@@ -1,0 +1,115 @@
+fragment GoalAssessmentFields on GoalAssessment {
+  outcome
+  summary
+  nextSteps
+  catalogueVersion
+  baselineId
+  target {
+    outcome
+    message
+    metric
+    unit
+    baseline
+    targetLevel
+    caveats
+  }
+  constraints {
+    code
+    message
+    outcome
+  }
+  conflicts {
+    code
+    message
+    outcome
+  }
+  interventions {
+    interventionId
+    name
+    family
+    relevant
+    outcome
+    benefit
+    preferred
+    site {
+      outcome
+      message
+    }
+    cost {
+      outcome
+      message
+    }
+    time {
+      outcome
+      message
+    }
+  }
+}
+
+query InterventionCatalogue {
+  interventionCatalogue {
+    version
+    interventions {
+      id
+      family
+      name
+      summary
+      serves
+      scales
+      requires
+      blockedBy
+      permissions
+      maintenance
+      costInputs {
+        key
+        label
+      }
+      costSources
+      construction
+      benefitTiming
+      benefitNote
+      evidence
+      effectModel
+      cautions
+      effectInputs {
+        key
+        label
+        unit
+        minimum
+        maximum
+        required
+        note
+      }
+    }
+  }
+}
+
+query CheckGoal($sessionId: ID!, $goal: GoalInput!) {
+  checkGoal(sessionId: $sessionId, goal: $goal) {
+    errors {
+      field
+      message
+    }
+    assessment {
+      ...GoalAssessmentFields
+    }
+  }
+}
+
+query GoalAssessment($sessionId: ID!) {
+  planningSession(id: $sessionId) {
+    id
+    inputsRevision
+    goalAssessment {
+      ...GoalAssessmentFields
+    }
+  }
+}
+
+query GoalArea($id: ID!) {
+  area(id: $id) {
+    id
+    name
+    currency
+  }
+}

@@ -2,7 +2,7 @@
   "name": "waterlens",
   "version": "0.1.0",
   "private": true,
-  "description": "WaterLens monorepo \u2014 React frontend, FastAPI modular-monolith backend, shared contracts.",
+  "description": "WaterLens monorepo — React frontend, FastAPI modular-monolith backend, shared contracts.",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -24,6 +24,7 @@
     "seed": "cd services/backend && uv run python -m waterlens.cli.seed",
     "sources": "cd services/backend && uv run python -m waterlens.cli.sources",
     "coverage-matrix": "cd services/backend && uv run python -m waterlens.cli.coverage_matrix ../../docs/data-readiness.md",
+    "intervention-catalogue": "cd services/backend && uv run python -m waterlens.cli.intervention_catalogue ../../docs/domain/interventions.catalogue.json",
     "contracts": "npm run contracts:export && npm run contracts:gen",
     "contracts:export": "cd services/backend && uv run python -m waterlens.api.export_openapi ../../packages/contracts/openapi.json && uv run python -m waterlens.api.export_graphql ../../packages/contracts/schema.graphql",
     "contracts:gen": "npm -w packages/contracts run generate && npm -w apps/web run codegen",

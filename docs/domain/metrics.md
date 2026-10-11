@@ -1,6 +1,6 @@
 # WaterLens — Metric Dictionary
 
-Version 0.2 · **ALL DEFINITIONS PROPOSED pending domain review** · Phase 01 (corrected 2026-10-08, review R3)
+Version 0.3 · **ALL DEFINITIONS PROPOSED pending domain review** · Phase 01 (corrected 2026-10-08, review R3); context indicators and engine notes added in Prompt 09 (ADR 0010)
 
 Specifications for the deterministic engine. These are _definitions and contracts_,
 not a calibrated scientific model. Equations here are **never** altered to reproduce
@@ -69,6 +69,18 @@ These pairs are **different metrics** and must never be conflated:
 - **Provenance:** per-source manifest entry with observation dates and units.
 - **Null semantics:** if any **material** source contribution is missing, report delivered supply as `provisional` with the missing source named — do **not** treat the missing source as 0.
 - **Display rounding:** 1 decimal MLD.
+- **Window means and gaps (Prompt 09 close-out):**
+  - `delivered_supply` (window mean) and `tanker_dependence` use the days that have a
+    record. For tanker dependence these are the days where both series are recorded.
+  - They are provisional and state "N of M days". A missing day is left out, never
+    counted as 0.
+  - Coverage travels with the value: the engine records `period_days` and
+    `recorded_days` on every record-based result, and the API exposes them as
+    `periodDays` / `recordedDays`. A result whose recorded days fall short of the period
+    cannot be built as `AVAILABLE`, so a partial-window average can never be reported as
+    a complete-window metric (Prompt 10 verification).
+  - Metrics defined day by day still need every day: reliable supply, deficit,
+    dependable ratio, volume and time reliability, and shortage days.
 - **Status:** proposed.
 
 ## 3. Reliable supply (`reliable_supply`)
@@ -81,6 +93,12 @@ These pairs are **different metrics** and must never be conflated:
 - **Distinction:** `reliable_supply` is a level in MLD. Dividing it by demand gives `dependable_supply_ratio` (§3b), which is **not** volume reliability (§7a) — in the fixture they are 80% vs 94%. See key distinction 4.
 - **Provenance:** inherits delivered-supply provenance + the chosen `p`.
 - **Null semantics:** `unavailable` if the daily series is too short/incomplete to estimate exceedance at `p`.
+- **Engine (Prompt 09):**
+  - The engine computes the same value as `sorted_desc[ceil(p·n) − 1]` over the `n` complete days, with exact `p = 9/10`.
+  - With `k = ceil(p·n)`, the k-th largest value has at least `k` days at or above it, so its share is at least `p`. Any larger value has fewer than `k` days, so its share is below `p`.
+  - It needs at least 10 complete days (proposed `MIN_SERIES_DAYS`); otherwise the result is `series_too_short`.
+  - Any missing day in the window gives `missing_input`.
+  - One typed average gives `needs_daily_series`. A flat series is never assumed.
 - **Display rounding:** 1 decimal MLD.
 - **Status:** proposed.
 
@@ -105,6 +123,9 @@ These pairs are **different metrics** and must never be conflated:
 - **Formula:** `deficit = max(0, demand − reliable_supply)`. A **daily deficit series** is `deficit_day = max(0, demand_day − delivered_supply_day)` and is reported separately from the reliable-supply deficit; the two are not interchangeable.
 - **Provenance:** inherits demand + supply provenance.
 - **Null semantics:** `unavailable` if either input is unavailable (never 0 by default).
+- **Readiness (Prompt 09):**
+  - Deficit depends on `reliable_supply`, so it needs a daily delivered-supply series. Readiness marks it unavailable when only a typed average exists.
+  - The baseline also reports `daily_deficit_total` (Σ `deficit_day`, in litres) as a supporting value for shortage days. It is not this metric.
 - **Display rounding:** 1 decimal MLD.
 - **Status:** proposed.
 
@@ -212,6 +233,23 @@ These pairs are **different metrics** and must never be conflated:
 - **Status:** proposed.
 
 ---
+
+## Context indicators (Prompt 09)
+
+These are shown beside the baseline (registry `indicators`, ADR 0010). They are
+descriptive only: they never feed a metric and are never combined into a score. Each one
+is shown only when its capability passes the readiness gate, a snapshot is chosen and
+the variable's normalized unit matches. Otherwise it is unavailable with a reason, never 0.
+
+| Indicator                 | Statistic                | Unit                             | Null semantics                                                     |
+| ------------------------- | ------------------------ | -------------------------------- | ------------------------------------------------------------------ |
+| `rainfall_total`          | total over the window    | mm                               | any missing day, wrong unit or empty window                        |
+| `groundwater_abstraction` | mean per day             | L/day (shown in MLD)             | any missing day, wrong unit or empty window                        |
+| `groundwater_level`       | latest in the window     | m bgl                            | no reading in the window or wrong unit                             |
+| `surface_water_extent`    | latest in the window     | m²                               | no observation in the window or wrong unit                         |
+| `water_quality`           | latest per parameter     | mg/L, NTU, µS/cm, pH, CFU/100 mL | per parameter: no sample in the window or unreviewed unit          |
+| `flood_risk`              | category (point in time) | category                         | unavailable (`unsupported_format`) until categories are summarized |
+| `land_cover`              | category (point in time) | category                         | unavailable (`unsupported_format`) until categories are summarized |
 
 ## Metrics that are NOT inferable without local evidence
 

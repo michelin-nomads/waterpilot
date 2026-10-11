@@ -61,7 +61,7 @@ shown as zero.
 | delivered_supply        | delivered_supply                                  | -                   | no           | user_entered         |
 | reliable_supply         | delivered_supply                                  | -                   | yes          | unavailable          |
 | dependable_supply_ratio | delivered_supply, population, per_capita_standard | non_domestic_demand | yes          | unavailable          |
-| deficit                 | delivered_supply, population, per_capita_standard | non_domestic_demand | no           | user_entered         |
+| deficit                 | delivered_supply, population, per_capita_standard | non_domestic_demand | yes          | unavailable          |
 | shortage_days           | delivered_supply, population, per_capita_standard | non_domestic_demand | yes          | unavailable          |
 | volume_reliability      | delivered_supply, population, per_capita_standard | non_domestic_demand | yes          | unavailable          |
 | time_reliability        | delivered_supply, population, per_capita_standard | non_domestic_demand | yes          | unavailable          |

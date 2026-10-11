@@ -71,7 +71,7 @@ function Metrics({ readiness }: { readiness: Readiness }) {
     <Section
       id="readiness-metrics"
       title="What WaterLens can calculate here"
-      intro="Each result needs specific inputs. Values are calculated in a later step, and only where the inputs below allow."
+      intro="Each result needs specific inputs. Your water baseline above shows a value only where the inputs below allow."
     >
       <ul className={styles.rows}>
         {readiness.metrics.map((m) => (

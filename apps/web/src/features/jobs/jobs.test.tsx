@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { AxiosError, type AxiosAdapter, type AxiosResponse } from 'axios';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ToastProvider } from '../../components/Toast/ToastProvider';
 import type { JobFieldsFragment } from '../../graphql/generated/graphql';
@@ -9,6 +9,7 @@ import { apiClient } from '../../lib/apiClient';
 import { routes } from '../../routes';
 import { AuthTestProviders } from '../../test/AuthTestProviders';
 import { FakeAuthBackend, guest } from '../../test/fakeAuth';
+import { preloadLazyRoutes } from '../../test/preloadRoutes';
 import { DisplayPreferencesProvider } from '../../theme/DisplayPreferencesProvider';
 import {
   createEventParser,
@@ -19,6 +20,8 @@ import {
   type StreamFailure,
 } from './jobStream';
 import { HEALTHY_STREAM_MS, MAX_STREAM_FAILURES, reconnectDelay } from './useJobProgress';
+
+beforeAll(() => preloadLazyRoutes(routes), 60_000);
 
 interface OpenStream {
   path: string;

@@ -1589,3 +1589,894 @@ These carry over from Prompt 08:
 The Prompt 08 acceptance criteria are met for local mode and the fake-backed adapters.
 Live Google behaviour and real coverage stay unverified until the live configuration is
 run by the owner.
+
+## Prompt 08 close-out — verification (2026-10-11)
+
+I re-ran every check on the current tree. No live or billable test ran, no cloud
+resource changed, and no environment guard changed.
+
+### Fixed during close-out
+
+- **Unreliable web tests under load (Prompts 03 and 05 code, not location).** Three
+  concurrent `vitest` runs reproduced 2–4 failures per run in `session/provider.test.tsx`
+  and `shell/shell.test.tsx`. The tests waited 1 s (the Testing Library default) for
+  lazy route chunks, or checked synchronously before a re-render.
+  - `vitest.setup.ts` now sets `asyncUtilTimeout: 5000`. (Replaced in Prompt 09 by a
+    targeted route preload; the global timeout is gone. See below.)
+  - One assertion uses `findByRole` and one uses `waitFor`.
+  - Afterwards, nine concurrent stress runs all passed 288/288.
+- **Map-outage evidence gap.** The unit test only showed that search still offered
+  results. It now confirms a place after the map fails and checks that the session points
+  at the new area.
+
+### Commands and results
+
+| Command                                                                   | Result                                                                                                           |
+| ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `npm run test:py`                                                         | ✅ 601 passed, 129 deselected (emulator and live markers)                                                        |
+| `npm run validate:domain`                                                 | ✅ 172 passed                                                                                                    |
+| `uv run pytest -m live tests/live`                                        | ⏭ 33 skipped, 0 run: 29 Firestore index probes and 4 Google Places tests, because no `WL_LIVE_*` variable is set |
+| `npm run test:emulator`                                                   | ✅ Python 96 passed (634 deselected); web 6 passed                                                               |
+| `npm run test:web`                                                        | ✅ 288 passed, 16 files (after the fix above; 9 concurrent stress runs also all passed)                          |
+| `npm run test:e2e:emulator`                                               | ✅ 39 passed, 1 skipped (opt-in screenshot capture), 0 failed                                                    |
+| `npm run lint`, `npm run typecheck`, `npm run format:check`               | ✅ clean                                                                                                         |
+| `npm run lint:py`, `npm run typecheck:py`, `uv run ruff format --check .` | ✅ clean (mypy: 99 files)                                                                                        |
+| `npm run contracts` plus byte comparison                                  | ✅ no drift in `schema.graphql`, `openapi.json` and the generated web types                                      |
+| `npm run build` + `npm run budget`                                        | ✅ initial JS 147.38 / 150 kB gzip; `area` 13.38 / 40 kB gzip                                                    |
+
+### Acceptance criteria (Prompt 08)
+
+| Criterion                              | Evidence                                                                                                                                                                                                                                                                                                     | Met (local and emulator) |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------ |
+| Geolocation denial completes safely    | Unit: `explains a denied location permission…`, `reports a timeout`. E2E: `device location denied › explains the denial and a typed-in location still completes the step`                                                                                                                                    | ✅                       |
+| Search outside India                   | Unit: `searches outside India, reviews, confirms…`. GraphQL: `test_search_outside_india_confirms_with_its_own_region_settings`. Service: `test_confirming_a_place_outside_india_derives_its_region_settings`. E2E: `…a place outside India completes the step` (Nairobi)                                     | ✅                       |
+| Ambiguous name (including Koramangala) | Unit: `asks which place is meant for an ambiguous name and never picks one`. Service: `test_koramangala_gives_candidates_and_a_question_never_a_default`, `test_ambiguous_names_outside_india_are_also_clarified`. GraphQL: `test_ambiguous_name_returns_candidates_and_a_question`. E2E: 2 candidates shown | ✅                       |
+| Map outage                             | Unit: `completes the step by search when the map fails to load`. E2E: local mode has no map, and every location e2e completes without one                                                                                                                                                                    | ✅                       |
+| Custom location                        | Unit: `completes a custom location with a user radius`. E2E: typed-in location in the denial test (private, US customary units)                                                                                                                                                                              | ✅                       |
+| Coverage-limited area                  | Service: `test_unsupported_location_routes_to_a_user_input_assessment`. Area unit: `shows the confirmed location with region settings and a user-input banner`. E2E: Nairobi shows "User-input assessment"                                                                                                   | ✅                       |
+| Review points 1–8 (Prompt 08 review)   | See the "Prompt 08 review" section above, including the tests added for required extent, region correction, content-derived ids, area-scoped inputs and private-area reports                                                                                                                                 | ✅                       |
+
+### Live verification
+
+**The live Google Places test did not run.** Live Google Maps JavaScript, Places
+autocomplete, Place Details, Geocoding and server Text Search are **unverified**. The
+same goes for the browser key's referrer and API restrictions, quotas and billing alerts.
+Real dataset coverage is also **unverified**: no real source is registered. Adding
+`tests/live/test_places_google_live.py` is a configuration, not a verification.
+
+### Remaining (not blockers for local and emulator)
+
+- The 30-day purge of expired Google content.
+- A CSP for the Maps origins (Prompt 25).
+- Browser-supplied Google place details are recorded as provenance, not verified.
+- Initial JS has about 2.6 kB of headroom.
+
+### Conclusion
+
+Prompt 08 is complete for local and emulator environments and ready for Prompt 09. Live
+Maps and Places integration stays unverified until the owner runs
+`docs/build/live-integration-tests.md`.
+
+## Prompt 09 — Baseline analysis and charts (2026-10-11)
+
+Built the Understand screen's water baseline and its backend service (ADR 0010). No live
+or billable test ran, no cloud resource changed and no environment guard changed.
+
+### Load-sensitive test fix: integrity check
+
+- **Global timeout removed.** The Prompt 08 close-out had raised Testing Library's
+  `asyncUtilTimeout` to 5000 ms. That is reverted: `git diff apps/web/vitest.setup.ts` is
+  empty. No `testTimeout`, `hookTimeout` or `asyncUtilTimeout` exists anywhere in the web
+  config or tests.
+- **Cause.** The real race was lazy route chunks loading for the first time under CPU
+  load.
+- **Fix.** `src/test/preloadRoutes.ts` loads every `route.lazy()` once. A `beforeAll`
+  calls it in the three router-based suites: shell, session provider and jobs. Only that
+  one-off hook has its own 60 s limit; each test keeps the default wait.
+- **Assertions are unchanged in strength.** The two Prompt 08 edits stay:
+  - `findByRole` for the navigation, which renders after the lazy chunk;
+  - `waitFor` for the offline notice disappearing. `useSyncExternalStore` re-reads the
+    snapshot in an effect, so the check has to wait for a re-render.
+- **No skips.** No test was skipped, marked `.only` or `.todo`, or removed.
+- **Stress test.** Nine concurrent full runs all passed 288/288 before the new baseline
+  tests were added.
+
+### Built
+
+- **Engine** (`services/backend/src/waterlens/domain/baseline.py`, `baseline-1`):
+  - exact `Fraction` arithmetic;
+  - typed `DailySeries`, `WindowMean` and `DemandBasis` inputs;
+  - registry formulas, with reliable supply at `sorted_desc[ceil(9/10·n) − 1]` and at
+    least 10 complete days;
+  - typed reasons for missing inputs, empty windows, zero denominators, short series,
+    mixed resolution, inconsistent inputs and needing a forward series;
+  - origins `MEASURED` / `USER_ESTIMATE` / `MODELED`, combined to the weakest;
+  - chart buckets: daily up to 31 days, otherwise monthly means, null when any day is
+    missing;
+  - context indicators;
+  - `exact_text` and `decimal_text` serialization.
+- **Readiness changes:**
+  - deficit now needs a daily series. The regenerated `docs/data-readiness.md` matrix
+    changed only that row: deficit is unavailable when only typed values exist;
+  - `CapabilityReadiness.chosen_snapshot_id` was added.
+- **Registry:** `metrics.registry.json` v0.3 adds the `indicators` array. A drift test
+  binds the engine's constants, definitions, indicators and reason texts to it.
+- **Series reading** (`application/series.py`): a validated parser for snapshot series
+  artifacts (schema, snapshot id, time zone, increasing dates, decimal values; missing
+  days become `None`), with a per-snapshot LRU cache.
+- **Service** (`application/services/baseline.py`):
+  - it reads `ReadinessService.evaluate()` and uses only `AVAILABLE`, `USER_ENTERED` and
+    `PARTIAL` inputs, naming stale and unavailable ones;
+  - the window is the trailing 365 days narrowed to series coverage, and partial
+    coverage makes metrics provisional;
+  - every metric carries evidence links (source or manual input, as-of, coverage,
+    quality, method, uncertainty, URL, demo flag);
+  - missing essentials and optional inputs are listed;
+  - the id is deterministic, and an LRU cache of 128 reuses results, except results with
+    a series read failure.
+- **API:** owner-scoped `Area.baseline(sessionId)` with the types `Baseline`,
+  `BaselineMetric`, `BaselineIndicator`, `BaselineChart`, `ChartSeries`, `EvidenceLink`,
+  `SupportingValue` and `DateWindow`. Contracts were regenerated.
+- **Web** (`features/area/BaselinePanel.tsx`, `baselineFormat.ts`):
+  - headline cards, a reliability group, an origin legend and per-card origin badges;
+    synthetic demo badges;
+  - a details accordion and context indicators;
+  - a "What would complete this baseline" list with stated assumptions;
+  - one primary action: add the first missing essential (it focuses that readiness
+    input), or "Set your goal";
+  - loading, error with retry, permission and demo states.
+- **Web formatting:**
+  - exact string and BigInt formatting;
+  - MLD normally, kL/day when every nonzero value is below 1 MLD, and MGD for US
+    customary areas;
+  - half-even percentages;
+  - the chart table uses the same exact strings as the cards.
+- **Caching:** the baseline and readiness queries are independent and fetch in parallel.
+  `recordManualInput` invalidates both.
+- **Manual entry** reuses the Prompt 08 readiness forms, which stay unchanged.
+
+### Tests added
+
+- `tests/domain/test_baseline_engine.py` (40):
+  - golden values;
+  - three distinct reliability metrics;
+  - `edge-cases.json`;
+  - boundaries: minimum days, gaps, equality, the ceil index and an empty window;
+  - partial availability;
+  - chart months and the December rollover;
+  - indicators, text helpers and registry drift.
+- `tests/test_baseline.py` (16):
+  - nothing known, manual, sourced, and same-engine spy;
+  - the demo source under a January clock reproduces every golden value as provisional
+    demo values;
+  - stale sources excluded;
+  - partial coverage, gaps, and unreadable series not cached;
+  - refresh gives the same id, while a revision or a new source version gives a new id;
+  - ownership;
+  - indicators and series parsing.
+- `tests/api/test_baseline_graphql.py` (3): public view all unavailable; manual exact and
+  decimal strings; owner-only access.
+- `tests/test_readiness.py`: deficit needs a daily series; `chosen_snapshot_id`.
+- `apps/web/src/features/area/area.test.tsx`: 11 new baseline tests.
+  - **Content:**
+    - nothing known: every card unavailable with a reason, and no "0 MLD" or "0%";
+    - the primary action scrolls to and focuses the input;
+    - manual "Your estimate";
+    - progressive disclosure;
+    - demo golden values with synthetic badges.
+  - **Chart and table equivalence:** a gap splits the line, and the table reads
+    "Unavailable".
+  - **Units:** MGD; kL/day for small rates.
+  - **States:** revision after a save; error with retry; permission.
+  - **Scoping change.** The existing readiness tests now look up "Water demand" and
+    "Population served" inside the readiness sections, because the baseline repeats
+    those labels. This narrows where they search. It does not weaken them: the
+    assertions are the same.
+- `apps/web/src/lib/format.test.ts`: percentages from ratios, half-even division and
+  MGD.
+- `apps/web/e2e/baseline.spec.ts`:
+  - a guest enters population, per-capita need, delivered supply and tanker supply on
+    the demo area;
+  - the screen shows 1.6 MLD (your estimate), 1.0 MLD and 30%, with reliable supply
+    unavailable;
+  - after a reload, the same `data-baseline-id` is shown;
+  - revising delivered supply to 1.5 MLD shows 20% and a new id.
+
+### Commands and results
+
+| Command                                                                   | Result                                                                                                           |
+| ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `npm run test:py`                                                         | ✅ 661 passed, 129 deselected (emulator and live markers)                                                        |
+| `npm run validate:domain`                                                 | ✅ 212 passed                                                                                                    |
+| `npm run test:emulator`                                                   | ✅ Python 96 passed (694 deselected); web 6 passed                                                               |
+| `npm run test:web`                                                        | ✅ 316 passed, 16 files                                                                                          |
+| `npm run test:e2e:emulator`                                               | ✅ 40 passed, 1 skipped (opt-in screenshot capture), 0 failed                                                    |
+| `npm run lint`, `npm run typecheck`, `npm run format:check`               | ✅ clean                                                                                                         |
+| `npm run lint:py`, `npm run typecheck:py`, `uv run ruff format --check .` | ✅ clean (mypy: 103 files). The first ruff run flagged one SIM300 operand order in a test; fixed by `ruff --fix` |
+| `npm run contracts` plus byte comparison                                  | ✅ no drift in `schema.graphql`, `openapi.json` and the generated web types                                      |
+| `npm run coverage-matrix`                                                 | ✅ regenerated; only the deficit row changed (intended)                                                          |
+| `npm run build` + `npm run budget`                                        | ✅ initial JS 147.39 / 150 kB gzip; `area` 17.72 / 40 kB gzip                                                    |
+| `pytest -m live`                                                          | ⏭ not run (no `WL_LIVE_*` variables; no live or billable test)                                                   |
+
+### Acceptance evidence
+
+| Criterion                                         | Evidence                                                                                                                                                                                                |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Source-backed and manual baselines use one engine | `test_baseline.py`: a same-engine spy sees both a `WindowMean` and a `DailySeries` call `compute()`; the sourced and manual tests                                                                       |
+| Fixtures                                          | Engine golden test and demo source at 2026-01-11: 10.0 / 10.1 / 8.0 / 2.0 MLD, 80% / 94% / 70%, 3 days, 27%, 6 ML daily-deficit total; web test renders the same golden values                          |
+| Boundary cases                                    | Engine: minimum 10 days, ceil index (10th largest of 1..11 is 2), gaps, equality, empty window, zero denominators, T > S, mixed resolution, December rollover                                           |
+| Partial availability                              | Service: 100-day coverage is provisional with a note; a gap gives `MISSING_INPUT` and a null chart month; stale sources are excluded but a typed value still counts; web: nothing known and manual-only |
+| Chart and table equivalence                       | Web: table cells equal the cards' exact display strings, a gap reads "Unavailable" and splits the line into two paths                                                                                   |
+| Survives refresh and can be revised               | Service: same id after restart, new id after a revision or new source version; web: revision after a save; e2e: same `data-baseline-id` after reload, new id and values after revising                  |
+| Missing is not zero                               | Engine reasons; GraphQL null values; web and e2e assert no "0 MLD" or "0%" when inputs are missing                                                                                                      |
+| Prompt 08 behaviour preserved                     | All location, readiness and session unit tests and e2e pass unchanged in assertions (`readiness.spec.ts`, `location.spec.ts`); private-area and ownership checks extended to `Area.baseline`            |
+
+### Remaining limitations
+
+- No real source is registered. In practice, baselines are manual or demo-only.
+- Live Google Maps/Places and real dataset coverage are **unverified**.
+- Day-by-day metrics need an imported daily series. There is no manual daily-series
+  entry, so with typed values they stay unavailable, with the reason shown.
+- The demo sources are dated January 2026, so in October they are stale and excluded.
+  The source path is proven in unit tests with a fresh snapshot and a January clock.
+- Days until shortage waits for Prompt 11, and costs for Prompt 13.
+- Flood risk and land cover are unsupported, because there is no categorical summary.
+- The cache is per process; ids are stable across instances.
+- The registry definitions, including `MIN_SERIES_DAYS = 10`, remain **proposed** pending
+  domain review.
+- Initial JS has about 2.6 kB of headroom.
+
+## Prompt 09 close-out — verification (2026-10-11)
+
+I checked the six close-out points against the code, fixed the defects found and re-ran
+every check. No live or billable test ran, no cloud resource changed, and no
+environment guard changed. Two statements in the Prompt 09 entry above are superseded:
+
+- "kL/day for small rates" now applies to the whole baseline, not to each card;
+- a gap no longer blocks window means.
+
+### Findings and fixes
+
+| #   | Point                                                                | Finding                                                                                                                                                                                                                                                                                                                                                      | Fix                                                                                                                                                                                                                    |
+| --- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Deficit and reliability definitions; gaps block only what needs days | Definitions matched the registry: deficit = max(0, mean demand − reliable supply); reliable supply = ceil(p·n)-th largest; the three reliability measures are separate. Readiness and the engine flag the same six daily metrics. **Defect:** one missing day also blocked the delivered-supply mean and tanker dependence, which are not defined day by day | Window means use the recorded days (paired days for tanker dependence). They report `missing_days`, are provisional, and state "N of M days … not counted as zero". Day-by-day metrics still need every day            |
+| 2   | Compatible dates, scope, units; missing is not zero                  | Units were checked (normalized unit equals the requirement). Spatial scope is checked by readiness (`PARTIAL` when partial). **Defects:** a series dated in another time zone was compared day by day; a stored series was not checked against its declared coverage                                                                                         | A series in another time zone is left out of day-by-day use, with a named note. Rows must lie within the coverage, and the series spans the coverage, so covered days without a row are missing                        |
+| 3   | MGD = million US gallons/day, exact                                  | Arithmetic was already exact (BigInt, 3.785411784 L/gal, half-even, storage in L/day). **Defect:** labels said "MGD", "million gallons" and "gallons/day" without "US"                                                                                                                                                                                       | US areas show "MGD means million US gallons per day (1 US gallon = 3.785411784 litres exactly)…", in the panel and the chart description. Totals use "million US gal" and "US gal"                                     |
+| 4   | Cards, chart, table and evidence consistent                          | Periods and evidence matched. **Defects:** each card chose its own unit, so a card could read kL/day beside an MLD chart; chart series had no provenance                                                                                                                                                                                                     | One rate scale per baseline. Small nonzero values get more decimals or "< 0.001", never 0. `ChartSeries.origin` and `demo` were added, so labels read "Demand (your estimate)" and "Delivered supply (synthetic demo)" |
+| 5   | Manual input invalidates both; no stale overwrite                    | Both were invalidated. **Defect:** if the baseline's first load was still in flight when a value was saved, TanStack Query joined that load instead of restarting it, so the pre-save answer was shown as current                                                                                                                                            | `invalidateAfter` cancels in-flight fetches before invalidating. The new test fails without the change and passes with it                                                                                              |
+| 6   | Synthetic never silently substitutes                                 | Synthetic data is local-only and labelled. **Defects:** readiness chose by state alone, so a synthetic `AVAILABLE` snapshot could beat a real `PARTIAL` snapshot or a typed-in value; synthetic series showed a "Measured" badge                                                                                                                             | Choice order: usable first, then non-synthetic before synthetic, then state. Synthetic series show a "Synthetic demo" badge (`data-synthetic`), with a legend entry                                                    |
+
+### Tests added or changed
+
+- **Engine** (`tests/domain/test_baseline_engine.py`):
+  - `test_a_gap_blocks_only_the_metrics_defined_day_by_day` replaces the previous gap
+    test. Six daily metrics are `missing_input`; the delivered mean is 5 over 11 of 12
+    days, with the note; demand is unaffected.
+  - `test_tanker_dependence_pairs_recorded_days_and_never_fills_zero`: 16/80 = 1/5, not
+    16/90.
+  - `test_series_outside_the_window_is_missing_not_zero`: the mean is 5 (not 2.5) with 5
+    missing days.
+- **Service** (`tests/test_baseline.py`):
+  - the gap test now expects provisional window means with a "no record" reason, and
+    daily metrics unavailable;
+  - `test_series_dates_must_lie_in_the_declared_coverage`;
+  - `test_a_series_dated_in_another_timezone_is_not_compared_day_by_day`;
+  - `test_synthetic_evidence_ranks_last_among_usable_options`, which fails under the old
+    state-only order;
+  - `test_a_typed_value_is_never_replaced_by_demo_data`, supporting evidence only: the
+    demo coverage there is `PARTIAL`, so it also passed before the fix;
+  - `test_chart_series_carry_the_same_provenance_as_the_cards`.
+- **Web** (`area.test.tsx`):
+  - `never lets an older baseline response overwrite a newer one`: verified to fail
+    without the fix;
+  - `shows chart provenance and explicit units, matching the cards`: the synthetic badge,
+    table headers with origin, and every demand cell equal to the card;
+  - `uses one rate unit for the whole baseline…` ("0.040 MLD") replaces the per-card
+    kL/day test;
+  - `switches every rate to kL/day only when all of them are below 1 MLD`;
+  - the US test now also asserts the "million US gallons" note.
+  - The test transport now awaits handler results, so a reply can be held back.
+
+### Commands and results
+
+| Command                                                                   | Result                                                                      |
+| ------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `npm run test:py`                                                         | ✅ 667 passed, 129 deselected (emulator and live markers)                   |
+| `npm run validate:domain`                                                 | ✅ 213 passed                                                               |
+| `npm run test:emulator`                                                   | ✅ Python 96 passed (700 deselected); web 6 passed                          |
+| `npm run test:web`                                                        | ✅ 319 passed, 16 files                                                     |
+| `npm run test:e2e:emulator`                                               | ✅ 40 passed, 1 skipped (opt-in screenshot capture), 0 failed               |
+| `npm run lint`, `npm run typecheck`, `npm run format:check`               | ✅ clean                                                                    |
+| `npm run lint:py`, `npm run typecheck:py`, `uv run ruff format --check .` | ✅ clean (mypy: 103 files)                                                  |
+| `npm run contracts` plus byte comparison                                  | ✅ no drift in `schema.graphql`, `openapi.json` and the generated web types |
+| `npm run coverage-matrix`                                                 | ✅ unchanged                                                                |
+| `npm run build` + `npm run budget`                                        | ✅ initial JS 147.41 / 150 kB gzip; `area` 18.19 / 40 kB gzip               |
+| `pytest -m live`                                                          | ⏭ not run (no `WL_LIVE_*` variables; live verification is separate)         |
+
+### Acceptance (local and emulator)
+
+Every Prompt 09 criterion in the entry above still holds with the fixes. Each close-out
+point has a test that would fail if the defect returned (points 1–6 above). **Prompt 09
+is complete for local and emulator environments and ready for Prompt 10.**
+
+### Live data verification (separate, not run)
+
+- No real source is registered, so source-backed baselines are proven only with test
+  snapshots and the synthetic demo source.
+- Real dataset coverage, licences and time zones are **unverified**.
+- Live Google Maps/Places is **unverified**.
+
+### Remaining limitations
+
+- Day-by-day metrics need an imported daily series; there is no manual daily-series
+  entry.
+- A typed tanker average with a delivered daily series, or the reverse, returns
+  `mixed_resolution`. Readiness cannot know this in advance, so it may call tanker
+  dependence user-entered while the baseline shows the reason.
+- Chart buckets stay strict: a month with any missing day is unavailable, while the
+  card's window mean uses the recorded days and says so.
+- When a chosen snapshot is left out because of its time zone, the typed value for that
+  input is not used as a fallback. Entering a value makes readiness choose it.
+- The demo sources are dated January 2026, so they are stale by October.
+- Days until shortage waits for Prompt 11, and costs for Prompt 13.
+- Category indicators are unsupported.
+- The cache is per process.
+- Definitions, including the 10-day minimum, are **proposed** pending domain review.
+- Initial JS has about 2.6 kB of headroom.
+
+---
+
+## Prompt 10 — Goals and intervention constraints (2026-10-11)
+
+**Status:** Complete for local and emulator environments · ADR 0011
+
+### Prompt 09 checks done first
+
+- **Units, provenance and stale-response protection:** unchanged. All Prompt 09 tests
+  still pass, including the held-response test.
+- **Coverage disclosure.** This was a real gap: the window mean said "provisional", but
+  the result did not record how many days it covered.
+  - Fix: `MetricResult.period_days` and `recorded_days` (engine), with an invariant that
+    missing days need a period and must be fewer than it.
+  - `BaselineMetric` refuses `AVAILABLE` when recorded days fall short of the period.
+  - GraphQL adds `recordedDays` / `periodDays`, and the card caption reads "Average of N
+    of M days".
+  - Tests: `test_a_partial_window_average_can_never_be_reported_complete`,
+    `test_missing_days_only_exist_inside_a_recorded_window`, and the web test "says on
+    the card itself when an average leaves out days without records".
+- **Synthetic exclusion.** This was a real defect: in local mode, any area with
+  `allow_demo` could receive demo snapshots, including a real place found through search.
+  - Fix: `is_demo_area(area)` (catalogue origin plus synthetic evidence), applied inside
+    `assess_area`, so no caller can bypass it.
+  - `test_synthetic_records_never_assess_a_real_place` is parametrized over place
+    search, custom, geolocation and validated catalogue areas. It was verified to fail
+    without the fix.
+
+### Built
+
+- **Domain:**
+  - `domain/planning.py`: `GoalFields` with horizon, further objectives,
+    `SiteConstraints`, preferred measures, `MeasureEstimate` and `confirmed`;
+    `REDUCE_WATER_BILLS`.
+  - `domain/interventions.py`: the `interventions-1` catalogue, nine measures. The
+    `_honest` validator refuses a duration or effect model without evidence.
+  - `domain/goals.py`:
+    - `validate_goal`: target rules per kind, ranges, currencies, and the
+      prerequisite/restriction check on preferred measures;
+    - `assess_goal`: target against baseline, cost and time fit against user
+      estimates, horizon versus build, currency, and conflicts. Conflict codes:
+      `recharge_vs_quality`, `same_roof_water`, `objective_excluded`,
+      `objective_uncovered`, `priority_*` and `preferred_unrelated`.
+- **Application:**
+  - `services/goals.py` (`GoalService`, `GoalInput`), used by `services/sessions.py` on
+    goal patches;
+  - `planOptions` filters on `inputs_revision`;
+  - `tools/goals.py`: `check_goal`, `explain_goal_fit`, `list_interventions`.
+- **API:**
+  - `api/graphql/modules/goals.py`: the catalogue, `checkGoal`,
+    `PlanningSession.goalAssessment`, and input types;
+  - the planning `Goal`/`GoalInput` extended;
+  - contracts regenerated.
+- **Ops artefacts:** `cli/intervention_catalogue.py`, `npm run intervention-catalogue`,
+  `docs/domain/interventions.catalogue.json`, and the new index in
+  `infra/firebase/firestore.indexes.json`.
+- **Web:**
+  - `features/goals/`: `goalDraft.ts` (presets, canonical conversion, field mapping),
+    `goalLabels.ts`, `GoalForm.tsx`, `GoalAssessmentView.tsx`, `AgentGoalCheck.tsx`
+    (lazy, in the agent pane), `index.tsx` and `Goals.module.scss`;
+  - `goals.graphql` and the extended goal fragment;
+  - `canonicalGoal` covers every field;
+  - new query keys, and `recordManualInput` invalidates derived results;
+  - `e2e/goals.spec.ts`.
+
+### Tests added or changed
+
+- `tests/domain/test_goals.py`: 23 functions, 36 cases. They cover:
+  - impossible targets;
+  - not-assessable without a baseline;
+  - horizon before build;
+  - currency mismatch;
+  - restrictions excluding an objective;
+  - no bypass of prerequisites;
+  - no confidence.
+- `tests/domain/test_intervention_catalogue_doc.py` (2): exported JSON drift, plus no
+  numbers in the catalogue text.
+- `tests/api/test_goals_graphql.py` (8):
+  - the catalogue;
+  - check without saving;
+  - impossible and conflicting feedback;
+  - `expectedVersion` and clearing;
+  - no bypass or unconfirmed custom goal;
+  - formatted numbers rejected;
+  - tools equal to the API;
+  - owner only.
+- `tests/api/test_session_inputs.py`: an older-revision plan option is no longer listed.
+- `tests/test_baseline.py` and `tests/domain/test_baseline_engine.py`: the coverage and
+  demo-gating tests above.
+- `apps/web/src/features/goals/goals.test.tsx` (16):
+  - draft conversion (percent to ratio, minor units per currency, formatting refused,
+    round trip, field mapping);
+  - page behaviour (presets and progressive disclosure, infeasible and not-assessable
+    feedback, stale check, prerequisite-gated shortlist, server errors opening their
+    section, malformed values never sent, canonical save, no-location notice);
+  - the agent pane.
+- `e2e/goals.spec.ts`:
+  - a guest enters supply values, checks the tanker preset (target `FEASIBLE` against a
+    30% baseline), then saves and reloads it;
+  - a groundwater goal with digging and recharge ruled out is `INFEASIBLE`, with the
+    reason shown.
+
+### Commands and results
+
+| Command                                                                   | Result                                                                                                 |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `npm run test:py`                                                         | ✅ 723 passed, 130 deselected (emulator and live markers)                                              |
+| `npm run validate:domain`                                                 | ✅ 252 passed                                                                                          |
+| `npm run test:emulator`                                                   | ✅ Python 96 passed (757 deselected); web 6 passed                                                     |
+| `npm run test:web`                                                        | ✅ 336 passed, 17 files                                                                                |
+| `npm run test:e2e:emulator`                                               | ✅ 41 passed, 1 skipped (opt-in screenshot capture), 0 failed                                          |
+| `npm run lint`, `npm run typecheck`, `npm run format:check`               | ✅ clean                                                                                               |
+| `npm run lint:py`, `npm run typecheck:py`, `uv run ruff format --check .` | ✅ clean (mypy: 110 files)                                                                             |
+| `npm run contracts` plus byte comparison                                  | ✅ no drift in `schema.graphql`, `openapi.json` and the generated web types                            |
+| `npm run coverage-matrix`, `npm run intervention-catalogue`               | ✅ unchanged                                                                                           |
+| `npm run build` + `npm run budget`                                        | ✅ initial JS 147.75 / 150 kB gzip; `goals` 6.52 kB, `GoalAssessmentView` 2.46 kB, agent check 0.65 kB |
+| `pytest -m live`                                                          | ⏭ not run (no `WL_LIVE_*` variables; live verification is separate)                                    |
+
+### Acceptance (local and emulator)
+
+- **Impossible targets get useful feedback:**
+  - a target the baseline already meets, or a reduction when the baseline is already
+    zero, is `INFEASIBLE` and gives the baseline and target level;
+  - values that cannot exist (more than 366 days a year, pH outside 0–14, a negative
+    level) are field errors;
+  - a horizon shorter than every estimated build is `INFEASIBLE`, and so are a lowest
+    cost estimate above the budget and a shortest build longer than the maximum
+    implementation time.
+- **Conflicting constraints get useful feedback:** ruling out every measure for an
+  objective is `INFEASIBLE`, and names the measure and the reason. Recharge versus water
+  quality, and roof water for supply versus recharge, are explained as trade-offs.
+- **Prerequisites cannot be bypassed:** a preferred measure whose site prerequisites are
+  unmet is a server field error in GraphQL, session saves and the tools. The screen also
+  disables shortlisting.
+- **Stored values are independent of display:** ratios and minor units are canonical;
+  commas, symbols and `%` are rejected in the browser and by the server; the round trip
+  does not drift.
+- **Not yet assessable stays separate:** missing baselines, costs, durations or effects
+  give `NOT_ASSESSABLE` with next steps, never a guess or a confidence.
+
+### Remaining limitations
+
+- The catalogue has no reviewed costs, durations, evidence or effect models. Cost and
+  time fit use only the user's estimates, so most goals are "not yet assessable" until
+  Prompts 11 and 13.
+- Water quality has no catalogue measure; water bills have no baseline metric; the
+  groundwater indicator is usually unavailable.
+- The custom goal is matched to standard objectives only by the user's choice. No
+  language model interprets the wording.
+- The agent tools are typed functions with no agent runtime (Prompts 15–17).
+- The new `planOptions` composite index is not deployed (Prompt 25).
+- Catalogue content and target rules are proposed until domain review.
+- Live data, live Maps/Places and GCP behaviour are still **unverified**.
+- Initial JS has about 2.25 kB of headroom.
+
+---
+
+## Prompt 10 close-out — verification (2026-10-11)
+
+I re-checked Prompt 10's four acceptance points against the code and re-ran every check.
+No live or billable test ran, no cloud resource changed, and no environment guard
+changed.
+
+| #   | Point                                                                    | Finding                                                                                                                                                                                                                         | Evidence                                                                                                                                                                                                     |
+| --- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | Impossible targets and conflicting constraints get useful feedback       | Holds                                                                                                                                                                                                                           | `test_impossible_targets_and_conflicting_constraints_get_useful_feedback`, `test_an_already_met_target_is_infeasible_with_a_useful_message`, `test_conflicting_goals_are_explained`, `goals.spec.ts`         |
+| 2   | Unsupported prerequisites cannot be bypassed                             | Holds in GraphQL, session saves and agent tools                                                                                                                                                                                 | `test_a_chosen_measure_cannot_bypass_its_prerequisites`, `test_a_save_cannot_bypass_prerequisites_or_confirmation`, `test_agent_tools_reuse_the_same_validation_and_screen`                                  |
+| 3   | Stored values stay independent of display formatting                     | **Gap fixed:** the server canonicalised some numbers ("0.20" → "0.2", "400.0" → "400") but the client kept its own spelling, so a saved goal could look changed after saving. Scenario quantities were not canonicalised at all | `ScenarioAdjustment` and effect ranges are canonicalised on the server; the web client uses the same spelling (`canonicalDecimal`). Tests: `format.test.ts`, the goal round-trip and effect round-trip tests |
+| 4   | Feasible, infeasible and not-yet-assessable stay distinct, no inventions | Holds: no costs, prerequisites or confidence are invented                                                                                                                                                                       | `test_a_missing_baseline_makes_the_target_not_yet_assessable`, `test_costs_are_only_your_estimates_and_gate_a_budget`, `separates not-yet-assessable from impossible…` (web)                                 |
+
+Command results are in the Prompt 11 entry below (one run covers both). **Prompt 10 is
+complete for local and emulator environments.**
+
+---
+
+## Prompt 11 — Scenario and option engines (2026-10-11)
+
+**Status:** Complete for local and emulator environments · ADR 0012 ·
+rules in `docs/domain/option-engine.md`
+
+### Files changed / created
+
+- **Backend domain:**
+  - `domain/scenario.py` (new): scenario engine `scenario-1`, validation, balance,
+    comparison rows;
+  - `domain/options.py` (new): option engine `options-1`, comparison key, ranking,
+    sensitivity, stress tests;
+  - `domain/interventions.py`: `effect_inputs`, catalogue `interventions-2`;
+  - `domain/planning.py`: `EffectEstimate`, `MeasureEstimate.effects`, canonical
+    scenario quantities;
+  - `domain/goals.py`: effect estimates validated against the catalogue;
+  - `domain/baseline.py`: `daily_balance` for the last 365 days.
+- **Backend application and API:**
+  - `application/services/options.py` (new): `OptionService` (cache, scenario view,
+    preview, selection check);
+  - `application/services/sessions.py`, `baseline.py`, `__init__.py`,
+    `repositories.py`: selection through a fresh comparison, stored options;
+  - `api/graphql/modules/options.py` (new), `planning.py`, `goals.py`, `enums.py`,
+    `schema.py`;
+  - `application/tools/options.py` (new): `compare_plans`, `preview_scenario`,
+    `explain_option`.
+- **Contracts:** `packages/contracts/schema.graphql`, generated web types,
+  `docs/domain/interventions.catalogue.json`.
+- **Web:**
+  - `features/plans/` (new): `PlanComparisonView`, `WhatIfPanel`, `plansFormat.ts`,
+    styles, tests; `graphql/operations/plans.graphql`; new query keys;
+  - goal page effect ranges (`GoalForm.tsx`, `goalDraft.ts`, `goals/index.tsx`);
+  - `lib/format.ts` (`canonicalDecimal`), `session/sessionState.ts`.
+- **Tests:** `tests/domain/test_scenario.py` (14), `tests/domain/test_options.py` (29),
+  `tests/api/test_options_graphql.py` (6), an emulator round-trip for an engine option,
+  `plans.test.tsx` (10), `e2e/plans.spec.ts`.
+- **Docs:** ADR 0012 and index, `docs/domain/option-engine.md`, `docs/api/graphql.md`,
+  implementation status, traceability, this file.
+
+### Behaviour implemented
+
+- **Scenarios** change demand, supply other than tankers or rainfall, by a share in
+  (0, 1] or to a set value. They are exact, always against the same baseline, and an
+  unknown value stays unknown. Tankers absorb the change in the gap on an average day;
+  day by day, they stay as recorded. A scenario parsed from words is ignored until
+  confirmed.
+- **Options** use only the person's effect ranges. They avoid double counting:
+  - demand savings multiply;
+  - greywater replaces only the demand left after conservation;
+  - leak repair recovers only piped supply;
+  - one roof feeds one rooftop measure;
+  - water beyond the tanker deliveries it could replace is not counted.
+- An option is shown only when the target, budget, build time and horizon all hold at
+  pessimistic estimates and no smaller combination passes. At most three are shown,
+  preferring new family mixes; fewer pass, fewer are shown.
+- Explicit states: `OPTIONS`, `NO_FEASIBLE_PLAN` (with counts), `NEEDS_INPUT` (with what
+  to add), `TARGET_ALREADY_MET`, `NOT_SUPPORTED` (with the reason).
+- Stable ranking per priority (ending in measure ids), sensitivity per estimate, and
+  three stress tests (demand +10%, supply −10%, rainfall −20%).
+- The comparison key hashes every version and input; it ids results, keys the cache and
+  is stored with a chosen option. Contracts carry exact values (`ExactNumber`).
+- Choosing a plan checks the id against a fresh comparison and stores the option.
+- The Plans page shows the comparison and an in-page what-if panel. While a choice is
+  saving, the button says "Saving your choice…"; it says "Chosen plan" only once saved.
+
+### Acceptance tests (guide)
+
+| Criterion                         | Tests                                                                                                                                                                                  |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Reproducibility                   | `test_same_inputs_give_identical_results`, `test_catalogue_order_does_not_change_results`, scenario exact-application tests                                                            |
+| Unit conversions                  | `test_rainwater_converts_mm_on_m2_to_litres_per_day_exactly`, scenario `SET_TO` unit tests, web display tests                                                                          |
+| Invalid scenarios                 | `test_scenario.py` invalid cases and ratio model errors; API preview field errors                                                                                                      |
+| Overlap / no double counting      | demand multiply, greywater after conservation, leaks on piped only, one roof, uncounted tanker excess, shared tank space                                                               |
+| Sensitivity                       | `test_sensitivity_swings_are_ordered_and_exact`, the stress-test tests                                                                                                                 |
+| Infeasible and needs-input cases  | `test_no_feasible_plan_when_nothing_reaches_the_target`, `test_passing_only_at_optimistic_estimates_is_not_an_option`, needs-input tests, `plans.spec.ts` what-if → `NO_FEASIBLE_PLAN` |
+| Never padded to three             | `test_options_are_never_padded_to_three`, `plans.spec.ts` (exactly one option)                                                                                                         |
+| Version changes invalidate output | `test_any_version_or_input_change_gives_a_new_key_and_new_option_ids`; the cache and query keys are keyed by that key and the session revision                                         |
+
+### Fixed while closing out
+
+- `e2e/plans.spec.ts` first failed: the goal had no site scale, then no build time while
+  a horizon was set, so the engine correctly said `NEEDS_INPUT`. The spec now sets both.
+- The "needs" link now reads "Update your goal, site and estimates", because missing
+  inputs are often site facts.
+- **UX defect:** "Chosen plan" appeared before the choice was saved, so a reload
+  straight after could show "Not chosen yet". The button now says "Saving your choice…"
+  until the save completes.
+
+### Commands and results
+
+| Command                                                                   | Result                                                                                       |
+| ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `npm run test:py`                                                         | ✅ 781 passed, 131 deselected (emulator and live markers); 1 third-party deprecation warning |
+| `npm run validate:domain`                                                 | ✅ 302 passed                                                                                |
+| `npm run test:emulator`                                                   | ✅ Python 97 passed (815 deselected); web 6 passed                                           |
+| `npm run test:web`                                                        | ✅ 354 passed, 18 files                                                                      |
+| `npm run test:e2e:emulator`                                               | ✅ 42 passed, 1 skipped (opt-in screenshot capture), 0 failed                                |
+| `npm run lint`, `npm run typecheck`, `npm run format:check`               | ✅ clean                                                                                     |
+| `npm run lint:py`, `npm run typecheck:py`, `uv run ruff format --check .` | ✅ clean (mypy: 115 files)                                                                   |
+| `npm run contracts`, `coverage-matrix`, `intervention-catalogue`          | ✅ no drift across 7 generated files                                                         |
+| `npm run build` + `npm run budget`                                        | ✅ initial JS 148.64 / 150 kB gzip; `plans` 5.52 kB                                          |
+| `pytest -m live`                                                          | ⏭ not run (no `WL_LIVE_*` variables; live verification is separate)                          |
+
+### Remaining limitations
+
+- Only tanker-dependence and shortage-day goals can be compared. Bills, groundwater,
+  flooding, water quality and custom goals return `NOT_SUPPORTED` with the reason.
+- Effects are the person's own estimates; there is no reviewed effect evidence.
+- Rainwater is not counted on shortage days. Tank size and dry months are not modelled.
+- Neighbour effects are not assessed (Prompt 12); sourced costs wait for Prompt 13.
+- Relative scenario changes are capped at 100%; a set value covers larger changes.
+- A scenario change keeps the selected plan until the next save re-validates it
+  (existing session rule).
+- Days until shortage is still not built.
+- The comparison cache is per process.
+- The agent tools have no agent runtime (Prompts 15–17).
+- Accounting rules, stress tests and ranking are proposed until domain review.
+- Live data, live Maps/Places and GCP behaviour are still **unverified**.
+- Initial JS has about 1.4 kB of headroom.
+
+---
+
+## Prompt 11 review — Scenario and option engines against the full guide text
+
+**Status:** Complete for local and emulator use · **Date:** 2026-10-11
+
+Prompt 11 was built by continuing automatically. This review checked it against the full
+guide text and eight owner points, and closed the gaps found. Prompt 12 was not started.
+
+### Gaps found and fixed
+
+- **What-if lived in Traditional mode.** The guide says to expose scenario logic to
+  WaterLensAgent and remove separate what-if navigation. The what-if tool now lives in
+  the Agent pane (`AgentScenario`, which wraps `WhatIfPanel`). Traditional mode has no
+  what-if controls. The Plans page shows a saved what-if read-only, labelled "What-if
+  from Agent mode · Agent-generated", with "Open Agent mode" (`ScenarioResult`).
+- **A scenario change kept the chosen plan.** It now clears the plan in the same
+  transaction (server `_apply`, web `applyPatch`), so "Continue to funding" cannot point at
+  a plan from a different scenario.
+- **A recorded baseline value did not invalidate.** `recordManualInput` now bumps the
+  session's `inputsRevision` and clears the chosen plan in the same transaction; the web
+  client then refreshes the session. Covered by API and Firestore emulator tests.
+- **Effect provenance was implicit.** Each option line now returns `effects`
+  (`OptionEffect`: key, label, unit, exact low/high, `EffectOrigin`), shown under every
+  measure on the Plans page.
+- **Preview "saves nothing" was untested end to end.** Now tested in the API (previews by
+  GraphQL and by the tool leave the session, plan options and comparison unchanged) and
+  e2e (preview, reload, plan still chosen).
+
+The engine rules needed no change: determinism and versioning, overlap accounting, the
+feasibility rules and the states.
+
+### Files changed
+
+- Backend: `domain/options.py`, `api/graphql/enums.py`, `api/graphql/modules/options.py`,
+  `api/graphql/modules/planning.py` (description), `application/services/sessions.py`,
+  `application/services/readiness.py`; tests in `tests/api/test_options_graphql.py`,
+  `tests/api/test_session_inputs.py`, `tests/api/test_goals_graphql.py`,
+  `tests/domain/test_options.py`, `tests/test_locations.py`,
+  `tests/emulator/test_firestore_sources.py`.
+- Web: `features/plans/{AgentScenario,ScenarioResult,ScenarioRows}.tsx` (new),
+  `WhatIfPanel.tsx`, `PlanComparisonView.tsx`, `plansFormat.ts`, `index.tsx`,
+  `plans.test.tsx`; `features/planning/AgentPanel.tsx`; `features/area/ManualInputForm.tsx`;
+  `session/sessionState.ts`, `session/session.test.ts`; `graphql/operations/plans.graphql`,
+  `graphql/queryKeys.ts`; `e2e/plans.spec.ts`; regenerated contracts.
+- Docs: ADR 0012 (§1, §5, §6, alternatives, consequences, review), `docs/api/graphql.md`,
+  `docs/domain/option-engine.md`, implementation status, traceability, this file.
+
+### Commands and results
+
+| Command                                                                   | Result                                                                                       |
+| ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `npm run test:py`                                                         | ✅ 788 passed, 131 deselected (emulator and live markers); 1 third-party deprecation warning |
+| `npm run validate:domain`                                                 | ✅ 303 passed                                                                                |
+| `npm run test:emulator`                                                   | ✅ Python 97 passed (822 deselected); web 6 passed                                           |
+| `npm run test:web`                                                        | ✅ 356 passed, 18 files                                                                      |
+| `npm run test:e2e:emulator`                                               | ✅ 42 passed, 1 skipped (opt-in screenshot capture), 0 failed                                |
+| `npm run lint`, `npm run typecheck`, `npm run format:check`               | ✅ clean                                                                                     |
+| `npm run lint:py`, `npm run typecheck:py`, `uv run ruff format --check .` | ✅ clean (mypy: 115 files)                                                                   |
+| `npm run contracts`                                                       | ✅ no drift on regeneration                                                                  |
+| `npm run build` + `npm run budget`                                        | ✅ initial JS 148.67 / 150 kB gzip; `plans` 3.47 kB; `AgentScenario` 2.08 kB                 |
+| `pytest -m live`                                                          | ⏭ not run (instructed not to run live tests)                                                 |
+
+### Remaining limitations
+
+- Only tanker-dependence and shortage-day goals can be compared.
+- Effects are the person's own estimates; there is no reviewed effect evidence.
+- Rainwater is not counted on shortage days. Tank size and dry months are not modelled.
+- Neighbour effects wait for Prompt 12; sourced costs for Prompt 13.
+- Relative scenario changes are capped at 100%.
+- No language model is connected, so the agent's what-if takes structured fields.
+- A saved what-if appears on the Plans page only once a goal exists.
+- The comparison cache is per process.
+- Accounting rules, stress tests and ranking are proposed until domain review.
+- Live data, live Maps/Places and GCP behaviour are still **unverified**.
+- Initial JS has about 1.3 kB of headroom.
+
+### Next
+
+Stopped after verification. Prompt 12 waits for an explicit instruction.
+
+### Addendum — preview vs. commit confirmation (2026-10-11)
+
+Rechecked whether previews and saved changes are told apart. No defect: the server's
+`preview_scenario` validates and computes but writes nothing, and the agent pane's
+Preview only issues the `PreviewScenario` query. Only a saved change to a **different**
+scenario, location, goal or baseline value bumps the revision and clears the chosen plan.
+
+Tests strengthened:
+
+- `plans.test.tsx` "previews a what-if without saving, then applies it to plans" now
+  starts from a chosen plan. After Preview, the stored session is unchanged (version 1,
+  revision 1, no scenario, plan still chosen). After "Apply to plans", it is at revision 2
+  with no chosen plan.
+- `test_session_inputs.py::test_resaving_the_same_scenario_keeps_the_selected_plan`:
+  re-saving an identical scenario keeps both the chosen plan and the revision.
+
+| Command                                                                   | Result                                                                       |
+| ------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `npm run test:py`                                                         | ✅ 789 passed, 131 deselected; 1 third-party deprecation warning             |
+| `npm run validate:domain`                                                 | ✅ 303 passed                                                                |
+| `npm run test:emulator`                                                   | ✅ Python 97 passed (823 deselected); web 6 passed                           |
+| `npm run test:web`                                                        | ✅ 356 passed, 18 files                                                      |
+| `npm run test:e2e:emulator`                                               | ✅ 42 passed, 1 skipped (opt-in screenshot capture), 0 failed                |
+| `npm run lint`, `npm run typecheck`, `npm run format:check`               | ✅ clean                                                                     |
+| `npm run lint:py`, `npm run typecheck:py`, `uv run ruff format --check .` | ✅ clean (mypy: 115 files; 170 files formatted)                              |
+| `npm run contracts`                                                       | ✅ no drift (checksums of 6 generated files identical before and after)      |
+| `npm run build` + `npm run budget`                                        | ✅ initial JS 148.67 / 150 kB gzip; `plans` 3.47 kB; `AgentScenario` 2.08 kB |
+| `pytest -m live`                                                          | ⏭ not run (instructed not to run live or cloud operations)                   |
+
+The remaining limitations listed in the Prompt 11 review entry above are unchanged.
+Prompt 12 was not started.
+
+---
+
+## Prompt 12 — Wider-system impact (2026-10-11)
+
+**Status:** Complete for local and emulator use · **Date:** 2026-10-11 · ADR 0013
+
+### What was built
+
+- **Engine `impact-1`** (`domain/impact.py`, records and guards in
+  `domain/impact_records.py`, enums in `domain/systems.py`), deterministic and run for
+  every compared option:
+  - declared influence boundaries: site, area, and one each for aquifer, catchment and
+    supply network;
+  - `ConnectivityEvidence` with an accepted basis per system, sources, a method, a date,
+    an uncertainty, and validated or provisional quality. `proximity` and `unknown`
+    records are rejected. Area and pair linkage come only from records; absent,
+    lone-area or conflicting records give `UNKNOWN`. `REVIEWED_CONNECTIVITY` is empty;
+  - nearby communities within 5 km and outside the area, listed as geography only;
+  - findings:
+    - local benefit, the only number, from the option engine;
+    - catalogue externalities with system, direction and linkage, and no size;
+    - tradeoffs;
+    - professional reviews;
+    - unavailable assessments;
+  - possible false resilience only with sourced pumping or a declared borewell, and not
+    when evidence shows a separate aquifer;
+  - water-quality readings with parameter, method and date, and a fixed
+    no-drinkability-verdict note;
+  - `inputHash` over every input, and the assessment id derived from it.
+- **Catalogue `interventions-3`:** `wider_effects` and `reviews` per measure. Validators
+  keep the required recharge (hydrogeological and water-quality) and greywater
+  (water-quality) reviews. `docs/domain/interventions.catalogue.json` was regenerated.
+- **Claim guards:**
+  - `Finding` validators reject a magnitude beyond the site, metrics other than tanker
+    dependence or shortage days, a wrong unit, drinking-water certification, and
+    absence-of-harm wording;
+  - `check_narrative` / `require_valid_narrative` require a citation in every sentence
+    and only cited numbers.
+- **Goal:** the optional `SiteConstraints.groundwaterUse`, asked on the goal form.
+- **Selection, report and proposal:**
+  - `PlanOption.impact.wider` stores the assessment exactly as shown;
+  - `Report.planName` and `Report.impact` are copied at finalization;
+  - proposal inputs are `waterlens.proposal-inputs/2` (`inputs-v2.json`);
+  - `ProposalSection.WIDER_IMPACT` is added.
+- **GraphQL:**
+  - new types: `WiderImpact`, `ImpactFinding`, `ImpactCitation`, `ImpactMagnitude`,
+    `ImpactReview`, `ImpactContext`, `InfluenceBoundary`, `NearbyPlace`,
+    `SystemLinkage`, `QualityReading` and `UnavailableAssessment`;
+  - new fields: `ComparedOption.impact`, `PlanComparison.impactContext` and
+    `impactEngineVersion`;
+  - `ExactNumber` moved to `types_common`.
+- **Agent tools:** `compare_plans` and `explain_option` include impact, and
+  `check_impact_summary` is new.
+- **Web (Plans page):** each card shows effects at the site and beyond before choosing:
+  - the local benefit with numbers;
+  - externalities with system, direction and "Connection unknown" badges;
+  - a "Possible false resilience" caution notice;
+  - professional reviews;
+  - tradeoffs.
+
+  Below the cards: an influence-boundaries table, "Nearby places (geography only)",
+  groundwater use, water-quality readings with their note, "Not assessed", and the
+  engine version. New `caution` notice kind.
+
+### Acceptance evidence
+
+| Criterion                                         | Evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Absent connectivity evidence stays unknown        | `test_impact.py`: `test_absent_connectivity_evidence_stays_unknown_even_next_door` (a place 40 m away stays `UNKNOWN` for all three systems); `test_connectivity_records_need_real_evidence` (proximity, unknown, wrong basis, unreviewed quality, duplicate areas rejected); `test_evidence_links_only_the_areas_and_system_it_names`; `test_a_lone_unit_or_conflicting_records_prove_nothing`. API: `test_nearby_places_are_geography_only_without_evidence` (111 m neighbour: all `UNKNOWN`) and `test_reviewed_evidence_links_only_what_it_names` (only the record's areas and system become `LINKED`). Web: boundaries and nearby rows read "Connection unknown". e2e: three shared-system rows, all `UNKNOWN`, and neighbour effects under "Not assessed" |
+| Unsupported metric claims are rejected            | `test_unsupported_claims_are_rejected` (magnitude on an externality, an unclaimable metric, a wrong unit, "potable", "safe", "no impact"); `test_claimable_metrics_are_exactly_the_engine_goal_metrics`; narrative cases (uncited sentence, invented number, unknown citation, potability, reassurance) fail and a cited summary passes; API `test_agent_tools_return_the_same_assessment_and_guard_summaries` ("negligible" rejected through `check_impact_summary`). Mutation check: disabling the proximity rejection and forcing pair `LINKED` failed 3 tests (then restored)                                                                                                                                                                               |
+| Chosen options preserve the assessment provenance | API `test_the_chosen_option_keeps_its_assessment_and_provenance`: the stored `planOptions…impact.wider` equals the comparison's option `impact` field for field (id, `inputHash`, `comparisonId`, `engineVersion`, findings); `finalizeReport` gives the same `report.impact.wider`; after a later goal change the report is unchanged; `proposal_inputs` v2 carries the same id, hash and false-resilience finding. Firestore emulator: `test_a_chosen_option_and_report_keep_the_wider_impact_through_firestore` round-trips a full assessment (evidence links, nearby place, false resilience, quality reading, review) in a plan option and a report                                                                                                        |
+| Impact before selection                           | API `test_impact_is_shown_with_every_option_before_selection`; web "shows wider effects with every plan before one is chosen"; e2e checks impact, the false-resilience warning and boundaries before "Choose this plan"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| False resilience only with evidence               | `test_false_resilience_needs_evidence_of_groundwater_reliance` (unknown or none: no flag), declared and sourced cases with citations, `NOT_LINKED`: no flag, recharge not counted as an offset; API and web declared-borewell tests                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| No potability from a score; context kept          | `test_water_quality_is_context_with_parameter_method_and_date`; web `formatReading` test; no potability field in the schema                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| Professional reviews                              | `test_reviews_follow_the_measures`, `test_the_catalogue_cannot_drop_recharge_or_greywater_reviews`; the web greywater card shows "Water quality review: required before building"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+
+### Commands and results
+
+| Command                                                                   | Result                                                                                       |
+| ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `npm run test:py`                                                         | ✅ 835 passed, 132 deselected (emulator and live markers); 1 third-party deprecation warning |
+| `npm run validate:domain`                                                 | ✅ 343 passed                                                                                |
+| `npm run test:emulator`                                                   | ✅ Python 98 passed (869 deselected); web 6 passed                                           |
+| `npm run test:web`                                                        | ✅ 359 passed, 18 files                                                                      |
+| `npm run test:e2e:emulator`                                               | ✅ 42 passed, 1 skipped (opt-in screenshot capture), 0 failed                                |
+| `npm run lint`, `npm run typecheck`, `npm run format:check`               | ✅ clean                                                                                     |
+| `npm run lint:py`, `npm run typecheck:py`, `uv run ruff format --check .` | ✅ clean (mypy: 119 files; 176 files formatted)                                              |
+| `npm run contracts` + `npm run intervention-catalogue`                    | ✅ no drift (checksums of 6 generated files identical before and after)                      |
+| `npm run build` + `npm run budget`                                        | ✅ initial JS 148.70 / 150 kB gzip; `plans` 4.72 kB (was 3.47); `AgentScenario` 2.08 kB      |
+| `pytest -m live`                                                          | ⏭ not run (instructed not to run live or cloud operations)                                   |
+
+The first e2e run failed once on a test selector: "Possible false resilience" matched
+both the notice title and the statement. The fix was an exact match, and the rerun
+passed.
+
+### Files changed
+
+- Backend, new:
+  - `domain/{systems,impact_records,impact}.py`;
+  - `api/graphql/modules/impact.py`;
+  - `tests/domain/test_impact.py` (40 tests);
+  - `tests/api/test_impact_graphql.py` (6 tests).
+- Backend, changed:
+  - `domain/{interventions,planning,reports}.py`;
+  - `application/services/{common,options,reports}.py`;
+  - `application/jobs/proposals.py`;
+  - `application/tools/options.py`;
+  - `api/graphql/{enums,types_common}.py`;
+  - `api/graphql/modules/{options,planning,goals,reports}.py`;
+  - `tests/graphql_harness.py` (`connectivity`);
+  - `tests/emulator/test_firestore_store.py`;
+  - catalogue-version pins in the goals and catalogue tests.
+- Web, new: `features/plans/WiderImpactView.tsx`.
+- Web, changed:
+  - `PlanComparisonView.tsx`, `plansFormat.ts`, `Plans.module.scss`, `plans.test.tsx`;
+  - `features/goals/{goalDraft.ts,GoalForm.tsx,goals.test.tsx}`;
+  - `session/sessionState.ts`;
+  - `components/Notice/Notice.tsx`;
+  - `graphql/operations/{plans,planning}.graphql`;
+  - `e2e/plans.spec.ts`;
+  - regenerated contracts.
+- Docs:
+  - ADR 0013 and the ADR index;
+  - `docs/domain/impact-assessment.md` (new), `docs/domain/option-engine.md`;
+  - `docs/api/graphql.md`;
+  - implementation status, traceability, this file.
+
+### Remaining limitations
+
+- No reviewed connectivity record exists, so every aquifer, catchment and
+  supply-network connection is unknown. Neighbour effects are listed as not assessed,
+  and the illustrative neighbourhood map is not built.
+- Externalities are mechanisms without a size, because no reviewed model exists.
+- The groundwater level trend is not computed. Sourced reliance needs an imported
+  abstraction series, which the demo sources do not provide.
+- `LOWEST_NEIGHBOUR_EFFECT` still uses the default order.
+- No language model is connected, so the narrative checker is exercised by tests and
+  the agent tool only.
+- Reports and proposals store the assessment, but no screen shows it until Prompt 20,
+  and the renderer does not exist.
+- The wider effects, reviews and false-resilience rule are proposed until domain review.
+- Live data, live Maps/Places and GCP behaviour are still **unverified**.
+- Initial JS has about 1.3 kB of headroom.
+
+### Next
+
+Stopped after Prompt 12. Prompt 13 waits for an explicit instruction. Nothing was
+deployed or provisioned, and no billing or live cloud operation was run.

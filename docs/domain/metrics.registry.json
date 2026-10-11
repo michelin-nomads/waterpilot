@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "WaterLens Metric Registry",
   "description": "Machine-readable companion to docs/domain/metrics.md. All definitions are PROPOSED pending domain review. Equations must not be altered to reproduce screenshot example numbers.",
-  "version": "0.2",
+  "version": "0.3",
   "status": "proposed",
   "generatedBy": "Phase 01 (corrected after review R3)",
   "conventionsRef": "docs/domain/conventions.md",
@@ -326,5 +326,87 @@
       "status": "proposed",
       "rawValue": "exact years and months (e.g. 20/7 years, 240/7 months); integer months is the display value"
     }
-  ]
+  ],
+  "indicators": [
+    {
+      "id": "rainfall_total",
+      "name": "Rainfall over the reporting window",
+      "capability": "rainfall",
+      "unit": "mm",
+      "statistic": "window_total",
+      "formula": "sum(rainfall_day) over [start, end)",
+      "timeWindow": "reporting_window",
+      "nullSemantics": "unavailable if any day in the window is missing, the unit is not mm, or the window is empty",
+      "status": "proposed"
+    },
+    {
+      "id": "groundwater_abstraction",
+      "name": "Groundwater pumped (mean per day)",
+      "capability": "groundwater_abstraction",
+      "unit": "MLD",
+      "storedUnit": "L/day",
+      "statistic": "window_mean",
+      "formula": "sum(abstraction_day) / count(days in window)",
+      "timeWindow": "reporting_window",
+      "note": "Pumped volume into supply; says nothing about aquifer level.",
+      "nullSemantics": "unavailable if any day in the window is missing, the unit is not L/day, or the window is empty",
+      "status": "proposed"
+    },
+    {
+      "id": "groundwater_level",
+      "name": "Latest groundwater level",
+      "capability": "groundwater_level",
+      "unit": "m_bgl",
+      "statistic": "latest",
+      "formula": "last observed level in the window, with its date",
+      "timeWindow": "reporting_window",
+      "nullSemantics": "unavailable if no reading in the window or the unit is not m_bgl",
+      "status": "proposed"
+    },
+    {
+      "id": "surface_water_extent",
+      "name": "Latest surface-water extent",
+      "capability": "surface_water",
+      "unit": "m2",
+      "statistic": "latest",
+      "formula": "last observed extent in the window, with its date",
+      "timeWindow": "reporting_window",
+      "nullSemantics": "unavailable if no observation in the window or the unit is not m2",
+      "status": "proposed"
+    },
+    {
+      "id": "water_quality",
+      "name": "Latest water-quality reading per parameter",
+      "capability": "water_quality",
+      "unit": "per parameter (mg/L, NTU, uS/cm, pH, CFU/100mL)",
+      "statistic": "latest",
+      "formula": "last sample per parameter in the window, with its date; never combined into an index",
+      "timeWindow": "reporting_window",
+      "nullSemantics": "unavailable per parameter if no sample in the window or the unit is not a reviewed quality unit",
+      "status": "proposed"
+    },
+    {
+      "id": "flood_risk",
+      "name": "Flood-risk category",
+      "capability": "flood_risk",
+      "unit": "category",
+      "statistic": "latest",
+      "formula": "category from a reviewed hazard layer",
+      "timeWindow": "point_in_time",
+      "nullSemantics": "unavailable: categorical layers are not summarized by the baseline yet",
+      "status": "proposed"
+    },
+    {
+      "id": "land_cover",
+      "name": "Land-cover category",
+      "capability": "land_cover",
+      "unit": "category",
+      "statistic": "latest",
+      "formula": "category from a land-cover map",
+      "timeWindow": "point_in_time",
+      "nullSemantics": "unavailable: categorical layers are not summarized by the baseline yet",
+      "status": "proposed"
+    }
+  ],
+  "indicatorsNote": "Context indicators shown beside the baseline (ADR 0010). Descriptive only: they never feed a metric and are never combined into a score. Shown only when the capability passes the readiness gate and the variable's normalized unit matches."
 }

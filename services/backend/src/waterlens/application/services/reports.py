@@ -25,6 +25,7 @@ from waterlens.application.policies import (
     require_report_manager,
 )
 from waterlens.application.services.common import Deps, build, page_of
+from waterlens.application.services.options import FINALIZABLE, OptionService, SelectionStatus
 from waterlens.domain.communities import CommunityStatus
 from waterlens.domain.errors import DomainError, ErrorCode, not_found
 from waterlens.domain.ids import IdKind, new_id, require_id
@@ -43,13 +44,35 @@ class GenerateProposalInput(Frozen):
     sections: tuple[ProposalSection, ...] = Field(min_length=1, max_length=len(ProposalSection))
 
 
+STALE_SELECTION = {
+    SelectionStatus.IMPACT_CHANGED: "the wider-impact assessment of the chosen plan has "
+    "changed since it was chosen (new evidence, nearby places or sourced values); review it "
+    "and choose the plan again before finalizing",
+    SelectionStatus.NOT_CURRENT: "the chosen plan is not one of the options for your current "
+    "inputs (for example it was compared under an earlier catalogue or engine version); "
+    "compare plans and choose again before finalizing",
+}
+
+
+def _sections(
+    report: Report, requested: tuple[ProposalSection, ...]
+) -> tuple[ProposalSection, ...]:
+    """Requested sections in order; wider impact is added when the chosen plan needs a
+    required professional review, which no proposal may leave out (ADR 0013)."""
+    sections = tuple(dict.fromkeys(requested))
+    if report.required_reviews() and ProposalSection.WIDER_IMPACT not in sections:
+        sections = (*sections, ProposalSection.WIDER_IMPACT)
+    return sections
+
+
 def _archived(kind: str) -> DomainError:
     return DomainError(ErrorCode.ARCHIVED, f"this {kind} is archived and read-only")
 
 
 class ReportService:
-    def __init__(self, deps: Deps) -> None:
+    def __init__(self, deps: Deps, options: OptionService) -> None:
         self._d = deps
+        self._options = options
 
     def get(self, ctx: RequestContext, report_id: str) -> Report:
         principal = ctx.require_principal()
@@ -80,6 +103,10 @@ class ReportService:
         payload = build(FinalizeReportInput, data)
         store, now = self._d.store, self._d.clock()
         session_id = require_id(payload.session_id, IdKind.SESSION)
+        # Checked outside the transaction (it reads evidence and nearby places) and
+        # enforced only when a report is created, so a replay still returns its report.
+        checked = owned_session(store, session_id, principal).selected_plan_option_id
+        status = self._options.selection_status(ctx, session_id)
 
         def create() -> tuple[str, ...]:
             # Snapshot the session as committed in this transaction, not as read earlier.
@@ -101,6 +128,15 @@ class ReportService:
                     ErrorCode.PRECONDITION_FAILED,
                     "choose a location, set a goal and select a plan before finalizing",
                 )
+            if option_id != checked or status not in FINALIZABLE:
+                raise DomainError(
+                    ErrorCode.PRECONDITION_FAILED,
+                    STALE_SELECTION.get(status, STALE_SELECTION[SelectionStatus.NOT_CURRENT]),
+                    field="selectedPlanOptionId",
+                )
+            # The chosen option, with its impact assessment and provenance, as stored
+            # when it was selected; the report keeps that copy even if inputs change later.
+            option = store.plan_options.get(option_id)
             report = Report(
                 id=new_id(IdKind.REPORT),
                 owner_uid=principal.uid,
@@ -110,6 +146,8 @@ class ReportService:
                 title=payload.title,
                 goal=goal,
                 plan_option_id=option_id,
+                plan_name=option.name if option else None,
+                impact=option.impact if option else None,
                 finalized_at=now,
                 created_at=now,
                 updated_at=now,
@@ -166,7 +204,8 @@ class ProposalService:
         return proposal
 
     def for_report(self, ctx: RequestContext, report_id: str, page: PageArgs) -> Page[Proposal]:
-        report = ReportService(self._d).get(ctx, report_id)
+        principal = ctx.require_principal()
+        report = readable_report(self._d.store, require_id(report_id, IdKind.REPORT), principal)
         return page_of(self._d.store.proposals, {"report_id": report.id}, page)
 
     def generate(self, ctx: RequestContext, data: dict[str, Any], idempotency_key: str) -> Proposal:
@@ -196,7 +235,7 @@ class ProposalService:
                     id=proposal_id,
                     owner_uid=principal.uid,
                     report_id=report.id,
-                    sections=tuple(dict.fromkeys(payload.sections)),
+                    sections=_sections(report, payload.sections),
                     job_id=job_id,
                     created_at=now,
                     updated_at=now,

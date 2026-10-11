@@ -76,6 +76,7 @@ def test_sources_and_readiness_on_firestore(
         mode=PlanningMode.TRADITIONAL,
         created_at=NOW,
         updated_at=NOW,
+        selected_plan_option_id=new_id(IdKind.PLAN_OPTION),
     )
     store.transaction(lambda: store.sessions.insert(session))
     ctx = RequestContext("r", OWNER)
@@ -91,6 +92,11 @@ def test_sources_and_readiness_on_firestore(
         },
         "key-firestore-manual-01",
     )
+    # The value and the session move together in one Firestore transaction.
+    moved = store.sessions.get(session.id)
+    assert moved is not None
+    assert (moved.inputs_revision, moved.selected_plan_option_id) == (1, None)
+    assert moved.version == session.version + 1
     r = services.readiness.assess(ctx, SYNTHETIC_AREA_ID, session.id)
     states = {i.input: i.state for i in r.inputs}
     assert states[InputId.DELIVERED_SUPPLY] is ReadinessState.AVAILABLE

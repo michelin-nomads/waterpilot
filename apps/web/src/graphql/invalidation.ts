@@ -47,7 +47,12 @@ export const invalidations: Record<MutationName, (input: Input) => QueryKey[]> =
   startImplementationProject: () => [queryKeys.projects.all()],
   updateMilestone: () => [queryKeys.projects.all()],
   recordObservation: (i) => [['projects', str(i, 'projectId'), 'observations']],
-  recordManualInput: () => [queryKeys.readiness.all()],
+  // A typed-in value changes the baseline, and with it the goal checks that use it.
+  recordManualInput: (i) => [
+    queryKeys.readiness.all(),
+    queryKeys.baseline.all(),
+    queryKeys.sessions.derived(str(i, 'sessionId')),
+  ],
   // Confirming creates (or reuses) an area; the session is pointed at it separately.
   confirmLocation: () => [['areas']],
   // The claim itself is never cached; completing it moves the guest's session.
@@ -62,6 +67,12 @@ export async function invalidateAfter(
   input: Input,
 ): Promise<void> {
   await Promise.all(
-    invalidations[mutation](input).map((queryKey) => client.invalidateQueries({ queryKey })),
+    invalidations[mutation](input).map(async (queryKey) => {
+      // invalidateQueries joins a first load that is still in flight instead of restarting
+      // it, so a response computed before this mutation would land as current. Cancelling
+      // first discards that response and makes the refetch start fresh.
+      await client.cancelQueries({ queryKey });
+      await client.invalidateQueries({ queryKey });
+    }),
   );
 }

@@ -5,14 +5,20 @@ from __future__ import annotations
 import strawberry
 
 from waterlens.application.identity import AccountKind as _AccountKind
+from waterlens.application.services.options import SelectionStatus as _SelectionStatus
 from waterlens.domain import accounts as a
+from waterlens.domain import baseline as bl
 from waterlens.domain import communities as c
 from waterlens.domain import funding as f
+from waterlens.domain import impact_records as ir
 from waterlens.domain import jobs as j
 from waterlens.domain import location as loc
+from waterlens.domain import options as opt
 from waterlens.domain import planning as p
 from waterlens.domain import readiness as rd
 from waterlens.domain import reports as r
+from waterlens.domain import sources as src
+from waterlens.domain import systems as sy
 from waterlens.domain import tracking as t
 from waterlens.domain import values as v
 from waterlens.domain.errors import ErrorCode as _ErrorCode
@@ -48,6 +54,20 @@ TargetMode = strawberry.enum(p.TargetMode, name="TargetMode")
 Priority = strawberry.enum(p.Priority, name="Priority")
 AdjustmentChange = strawberry.enum(p.AdjustmentChange, name="AdjustmentChange")
 Feasibility = strawberry.enum(p.Feasibility, name="Feasibility")
+PlanComparisonStatus = strawberry.enum(
+    opt.Status,
+    name="PlanComparisonStatus",
+    description="OPTIONS, or why there are none: NO_FEASIBLE_PLAN, NEEDS_INPUT, "
+    "TARGET_ALREADY_MET, NOT_SUPPORTED.",
+)
+PlanMetric = strawberry.enum(opt.Metric, name="PlanMetric")
+EffectOrigin = strawberry.enum(
+    opt.EffectOrigin,
+    name="EffectOrigin",
+    description="Where an effect value came from: USER_ESTIMATE (your range), BASELINE "
+    "(the sourced baseline value) or SCENARIO (set by the confirmed what-if). The "
+    "catalogue never supplies effect values.",
+)
 WindowStatus = strawberry.enum(f.WindowStatus, name="WindowStatus")
 CriterionStatus = strawberry.enum(f.CriterionStatus, name="CriterionStatus")
 MatchStatus = strawberry.enum(f.MatchStatus, name="FundingMatchStatus")
@@ -72,4 +92,38 @@ CanonicalUnit = strawberry.enum(
     _CanonicalUnit,
     name="CanonicalUnit",
     description="Canonical units a source variable or manual input normalizes to.",
+)
+ValueOrigin = strawberry.enum(
+    bl.Origin,
+    name="ValueOrigin",
+    description="Measured, your estimate or modelled; shown distinctly wherever a value is.",
+)
+BaselineReason = strawberry.enum(
+    bl.Reason, name="BaselineReason", description="Why a baseline value is unavailable."
+)
+IndicatorStatistic = strawberry.enum(bl.Statistic, name="IndicatorStatistic")
+ObservationMethod = strawberry.enum(src.ObservationMethod, name="ObservationMethod")
+SharedSystem = strawberry.enum(
+    sy.SharedSystem,
+    name="SharedSystem",
+    description="A system that can carry a measure's effect beyond the site.",
+)
+EffectDirection = strawberry.enum(sy.EffectDirection, name="EffectDirection")
+ReviewKind = strawberry.enum(sy.ReviewKind, name="ReviewKind")
+Linkage = strawberry.enum(
+    ir.Linkage,
+    name="Linkage",
+    description="Whether places share a system, from reviewed evidence only. Unknown "
+    "unless a record says otherwise; being close never decides it.",
+)
+FindingKind = strawberry.enum(ir.FindingKind, name="FindingKind")
+FindingBasis = strawberry.enum(ir.FindingBasis, name="FindingBasis")
+CitationKind = strawberry.enum(ir.CitationKind, name="CitationKind")
+BoundaryLevel = strawberry.enum(ir.BoundaryLevel, name="BoundaryLevel")
+GroundwaterReliance = strawberry.enum(ir.GroundwaterReliance, name="GroundwaterReliance")
+SelectedPlanStatus = strawberry.enum(
+    _SelectionStatus,
+    name="SelectedPlanStatus",
+    description="Whether the chosen plan still matches a fresh assessment; only CURRENT "
+    "or LEGACY can be finalized.",
 )

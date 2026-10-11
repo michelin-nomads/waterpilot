@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 
 import { ToastProvider } from '../components/Toast/ToastProvider';
@@ -8,10 +8,13 @@ import { DESKTOP_QUERY } from '../lib/useMediaQuery';
 import { routes } from '../routes';
 import { AuthFailure } from '../auth/authErrors';
 import { AuthTestProviders } from '../test/AuthTestProviders';
+import { preloadLazyRoutes } from '../test/preloadRoutes';
 import { FakeAuthBackend, guest, permanent } from '../test/fakeAuth';
 import { FakeSessionServer } from '../test/fakeSession';
 import { setMediaQuery } from '../test/mediaQueryMock';
 import { DisplayPreferencesProvider } from '../theme/DisplayPreferencesProvider';
+
+beforeAll(() => preloadLazyRoutes(routes), 60_000);
 
 async function renderAt(
   path: string,
@@ -160,7 +163,7 @@ describe('application shell', () => {
   });
 
   it('stage pages state plainly that no data is shown yet', async () => {
-    await renderAt('/plans');
+    await renderAt('/tracking');
     expect(
       screen.getByRole('heading', { name: 'This stage is not built yet' }),
     ).toBeInTheDocument();
@@ -295,7 +298,7 @@ describe('planning modes', () => {
     act(() => {
       window.dispatchEvent(new Event('online'));
     });
-    expect(screen.queryByText("You're offline")).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText("You're offline")).not.toBeInTheDocument());
     expect(screen.getByText('Back online.')).toBeInTheDocument();
     onLine.mockRestore();
   });

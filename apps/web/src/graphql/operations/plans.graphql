@@ -1,0 +1,307 @@
+fragment ExactNumberFields on ExactNumber {
+  exact
+  value
+}
+
+fragment ScenarioComparisonFields on ScenarioComparison {
+  status
+  notes
+  baselineId
+  engineVersion
+  rows {
+    key
+    label
+    unit
+    reason
+    baseline {
+      ...ExactNumberFields
+    }
+    scenario {
+      ...ExactNumberFields
+    }
+    change {
+      ...ExactNumberFields
+    }
+  }
+}
+
+fragment ImpactCitationFields on ImpactCitation {
+  kind
+  ref
+  label
+  asOf
+}
+
+fragment ImpactFindingFields on ImpactFinding {
+  id
+  kind
+  statement
+  basis
+  uncertainty
+  system
+  direction
+  linkage
+  interventionIds
+  related
+  magnitude {
+    metricId
+    unit
+    baseline {
+      ...ExactNumberFields
+    }
+    atLowEstimates {
+      ...ExactNumberFields
+    }
+    atHighEstimates {
+      ...ExactNumberFields
+    }
+  }
+  citations {
+    ...ImpactCitationFields
+  }
+}
+
+fragment WiderImpactFields on WiderImpact {
+  id
+  engineVersion
+  catalogueVersion
+  inputHash
+  localBenefits {
+    ...ImpactFindingFields
+  }
+  externalities {
+    ...ImpactFindingFields
+  }
+  falseResilience {
+    ...ImpactFindingFields
+  }
+  tradeoffs {
+    ...ImpactFindingFields
+  }
+  reviews {
+    kind
+    label
+    required
+    reasons
+    interventionIds
+  }
+}
+
+fragment ImpactContextFields on ImpactContext {
+  areaName
+  nearbyRadiusM
+  groundwater
+  groundwaterCitations {
+    ...ImpactCitationFields
+  }
+  waterQualityNote
+  boundaries {
+    level
+    label
+    detail
+    system
+    linkage
+    citations {
+      ...ImpactCitationFields
+    }
+  }
+  nearby {
+    name
+    communityId
+    distanceM
+    links {
+      system
+      linkage
+      evidenceIds
+    }
+  }
+  waterQuality {
+    parameter
+    value {
+      ...ExactNumberFields
+    }
+    unit
+    observedOn
+    method
+    citations {
+      ...ImpactCitationFields
+    }
+  }
+  unavailable {
+    key
+    label
+    reason
+  }
+}
+
+fragment ComparedOptionFields on ComparedOption {
+  id
+  rank
+  name
+  interventionIds
+  why
+  tradeoffs
+  uncertainty
+  firstBenefit
+  pessimistic {
+    ...ExactNumberFields
+  }
+  optimistic {
+    ...ExactNumberFields
+  }
+  margin {
+    ...ExactNumberFields
+  }
+  waterLow {
+    ...ExactNumberFields
+  }
+  waterHigh {
+    ...ExactNumberFields
+  }
+  uncountedHigh {
+    ...ExactNumberFields
+  }
+  cost {
+    low {
+      ...MoneyFields
+    }
+    high {
+      ...MoneyFields
+    }
+  }
+  buildDays {
+    low
+    high
+  }
+  measures {
+    interventionId
+    name
+    benefitTiming
+    effects {
+      key
+      label
+      unit
+      origin
+      low {
+        ...ExactNumberFields
+      }
+      high {
+        ...ExactNumberFields
+      }
+    }
+    waterLow {
+      ...ExactNumberFields
+    }
+    waterHigh {
+      ...ExactNumberFields
+    }
+    cost {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    buildDays {
+      low
+      high
+    }
+  }
+  sensitivity {
+    interventionId
+    key
+    label
+    swing {
+      ...ExactNumberFields
+    }
+  }
+  stress {
+    key
+    label
+    meetsTarget
+    value {
+      ...ExactNumberFields
+    }
+  }
+  impact {
+    ...WiderImpactFields
+  }
+}
+
+query PlanComparison($id: ID!) {
+  planningSession(id: $id) {
+    id
+    inputsRevision
+    selectedPlanOptionId
+    planComparison {
+      id
+      engineVersion
+      scenarioEngineVersion
+      catalogueVersion
+      baselineId
+      status
+      summary
+      metric
+      unit
+      needs
+      excluded
+      assumptions
+      ranking
+      maxOptions
+      stressTests
+      baselineValue {
+        ...ExactNumberFields
+      }
+      scenarioValue {
+        ...ExactNumberFields
+      }
+      targetLevel {
+        ...ExactNumberFields
+      }
+      rejections {
+        evaluated
+        onlyOptimistic
+        missedTarget
+        overBudget
+        budgetUncertain
+        tooSlow
+        timeUncertain
+        notMinimal
+        truncated
+      }
+      options {
+        ...ComparedOptionFields
+      }
+      impactEngineVersion
+      impactContext {
+        ...ImpactContextFields
+      }
+    }
+    scenarioComparison {
+      ...ScenarioComparisonFields
+    }
+  }
+}
+
+query PreviewScenario($sessionId: ID!, $scenario: ScenarioPreviewInput!) {
+  previewScenario(sessionId: $sessionId, scenario: $scenario) {
+    errors {
+      field
+      message
+    }
+    comparison {
+      ...ScenarioComparisonFields
+    }
+  }
+}
+
+query SessionScenario($id: ID!) {
+  planningSession(id: $id) {
+    id
+    inputsRevision
+    scenarioComparison {
+      ...ScenarioComparisonFields
+    }
+  }
+}

@@ -43,6 +43,17 @@ def _utc(value: datetime) -> datetime:
     return value.astimezone(UTC)
 
 
+def canonical_decimal(value: str) -> str:
+    """One spelling per number: ``"0.30"`` and ``"0.3"`` are the same value, so stored
+    and compared values never depend on how they were typed or displayed."""
+    number = Decimal(_decimal_string(value))
+    return "0" if number == 0 else format(number.normalize(), "f")
+
+
+def canonical_integer(value: str) -> str:
+    return str(int(_integer_string(value)))
+
+
 DecimalString = Annotated[str, AfterValidator(_decimal_string)]
 """An exact decimal rendered as a string; parse with ``decimal.Decimal`` only."""
 
@@ -108,6 +119,9 @@ class Quantity(Frozen):
     def litres_per_day(cls, value: str) -> Quantity:
         return cls(value=value, unit=Unit.LITRES_PER_DAY)
 
+    def canonical(self) -> Quantity:
+        return self.model_copy(update={"value": canonical_decimal(self.value)})
+
 
 # ISO 4217 minor-unit exponents for currencies the representation accepts. Accepting a
 # code here only makes an amount *representable*; it never enables conversion or a cost
@@ -153,6 +167,9 @@ class Money(Frozen):
     def exponent(self) -> int:
         return CURRENCY_EXPONENTS[self.currency]
 
+    def canonical(self) -> Money:
+        return self.model_copy(update={"minor_units": canonical_integer(self.minor_units)})
+
     @classmethod
     def from_inr_paise(cls, paise: int) -> Money:
         """Explicit adapter for existing ``INR_paise`` fixtures: 1 paise == 1 INR minor
@@ -188,6 +205,9 @@ class MoneyRange(Frozen):
         if self.low.compare(self.high) > 0:
             raise ValueError("money range low must not exceed high")
         return self
+
+    def canonical(self) -> MoneyRange:
+        return self.model_copy(update={"low": self.low.canonical(), "high": self.high.canonical()})
 
 
 class Provenance(Frozen):

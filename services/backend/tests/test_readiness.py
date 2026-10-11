@@ -172,6 +172,8 @@ def test_validated_authorized_local_snapshot_is_available(tmp_path: Path) -> Non
     assert _metric(r, "reliable_supply").state is A
     assert _metric(r, "tanker_dependence").state is A
     assert _cap(r, Capability.UTILITY_SUPPLY).state is A
+    assert _cap(r, Capability.UTILITY_SUPPLY).chosen_snapshot_id == sid
+    assert _cap(r, Capability.RAINFALL).chosen_snapshot_id is None
     # Demand inputs are still missing, so metrics that need them are not available.
     assert _metric(r, "deficit").state is U
     assert _metric(r, "deficit").blocked_inputs == (InputId.POPULATION, InputId.PER_CAPITA_STANDARD)
@@ -417,6 +419,11 @@ def test_a_typed_average_cannot_feed_daily_series_metrics(tmp_path: Path) -> Non
     reliable = _metric(r, "reliable_supply")
     assert reliable.state is U
     assert any("one entered average is not enough" in x for x in reliable.reasons)
+    # Deficit is max(0, demand - reliable supply), so it needs the same daily series.
+    deficit = _metric(r, "deficit")
+    assert deficit.state is U
+    assert InputId.DELIVERED_SUPPLY in deficit.blocked_inputs
+    assert any("one entered average is not enough" in x for x in deficit.reasons)
 
 
 def test_measured_evidence_outranks_a_typed_value(tmp_path: Path) -> None:

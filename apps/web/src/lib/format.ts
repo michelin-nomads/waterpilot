@@ -43,6 +43,14 @@ export function shiftDecimalLeft(value: string, places: number): string {
   return negative && /[1-9]/.test(result) ? `-${result}` : result;
 }
 
+/**
+ * One spelling per number ("0.20" and "0.2", "400.0" and "400", "-0" and "0"), matching
+ * the server's canonical form. Anything that is not a plain decimal is returned as is.
+ */
+export function canonicalDecimal(value: string): string {
+  return DECIMAL_PATTERN.test(value) ? shiftDecimalLeft(value, 0) : value;
+}
+
 export function paiseToRupeeString(paise: IntegerInput): string {
   return shiftDecimalLeft(toBigInt(paise, 'paise').toString(), 2);
 }
@@ -104,4 +112,64 @@ export function formatDecimal(value: DecimalInput, maximumFractionDigits = 1): s
   return new Intl.NumberFormat(LOCALE, { maximumFractionDigits, roundingMode: 'halfEven' }).format(
     input,
   );
+}
+
+/** Exact multiplication of a plain decimal string by 10^places. */
+export function shiftDecimalRight(value: string, places: number): string {
+  if (!DECIMAL_PATTERN.test(value)) throw new RangeError(`not a plain decimal: "${value}"`);
+  const negative = value.startsWith('-');
+  const [intPart = '0', fracPart = ''] = (negative ? value.slice(1) : value).split('.');
+  const padded = fracPart.padEnd(places, '0');
+  const whole = (intPart + padded.slice(0, places)).replace(/^0+(?=\d)/, '');
+  const fraction = padded.slice(places).replace(/0+$/, '');
+  const result = fraction ? `${whole}.${fraction}` : whole;
+  return negative && /[1-9]/.test(result) ? `-${result}` : result;
+}
+
+/** Formats an exact ratio (e.g. "0.94") as a percentage, rounding half-even once. */
+export function formatPercentFromRatio(ratio: string, fractionDigits = 0): string {
+  const percent = shiftDecimalRight(toDecimalString(ratio, 'ratio'), 2);
+  const number = new Intl.NumberFormat(LOCALE, {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+    roundingMode: 'halfEven',
+  }).format(percent as Intl.StringNumericLiteral);
+  return `${number}%`;
+}
+
+/** 1 US gallon = 3.785411784 L exactly (NIST), as an integer over 10^9. */
+const LITRES_PER_GALLON_E9 = 3_785_411_784n;
+
+function divideHalfEven(numerator: bigint, denominator: bigint): bigint {
+  const quotient = numerator / denominator;
+  const twice = 2n * (numerator % denominator);
+  if (twice > denominator || (twice === denominator && quotient % 2n !== 0n)) {
+    return quotient + 1n;
+  }
+  return quotient;
+}
+
+/**
+ * Million US gallons per day from canonical L/day, rounded half-even once with exact
+ * integer arithmetic. Display only; stored values stay in L/day.
+ */
+export function mgdFromLitresPerDay(litresPerDay: DecimalInput, fractionDigits = 2): string {
+  const text = toDecimalString(litresPerDay, 'litresPerDay');
+  const negative = text.startsWith('-');
+  const [intPart = '0', fracPart = ''] = (negative ? text.slice(1) : text).split('.');
+  const digits = BigInt(intPart + fracPart);
+  // MGD = L/day / 3.785411784 / 10^6 = digits * 10^3 / (10^scale * 3785411784)
+  const numerator = digits * 10n ** BigInt(3 + fractionDigits);
+  const denominator = 10n ** BigInt(fracPart.length) * LITRES_PER_GALLON_E9;
+  const scaled = divideHalfEven(numerator, denominator).toString();
+  const result = shiftDecimalLeft(scaled, fractionDigits);
+  return negative && /[1-9]/.test(result) ? `-${result}` : result;
+}
+
+export function formatMgdFromLitresPerDay(litresPerDay: DecimalInput, fractionDigits = 2): string {
+  const number = new Intl.NumberFormat(LOCALE, {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  }).format(mgdFromLitresPerDay(litresPerDay, fractionDigits) as Intl.StringNumericLiteral);
+  return `${number} MGD`;
 }

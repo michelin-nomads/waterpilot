@@ -480,7 +480,8 @@ def test_values_entered_for_a_previous_location_do_not_count_for_the_new_one() -
     )
     assert population.manual_value is not None
     second = s.locations.confirm(ctx(), custom_input(name="Another well"), key("mv4"))
-    s.sessions.update(ctx(), session.id, session.version, {"area_id": second.id})
+    current = s.sessions.get(ctx(), session.id)  # recording bumped the session
+    s.sessions.update(ctx(), session.id, current.version, {"area_id": second.id})
     population = next(
         i
         for i in s.readiness.assess(ctx(), second.id, session.id).inputs

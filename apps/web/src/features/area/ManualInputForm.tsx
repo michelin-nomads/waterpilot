@@ -1,10 +1,11 @@
-import { useId, useRef, useState, type FormEvent } from 'react';
+import { useContext, useId, useRef, useState, type FormEvent } from 'react';
 
 import { Button, ErrorSummary, Field, Input, Select, Textarea } from '../../components';
 import type { FieldError } from '../../components';
 import { MutationFailure, newIdempotencyKey, unwrapPayload } from '../../graphql/client';
 import { RecordManualInputDocument, type ReadinessInput } from '../../graphql/generated/graphql';
 import { useGraphQLMutation } from '../../graphql/hooks';
+import { PlanningSessionContext } from '../../session/sessionContext';
 import { ENTRY_UNITS } from './readinessLabels';
 import styles from './Readiness.module.scss';
 
@@ -38,6 +39,7 @@ export function ManualInputForm({ sessionId, input, label, maxDate }: ManualInpu
   const [saved, setSaved] = useState(false);
   const intent = useRef<string | null>(null);
   const mutation = useGraphQLMutation('recordManualInput', RecordManualInputDocument);
+  const planning = useContext(PlanningSessionContext);
 
   const ids = Object.fromEntries(FIELDS.map((f) => [f, `${formId}-${f}`])) as Record<
     keyof Values,
@@ -72,6 +74,8 @@ export function ManualInputForm({ sessionId, input, label, maxDate }: ManualInpu
         idempotencyKey: intent.current,
       });
       unwrapPayload(data.recordManualInput);
+      // The server moved the session to a new inputs revision (and cleared a chosen plan).
+      void planning?.coordinator?.refresh();
       intent.current = null;
       setSaved(true);
       setValues((v) => ({ ...v, value: '', note: '' }));

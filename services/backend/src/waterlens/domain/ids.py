@@ -42,6 +42,7 @@ class IdKind(StrEnum):
     INGESTION_RUN = "ing"
     CONNECTIVITY_CHECK = "cnx"
     MANUAL_INPUT = "min"
+    BASELINE = "bsl"
 
 
 _ID_RE = re.compile(rf"^([a-z]{{3}})_[{_ALPHABET}]{{{_BODY_LEN}}}$")

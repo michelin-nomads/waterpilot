@@ -28,6 +28,7 @@ from zoneinfo import ZoneInfo
 
 from pydantic import Field, model_validator
 
+from waterlens.domain.location import AreaOrigin
 from waterlens.domain.planning import Area, Capability
 from waterlens.domain.records import Record
 from waterlens.domain.sources import (
@@ -279,7 +280,11 @@ METRICS: tuple[MetricRequirement, ...] = (
         daily_series=True,
     ),
     MetricRequirement(
-        "deficit", (InputId.DELIVERED_SUPPLY, *_DEMAND), (InputId.NON_DOMESTIC_DEMAND,)
+        # max(0, demand - reliable_supply): inherits reliable supply's daily series.
+        "deficit",
+        (InputId.DELIVERED_SUPPLY, *_DEMAND),
+        (InputId.NON_DOMESTIC_DEMAND,),
+        daily_series=True,
     ),
     *(
         MetricRequirement(
@@ -339,6 +344,8 @@ class CapabilityReadiness(Frozen):
     state: ReadinessState
     reasons: tuple[str, ...]
     snapshot_ids: tuple[str, ...] = ()
+    chosen_snapshot_id: str | None = None
+    """The snapshot whose finding set ``state`` (best evidence first)."""
     registered_source_ids: tuple[str, ...] = ()
     demo: bool = False
     technical_support: TechnicalSupport
@@ -561,10 +568,19 @@ def assess_snapshot(
 def _best_snapshot(
     findings: Sequence[tuple[SourceSnapshot, _Finding]],
 ) -> tuple[SourceSnapshot, _Finding] | None:
-    order = {s: i for i, s in enumerate(_BEST_FIRST)}
     if not findings:
         return None
-    return min(findings, key=lambda pair: order[pair[1].state])
+    return min(findings, key=lambda pair: _preference(pair[1]))
+
+
+_USABLE = frozenset({ReadinessState.AVAILABLE, ReadinessState.USER_ENTERED, ReadinessState.PARTIAL})
+
+
+def _preference(finding: _Finding) -> tuple[bool, bool, int]:
+    """Usable before unusable; among usable evidence, synthetic demo data comes last, so it
+    never stands in for a real snapshot or a value the person entered; then by state."""
+    usable = finding.state in _USABLE
+    return (not usable, usable and finding.demo, _BEST_FIRST.index(finding.state))
 
 
 def assess_capability(
@@ -599,6 +615,7 @@ def assess_capability(
         state=state,
         reasons=reasons,
         snapshot_ids=tuple(s.id for s, _ in findings),
+        chosen_snapshot_id=chosen[0].id if chosen is not None else None,
         registered_source_ids=registered,
         demo=demo,
         technical_support=policy.technical_support,
@@ -661,8 +678,7 @@ def assess_input(
             else "No source family is defined for this input yet."
         )
         return InputReadiness(input=req.id, state=_U_, reasons=(reason, req.action))
-    order = {s: i for i, s in enumerate(_BEST_FIRST)}
-    kind, finding = min(options, key=lambda o: order[o[1].state])
+    kind, finding = min(options, key=lambda o: _preference(o[1]))
     reasons: tuple[str, ...] = finding.reasons
     if finding.state is not ReadinessState.AVAILABLE:
         reasons = (*reasons, req.action)
@@ -726,6 +742,11 @@ def local_date(instant: datetime, timezone: str) -> date:
     return instant.astimezone(ZoneInfo(timezone)).date()
 
 
+def is_demo_area(area: Area) -> bool:
+    """The labelled synthetic catalogue area: the only place synthetic records describe."""
+    return area.origin is AreaOrigin.CATALOGUE and area.evidence is EvidenceQuality.SYNTHETIC
+
+
 def assess_area(
     area: Area,
     assessed_at: datetime,
@@ -736,7 +757,11 @@ def assess_area(
     session_id: str | None,
     allow_demo: bool,
 ) -> AreaReadiness:
+    """``allow_demo`` only permits synthetic snapshots for the synthetic demo area itself.
+    A real place, including a local fixture place or a typed-in point, is never assessed
+    with demo records, whatever the runtime mode."""
     today = local_date(assessed_at, area.timezone)
+    allow_demo = allow_demo and is_demo_area(area)
     capabilities = tuple(
         assess_capability(c, area, today, snapshots, registrations, allow_demo=allow_demo)
         for c in Capability

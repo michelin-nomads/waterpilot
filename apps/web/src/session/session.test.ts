@@ -96,6 +96,19 @@ describe('mergeEdits', () => {
     expect(moved.selectedPlanOptionId).toBeNull();
     expect(applyPatch(chosen, { goal: GOAL_B }).selectedPlanOptionId).toBeNull();
     expect(applyPatch(chosen, { goal: GOAL_A })).toEqual(chosen);
+    const wetter = {
+      adjustments: [
+        {
+          parameter: 'rainfall',
+          change: 'INCREASE_BY' as const,
+          quantity: { value: '0.1', unit: 'RATIO' as const },
+        },
+      ],
+      interpretedFrom: null,
+      confirmed: true,
+    };
+    expect(applyPatch(chosen, { scenario: wetter }).selectedPlanOptionId).toBeNull();
+    expect(applyPatch(chosen, { scenario: chosen.scenario })).toEqual(chosen);
   });
 });
 

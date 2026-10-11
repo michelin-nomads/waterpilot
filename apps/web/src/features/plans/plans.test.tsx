@@ -1,0 +1,766 @@
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import type { AxiosAdapter, InternalAxiosRequestConfig } from 'axios';
+import type { ReactNode } from 'react';
+import { MemoryRouter } from 'react-router-dom';
+
+import type {
+  ComparedOptionFieldsFragment,
+  ImpactContextFieldsFragment,
+  ImpactFindingFieldsFragment,
+  PlanComparisonQuery,
+  ScenarioComparisonFieldsFragment,
+  WiderImpactFieldsFragment,
+} from '../../graphql/generated/graphql';
+import { apiClient } from '../../lib/apiClient';
+import type { SessionState } from '../../session/sessionState';
+import { AuthTestProviders } from '../../test/AuthTestProviders';
+import { FakeAuthBackend, permanent } from '../../test/fakeAuth';
+import { FakeSessionServer } from '../../test/fakeSession';
+import AgentScenario from './AgentScenario';
+import PlansPage from './index';
+import {
+  emptyWhatIf,
+  formatChange,
+  formatMetric,
+  formatMoneyRange,
+  formatReading,
+  fromAdjustments,
+  rowOf,
+  toAdjustments,
+} from './plansFormat';
+
+type Comparison = NonNullable<PlanComparisonQuery['planningSession']>['planComparison'];
+
+const n = (exact: string, value = exact) => ({ exact, value });
+
+const GOAL: SessionState['goal'] = {
+  kind: 'REDUCE_TANKER_DEPENDENCE',
+  target: { mode: 'RELATIVE_REDUCTION', quantity: { value: '0.5', unit: 'RATIO' } },
+};
+
+const COMPARISON_CITE = {
+  kind: 'COMPARISON' as const,
+  ref: 'cmp_1',
+  label: 'Option comparison (options-1) using your estimates',
+  asOf: null,
+};
+
+function finding(
+  over: Partial<ImpactFindingFieldsFragment> & Pick<ImpactFindingFieldsFragment, 'id' | 'kind'>,
+): ImpactFindingFieldsFragment {
+  return {
+    statement: '',
+    basis: 'MECHANISM',
+    uncertainty: '',
+    system: null,
+    direction: null,
+    linkage: null,
+    interventionIds: [],
+    related: [],
+    magnitude: null,
+    citations: [],
+    ...over,
+  };
+}
+
+const FALSE_RESILIENCE = finding({
+  id: 'false_resilience.groundwater',
+  kind: 'FALSE_RESILIENCE',
+  basis: 'DECLARED',
+  system: 'AQUIFER',
+  direction: 'POSSIBLE_HARM',
+  linkage: 'UNKNOWN',
+  statement:
+    'Possible false resilience. Your site draws on groundwater, so supply can look secure while pumping lowers the water table for others.',
+  uncertainty:
+    'Whether this aquifer is shared with neighbours is not known: no reviewed record on file.',
+  citations: [
+    {
+      kind: 'SITE_FACT',
+      ref: 'goal.site.groundwater_use',
+      label: 'You said the site uses groundwater',
+      asOf: null,
+    },
+  ],
+});
+
+function impact(
+  optionId: string,
+  ids: string[],
+  flags: ImpactFindingFieldsFragment[] = [],
+): WiderImpactFieldsFragment {
+  const greywater = ids.includes('greywater_reuse');
+  return {
+    id: `imp_${optionId}`,
+    engineVersion: 'impact-1',
+    catalogueVersion: 'interventions-3',
+    inputHash: 'h'.repeat(64),
+    localBenefits: [
+      finding({
+        id: 'benefit.tanker_dependence',
+        kind: 'LOCAL_BENEFIT',
+        basis: 'ENGINE_ESTIMATE',
+        statement:
+          'Tanker dependence at your site moves from the baseline towards your target: the range runs from your low to your high estimates.',
+        uncertainty: 'Calculated from your own estimate ranges, not measured.',
+        magnitude: {
+          metricId: 'tanker_dependence',
+          unit: 'RATIO',
+          baseline: n('3/10', '0.3'),
+          atLowEstimates: n('3/73', '0.0410958904109589041095890411'),
+          atHighEstimates: n('0', '0'),
+        },
+        citations: [COMPARISON_CITE],
+      }),
+    ],
+    externalities: [
+      finding({
+        id: `ext.${ids[0]}.shared_draw`,
+        kind: 'EXTERNALITY',
+        system: 'AQUIFER',
+        direction: 'POSSIBLE_BENEFIT',
+        linkage: 'UNKNOWN',
+        statement:
+          'Using less water can leave more in a shared source for others. Whether this aquifer is shared with neighbours is not known: no reviewed record on file.',
+        uncertainty: 'Size not assessed: no reviewed model of the aquifer for this area.',
+        interventionIds: [ids[0]!],
+      }),
+    ],
+    falseResilience: flags,
+    tradeoffs: [],
+    reviews: greywater
+      ? [
+          {
+            kind: 'WATER_QUALITY',
+            label: 'Water quality review',
+            required: true,
+            reasons: ['Treated greywater must be checked before reuse.'],
+            interventionIds: ['greywater_reuse'],
+          },
+        ]
+      : [],
+  };
+}
+
+const UNKNOWN_LINKS = (['AQUIFER', 'CATCHMENT', 'SUPPLY_NETWORK'] as const).map((system) => ({
+  system,
+  linkage: 'UNKNOWN' as const,
+  evidenceIds: [],
+}));
+
+const CONTEXT: ImpactContextFieldsFragment = {
+  areaName: 'Synthville',
+  nearbyRadiusM: 5000,
+  groundwater: 'UNKNOWN',
+  groundwaterCitations: [],
+  waterQualityNote:
+    'Readings are shown with their parameter, method and date. WaterLens does not judge whether water is safe to drink.',
+  boundaries: [
+    {
+      level: 'SITE',
+      label: 'Your site',
+      detail: 'A building.',
+      system: null,
+      linkage: null,
+      citations: [],
+    },
+    {
+      level: 'AREA',
+      label: 'Synthville',
+      detail: 'Inside a reviewed boundary.',
+      system: null,
+      linkage: null,
+      citations: [],
+    },
+    ...(['AQUIFER', 'CATCHMENT', 'SUPPLY_NETWORK'] as const).map((system) => ({
+      level: 'SHARED_SYSTEM' as const,
+      label: `Shared ${system.toLowerCase()}`,
+      detail: 'No reviewed record on file.',
+      system,
+      linkage: 'UNKNOWN' as const,
+      citations: [],
+    })),
+  ],
+  nearby: [{ name: 'Next ward', communityId: 'com_next', distanceM: 900, links: UNKNOWN_LINKS }],
+  waterQuality: [],
+  unavailable: [
+    {
+      key: 'neighbour_effects',
+      label: 'Effects on neighbours',
+      reason: 'Not enough evidence to estimate effects on neighbours.',
+    },
+  ],
+};
+
+function option(
+  id: string,
+  rank: number,
+  name: string,
+  ids: string[],
+  flags: ImpactFindingFieldsFragment[] = [],
+): ComparedOptionFieldsFragment {
+  return {
+    impact: impact(id, ids, flags),
+    id,
+    rank,
+    name,
+    interventionIds: ids,
+    why: `Ranked ${rank} by: fewest measures.`,
+    tradeoffs: ['Fixtures need replacing as they wear.'],
+    uncertainty: ['Estimates are yours, not sourced figures.'],
+    firstBenefit: 'AFTER_COMMISSIONING',
+    pessimistic: n('3/73', '0.0410958904109589041095890411'),
+    optimistic: n('0', '0'),
+    margin: n('159/1460', '0.1089041095890410958904109589'),
+    waterLow: n('324000'),
+    waterHigh: n('405000'),
+    uncountedHigh: n('45000'),
+    cost: {
+      low: { minorUnits: '500000', currency: 'INR', exponent: 2 },
+      high: { minorUnits: '900000', currency: 'INR', exponent: 2 },
+    },
+    buildDays: { low: 10, high: 30 },
+    measures: ids.map((m) => ({
+      interventionId: m,
+      name: m.replace(/_/g, ' '),
+      benefitTiming: 'AFTER_COMMISSIONING' as const,
+      waterLow: n('324000'),
+      waterHigh: n('405000'),
+      cost: null,
+      buildDays: null,
+      effects: [
+        {
+          key: 'demand_reduction',
+          label: 'Share of water use the fixtures save',
+          unit: 'RATIO' as const,
+          origin: 'USER_ESTIMATE' as const,
+          low: n('1/5', '0.2'),
+          high: n('1/4', '0.25'),
+        },
+      ],
+    })),
+    sensitivity: [
+      {
+        interventionId: ids[0]!,
+        key: 'demand_reduction',
+        label: 'Share saved',
+        swing: n('3/73', '0.041'),
+      },
+    ],
+    stress: [
+      {
+        key: 'demand_up_10',
+        label: 'Demand 10% higher',
+        meetsTarget: true,
+        value: n('9/89', '0.1011'),
+      },
+      { key: 'rainfall_down_20', label: '20% less rainfall', meetsTarget: null, value: null },
+    ],
+  };
+}
+
+const NO_SCENARIO: ScenarioComparisonFieldsFragment = {
+  status: 'none',
+  notes: [],
+  baselineId: 'bsl_1',
+  engineVersion: 'scenario-1',
+  rows: [
+    {
+      key: 'demand',
+      label: 'Water demand',
+      unit: 'LITRES_PER_DAY',
+      reason: null,
+      baseline: n('1620000'),
+      scenario: n('1620000'),
+      change: n('0'),
+    },
+    {
+      key: 'rainfall',
+      label: 'Rainfall in a year',
+      unit: 'MILLIMETRE',
+      reason: 'Needs at least a year of rainfall records for this location.',
+      baseline: null,
+      scenario: null,
+      change: null,
+    },
+  ],
+};
+
+function comparison(over: Partial<Comparison> = {}): Comparison {
+  return {
+    id: 'cmp_1',
+    engineVersion: 'options-1',
+    scenarioEngineVersion: 'scenario-1',
+    catalogueVersion: 'interventions-3',
+    baselineId: 'bsl_1',
+    status: 'OPTIONS',
+    summary:
+      '2 plans meet the target and every constraint even at the low end of your estimates. No other combination passes, so no more are shown.',
+    metric: 'TANKER_DEPENDENCE',
+    unit: 'RATIO',
+    needs: [],
+    excluded: ['Additional storage: its water effect is not modelled, so it cannot count.'],
+    assumptions: ['Measures in one option are assumed to be built at the same time.'],
+    ranking: 'Fewest measures, then the largest margin past the target.',
+    maxOptions: 3,
+    stressTests: ['Demand 10% higher', '20% less rainfall'],
+    baselineValue: n('3/10', '0.3'),
+    scenarioValue: n('3/10', '0.3'),
+    targetLevel: n('3/20', '0.15'),
+    rejections: {
+      evaluated: 7,
+      onlyOptimistic: 0,
+      missedTarget: 4,
+      overBudget: 0,
+      budgetUncertain: 0,
+      tooSlow: 0,
+      timeUncertain: 0,
+      notMinimal: 1,
+      truncated: false,
+    },
+    options: [
+      option('opt_a', 1, 'Water-efficient fixtures', ['efficient_fixtures']),
+      option('opt_b', 2, 'Greywater reuse + Leak detection and repair', [
+        'greywater_reuse',
+        'leak_detection_and_repair',
+      ]),
+    ],
+    impactEngineVersion: 'impact-1',
+    impactContext: CONTEXT,
+    ...over,
+  };
+}
+
+type Handler = (variables: Record<string, unknown>) => unknown;
+let handlers: Record<string, Handler> = {};
+let sent: Array<{ op: string; variables: Record<string, unknown> }> = [];
+const originalAdapter = apiClient.defaults.adapter;
+
+const stub: AxiosAdapter = async (config: InternalAxiosRequestConfig) => {
+  const body = JSON.parse(config.data as string) as {
+    query: string;
+    variables: Record<string, unknown>;
+  };
+  const op = /(?:query|mutation)\s+(\w+)/.exec(body.query)?.[1] ?? '';
+  sent.push({ op, variables: body.variables });
+  const handler = handlers[op];
+  if (!handler) throw new Error(`unexpected operation ${op}`);
+  const data: unknown = await handler(body.variables);
+  return { data, status: 200, statusText: 'OK', headers: {}, config };
+};
+
+function reply(c: Comparison, scenario = NO_SCENARIO) {
+  return {
+    data: {
+      planningSession: {
+        id: 'ses_1',
+        inputsRevision: 1,
+        selectedPlanOptionId: null,
+        planComparison: c,
+        scenarioComparison: scenario,
+      },
+    },
+  };
+}
+
+beforeEach(() => {
+  sent = [];
+  handlers = { PlanComparison: () => reply(comparison()) };
+  apiClient.defaults.adapter = stub;
+});
+
+afterEach(() => {
+  apiClient.defaults.adapter = originalAdapter;
+});
+
+function renderWith(
+  ui: ReactNode,
+  session: Partial<SessionState> = { goal: GOAL, inputsRevision: 1 },
+) {
+  const sessions = new FakeSessionServer();
+  sessions.seed('user-1', { id: 'ses_1', areaId: 'are_1', ...session });
+  render(
+    <AuthTestProviders backend={new FakeAuthBackend(permanent())} sessions={sessions}>
+      <MemoryRouter>{ui}</MemoryRouter>
+    </AuthTestProviders>,
+  );
+  return sessions;
+}
+
+const renderPlans = (session?: Partial<SessionState>) => renderWith(<PlansPage />, session);
+const renderAgent = (session?: Partial<SessionState>) => renderWith(<AgentScenario />, session);
+
+const APPLIED: ScenarioComparisonFieldsFragment = {
+  ...NO_SCENARIO,
+  status: 'applied',
+  rows: [
+    {
+      key: 'demand',
+      label: 'Water demand',
+      unit: 'LITRES_PER_DAY',
+      reason: null,
+      baseline: n('1620000'),
+      scenario: n('1782000'),
+      change: n('162000'),
+    },
+  ],
+};
+
+function scenarioReply(scenario: ScenarioComparisonFieldsFragment) {
+  return {
+    data: { planningSession: { id: 'ses_1', inputsRevision: 1, scenarioComparison: scenario } },
+  };
+}
+
+describe('plansFormat', () => {
+  it('formats exact values once, for display', () => {
+    expect(formatMetric(n('3/73', '0.0410958904109589041095890411'), 'RATIO')).toBe('4.1%');
+    expect(formatMetric(n('182'), 'DAY')).toBe('182 days');
+    expect(formatMetric(null, 'RATIO')).toBe('Not known');
+    expect(formatChange(n('-3/25', '-0.12'), 'RATIO')).toBe('−12 percentage points');
+    expect(formatChange(n('162000'), 'LITRES_PER_DAY')).toBe('+1,62,000 L/day');
+    expect(
+      formatMoneyRange({
+        low: { minorUnits: '500000', currency: 'INR', exponent: 2 },
+        high: { minorUnits: '500000', currency: 'INR', exponent: 2 },
+      }),
+    ).toBe('₹5,000');
+  });
+
+  it('keeps a water quality reading with its parameter, method and date', () => {
+    const reading = {
+      parameter: 'nitrate',
+      value: n('52'),
+      unit: 'MG_PER_LITRE' as const,
+      observedOn: '2026-08-14',
+      method: 'in_situ_measurement',
+    };
+    expect(formatReading(reading)).toBe('nitrate: 52 mg/L (in situ measurement, 2026-08-14)');
+    expect(formatReading({ ...reading, parameter: null, method: null, observedOn: null })).toBe(
+      'Parameter not recorded: 52 mg/L (method not recorded, date not recorded)',
+    );
+  });
+
+  it('builds canonical adjustments and refuses unusable rows', () => {
+    const draft = {
+      ...emptyWhatIf(),
+      rainfall: { change: 'DECREASE_BY' as const, value: '20' },
+      demand: { change: 'SET_TO' as const, value: '1500000.0' },
+    };
+    const { adjustments } = toAdjustments(draft);
+    expect(adjustments).toEqual([
+      {
+        parameter: 'demand',
+        change: 'SET_TO',
+        quantity: { value: '1500000', unit: 'LITRES_PER_DAY' },
+      },
+      { parameter: 'rainfall', change: 'DECREASE_BY', quantity: { value: '0.2', unit: 'RATIO' } },
+    ]);
+    expect(fromAdjustments(adjustments!)).toEqual({
+      ...draft,
+      demand: { change: 'SET_TO', value: '1500000' },
+    });
+    expect(
+      toAdjustments({ ...draft, rainfall: { change: 'DECREASE_BY', value: '150' } }).errors,
+    ).toEqual({ rainfall: 'Enter a percentage above 0 and at most 100.' });
+    expect(
+      toAdjustments({ ...draft, demand: { change: 'SET_TO', value: '1,500' } }).errors.demand,
+    ).toMatch(/without commas/);
+    expect(rowOf('scenario.adjustments.1.quantity.value', adjustments!)).toBe('rainfall');
+  });
+});
+
+describe('PlansPage', () => {
+  it('asks for a goal before comparing', async () => {
+    renderPlans({ goal: null });
+    expect(await screen.findByText(/set a goal first/i)).toBeInTheDocument();
+    expect(sent.some((s) => s.op === 'PlanComparison')).toBe(false);
+  });
+
+  it('shows only the feasible plans, with exact figures rounded for display', async () => {
+    renderPlans();
+    const list = await screen.findByRole('list', { name: 'Feasible plans' });
+    const cards = within(list)
+      .getAllByRole('listitem')
+      .filter((li) => li.dataset.optionId);
+    expect(cards).toHaveLength(2);
+    expect(screen.getByText(/no other combination passes/i)).toBeInTheDocument();
+    expect(within(cards[0]!).getByText('4.1% to 0.0%')).toBeInTheDocument();
+    expect(within(cards[0]!).getByText('₹5,000 to ₹9,000')).toBeInTheDocument();
+    expect(within(cards[0]!).getByText('10 to 30 days')).toBeInTheDocument();
+    expect(screen.getByText('30.0%')).toBeInTheDocument();
+    expect(screen.getByText('15.0%')).toBeInTheDocument();
+    const basis = within(cards[0]!).getByRole('list', {
+      name: 'What efficient fixtures is computed from',
+    });
+    expect(within(basis).getByText(/20\.0% to 25\.0% \(your estimate\)/)).toHaveAttribute(
+      'data-effect-origin',
+      'USER_ESTIMATE',
+    );
+  });
+
+  it('shows wider effects with every plan before one is chosen, unknown left unknown', async () => {
+    renderPlans();
+    const list = await screen.findByRole('list', { name: 'Feasible plans' });
+    const cards = within(list)
+      .getAllByRole('listitem')
+      .filter((li) => li.dataset.optionId);
+    for (const card of cards) {
+      const effects = within(card).getByRole('region', { name: 'Effects beyond your site' });
+      expect(within(effects).getByText('30.0% now; 4.1% to 0.0% with this plan.')).toBeVisible();
+      const ext = effects.querySelector('[data-finding^="ext."]')!;
+      expect(ext).toHaveAttribute('data-linkage', 'UNKNOWN');
+      expect(within(ext as HTMLElement).getByText('Connection unknown')).toBeInTheDocument();
+      expect(within(card).getByRole('button', { name: 'Choose this plan' })).toBeEnabled();
+    }
+    expect(within(cards[0]!).queryByText('Professional review')).not.toBeInTheDocument();
+    expect(
+      within(cards[1]!).getByText(/Water quality review: required before building/),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Possible false resilience')).not.toBeInTheDocument();
+
+    const boundaries = screen.getByRole('table', { name: 'Influence boundaries' });
+    const shared = within(boundaries)
+      .getAllByRole('row')
+      .filter((r) => r.dataset.linkage);
+    expect(shared.map((r) => r.dataset.linkage)).toEqual(['UNKNOWN', 'UNKNOWN', 'UNKNOWN']);
+    const nearby = screen.getByRole('list', { name: 'Nearby places' });
+    expect(within(nearby).getByRole('listitem')).toHaveTextContent(
+      'Next ward, about 900 m away: Aquifer connection unknown; Catchment connection unknown; Supply network connection unknown.',
+    );
+    expect(screen.getByText(/Being close does not mean sharing an aquifer/)).toBeInTheDocument();
+    expect(screen.getByText('Not known whether the site uses groundwater.')).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('list', { name: 'Not assessed' })).getByText(
+        /Not enough evidence to estimate effects on neighbours/,
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/does not judge whether water is safe to drink/)).toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/\bpotable\b|\bdrinkable\b|\bno harm\b/i);
+  });
+
+  it('warns about possible false resilience with its uncertainty and source', async () => {
+    handlers.PlanComparison = () =>
+      reply(
+        comparison({
+          options: [
+            option(
+              'opt_a',
+              1,
+              'Water-efficient fixtures',
+              ['efficient_fixtures'],
+              [FALSE_RESILIENCE],
+            ),
+          ],
+          impactContext: { ...CONTEXT, groundwater: 'DECLARED' },
+        }),
+      );
+    renderPlans();
+    const list = await screen.findByRole('list', { name: 'Feasible plans' });
+    const notice = within(list).getByText('Possible false resilience').closest('[data-notice]')!;
+    expect(notice).toHaveAttribute('data-notice', 'caution');
+    expect(notice).toHaveTextContent(/lowers the water table for others/);
+    expect(notice).toHaveTextContent(/is not known: no reviewed record on file/);
+    expect(notice).toHaveTextContent('Based on: You said the site uses groundwater');
+    expect(
+      screen.getByText('You said the site uses a borewell or other groundwater.'),
+    ).toBeInTheDocument();
+  });
+
+  it('has no what-if controls in Traditional mode', async () => {
+    renderPlans();
+    await screen.findByRole('list', { name: 'Feasible plans' });
+    expect(screen.queryByRole('button', { name: 'Preview' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Apply to plans' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: 'Water demand' })).not.toBeInTheDocument();
+    expect(screen.queryByText('What-if from Agent mode')).not.toBeInTheDocument();
+  });
+
+  it('shows an agent-generated what-if read-only, labelled, and offers Agent mode', async () => {
+    handlers.PlanComparison = () => reply(comparison(), APPLIED);
+    const sessions = renderPlans({
+      goal: GOAL,
+      inputsRevision: 1,
+      scenario: {
+        adjustments: [
+          {
+            parameter: 'demand',
+            change: 'INCREASE_BY',
+            quantity: { value: '0.1', unit: 'RATIO' },
+          },
+        ],
+        interpretedFrom: null,
+        confirmed: true,
+      },
+    });
+    const card = (await screen.findByText('What-if from Agent mode')).closest('section')!;
+    expect(within(card).getByText('Agent-generated')).toBeInTheDocument();
+    expect(within(card).getByText('+1,62,000 L/day')).toBeInTheDocument();
+    expect(within(card).getByText(/not by a language model/)).toBeInTheDocument();
+    expect(within(card).queryByRole('button', { name: 'Preview' })).not.toBeInTheDocument();
+    fireEvent.click(within(card).getByRole('button', { name: 'Open Agent mode' }));
+    await waitFor(() => expect(sessions.applied.at(-1)?.patch).toEqual({ mode: 'AGENT' }));
+  });
+
+  it('saves the chosen plan through the session', async () => {
+    const sessions = renderPlans();
+    sessions.options.set('opt_b', 1);
+    const list = await screen.findByRole('list', { name: 'Feasible plans' });
+    const buttons = within(list).getAllByRole('button', { name: 'Choose this plan' });
+    fireEvent.click(buttons[1]!);
+    await waitFor(() =>
+      expect(sessions.applied.at(-1)?.patch).toEqual({ selectedPlanOptionId: 'opt_b' }),
+    );
+    expect(await screen.findByRole('button', { name: 'Chosen plan' })).toBeDisabled();
+  });
+
+  it('explains why no plan is shown instead of inventing one', async () => {
+    handlers.PlanComparison = () =>
+      reply(
+        comparison({
+          status: 'NO_FEASIBLE_PLAN',
+          summary:
+            'No plan meets the target and every constraint. Of 3 combinations checked, 2 would meet the target only with optimistic estimates.',
+          options: [],
+          rejections: {
+            ...comparison().rejections,
+            evaluated: 3,
+            onlyOptimistic: 2,
+            missedTarget: 1,
+          },
+        }),
+      );
+    renderPlans();
+    expect(await screen.findByText('No feasible plan')).toBeInTheDocument();
+    expect(
+      screen.getByText('2 would meet the target only with optimistic estimates.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Feasible plans' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Choose this plan' })).not.toBeInTheDocument();
+  });
+
+  it('lists the input that would let plans be compared', async () => {
+    handlers.PlanComparison = () =>
+      reply(
+        comparison({
+          status: 'NEEDS_INPUT',
+          summary: 'No measure can be compared yet.',
+          options: [],
+          needs: ['Water-efficient fixtures: estimate share of water use the fixtures save.'],
+        }),
+      );
+    renderPlans();
+    expect(await screen.findByText('More input needed')).toBeInTheDocument();
+    expect(screen.getByText(/estimate share of water use the fixtures save/)).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /update your goal, site and estimates/i }),
+    ).toHaveAttribute('href', '/goals');
+  });
+});
+
+describe('AgentScenario (agent what-if tool)', () => {
+  beforeEach(() => {
+    handlers.SessionScenario = () => scenarioReply(NO_SCENARIO);
+  });
+
+  it('previews a what-if without saving, then applies it to plans', async () => {
+    handlers.PreviewScenario = () => ({
+      data: {
+        previewScenario: {
+          errors: [],
+          comparison: {
+            ...NO_SCENARIO,
+            status: 'applied',
+            rows: [
+              {
+                key: 'demand',
+                label: 'Water demand',
+                unit: 'LITRES_PER_DAY',
+                reason: null,
+                baseline: n('1620000'),
+                scenario: n('1782000'),
+                change: n('162000'),
+              },
+            ],
+          },
+        },
+      },
+    });
+    const sessions = renderAgent({ goal: GOAL, inputsRevision: 1, selectedPlanOptionId: 'opt_b' });
+    const stored = () => sessions.sessions.get('ses_1')!;
+    const demand = await screen.findByRole('group', { name: 'Water demand' });
+    fireEvent.change(within(demand).getByLabelText('Change'), {
+      target: { value: 'INCREASE_BY' },
+    });
+    fireEvent.change(within(demand).getByLabelText('Percentage'), { target: { value: '10' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Preview' }));
+    expect(await screen.findByText('+1,62,000 L/day')).toBeInTheDocument();
+    expect(sent.find((s) => s.op === 'PreviewScenario')?.variables).toEqual({
+      sessionId: 'ses_1',
+      scenario: {
+        adjustments: [
+          { parameter: 'demand', change: 'INCREASE_BY', quantity: { value: '0.1', unit: 'RATIO' } },
+        ],
+      },
+    });
+    expect(sessions.applied).toHaveLength(0);
+    expect(stored()).toMatchObject({
+      version: 1,
+      inputsRevision: 1,
+      scenario: null,
+      selectedPlanOptionId: 'opt_b',
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Apply to plans' }));
+    await waitFor(() =>
+      expect(sessions.applied.at(-1)?.patch).toEqual({
+        scenario: {
+          adjustments: [
+            {
+              parameter: 'demand',
+              change: 'INCREASE_BY',
+              quantity: { value: '0.1', unit: 'RATIO' },
+            },
+          ],
+          interpretedFrom: null,
+          confirmed: true,
+        },
+      }),
+    );
+    expect(stored()).toMatchObject({ inputsRevision: 2, selectedPlanOptionId: null });
+  });
+
+  it('refuses an unusable what-if before sending it', async () => {
+    renderAgent();
+    const rain = await screen.findByRole('group', { name: 'Rainfall in a year' });
+    fireEvent.change(within(rain).getByLabelText('Change'), { target: { value: 'DECREASE_BY' } });
+    fireEvent.change(within(rain).getByLabelText('Percentage'), { target: { value: '120' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Preview' }));
+    expect(await screen.findByText(/at most 100/)).toBeInTheDocument();
+    expect(sent.some((s) => s.op === 'PreviewScenario')).toBe(false);
+  });
+
+  it('applies an agent-parsed what-if only after confirmation', async () => {
+    const scenario = {
+      adjustments: [
+        {
+          parameter: 'rainfall',
+          change: 'DECREASE_BY' as const,
+          quantity: { value: '0.2', unit: 'RATIO' as const },
+        },
+      ],
+      interpretedFrom: 'What if rainfall falls by 20%?',
+      confirmed: false,
+    };
+    handlers.SessionScenario = () =>
+      scenarioReply({ ...NO_SCENARIO, status: 'awaiting_confirmation' });
+    const sessions = renderAgent({ goal: GOAL, inputsRevision: 1, scenario });
+    expect(await screen.findByText('Waiting for your confirmation')).toBeInTheDocument();
+    expect(screen.getByText('“What if rainfall falls by 20%?”')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm what-if' }));
+    await waitFor(() =>
+      expect(sessions.applied.at(-1)?.patch).toEqual({
+        scenario: { ...scenario, confirmed: true },
+      }),
+    );
+  });
+});

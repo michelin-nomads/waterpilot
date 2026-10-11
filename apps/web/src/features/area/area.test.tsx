@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { AxiosAdapter, InternalAxiosRequestConfig } from 'axios';
+import { MemoryRouter } from 'react-router-dom';
 
 import type {
   AreaReadinessFieldsFragment,
@@ -8,6 +9,7 @@ import type {
 import { apiClient } from '../../lib/apiClient';
 import { AuthTestProviders } from '../../test/AuthTestProviders';
 import { FakeAuthBackend, permanent } from '../../test/fakeAuth';
+import { baseline, baselineReply, demoBaseline, manualBaseline } from '../../test/baselineFixtures';
 import { FakeSessionServer } from '../../test/fakeSession';
 import AreaPage, { DEMO_AREA_ID } from './index';
 
@@ -126,12 +128,17 @@ const stub: AxiosAdapter = async (config: InternalAxiosRequestConfig) => {
   sent.push({ op, variables: body.variables });
   const handler = handlers[op];
   if (!handler) throw new Error(`unexpected operation ${op}`);
-  return { data: handler(body.variables), status: 200, statusText: 'OK', headers: {}, config };
+  const data: unknown = await handler(body.variables);
+  return { data, status: 200, statusText: 'OK', headers: {}, config };
 };
 
 beforeEach(() => {
   sent = [];
-  handlers = { AreaReadiness: () => areaReply(), AreaLocation: () => locationReply() };
+  handlers = {
+    AreaReadiness: () => areaReply(),
+    AreaLocation: () => locationReply(),
+    AreaBaseline: () => baselineReply(),
+  };
   apiClient.defaults.adapter = stub;
 });
 
@@ -139,12 +146,23 @@ afterEach(() => {
   apiClient.defaults.adapter = originalAdapter;
 });
 
+/** The readiness panel's own sections; the baseline above repeats some labels. */
+const readinessMetrics = () =>
+  screen.findByRole('region', { name: 'What WaterLens can calculate here' });
+const readinessInputs = () => screen.findByRole('region', { name: 'What you can provide' });
+const populationRow = async () =>
+  within(await readinessInputs())
+    .getByText('Population served')
+    .closest('li') as HTMLElement;
+
 function renderArea(areaId: string | null = AREA) {
   const sessions = new FakeSessionServer();
   if (areaId !== undefined) sessions.seed('user-1', { id: 'ses_1', areaId });
   render(
     <AuthTestProviders backend={new FakeAuthBackend(permanent())} sessions={sessions}>
-      <AreaPage />
+      <MemoryRouter>
+        <AreaPage />
+      </MemoryRouter>
     </AuthTestProviders>,
   );
   return sessions;
@@ -173,7 +191,7 @@ describe('AreaPage', () => {
 
   it('shows readiness states with reasons and never a number as a result', async () => {
     renderArea();
-    const metric = await screen.findByText('Water demand');
+    const metric = within(await readinessMetrics()).getByText('Water demand');
     const row = metric.closest('li') as HTMLElement;
     expect(within(row).getByText('Unavailable')).toBeInTheDocument();
     expect(within(row).getByText('Population served is unavailable.')).toBeInTheDocument();
@@ -187,7 +205,7 @@ describe('AreaPage', () => {
 
   it('offers manual entry only where the server allows it', async () => {
     renderArea();
-    const population = (await screen.findByText('Population served')).closest('li') as HTMLElement;
+    const population = await populationRow();
     expect(within(population).getByLabelText(/population served value/i)).toBeInTheDocument();
     const price = screen.getByText('Water unit price').closest('li') as HTMLElement;
     expect(within(price).queryByRole('textbox')).not.toBeInTheDocument();
@@ -235,7 +253,7 @@ describe('AreaPage', () => {
     expect(screen.getByText(/data readiness could not load/i)).toBeInTheDocument();
     expect(sent.filter((s) => s.op === 'AreaReadiness')).toHaveLength(1);
     fireEvent.click(retry);
-    expect(await screen.findByText('Water demand')).toBeInTheDocument();
+    expect(within(await readinessMetrics()).getByText('Water demand')).toBeInTheDocument();
   });
 
   it('shows a permission state when the session or area is not the user’s', async () => {
@@ -270,7 +288,7 @@ describe('AreaPage', () => {
       };
     };
     renderArea();
-    const population = (await screen.findByText('Population served')).closest('li') as HTMLElement;
+    const population = await populationRow();
     fireEvent.change(within(population).getByLabelText(/population served value/i), {
       target: { value: '12000' },
     });
@@ -315,7 +333,7 @@ describe('AreaPage', () => {
       },
     });
     renderArea();
-    const population = (await screen.findByText('Population served')).closest('li') as HTMLElement;
+    const population = await populationRow();
     fireEvent.change(within(population).getByLabelText(/population served value/i), {
       target: { value: '5' },
     });
@@ -332,7 +350,7 @@ describe('AreaPage', () => {
 
   it('rejects a non-number before sending', async () => {
     renderArea();
-    const population = (await screen.findByText('Population served')).closest('li') as HTMLElement;
+    const population = await populationRow();
     fireEvent.change(within(population).getByLabelText(/population served value/i), {
       target: { value: '12,000 people' },
     });
@@ -341,5 +359,356 @@ describe('AreaPage', () => {
       0,
     );
     expect(sent.some((s) => s.op === 'RecordManualInput')).toBe(false);
+  });
+});
+
+describe('BaselinePanel', () => {
+  const card = (metric: string) =>
+    document.querySelector(`[data-baseline-metric="${metric}"]`) as HTMLElement;
+  const baselineRegion = () => screen.findByRole('region', { name: 'Your water baseline' });
+
+  it('shows every metric as unavailable with a reason when nothing is known', async () => {
+    renderArea();
+    const region = await baselineRegion();
+    for (const metric of ['demand', 'delivered_supply', 'reliable_supply', 'deficit']) {
+      expect(within(card(metric)).getByText('Unavailable')).toBeInTheDocument();
+      expect(within(card(metric)).getByText('A value it needs is missing.')).toBeInTheDocument();
+    }
+    expect(within(region).queryByText(/\b0(\.0)?\s*(MLD|kL\/day|%|days)/)).not.toBeInTheDocument();
+    expect(
+      within(region).getByText('Nothing can be calculated yet.', { exact: false }),
+    ).toBeVisible();
+    expect(sent.find((s) => s.op === 'AreaBaseline')).toEqual({
+      op: 'AreaBaseline',
+      variables: { areaId: AREA, sessionId: 'ses_1' },
+    });
+  });
+
+  it('makes adding the first missing essential the primary action and focuses its field', async () => {
+    renderArea();
+    const region = await baselineRegion();
+    const missing = within(region).getByRole('region', {
+      name: 'What would complete this baseline',
+    });
+    expect(within(missing).getByText(/labelled as your estimate/i)).toBeInTheDocument();
+    expect(within(missing).getByText(/stay unavailable until daily records/i)).toBeInTheDocument();
+    const primary = within(region).getByRole('button', { name: 'Add population served' });
+    const population = await populationRow();
+    // jsdom has no layout, so scrolling is observed rather than performed.
+    const scrollIntoView = vi.fn();
+    population.scrollIntoView = scrollIntoView;
+    fireEvent.click(primary);
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start' });
+    expect(within(population).getByLabelText(/population served value/i)).toHaveFocus();
+    expect(within(region).getByRole('link', { name: 'Continue to your goal' })).toHaveAttribute(
+      'href',
+      '/goals',
+    );
+  });
+
+  it('labels typed-in results as your estimate and keeps day-by-day metrics unavailable', async () => {
+    handlers.AreaBaseline = () => baselineReply(manualBaseline());
+    renderArea();
+    await baselineRegion();
+    expect(within(card('demand')).getByText('1.6')).toBeInTheDocument();
+    expect(within(card('demand')).getByText('MLD')).toBeInTheDocument();
+    expect(card('demand').querySelector('[data-origin="USER_ESTIMATE"]')).toHaveTextContent(
+      'Your estimate',
+    );
+    expect(within(card('demand')).getByText('Provisional')).toBeInTheDocument();
+    expect(within(card('tanker_dependence')).getByText('30%')).toBeInTheDocument();
+    expect(within(card('reliable_supply')).getByText('Unavailable')).toBeInTheDocument();
+    expect(within(card('reliable_supply')).getByText(/defined day by day/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Set your goal' })).toHaveAttribute('href', '/goals');
+  });
+
+  it('discloses definition, exact value, assumptions and evidence progressively', async () => {
+    handlers.AreaBaseline = () => baselineReply(manualBaseline());
+    renderArea();
+    const details = within(await baselineRegion()).getByRole('region', {
+      name: 'Details, evidence and uncertainty',
+    });
+    expect(within(details).getByText(/population \* per_capita_lpcd/)).not.toBeVisible();
+    fireEvent.click(within(details).getByRole('button', { name: /water demand/i }));
+    expect(within(details).getByText(/population \* per_capita_lpcd/)).toBeVisible();
+    expect(within(details).getByText('1620000')).toBeInTheDocument();
+    expect(within(details).getByText(/non-domestic use was not provided/i)).toBeInTheDocument();
+    expect(within(details).getByText('Population served (entered by you)')).toBeInTheDocument();
+    expect(within(details).getAllByText(/Uncertainty: Not quantified/)).toHaveLength(2);
+    expect(within(details).getAllByText(/as of 1 Oct 2026/i).length).toBeGreaterThan(0);
+  });
+
+  it('reproduces the golden fixture values from the demo source, labelled synthetic', async () => {
+    handlers.AreaBaseline = () => baselineReply(demoBaseline());
+    renderArea();
+    const region = await baselineRegion();
+    const expected: Record<string, string> = {
+      demand: '10.0',
+      delivered_supply: '10.1',
+      reliable_supply: '8.0',
+      deficit: '2.0',
+      dependable_supply_ratio: '80%',
+      volume_reliability: '94%',
+      time_reliability: '70%',
+      shortage_days: '3',
+      tanker_dependence: '27%',
+    };
+    for (const [metric, text] of Object.entries(expected)) {
+      expect(within(card(metric)).getByText(text)).toBeInTheDocument();
+    }
+    expect(card('delivered_supply').querySelector('[data-origin="MEASURED"]')).not.toBeNull();
+    expect(card('deficit').querySelector('[data-origin="USER_ESTIMATE"]')).not.toBeNull();
+    expect(within(card('delivered_supply')).getByText('Synthetic demo data')).toBeInTheDocument();
+    expect(within(region).getByText('Demo data')).toBeInTheDocument();
+    expect(within(region).getByText(/10 of the last 365 days/, { selector: 'li' })).toBeVisible();
+  });
+
+  it('keeps the chart and its table equivalent, with gaps unavailable in both', async () => {
+    handlers.AreaBaseline = () => baselineReply(demoBaseline(8));
+    renderArea();
+    const region = await baselineRegion();
+    const figure = within(region).getByRole('figure', { name: /supply and demand by day/i });
+    // A gap splits the delivered line (the first series) instead of dropping to zero.
+    const [delivered, demand] = Array.from(figure.querySelectorAll('svg > g:not([aria-hidden])'));
+    expect(delivered?.querySelectorAll('path')).toHaveLength(2);
+    expect(delivered?.querySelectorAll('circle')).toHaveLength(9);
+    expect(demand?.querySelectorAll('path')).toHaveLength(1);
+    fireEvent.click(within(figure).getByRole('button', { name: /show table/i }));
+    const table = within(figure).getByRole('table');
+    const rows = within(table).getAllByRole('row').slice(1);
+    expect(rows).toHaveLength(10);
+    const cells = rows.map((r) =>
+      within(r)
+        .getAllByRole('cell')
+        .map((c) => c.textContent),
+    );
+    expect(cells[0]).toEqual(['11.0', '10.0', '3.0']);
+    expect(cells[7]).toEqual(['8.0', '10.0', '2.0']);
+    expect(cells[8]).toEqual(['Unavailable', '10.0', '2.0']);
+    expect(within(rows[0] as HTMLElement).getByRole('rowheader')).toHaveTextContent('1 Jan');
+  });
+
+  it('says on the card itself when an average leaves out days without records', async () => {
+    const b = demoBaseline(8);
+    b.metrics = b.metrics.map((m) =>
+      m.metric === 'delivered_supply'
+        ? { ...m, value: '10000000', exact: '10000000', recordedDays: 9, periodDays: 10 }
+        : m,
+    );
+    handlers.AreaBaseline = () => baselineReply(b);
+    renderArea();
+    await baselineRegion();
+    expect(within(card('delivered_supply')).getByText('Average of 9 of 10 days')).toBeVisible();
+    expect(within(card('delivered_supply')).getByText('Provisional')).toBeInTheDocument();
+    // Complete windows and typed-in constants carry no coverage caption.
+    expect(card('reliable_supply').querySelector('[data-coverage]')).toBeNull();
+    expect(card('demand').querySelector('[data-coverage]')).toBeNull();
+  });
+
+  it('formats rates for US customary areas in million gallons per day', async () => {
+    handlers.AreaBaseline = () => baselineReply(manualBaseline(), 'US_CUSTOMARY');
+    renderArea();
+    await baselineRegion();
+    expect(within(card('demand')).getByText('0.43')).toBeInTheDocument();
+    expect(within(card('demand')).getByText('MGD')).toBeInTheDocument();
+    expect(
+      screen.getByText(/MGD means million US gallons per day \(1 US gallon = 3\.785411784 litres/),
+    ).toBeInTheDocument();
+  });
+
+  it('uses one rate unit for the whole baseline and never shows a small rate as 0', async () => {
+    const b = manualBaseline();
+    handlers.AreaBaseline = () =>
+      baselineReply({
+        ...b,
+        metrics: b.metrics.map((m) =>
+          m.metric === 'delivered_supply' ? { ...m, value: '40000', exact: '40000' } : m,
+        ),
+      });
+    renderArea();
+    await baselineRegion();
+    // Demand is 1.6 MLD, so supply stays in MLD with the precision it needs.
+    expect(within(card('demand')).getByText('MLD')).toBeInTheDocument();
+    expect(within(card('delivered_supply')).getByText('0.040')).toBeInTheDocument();
+    expect(within(card('delivered_supply')).getByText('MLD')).toBeInTheDocument();
+  });
+
+  it('switches every rate to kL/day only when all of them are below 1 MLD', async () => {
+    const b = manualBaseline();
+    handlers.AreaBaseline = () =>
+      baselineReply({
+        ...b,
+        metrics: b.metrics.map((m) =>
+          m.metric === 'delivered_supply'
+            ? { ...m, value: '40000', exact: '40000' }
+            : m.metric === 'demand'
+              ? { ...m, value: '60000', exact: '60000' }
+              : m,
+        ),
+      });
+    renderArea();
+    await baselineRegion();
+    expect(within(card('delivered_supply')).getByText('40')).toBeInTheDocument();
+    expect(within(card('demand')).getByText('60')).toBeInTheDocument();
+    expect(screen.getAllByText('kL/day')).toHaveLength(2);
+  });
+
+  it('revises the baseline after a value is saved', async () => {
+    let version = 0;
+    handlers.AreaBaseline = () => baselineReply(version === 0 ? baseline() : manualBaseline());
+    handlers.RecordManualInput = () => {
+      version = 1;
+      return {
+        data: {
+          recordManualInput: {
+            manualInput: {
+              id: 'min_1',
+              input: 'POPULATION',
+              value: '12000',
+              unit: 'COUNT',
+              enteredValue: '12000',
+              enteredUnit: 'people',
+              asOf: '2026-10-10',
+              note: 'Ward census table',
+            },
+            error: null,
+          },
+        },
+      };
+    };
+    renderArea();
+    const region = await baselineRegion();
+    expect(region).toHaveAttribute('data-baseline-id', 'bsl_EMPTY');
+    const population = await populationRow();
+    fireEvent.change(within(population).getByLabelText(/population served value/i), {
+      target: { value: '12000' },
+    });
+    fireEvent.change(within(population).getByLabelText(/^source/i), {
+      target: { value: 'Ward census table' },
+    });
+    await act(async () =>
+      fireEvent.click(within(population).getByRole('button', { name: /save value/i })),
+    );
+    await waitFor(() =>
+      expect(screen.getByRole('region', { name: 'Your water baseline' })).toHaveAttribute(
+        'data-baseline-id',
+        'bsl_MANUAL',
+      ),
+    );
+    expect(within(card('demand')).getByText('1.6')).toBeInTheDocument();
+  });
+
+  it('never lets an older baseline response overwrite a newer one', async () => {
+    let calls = 0;
+    let releaseOld: () => void = () => undefined;
+    handlers.AreaBaseline = () => {
+      calls += 1;
+      if (calls === 1) {
+        // The first load is slow and answers after the save's refetch.
+        return new Promise((resolve) => {
+          releaseOld = () => resolve(baselineReply({ ...baseline(), id: 'bsl_OLD' }));
+        });
+      }
+      return baselineReply(manualBaseline());
+    };
+    handlers.RecordManualInput = () => ({
+      data: {
+        recordManualInput: {
+          manualInput: {
+            id: 'min_1',
+            input: 'POPULATION',
+            value: '12000',
+            unit: 'COUNT',
+            enteredValue: '12000',
+            enteredUnit: 'people',
+            asOf: '2026-10-10',
+            note: 'Ward census table',
+          },
+          error: null,
+        },
+      },
+    });
+    renderArea();
+    // Readiness loads independently, so a value can be saved while the baseline loads.
+    const population = await populationRow();
+    expect(calls).toBe(1);
+    fireEvent.change(within(population).getByLabelText(/population served value/i), {
+      target: { value: '12000' },
+    });
+    fireEvent.change(within(population).getByLabelText(/^source/i), {
+      target: { value: 'Ward census table' },
+    });
+    await act(async () =>
+      fireEvent.click(within(population).getByRole('button', { name: /save value/i })),
+    );
+    const region = await baselineRegion();
+    await waitFor(() => expect(region).toHaveAttribute('data-baseline-id', 'bsl_MANUAL'));
+    expect(calls).toBe(2);
+    await act(async () => {
+      releaseOld();
+      await new Promise((r) => setTimeout(r, 50));
+    });
+    expect(screen.getByRole('region', { name: 'Your water baseline' })).toHaveAttribute(
+      'data-baseline-id',
+      'bsl_MANUAL',
+    );
+  });
+
+  it('shows chart provenance and explicit units, matching the cards', async () => {
+    handlers.AreaBaseline = () => baselineReply(demoBaseline());
+    renderArea();
+    const region = await baselineRegion();
+    // A synthetic series is never labelled plain "Measured".
+    const origin = card('delivered_supply').querySelector('[data-origin="MEASURED"]');
+    expect(origin).toHaveTextContent('Synthetic demo');
+    expect(origin).toHaveAttribute('data-synthetic');
+    expect(card('demand').querySelector('[data-origin="USER_ESTIMATE"]')).toHaveTextContent(
+      'Your estimate',
+    );
+    const figure = within(region).getByRole('figure', { name: /supply and demand by day/i });
+    fireEvent.click(within(figure).getByRole('button', { name: /show table/i }));
+    const headers = within(within(figure).getByRole('table'))
+      .getAllByRole('columnheader')
+      .map((h) => h.textContent);
+    expect(headers).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('Delivered supply (synthetic demo)'),
+        expect.stringContaining('Demand (your estimate)'),
+        expect.stringContaining('Tanker supply (synthetic demo)'),
+      ]),
+    );
+    // Cards and chart share the MLD unit; the demand card equals every demand cell.
+    expect(within(card('demand')).getByText('MLD')).toBeInTheDocument();
+    const demandCells = within(within(figure).getByRole('table'))
+      .getAllByRole('row')
+      .slice(1)
+      .map((r) => within(r).getAllByRole('cell')[1]?.textContent);
+    expect(new Set(demandCells)).toEqual(new Set(['10.0']));
+    expect(within(card('demand')).getByText('10.0')).toBeInTheDocument();
+  });
+
+  it('shows a retryable error and recovers', async () => {
+    let fail = true;
+    handlers.AreaBaseline = () =>
+      fail
+        ? { errors: [{ message: 'boom', extensions: { code: 'INTERNAL' } }] }
+        : baselineReply(manualBaseline());
+    renderArea();
+    expect(await screen.findByText('The baseline could not load')).toBeInTheDocument();
+    expect(card('demand')).toBeNull();
+    fail = false;
+    fireEvent.click(screen.getByRole('button', { name: /try again/i }));
+    expect(await screen.findByRole('region', { name: 'Your water baseline' })).toHaveAttribute(
+      'data-baseline-id',
+      'bsl_MANUAL',
+    );
+  });
+
+  it('shows a permission state', async () => {
+    handlers.AreaBaseline = () => ({
+      errors: [{ message: 'not found', extensions: { code: 'NOT_FOUND' } }],
+    });
+    renderArea();
+    expect(await screen.findByText('This baseline is not available to you')).toBeInTheDocument();
   });
 });

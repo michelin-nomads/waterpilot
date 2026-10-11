@@ -1,0 +1,150 @@
+@use 'mixins' as *;
+
+.page {
+  display: grid;
+  gap: var(--wl-space-5);
+}
+
+.panel {
+  @include card;
+
+  display: grid;
+  gap: var(--wl-space-4);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--wl-text-xl);
+}
+
+.subTitle {
+  margin: 0;
+  font-size: var(--wl-text-lg);
+}
+
+.form,
+.stack {
+  display: grid;
+  gap: var(--wl-space-4);
+}
+
+.grid {
+  display: grid;
+  gap: var(--wl-space-3);
+  grid-template-columns: minmax(0, 1fr);
+
+  @include tablet-up {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.target,
+.checks,
+.estimate {
+  display: grid;
+  gap: var(--wl-space-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
+.estimate {
+  padding-block-start: var(--wl-space-3);
+  border-block-start: 1px solid var(--wl-color-border);
+}
+
+.legend {
+  margin-block-end: var(--wl-space-2);
+  padding: 0;
+  font-weight: 600;
+}
+
+.check {
+  @include tap-target;
+
+  display: flex;
+  align-items: center;
+  gap: var(--wl-space-2);
+}
+
+.inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--wl-space-3);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wl-space-3);
+}
+
+.error {
+  margin: 0;
+  color: var(--wl-color-danger-text);
+  font-size: var(--wl-text-sm);
+}
+
+.muted {
+  margin: 0;
+  color: var(--wl-color-text-muted);
+  font-size: var(--wl-text-sm);
+}
+
+.assessment {
+  display: grid;
+  gap: var(--wl-space-4);
+}
+
+.assessmentHead,
+.measureHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wl-space-2);
+}
+
+.summary {
+  margin: 0;
+  font-size: var(--wl-text-md);
+}
+
+.block {
+  display: grid;
+  gap: var(--wl-space-2);
+}
+
+.blockTitle {
+  margin: 0;
+  font-size: var(--wl-text-md);
+}
+
+.list,
+.fitList {
+  display: grid;
+  gap: var(--wl-space-1);
+  margin: 0;
+  padding-inline-start: var(--wl-space-5);
+}
+
+.measures {
+  display: grid;
+  gap: var(--wl-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.measure {
+  display: grid;
+  gap: var(--wl-space-2);
+  padding-block-start: var(--wl-space-3);
+  border-block-start: 1px solid var(--wl-color-border);
+}
+
+.measureName {
+  font-weight: 600;
+}

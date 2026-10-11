@@ -4,13 +4,16 @@ Traditional and Agent modes; five stages; no drafts)."""
 
 from __future__ import annotations
 
+import re
 from datetime import date
+from decimal import Decimal
 from enum import StrEnum
 from typing import Literal, Self
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import Field, field_validator, model_validator
 
+from waterlens.domain.impact_records import OptionImpact
 from waterlens.domain.location import (
     MAX_RADIUS_M,
     MIN_RADIUS_M,
@@ -37,6 +40,7 @@ from waterlens.domain.values import (
     Quantity,
     Unit,
     UtcDateTime,
+    canonical_decimal,
 )
 
 
@@ -166,6 +170,7 @@ class GoalKind(StrEnum):
     REDUCE_TANKER_DEPENDENCE = "reduce_tanker_dependence"
     REDUCE_FLOOD_RISK = "reduce_flood_risk"
     IMPROVE_WATER_QUALITY = "improve_water_quality"
+    REDUCE_WATER_BILLS = "reduce_water_bills"
     CUSTOM = "custom"
 
 
@@ -191,26 +196,180 @@ class GoalTarget(Frozen):
             raise ValueError("a relative reduction target is a ratio in [0, 1]")
         return self
 
+    @field_validator("quantity")
+    @classmethod
+    def _canonical(cls, value: Quantity) -> Quantity:
+        return value.canonical()
 
-class Goal(Frozen):
-    id: str
+
+class DayRange(Frozen):
+    low: int = Field(ge=0)
+    high: int = Field(ge=0)
+
+    @model_validator(mode="after")
+    def _ordered(self) -> Self:
+        if self.low > self.high:
+            raise ValueError("day range low must not exceed high")
+        return self
+
+
+class SiteScale(StrEnum):
+    HOUSEHOLD = "household"
+    BUILDING = "building"
+    NEIGHBOURHOOD = "neighbourhood"
+    UTILITY = "utility"
+
+
+class SiteRestriction(StrEnum):
+    """Restrictions the person declares; a declared restriction can never be overridden
+    by a plan, a tool or the agent (``domain/goals.py``)."""
+
+    NO_EXCAVATION = "no_excavation"
+    NO_STRUCTURAL_CHANGES = "no_structural_changes"
+    NO_RECHARGE = "no_recharge"
+    NO_GREYWATER_REUSE = "no_greywater_reuse"
+    NO_PERMIT_WORKS = "no_permit_works"
+
+
+INTERVENTION_ID = r"^[a-z][a-z0-9_]{2,63}$"
+PARAMETER_ID = r"^[a-z][a-z0-9_]{1,63}$"
+
+
+def _area_quantity(value: Quantity | None) -> Quantity | None:
+    if value is not None and (value.unit is not Unit.SQUARE_METRE or Decimal(value.value) < 0):
+        raise ValueError("an area is a non-negative value in m2")
+    return None if value is None else value.canonical()
+
+
+class SiteConstraints(Frozen):
+    """What is known about the site. ``None`` means not known (never assumed)."""
+
+    scale: SiteScale | None = None
+    roof_area: Quantity | None = None
+    open_ground: Quantity | None = None
+    """Unpaved or permeable ground that could be dug or opened, in m2."""
+    storage_space: bool | None = None
+    piped_supply: bool | None = None
+    groundwater_use: bool | None = None
+    """Whether the site pumps groundwater (a borewell or well), as the person declares."""
+    restrictions: tuple[SiteRestriction, ...] = Field(default=(), max_length=10)
+
+    _areas = field_validator("roof_area", "open_ground")(_area_quantity)
+
+    @field_validator("restrictions")
+    @classmethod
+    def _distinct(cls, value: tuple[SiteRestriction, ...]) -> tuple[SiteRestriction, ...]:
+        if len(set(value)) != len(value):
+            raise ValueError("each restriction is listed once")
+        return value
+
+
+class EffectEstimate(Frozen):
+    """The person's range for one of a measure's effect inputs (catalogue ``effect_inputs``),
+    in that input's canonical unit. Checked against the catalogue by ``validate_goal``."""
+
+    key: str = Field(pattern=r"^[a-z][a-z0-9_]{1,63}$")
+    low: DecimalString
+    high: DecimalString
+
+    @field_validator("low", "high")
+    @classmethod
+    def _canonical(cls, value: str) -> str:
+        return canonical_decimal(value)
+
+    @model_validator(mode="after")
+    def _ordered(self) -> Self:
+        if Decimal(self.low) > Decimal(self.high):
+            raise ValueError("an estimate range runs from low to high")
+        return self
+
+
+class MeasureEstimate(Frozen):
+    """The person's own figures for one catalogue measure: always labelled their
+    estimate, never treated as sourced, never converted between currencies."""
+
+    intervention_id: str = Field(pattern=INTERVENTION_ID)
+    cost: MoneyRange | None = None
+    build_days: DayRange | None = None
+    effects: tuple[EffectEstimate, ...] = Field(default=(), max_length=5)
+    note: str = Field(default="", max_length=500)
+
+    @field_validator("cost")
+    @classmethod
+    def _canonical(cls, value: MoneyRange | None) -> MoneyRange | None:
+        return None if value is None else value.canonical()
+
+    @model_validator(mode="after")
+    def _something(self) -> Self:
+        if self.cost is None and self.build_days is None and not self.effects:
+            raise ValueError("an estimate gives a cost range, a build time or an effect")
+        if len({e.key for e in self.effects}) != len(self.effects):
+            raise ValueError("each effect is estimated once")
+        if self.cost is not None and int(self.cost.low.minor_units) < 0:
+            raise ValueError("a cost cannot be negative")
+        return self
+
+
+class GoalFields(Frozen):
     kind: GoalKind
     description: str = Field(default="", max_length=2000)
     target: GoalTarget | None = None
+    target_parameter: str | None = Field(default=None, pattern=PARAMETER_ID)
+    """Which parameter a water-quality or custom target refers to (e.g. ``nitrate``)."""
     budget: Money | None = None
     timeline_days: int | None = Field(default=None, ge=1, le=36_500)
+    """Maximum implementation (build) time."""
+    horizon_days: int | None = Field(default=None, ge=1, le=36_500)
+    """Planning horizon over which benefits count; separate from build time."""
     priority: Priority | None = None
+    also: tuple[GoalKind, ...] = Field(default=(), max_length=3)
+    """Further objectives checked for conflicts with the main goal."""
+    site: SiteConstraints = SiteConstraints()
+    preferred_interventions: tuple[str, ...] = Field(default=(), max_length=10)
+    estimates: tuple[MeasureEstimate, ...] = Field(default=(), max_length=20)
+    confirmed: bool = False
+    """A custom goal is used for planning only after the person confirms its wording."""
+
+    @field_validator("site", mode="before")
+    @classmethod
+    def _site(cls, value: object) -> object:
+        return SiteConstraints() if value is None else value
+
+    @field_validator("budget")
+    @classmethod
+    def _canonical_budget(cls, value: Money | None) -> Money | None:
+        return None if value is None else value.canonical()
+
+    @field_validator("preferred_interventions")
+    @classmethod
+    def _ids(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        if any(re.fullmatch(INTERVENTION_ID, v) is None for v in value):
+            raise ValueError("unknown measure id")
+        return value
+
+
+class Goal(GoalFields):
+    id: str
 
 
 class AdjustmentChange(StrEnum):
-    RELATIVE = "relative"
-    ABSOLUTE = "absolute"
+    """How a scenario changes a baseline quantity. Relative changes are a ratio magnitude
+    in [0, 1] (``0.2`` with DECREASE_BY is "20% less"); SET_TO uses the parameter's unit."""
+
+    INCREASE_BY = "increase_by"
+    DECREASE_BY = "decrease_by"
+    SET_TO = "set_to"
 
 
 class ScenarioAdjustment(Frozen):
     parameter: str = Field(pattern=r"^[a-z][a-z0-9_]{1,63}$")
     change: AdjustmentChange
     quantity: Quantity
+
+    @field_validator("quantity")
+    @classmethod
+    def _canonical(cls, value: Quantity) -> Quantity:
+        return value.canonical()
 
 
 class Scenario(Frozen):
@@ -254,17 +413,9 @@ class ImpactAssessment(Frozen):
     neighbour_effect: MeasuredValue
     assumptions: tuple[str, ...] = Field(default=(), max_length=MAX_LIST_ITEMS)
     provenance: Provenance
-
-
-class DayRange(Frozen):
-    low: int = Field(ge=0)
-    high: int = Field(ge=0)
-
-    @model_validator(mode="after")
-    def _ordered(self) -> Self:
-        if self.low > self.high:
-            raise ValueError("day range low must not exceed high")
-        return self
+    wider: OptionImpact | None = None
+    """The wider-system assessment shown with the option when it was chosen (ADR 0013);
+    None for options stored before it existed."""
 
 
 class PlanOption(Frozen):
@@ -282,6 +433,11 @@ class PlanOption(Frozen):
     best_fit_reason: str | None = None
     impact: ImpactAssessment
     cost_basis_date: date | None = None
+    comparison_id: str | None = None
+    """The deterministic comparison (engine versions, catalogue, baseline, goal, scenario)
+    that produced this option; None for options imported before the option engine."""
+    engine_version: str | None = None
+    intervention_ids: tuple[str, ...] = Field(default=(), max_length=10)
 
     @model_validator(mode="after")
     def _cost_explained(self) -> Self:

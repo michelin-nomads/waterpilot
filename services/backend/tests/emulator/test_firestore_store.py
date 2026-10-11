@@ -6,6 +6,8 @@ from __future__ import annotations
 import threading
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
+from datetime import date
+from fractions import Fraction
 from pathlib import Path
 from typing import Any
 
@@ -25,7 +27,7 @@ from firestore_support import (
 )
 
 from conftest import LOCAL_OK, LoadSettings
-from graphql_harness import AREA_ID, NOW
+from graphql_harness import AREA_ID, NOW, seed_plan_option
 from store_contract import StoreContract
 from waterlens.adapters.catalogue_synthetic import SYNTHETIC_SCHEME_ID
 from waterlens.adapters.factory import build_api_runtime
@@ -36,7 +38,22 @@ from waterlens.application.pagination import PageArgs, page_query
 from waterlens.application.services import Deps, Services
 from waterlens.domain.communities import CommunityStatus
 from waterlens.domain.errors import DomainError, ErrorCode
-from waterlens.domain.planning import SessionStatus
+from waterlens.domain.ids import IdKind, new_id
+from waterlens.domain.impact import (
+    ConnectivityEvidence,
+    ImpactInputs,
+    NearbyInput,
+    QualityInput,
+    SourcedValue,
+    assess,
+)
+from waterlens.domain.impact_records import Citation, CitationKind, OptionImpact
+from waterlens.domain.interventions import CATALOGUE
+from waterlens.domain.options import compare_options, comparison_key
+from waterlens.domain.planning import Goal, GoalFields, GoalKind, SessionStatus, SiteConstraints
+from waterlens.domain.reports import Report
+from waterlens.domain.scenario import Balance
+from waterlens.domain.values import Unit
 
 pytestmark = pytest.mark.emulator
 
@@ -185,6 +202,122 @@ def test_conflicting_session_updates_let_exactly_one_win(store: FirestoreStore) 
     assert len(winners) == 1 and winners[0].version == 2
     assert {e.code for e in losers} == {ErrorCode.VERSION_CONFLICT}
     assert s.sessions.get(ctx("alice"), session.id).stage == winners[0].stage
+
+
+def test_a_selected_engine_option_round_trips_with_its_comparison(store: FirestoreStore) -> None:
+    s = services(store)
+    session = s.sessions.create(ctx("alice"), {"mode": "traditional", "area_id": AREA_ID}, key(9))
+    legacy = store.plan_options.get(seed_plan_option(store, session.id, 1_000_000))
+    assert legacy is not None and legacy.comparison_id is None
+    engine = legacy.model_copy(
+        update={
+            "id": legacy.id[:-1] + ("A" if legacy.id[-1] != "A" else "B"),
+            "comparison_id": "c" * 64,
+            "engine_version": "options-1",
+            "intervention_ids": ("efficient_fixtures", "greywater_reuse"),
+        }
+    )
+    store.plan_options.add(engine)
+    store.plan_options.add(engine)  # a retry writes the same document
+    assert store.plan_options.get(engine.id) == engine
+    listed = s.sessions.plan_options(ctx("alice"), session.id, PageArgs(first=10))
+    assert {o.id for o in listed.items} == {legacy.id, engine.id}
+
+
+def _wider_impact() -> OptionImpact:
+    site = SiteConstraints.model_validate(
+        {"scale": "building", "storage_space": True, "piped_supply": True, "groundwater_use": True}
+    )
+    g = GoalFields.model_validate(
+        {
+            "kind": "reduce_tanker_dependence",
+            "target": {"mode": "absolute_level", "quantity": {"value": "0.2", "unit": "ratio"}},
+            "site": site.model_dump(),
+            "estimates": [
+                {
+                    "intervention_id": "leak_detection_and_repair",
+                    "effects": [
+                        {"key": "leakage_share", "low": "0.3", "high": "0.4"},
+                        {"key": "recovered_share", "low": "0.6", "high": "0.8"},
+                    ],
+                },
+                {
+                    "intervention_id": "greywater_reuse",
+                    "effects": [{"key": "reuse_share", "low": "0.3", "high": "0.4"}],
+                },
+            ],
+        }
+    )
+    base = Balance(Fraction(1000), Fraction(700), Fraction(300), Fraction(730))
+    key_ = comparison_key(baseline_id="bsl_A", goal=g, adjustments=())
+    c = compare_options(
+        key=key_, goal=g, base=base, adjustments=(), baseline_id="bsl_A", catalogue=CATALOGUE
+    )
+    source = Citation(kind=CitationKind.SOURCE, ref="snp_1", label="State groundwater board")
+    evidence = ConnectivityEvidence.model_validate(
+        {
+            "id": "aq-unit-7",
+            "system": "aquifer",
+            "linkage": "linked",
+            "unit_name": "Unit 7",
+            "area_ids": [AREA_ID, "are_NEXT"],
+            "basis": "mapped_boundary",
+            "source_ids": ["src_atlas"],
+            "method": "Test delineation",
+            "as_of": "2025-03-01",
+            "quality": "provisional",
+            "uncertainty": "Test fixture only.",
+        }
+    )
+    inputs = ImpactInputs(
+        area_id=AREA_ID,
+        area_name="Synthville",
+        area_extent="Synthetic boundary.",
+        site=site,
+        abstraction=SourcedValue(Fraction(5000), date(2026, 9, 30), (source,)),
+        groundwater_level=SourcedValue(Fraction(23, 2), date(2026, 9, 1), (source,)),
+        water_quality=(
+            QualityInput(
+                "nitrate", Fraction(52), Unit.MG_PER_LITRE, date(2026, 8, 14), None, (source,)
+            ),
+        ),
+        connectivity=(evidence,),
+        nearby=(NearbyInput("Next ward", "com_NEXT", "are_NEXT", 900),),
+    )
+    reuse = next(o for o in c.options if "greywater_reuse" in o.intervention_ids)
+    return assess(c, inputs, CATALOGUE).options[reuse.id]
+
+
+def test_a_chosen_option_and_report_keep_the_wider_impact_through_firestore(
+    store: FirestoreStore,
+) -> None:
+    s = services(store)
+    session = s.sessions.create(ctx("alice"), {"mode": "traditional", "area_id": AREA_ID}, key(8))
+    legacy = store.plan_options.get(seed_plan_option(store, session.id, 1_000_000))
+    assert legacy is not None
+    wider = _wider_impact()
+    assert wider.false_resilience and wider.reviews and wider.context.nearby
+    assert wider.context.water_quality
+    chosen = legacy.model_copy(update={"impact": legacy.impact.model_copy(update={"wider": wider})})
+    store.plan_options.add(chosen)
+    stored = store.plan_options.get(chosen.id)
+    assert stored is not None and stored.impact.wider == wider
+    report = Report(
+        id=new_id(IdKind.REPORT),
+        owner_uid="alice",
+        session_id=session.id,
+        area_id=AREA_ID,
+        plan_option_id=chosen.id,
+        plan_name=chosen.name,
+        title="Ward plan",
+        goal=Goal(id=new_id(IdKind.GOAL), kind=GoalKind.REDUCE_TANKER_DEPENDENCE),
+        finalized_at=NOW,
+        impact=stored.impact,
+        created_at=NOW,
+        updated_at=NOW,
+    )
+    store.transaction(lambda: store.reports.insert(report))
+    assert store.reports.get(report.id) == report
 
 
 def test_concurrent_session_starts_leave_one_active_session(store: FirestoreStore) -> None:

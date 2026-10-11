@@ -13,6 +13,8 @@ packages/contracts/src/openapi.ts
 packages/contracts/openapi.json
 packages/contracts/schema.graphql
 apps/web/src/graphql/generated
+# Generated from the runtime catalogue (npm run intervention-catalogue; drift-tested).
+docs/domain/interventions.catalogue.json
 docs/design/reference
 
 # Provided source-of-truth documents — preserve verbatim, never reformat.

@@ -14,8 +14,9 @@ export type AccountKind =
   | 'PERMANENT';
 
 export type AdjustmentChange =
-  | 'ABSOLUTE'
-  | 'RELATIVE';
+  | 'DECREASE_BY'
+  | 'INCREASE_BY'
+  | 'SET_TO';
 
 export type AdminContextInput = {
   admin1?: string | null | undefined;
@@ -51,6 +52,31 @@ export type Availability =
   | 'PROVISIONAL'
   | 'UNAVAILABLE';
 
+/** Why a baseline value is unavailable. */
+export type BaselineReason =
+  | 'EMPTY_WINDOW'
+  | 'INCOMPATIBLE_UNIT'
+  | 'INCONSISTENT_INPUTS'
+  | 'MISSING_INPUT'
+  | 'MIXED_RESOLUTION'
+  | 'NEEDS_DAILY_SERIES'
+  | 'NEEDS_FORWARD_SERIES'
+  | 'SERIES_TOO_SHORT'
+  | 'UNSUPPORTED_FORMAT'
+  | 'ZERO_MEAN_DEMAND'
+  | 'ZERO_TOTAL_DEMAND'
+  | 'ZERO_TOTAL_SUPPLY';
+
+export type BenefitTiming =
+  | 'AFTER_COMMISSIONING'
+  | 'AFTER_RAINFALL'
+  | 'AFTER_WET_SEASONS';
+
+export type BoundaryLevel =
+  | 'AREA'
+  | 'SHARED_SYSTEM'
+  | 'SITE';
+
 export type CancelAccountClaimInput = {
   claimId: string;
   expectedVersion: number;
@@ -84,6 +110,14 @@ export type Capability =
   | 'SURFACE_WATER'
   | 'UTILITY_SUPPLY'
   | 'WATER_QUALITY';
+
+export type CitationKind =
+  | 'CATALOGUE'
+  | 'COMPARISON'
+  | 'CONNECTIVITY'
+  | 'SITE_FACT'
+  | 'SOURCE'
+  | 'USER_INPUT';
 
 export type CommunityFilter = {
   areaId?: string | null | undefined;
@@ -141,6 +175,28 @@ export type CriterionStatus =
   | 'NEEDS_CHECK'
   | 'NOT_MET';
 
+export type DayRangeInput = {
+  high: number;
+  low: number;
+};
+
+export type EffectDirection =
+  | 'EITHER'
+  | 'POSSIBLE_BENEFIT'
+  | 'POSSIBLE_HARM';
+
+export type EffectEstimateInput = {
+  high: string;
+  key: string;
+  low: string;
+};
+
+/** Where an effect value came from: USER_ESTIMATE (your range), BASELINE (the sourced baseline value) or SCENARIO (set by the confirmed what-if). The catalogue never supplies effect values. */
+export type EffectOrigin =
+  | 'BASELINE'
+  | 'SCENARIO'
+  | 'USER_ESTIMATE';
+
 export type ErrorCode =
   | 'ARCHIVED'
   | 'BUDGET_EXHAUSTED'
@@ -182,6 +238,18 @@ export type FinalizeReportInput = {
   title: string;
 };
 
+export type FindingBasis =
+  | 'DECLARED'
+  | 'ENGINE_ESTIMATE'
+  | 'MECHANISM'
+  | 'SOURCED';
+
+export type FindingKind =
+  | 'EXTERNALITY'
+  | 'FALSE_RESILIENCE'
+  | 'LOCAL_BENEFIT'
+  | 'TRADEOFF';
+
 export type FundingMatchStatus =
   | 'ADDED'
   | 'CANDIDATE'
@@ -204,11 +272,18 @@ export type GeographicScope =
   | 'SUBLOCALITY';
 
 export type GoalInput = {
+  also?: Array<GoalKind>;
   budget?: MoneyInput | null | undefined;
+  confirmed?: boolean;
   description?: string;
+  estimates?: Array<MeasureEstimateInput>;
+  horizonDays?: number | null | undefined;
   kind: GoalKind;
+  preferredInterventions?: Array<string>;
   priority?: Priority | null | undefined;
+  site?: SiteConstraintsInput | null | undefined;
   target?: GoalTargetInput | null | undefined;
+  targetParameter?: string | null | undefined;
   timelineDays?: number | null | undefined;
 };
 
@@ -218,12 +293,38 @@ export type GoalKind =
   | 'IMPROVE_WATER_QUALITY'
   | 'REDUCE_FLOOD_RISK'
   | 'REDUCE_SHORTAGE'
-  | 'REDUCE_TANKER_DEPENDENCE';
+  | 'REDUCE_TANKER_DEPENDENCE'
+  | 'REDUCE_WATER_BILLS';
+
+export type GoalOutcome =
+  | 'FEASIBLE'
+  | 'INFEASIBLE'
+  | 'NOT_ASSESSABLE';
 
 export type GoalTargetInput = {
   mode: TargetMode;
   quantity: QuantityInput;
 };
+
+export type GroundwaterReliance =
+  | 'DECLARED'
+  | 'NONE_RECORDED'
+  | 'SOURCED'
+  | 'UNKNOWN';
+
+export type IndicatorStatistic =
+  | 'LATEST'
+  | 'WINDOW_MEAN'
+  | 'WINDOW_TOTAL';
+
+export type InterventionFamily =
+  | 'DEMAND_CONSERVATION'
+  | 'GREYWATER_REUSE'
+  | 'LEAKAGE_REDUCTION'
+  | 'RAINWATER_HARVESTING'
+  | 'RECHARGE'
+  | 'STORAGE'
+  | 'STORMWATER';
 
 export type JobKind =
   | 'FUNDING_MATCH'
@@ -247,10 +348,24 @@ export type LeaveCommunityInput = {
   expectedVersion: number;
 };
 
+/** Whether places share a system, from reviewed evidence only. Unknown unless a record says otherwise; being close never decides it. */
+export type Linkage =
+  | 'LINKED'
+  | 'NOT_LINKED'
+  | 'UNKNOWN';
+
 export type MatchFundingInput = {
   idempotencyKey: string;
   planOptionId: string;
   sessionId: string;
+};
+
+export type MeasureEstimateInput = {
+  buildDays?: DayRangeInput | null | undefined;
+  cost?: MoneyRangeInput | null | undefined;
+  effects?: Array<EffectEstimateInput>;
+  interventionId: string;
+  note?: string;
 };
 
 export type MembershipRole =
@@ -274,6 +389,11 @@ export type MoneyInput = {
   minorUnits: string;
 };
 
+export type MoneyRangeInput = {
+  high: MoneyInput;
+  low: MoneyInput;
+};
+
 /** A search circle around a point the user chose. */
 export type NearbyCommunitiesInput = {
   latitude: string;
@@ -286,6 +406,25 @@ export type ObservationEvidence =
   | 'RECORDED'
   | 'REJECTED'
   | 'VERIFIED';
+
+export type ObservationMethod =
+  | 'ADMINISTRATIVE_RECORD'
+  | 'IN_SITU_MEASUREMENT'
+  | 'MODEL_OUTPUT'
+  | 'REMOTE_SENSING'
+  | 'SURVEY';
+
+/** OPTIONS, or why there are none: NO_FEASIBLE_PLAN, NEEDS_INPUT, TARGET_ALREADY_MET, NOT_SUPPORTED. */
+export type PlanComparisonStatus =
+  | 'NEEDS_INPUT'
+  | 'NOT_SUPPORTED'
+  | 'NO_FEASIBLE_PLAN'
+  | 'OPTIONS'
+  | 'TARGET_ALREADY_MET';
+
+export type PlanMetric =
+  | 'SHORTAGE_DAYS'
+  | 'TANKER_DEPENDENCE';
 
 export type PlanningMode =
   | 'AGENT'
@@ -326,7 +465,8 @@ export type ProposalSection =
   | 'EXECUTIVE_SUMMARY'
   | 'FUNDING'
   | 'PLAN'
-  | 'SOURCES';
+  | 'SOURCES'
+  | 'WIDER_IMPACT';
 
 export type ProposalStatus =
   | 'APPROVED'
@@ -390,6 +530,11 @@ export type ReportStatus =
   | 'ARCHIVED'
   | 'FINALIZED';
 
+export type ReviewKind =
+  | 'HYDROGEOLOGICAL'
+  | 'STRUCTURAL'
+  | 'WATER_QUALITY';
+
 export type ScenarioAdjustmentInput = {
   change: AdjustmentChange;
   parameter: string;
@@ -402,9 +547,54 @@ export type ScenarioInput = {
   interpretedFrom?: string | null | undefined;
 };
 
+export type ScenarioPreviewAdjustmentInput = {
+  change: AdjustmentChange;
+  parameter: string;
+  quantity: QuantityInput;
+};
+
+export type ScenarioPreviewInput = {
+  adjustments?: Array<ScenarioPreviewAdjustmentInput>;
+};
+
 export type SessionStatus =
   | 'ACTIVE'
   | 'CLOSED';
+
+/** A system that can carry a measure's effect beyond the site. */
+export type SharedSystem =
+  | 'AQUIFER'
+  | 'CATCHMENT'
+  | 'SUPPLY_NETWORK';
+
+export type SiteConstraintsInput = {
+  groundwaterUse?: boolean | null | undefined;
+  openGround?: QuantityInput | null | undefined;
+  pipedSupply?: boolean | null | undefined;
+  restrictions?: Array<SiteRestriction>;
+  roofArea?: QuantityInput | null | undefined;
+  scale?: SiteScale | null | undefined;
+  storageSpace?: boolean | null | undefined;
+};
+
+export type SiteRequirement =
+  | 'OPEN_GROUND'
+  | 'PIPED_SUPPLY'
+  | 'ROOF_AREA'
+  | 'STORAGE_SPACE';
+
+export type SiteRestriction =
+  | 'NO_EXCAVATION'
+  | 'NO_GREYWATER_REUSE'
+  | 'NO_PERMIT_WORKS'
+  | 'NO_RECHARGE'
+  | 'NO_STRUCTURAL_CHANGES';
+
+export type SiteScale =
+  | 'BUILDING'
+  | 'HOUSEHOLD'
+  | 'NEIGHBOURHOOD'
+  | 'UTILITY';
 
 export type StartImplementationProjectInput = {
   idempotencyKey: string;
@@ -454,6 +644,12 @@ export type UpdatePlanningSessionInput = {
   patch: PlanningSessionPatch;
 };
 
+/** Measured, your estimate or modelled; shown distinctly wherever a value is. */
+export type ValueOrigin =
+  | 'MEASURED'
+  | 'MODELED'
+  | 'USER_ESTIMATE';
+
 export type WindowStatus =
   | 'CLOSED'
   | 'OPEN'
@@ -480,6 +676,18 @@ export type CancelAccountClaimMutationVariables = Exact<{
 
 
 export type CancelAccountClaimMutation = { cancelAccountClaim: { claim: { id: string, version: number, status: AccountClaimStatus, expiresAt: string, transferredSessionId: string | null, closedSessionId: string | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
+
+export type EvidenceLinkFieldsFragment = { input: ReadinessInput | null, capability: Capability | null, snapshotId: string | null, manualInputId: string | null, title: string, publisher: string | null, url: string | null, asOf: string | null, quality: EvidenceQuality | null, method: ObservationMethod | null, uncertainty: string, note: string | null, demo: boolean };
+
+export type BaselineFieldsFragment = { id: string, areaId: string, sessionId: string | null, asOf: string, engineVersion: string, exceedanceP: string, windowDays: number, demo: boolean, basis: AssessmentBasis, missingEssentials: Array<ReadinessInput>, missingOptional: Array<ReadinessInput>, notes: Array<string>, window: { start: string, endExclusive: string, days: number } | null, metrics: Array<{ metric: string, name: string, formula: string, unit: CanonicalUnit, availability: Availability, exact: string | null, value: string | null, reason: BaselineReason | null, reasons: Array<string>, origin: ValueOrigin | null, daily: boolean, asOf: string | null, assumptions: Array<string>, demo: boolean, recordedDays: number | null, periodDays: number | null, evidence: Array<{ input: ReadinessInput | null, capability: Capability | null, snapshotId: string | null, manualInputId: string | null, title: string, publisher: string | null, url: string | null, asOf: string | null, quality: EvidenceQuality | null, method: ObservationMethod | null, uncertainty: string, note: string | null, demo: boolean }>, supporting: Array<{ key: string, exact: string, value: string, unit: CanonicalUnit }> }>, indicators: Array<{ indicator: string, name: string, capability: Capability, statistic: IndicatorStatistic, variable: string | null, parameter: string | null, unit: CanonicalUnit | null, availability: Availability, exact: string | null, value: string | null, observedOn: string | null, reason: BaselineReason | null, reasons: Array<string>, origin: ValueOrigin | null, demo: boolean, window: { start: string, endExclusive: string, days: number } | null, evidence: Array<{ input: ReadinessInput | null, capability: Capability | null, snapshotId: string | null, manualInputId: string | null, title: string, publisher: string | null, url: string | null, asOf: string | null, quality: EvidenceQuality | null, method: ObservationMethod | null, uncertainty: string, note: string | null, demo: boolean }> }>, chart: { monthly: boolean, buckets: Array<{ start: string, endExclusive: string, days: number }>, series: Array<{ key: string, values: Array<string | null>, origin: ValueOrigin | null, demo: boolean }> } | null };
+
+export type AreaBaselineQueryVariables = Exact<{
+  areaId: string;
+  sessionId?: string | null | undefined;
+}>;
+
+
+export type AreaBaselineQuery = { area: { id: string, name: string, unitSystem: UnitSystem, baseline: { id: string, areaId: string, sessionId: string | null, asOf: string, engineVersion: string, exceedanceP: string, windowDays: number, demo: boolean, basis: AssessmentBasis, missingEssentials: Array<ReadinessInput>, missingOptional: Array<ReadinessInput>, notes: Array<string>, window: { start: string, endExclusive: string, days: number } | null, metrics: Array<{ metric: string, name: string, formula: string, unit: CanonicalUnit, availability: Availability, exact: string | null, value: string | null, reason: BaselineReason | null, reasons: Array<string>, origin: ValueOrigin | null, daily: boolean, asOf: string | null, assumptions: Array<string>, demo: boolean, recordedDays: number | null, periodDays: number | null, evidence: Array<{ input: ReadinessInput | null, capability: Capability | null, snapshotId: string | null, manualInputId: string | null, title: string, publisher: string | null, url: string | null, asOf: string | null, quality: EvidenceQuality | null, method: ObservationMethod | null, uncertainty: string, note: string | null, demo: boolean }>, supporting: Array<{ key: string, exact: string, value: string, unit: CanonicalUnit }> }>, indicators: Array<{ indicator: string, name: string, capability: Capability, statistic: IndicatorStatistic, variable: string | null, parameter: string | null, unit: CanonicalUnit | null, availability: Availability, exact: string | null, value: string | null, observedOn: string | null, reason: BaselineReason | null, reasons: Array<string>, origin: ValueOrigin | null, demo: boolean, window: { start: string, endExclusive: string, days: number } | null, evidence: Array<{ input: ReadinessInput | null, capability: Capability | null, snapshotId: string | null, manualInputId: string | null, title: string, publisher: string | null, url: string | null, asOf: string | null, quality: EvidenceQuality | null, method: ObservationMethod | null, uncertainty: string, note: string | null, demo: boolean }> }>, chart: { monthly: boolean, buckets: Array<{ start: string, endExclusive: string, days: number }>, series: Array<{ key: string, values: Array<string | null>, origin: ValueOrigin | null, demo: boolean }> } | null } } | null };
 
 export type MutationErrorFieldsFragment = { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> };
 
@@ -582,6 +790,35 @@ export type MatchFundingMutationVariables = Exact<{
 
 export type MatchFundingMutation = { matchFunding: { matches: Array<{ id: string, version: number, sessionId: string, planOptionId: string, metCount: number, notMetCount: number, needsCheckCount: number, window: WindowStatus, status: FundingMatchStatus, rulesVersion: string, results: Array<{ criterionId: string, status: CriterionStatus, reason: string }>, scheme: { id: string, name: string, funder: string, summary: string, currency: string, opensOn: string | null, closesOn: string | null, sourceUrl: string, lastVerifiedAt: string, evidence: EvidenceQuality, requiredDocuments: Array<string>, maxAmount: { minorUnits: string, currency: string, exponent: number } | null, criteria: Array<{ id: string, text: string, machineCheckable: boolean }> } }> | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
+export type GoalAssessmentFieldsFragment = { outcome: GoalOutcome, summary: string, nextSteps: Array<string>, catalogueVersion: string, baselineId: string | null, target: { outcome: GoalOutcome, message: string, metric: string | null, unit: Unit | null, baseline: string | null, targetLevel: string | null, caveats: Array<string> }, constraints: Array<{ code: string, message: string, outcome: GoalOutcome | null }>, conflicts: Array<{ code: string, message: string, outcome: GoalOutcome | null }>, interventions: Array<{ interventionId: string, name: string, family: InterventionFamily, relevant: boolean, outcome: GoalOutcome, benefit: string, preferred: boolean, site: { outcome: GoalOutcome, message: string }, cost: { outcome: GoalOutcome, message: string } | null, time: { outcome: GoalOutcome, message: string } | null }> };
+
+export type InterventionCatalogueQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type InterventionCatalogueQuery = { interventionCatalogue: { version: string, interventions: Array<{ id: string, family: InterventionFamily, name: string, summary: string, serves: Array<GoalKind>, scales: Array<SiteScale>, requires: Array<SiteRequirement>, blockedBy: Array<SiteRestriction>, permissions: Array<string>, maintenance: Array<string>, costSources: Array<string>, construction: string, benefitTiming: BenefitTiming, benefitNote: string, evidence: Array<string>, effectModel: string | null, cautions: Array<string>, costInputs: Array<{ key: string, label: string }>, effectInputs: Array<{ key: string, label: string, unit: Unit, minimum: string, maximum: string, required: boolean, note: string }> }> } };
+
+export type CheckGoalQueryVariables = Exact<{
+  sessionId: string;
+  goal: GoalInput;
+}>;
+
+
+export type CheckGoalQuery = { checkGoal: { errors: Array<{ field: string, message: string }>, assessment: { outcome: GoalOutcome, summary: string, nextSteps: Array<string>, catalogueVersion: string, baselineId: string | null, target: { outcome: GoalOutcome, message: string, metric: string | null, unit: Unit | null, baseline: string | null, targetLevel: string | null, caveats: Array<string> }, constraints: Array<{ code: string, message: string, outcome: GoalOutcome | null }>, conflicts: Array<{ code: string, message: string, outcome: GoalOutcome | null }>, interventions: Array<{ interventionId: string, name: string, family: InterventionFamily, relevant: boolean, outcome: GoalOutcome, benefit: string, preferred: boolean, site: { outcome: GoalOutcome, message: string }, cost: { outcome: GoalOutcome, message: string } | null, time: { outcome: GoalOutcome, message: string } | null }> } | null } };
+
+export type GoalAssessmentQueryVariables = Exact<{
+  sessionId: string;
+}>;
+
+
+export type GoalAssessmentQuery = { planningSession: { id: string, inputsRevision: number, goalAssessment: { outcome: GoalOutcome, summary: string, nextSteps: Array<string>, catalogueVersion: string, baselineId: string | null, target: { outcome: GoalOutcome, message: string, metric: string | null, unit: Unit | null, baseline: string | null, targetLevel: string | null, caveats: Array<string> }, constraints: Array<{ code: string, message: string, outcome: GoalOutcome | null }>, conflicts: Array<{ code: string, message: string, outcome: GoalOutcome | null }>, interventions: Array<{ interventionId: string, name: string, family: InterventionFamily, relevant: boolean, outcome: GoalOutcome, benefit: string, preferred: boolean, site: { outcome: GoalOutcome, message: string }, cost: { outcome: GoalOutcome, message: string } | null, time: { outcome: GoalOutcome, message: string } | null }> } | null } | null };
+
+export type GoalAreaQueryVariables = Exact<{
+  id: string;
+}>;
+
+
+export type GoalAreaQuery = { area: { id: string, name: string, currency: string | null } | null };
+
 export type PlaceCandidateFieldsFragment = { placeId: string, name: string, formattedAddress: string | null, latitude: string, longitude: string, countryCode: string | null, scope: GeographicScope, types: Array<string>, admin: { countryName: string | null, admin1: string | null, admin2: string | null, locality: string | null, sublocality: string | null } };
 
 export type AreaLocationFieldsFragment = { id: string, name: string, countryCode: string, timezone: string, currency: string | null, unitSystem: UnitSystem, regionSetByUser: Array<string>, evidence: EvidenceQuality, origin: AreaOrigin, scope: GeographicScope, extent: ExtentKind, radiusMeters: number | null, private: boolean, formattedAddress: string | null, accuracyMeters: number | null, hasBoundary: boolean, providerContentExpired: boolean, admin: { countryName: string | null, admin1: string | null, admin2: string | null, locality: string | null, sublocality: string | null } };
@@ -631,7 +868,7 @@ export type ConfirmLocationMutation = { confirmLocation: { area: { id: string, n
 
 export type AreaFieldsFragment = { id: string, name: string, countryCode: string, timezone: string, evidence: EvidenceQuality };
 
-export type PlanningSessionFieldsFragment = { id: string, version: number, mode: PlanningMode, stage: PlanningStage, status: SessionStatus, areaId: string | null, communityId: string | null, selectedPlanOptionId: string | null, inputsRevision: number, updatedAt: string, area: { id: string, name: string } | null, goal: { id: string, kind: GoalKind, description: string, timelineDays: number | null, priority: Priority | null, budget: { minorUnits: string, currency: string, exponent: number } | null, target: { mode: TargetMode, quantity: { value: string, unit: Unit } } | null } | null, scenario: { id: string, confirmed: boolean, interpretedFrom: string | null, adjustments: Array<{ parameter: string, change: AdjustmentChange, quantity: { value: string, unit: Unit } }> } | null };
+export type PlanningSessionFieldsFragment = { id: string, version: number, mode: PlanningMode, stage: PlanningStage, status: SessionStatus, areaId: string | null, communityId: string | null, selectedPlanOptionId: string | null, inputsRevision: number, updatedAt: string, area: { id: string, name: string } | null, goal: { id: string, kind: GoalKind, description: string, targetParameter: string | null, timelineDays: number | null, horizonDays: number | null, priority: Priority | null, also: Array<GoalKind>, confirmed: boolean, preferredInterventions: Array<string>, budget: { minorUnits: string, currency: string, exponent: number } | null, target: { mode: TargetMode, quantity: { value: string, unit: Unit } } | null, site: { scale: SiteScale | null, storageSpace: boolean | null, pipedSupply: boolean | null, groundwaterUse: boolean | null, restrictions: Array<SiteRestriction>, roofArea: { value: string, unit: Unit } | null, openGround: { value: string, unit: Unit } | null }, estimates: Array<{ interventionId: string, note: string, cost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, buildDays: { low: number, high: number } | null, effects: Array<{ key: string, low: string, high: string }> }> } | null, scenario: { id: string, confirmed: boolean, interpretedFrom: string | null, adjustments: Array<{ parameter: string, change: AdjustmentChange, quantity: { value: string, unit: Unit } }> } | null };
 
 export type ViewerQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -657,14 +894,14 @@ export type AreaCoverageQuery = { area: { id: string, name: string, countryCode:
 export type CurrentPlanningSessionQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type CurrentPlanningSessionQuery = { currentPlanningSession: { id: string, version: number, mode: PlanningMode, stage: PlanningStage, status: SessionStatus, areaId: string | null, communityId: string | null, selectedPlanOptionId: string | null, inputsRevision: number, updatedAt: string, area: { id: string, name: string } | null, goal: { id: string, kind: GoalKind, description: string, timelineDays: number | null, priority: Priority | null, budget: { minorUnits: string, currency: string, exponent: number } | null, target: { mode: TargetMode, quantity: { value: string, unit: Unit } } | null } | null, scenario: { id: string, confirmed: boolean, interpretedFrom: string | null, adjustments: Array<{ parameter: string, change: AdjustmentChange, quantity: { value: string, unit: Unit } }> } | null } | null };
+export type CurrentPlanningSessionQuery = { currentPlanningSession: { id: string, version: number, mode: PlanningMode, stage: PlanningStage, status: SessionStatus, areaId: string | null, communityId: string | null, selectedPlanOptionId: string | null, inputsRevision: number, updatedAt: string, area: { id: string, name: string } | null, goal: { id: string, kind: GoalKind, description: string, targetParameter: string | null, timelineDays: number | null, horizonDays: number | null, priority: Priority | null, also: Array<GoalKind>, confirmed: boolean, preferredInterventions: Array<string>, budget: { minorUnits: string, currency: string, exponent: number } | null, target: { mode: TargetMode, quantity: { value: string, unit: Unit } } | null, site: { scale: SiteScale | null, storageSpace: boolean | null, pipedSupply: boolean | null, groundwaterUse: boolean | null, restrictions: Array<SiteRestriction>, roofArea: { value: string, unit: Unit } | null, openGround: { value: string, unit: Unit } | null }, estimates: Array<{ interventionId: string, note: string, cost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, buildDays: { low: number, high: number } | null, effects: Array<{ key: string, low: string, high: string }> }> } | null, scenario: { id: string, confirmed: boolean, interpretedFrom: string | null, adjustments: Array<{ parameter: string, change: AdjustmentChange, quantity: { value: string, unit: Unit } }> } | null } | null };
 
 export type PlanningSessionQueryVariables = Exact<{
   id: string;
 }>;
 
 
-export type PlanningSessionQuery = { planningSession: { id: string, version: number, mode: PlanningMode, stage: PlanningStage, status: SessionStatus, areaId: string | null, communityId: string | null, selectedPlanOptionId: string | null, inputsRevision: number, updatedAt: string, area: { id: string, name: string } | null, goal: { id: string, kind: GoalKind, description: string, timelineDays: number | null, priority: Priority | null, budget: { minorUnits: string, currency: string, exponent: number } | null, target: { mode: TargetMode, quantity: { value: string, unit: Unit } } | null } | null, scenario: { id: string, confirmed: boolean, interpretedFrom: string | null, adjustments: Array<{ parameter: string, change: AdjustmentChange, quantity: { value: string, unit: Unit } }> } | null } | null };
+export type PlanningSessionQuery = { planningSession: { id: string, version: number, mode: PlanningMode, stage: PlanningStage, status: SessionStatus, areaId: string | null, communityId: string | null, selectedPlanOptionId: string | null, inputsRevision: number, updatedAt: string, area: { id: string, name: string } | null, goal: { id: string, kind: GoalKind, description: string, targetParameter: string | null, timelineDays: number | null, horizonDays: number | null, priority: Priority | null, also: Array<GoalKind>, confirmed: boolean, preferredInterventions: Array<string>, budget: { minorUnits: string, currency: string, exponent: number } | null, target: { mode: TargetMode, quantity: { value: string, unit: Unit } } | null, site: { scale: SiteScale | null, storageSpace: boolean | null, pipedSupply: boolean | null, groundwaterUse: boolean | null, restrictions: Array<SiteRestriction>, roofArea: { value: string, unit: Unit } | null, openGround: { value: string, unit: Unit } | null }, estimates: Array<{ interventionId: string, note: string, cost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, buildDays: { low: number, high: number } | null, effects: Array<{ key: string, low: string, high: string }> }> } | null, scenario: { id: string, confirmed: boolean, interpretedFrom: string | null, adjustments: Array<{ parameter: string, change: AdjustmentChange, quantity: { value: string, unit: Unit } }> } | null } | null };
 
 export type PlanOptionsQueryVariables = Exact<{
   sessionId: string;
@@ -680,14 +917,50 @@ export type CreatePlanningSessionMutationVariables = Exact<{
 }>;
 
 
-export type CreatePlanningSessionMutation = { createPlanningSession: { session: { id: string, version: number, mode: PlanningMode, stage: PlanningStage, status: SessionStatus, areaId: string | null, communityId: string | null, selectedPlanOptionId: string | null, inputsRevision: number, updatedAt: string, area: { id: string, name: string } | null, goal: { id: string, kind: GoalKind, description: string, timelineDays: number | null, priority: Priority | null, budget: { minorUnits: string, currency: string, exponent: number } | null, target: { mode: TargetMode, quantity: { value: string, unit: Unit } } | null } | null, scenario: { id: string, confirmed: boolean, interpretedFrom: string | null, adjustments: Array<{ parameter: string, change: AdjustmentChange, quantity: { value: string, unit: Unit } }> } | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
+export type CreatePlanningSessionMutation = { createPlanningSession: { session: { id: string, version: number, mode: PlanningMode, stage: PlanningStage, status: SessionStatus, areaId: string | null, communityId: string | null, selectedPlanOptionId: string | null, inputsRevision: number, updatedAt: string, area: { id: string, name: string } | null, goal: { id: string, kind: GoalKind, description: string, targetParameter: string | null, timelineDays: number | null, horizonDays: number | null, priority: Priority | null, also: Array<GoalKind>, confirmed: boolean, preferredInterventions: Array<string>, budget: { minorUnits: string, currency: string, exponent: number } | null, target: { mode: TargetMode, quantity: { value: string, unit: Unit } } | null, site: { scale: SiteScale | null, storageSpace: boolean | null, pipedSupply: boolean | null, groundwaterUse: boolean | null, restrictions: Array<SiteRestriction>, roofArea: { value: string, unit: Unit } | null, openGround: { value: string, unit: Unit } | null }, estimates: Array<{ interventionId: string, note: string, cost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, buildDays: { low: number, high: number } | null, effects: Array<{ key: string, low: string, high: string }> }> } | null, scenario: { id: string, confirmed: boolean, interpretedFrom: string | null, adjustments: Array<{ parameter: string, change: AdjustmentChange, quantity: { value: string, unit: Unit } }> } | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
 export type UpdatePlanningSessionMutationVariables = Exact<{
   input: UpdatePlanningSessionInput;
 }>;
 
 
-export type UpdatePlanningSessionMutation = { updatePlanningSession: { session: { id: string, version: number, mode: PlanningMode, stage: PlanningStage, status: SessionStatus, areaId: string | null, communityId: string | null, selectedPlanOptionId: string | null, inputsRevision: number, updatedAt: string, area: { id: string, name: string } | null, goal: { id: string, kind: GoalKind, description: string, timelineDays: number | null, priority: Priority | null, budget: { minorUnits: string, currency: string, exponent: number } | null, target: { mode: TargetMode, quantity: { value: string, unit: Unit } } | null } | null, scenario: { id: string, confirmed: boolean, interpretedFrom: string | null, adjustments: Array<{ parameter: string, change: AdjustmentChange, quantity: { value: string, unit: Unit } }> } | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
+export type UpdatePlanningSessionMutation = { updatePlanningSession: { session: { id: string, version: number, mode: PlanningMode, stage: PlanningStage, status: SessionStatus, areaId: string | null, communityId: string | null, selectedPlanOptionId: string | null, inputsRevision: number, updatedAt: string, area: { id: string, name: string } | null, goal: { id: string, kind: GoalKind, description: string, targetParameter: string | null, timelineDays: number | null, horizonDays: number | null, priority: Priority | null, also: Array<GoalKind>, confirmed: boolean, preferredInterventions: Array<string>, budget: { minorUnits: string, currency: string, exponent: number } | null, target: { mode: TargetMode, quantity: { value: string, unit: Unit } } | null, site: { scale: SiteScale | null, storageSpace: boolean | null, pipedSupply: boolean | null, groundwaterUse: boolean | null, restrictions: Array<SiteRestriction>, roofArea: { value: string, unit: Unit } | null, openGround: { value: string, unit: Unit } | null }, estimates: Array<{ interventionId: string, note: string, cost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, buildDays: { low: number, high: number } | null, effects: Array<{ key: string, low: string, high: string }> }> } | null, scenario: { id: string, confirmed: boolean, interpretedFrom: string | null, adjustments: Array<{ parameter: string, change: AdjustmentChange, quantity: { value: string, unit: Unit } }> } | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
+
+export type ExactNumberFieldsFragment = { exact: string, value: string };
+
+export type ScenarioComparisonFieldsFragment = { status: string, notes: Array<string>, baselineId: string | null, engineVersion: string, rows: Array<{ key: string, label: string, unit: Unit, reason: string | null, baseline: { exact: string, value: string } | null, scenario: { exact: string, value: string } | null, change: { exact: string, value: string } | null }> };
+
+export type ImpactCitationFieldsFragment = { kind: CitationKind, ref: string, label: string, asOf: string | null };
+
+export type ImpactFindingFieldsFragment = { id: string, kind: FindingKind, statement: string, basis: FindingBasis, uncertainty: string, system: SharedSystem | null, direction: EffectDirection | null, linkage: Linkage | null, interventionIds: Array<string>, related: Array<string>, magnitude: { metricId: string, unit: Unit, baseline: { exact: string, value: string } | null, atLowEstimates: { exact: string, value: string }, atHighEstimates: { exact: string, value: string } } | null, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> };
+
+export type WiderImpactFieldsFragment = { id: string, engineVersion: string, catalogueVersion: string, inputHash: string, localBenefits: Array<{ id: string, kind: FindingKind, statement: string, basis: FindingBasis, uncertainty: string, system: SharedSystem | null, direction: EffectDirection | null, linkage: Linkage | null, interventionIds: Array<string>, related: Array<string>, magnitude: { metricId: string, unit: Unit, baseline: { exact: string, value: string } | null, atLowEstimates: { exact: string, value: string }, atHighEstimates: { exact: string, value: string } } | null, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> }>, externalities: Array<{ id: string, kind: FindingKind, statement: string, basis: FindingBasis, uncertainty: string, system: SharedSystem | null, direction: EffectDirection | null, linkage: Linkage | null, interventionIds: Array<string>, related: Array<string>, magnitude: { metricId: string, unit: Unit, baseline: { exact: string, value: string } | null, atLowEstimates: { exact: string, value: string }, atHighEstimates: { exact: string, value: string } } | null, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> }>, falseResilience: Array<{ id: string, kind: FindingKind, statement: string, basis: FindingBasis, uncertainty: string, system: SharedSystem | null, direction: EffectDirection | null, linkage: Linkage | null, interventionIds: Array<string>, related: Array<string>, magnitude: { metricId: string, unit: Unit, baseline: { exact: string, value: string } | null, atLowEstimates: { exact: string, value: string }, atHighEstimates: { exact: string, value: string } } | null, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> }>, tradeoffs: Array<{ id: string, kind: FindingKind, statement: string, basis: FindingBasis, uncertainty: string, system: SharedSystem | null, direction: EffectDirection | null, linkage: Linkage | null, interventionIds: Array<string>, related: Array<string>, magnitude: { metricId: string, unit: Unit, baseline: { exact: string, value: string } | null, atLowEstimates: { exact: string, value: string }, atHighEstimates: { exact: string, value: string } } | null, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> }>, reviews: Array<{ kind: ReviewKind, label: string, required: boolean, reasons: Array<string>, interventionIds: Array<string> }> };
+
+export type ImpactContextFieldsFragment = { areaName: string | null, nearbyRadiusM: number, groundwater: GroundwaterReliance, waterQualityNote: string, groundwaterCitations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }>, boundaries: Array<{ level: BoundaryLevel, label: string, detail: string, system: SharedSystem | null, linkage: Linkage | null, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> }>, nearby: Array<{ name: string, communityId: string, distanceM: number, links: Array<{ system: SharedSystem, linkage: Linkage, evidenceIds: Array<string> }> }>, waterQuality: Array<{ parameter: string | null, unit: Unit, observedOn: string | null, method: string | null, value: { exact: string, value: string }, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> }>, unavailable: Array<{ key: string, label: string, reason: string }> };
+
+export type ComparedOptionFieldsFragment = { id: string, rank: number, name: string, interventionIds: Array<string>, why: string, tradeoffs: Array<string>, uncertainty: Array<string>, firstBenefit: BenefitTiming, pessimistic: { exact: string, value: string }, optimistic: { exact: string, value: string }, margin: { exact: string, value: string }, waterLow: { exact: string, value: string } | null, waterHigh: { exact: string, value: string } | null, uncountedHigh: { exact: string, value: string } | null, cost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, buildDays: { low: number, high: number } | null, measures: Array<{ interventionId: string, name: string, benefitTiming: BenefitTiming, effects: Array<{ key: string, label: string, unit: Unit, origin: EffectOrigin, low: { exact: string, value: string }, high: { exact: string, value: string } }>, waterLow: { exact: string, value: string } | null, waterHigh: { exact: string, value: string } | null, cost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, buildDays: { low: number, high: number } | null }>, sensitivity: Array<{ interventionId: string, key: string, label: string, swing: { exact: string, value: string } }>, stress: Array<{ key: string, label: string, meetsTarget: boolean | null, value: { exact: string, value: string } | null }>, impact: { id: string, engineVersion: string, catalogueVersion: string, inputHash: string, localBenefits: Array<{ id: string, kind: FindingKind, statement: string, basis: FindingBasis, uncertainty: string, system: SharedSystem | null, direction: EffectDirection | null, linkage: Linkage | null, interventionIds: Array<string>, related: Array<string>, magnitude: { metricId: string, unit: Unit, baseline: { exact: string, value: string } | null, atLowEstimates: { exact: string, value: string }, atHighEstimates: { exact: string, value: string } } | null, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> }>, externalities: Array<{ id: string, kind: FindingKind, statement: string, basis: FindingBasis, uncertainty: string, system: SharedSystem | null, direction: EffectDirection | null, linkage: Linkage | null, interventionIds: Array<string>, related: Array<string>, magnitude: { metricId: string, unit: Unit, baseline: { exact: string, value: string } | null, atLowEstimates: { exact: string, value: string }, atHighEstimates: { exact: string, value: string } } | null, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> }>, falseResilience: Array<{ id: string, kind: FindingKind, statement: string, basis: FindingBasis, uncertainty: string, system: SharedSystem | null, direction: EffectDirection | null, linkage: Linkage | null, interventionIds: Array<string>, related: Array<string>, magnitude: { metricId: string, unit: Unit, baseline: { exact: string, value: string } | null, atLowEstimates: { exact: string, value: string }, atHighEstimates: { exact: string, value: string } } | null, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> }>, tradeoffs: Array<{ id: string, kind: FindingKind, statement: string, basis: FindingBasis, uncertainty: string, system: SharedSystem | null, direction: EffectDirection | null, linkage: Linkage | null, interventionIds: Array<string>, related: Array<string>, magnitude: { metricId: string, unit: Unit, baseline: { exact: string, value: string } | null, atLowEstimates: { exact: string, value: string }, atHighEstimates: { exact: string, value: string } } | null, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> }>, reviews: Array<{ kind: ReviewKind, label: string, required: boolean, reasons: Array<string>, interventionIds: Array<string> }> } };
+
+export type PlanComparisonQueryVariables = Exact<{
+  id: string;
+}>;
+
+
+export type PlanComparisonQuery = { planningSession: { id: string, inputsRevision: number, selectedPlanOptionId: string | null, planComparison: { id: string, engineVersion: string, scenarioEngineVersion: string, catalogueVersion: string, baselineId: string | null, status: PlanComparisonStatus, summary: string, metric: PlanMetric | null, unit: Unit | null, needs: Array<string>, excluded: Array<string>, assumptions: Array<string>, ranking: string, maxOptions: number, stressTests: Array<string>, impactEngineVersion: string, baselineValue: { exact: string, value: string } | null, scenarioValue: { exact: string, value: string } | null, targetLevel: { exact: string, value: string } | null, rejections: { evaluated: number, onlyOptimistic: number, missedTarget: number, overBudget: number, budgetUncertain: number, tooSlow: number, timeUncertain: number, notMinimal: number, truncated: boolean }, options: Array<{ id: string, rank: number, name: string, interventionIds: Array<string>, why: string, tradeoffs: Array<string>, uncertainty: Array<string>, firstBenefit: BenefitTiming, pessimistic: { exact: string, value: string }, optimistic: { exact: string, value: string }, margin: { exact: string, value: string }, waterLow: { exact: string, value: string } | null, waterHigh: { exact: string, value: string } | null, uncountedHigh: { exact: string, value: string } | null, cost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, buildDays: { low: number, high: number } | null, measures: Array<{ interventionId: string, name: string, benefitTiming: BenefitTiming, effects: Array<{ key: string, label: string, unit: Unit, origin: EffectOrigin, low: { exact: string, value: string }, high: { exact: string, value: string } }>, waterLow: { exact: string, value: string } | null, waterHigh: { exact: string, value: string } | null, cost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, buildDays: { low: number, high: number } | null }>, sensitivity: Array<{ interventionId: string, key: string, label: string, swing: { exact: string, value: string } }>, stress: Array<{ key: string, label: string, meetsTarget: boolean | null, value: { exact: string, value: string } | null }>, impact: { id: string, engineVersion: string, catalogueVersion: string, inputHash: string, localBenefits: Array<{ id: string, kind: FindingKind, statement: string, basis: FindingBasis, uncertainty: string, system: SharedSystem | null, direction: EffectDirection | null, linkage: Linkage | null, interventionIds: Array<string>, related: Array<string>, magnitude: { metricId: string, unit: Unit, baseline: { exact: string, value: string } | null, atLowEstimates: { exact: string, value: string }, atHighEstimates: { exact: string, value: string } } | null, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> }>, externalities: Array<{ id: string, kind: FindingKind, statement: string, basis: FindingBasis, uncertainty: string, system: SharedSystem | null, direction: EffectDirection | null, linkage: Linkage | null, interventionIds: Array<string>, related: Array<string>, magnitude: { metricId: string, unit: Unit, baseline: { exact: string, value: string } | null, atLowEstimates: { exact: string, value: string }, atHighEstimates: { exact: string, value: string } } | null, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> }>, falseResilience: Array<{ id: string, kind: FindingKind, statement: string, basis: FindingBasis, uncertainty: string, system: SharedSystem | null, direction: EffectDirection | null, linkage: Linkage | null, interventionIds: Array<string>, related: Array<string>, magnitude: { metricId: string, unit: Unit, baseline: { exact: string, value: string } | null, atLowEstimates: { exact: string, value: string }, atHighEstimates: { exact: string, value: string } } | null, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> }>, tradeoffs: Array<{ id: string, kind: FindingKind, statement: string, basis: FindingBasis, uncertainty: string, system: SharedSystem | null, direction: EffectDirection | null, linkage: Linkage | null, interventionIds: Array<string>, related: Array<string>, magnitude: { metricId: string, unit: Unit, baseline: { exact: string, value: string } | null, atLowEstimates: { exact: string, value: string }, atHighEstimates: { exact: string, value: string } } | null, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> }>, reviews: Array<{ kind: ReviewKind, label: string, required: boolean, reasons: Array<string>, interventionIds: Array<string> }> } }>, impactContext: { areaName: string | null, nearbyRadiusM: number, groundwater: GroundwaterReliance, waterQualityNote: string, groundwaterCitations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }>, boundaries: Array<{ level: BoundaryLevel, label: string, detail: string, system: SharedSystem | null, linkage: Linkage | null, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> }>, nearby: Array<{ name: string, communityId: string, distanceM: number, links: Array<{ system: SharedSystem, linkage: Linkage, evidenceIds: Array<string> }> }>, waterQuality: Array<{ parameter: string | null, unit: Unit, observedOn: string | null, method: string | null, value: { exact: string, value: string }, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> }>, unavailable: Array<{ key: string, label: string, reason: string }> } }, scenarioComparison: { status: string, notes: Array<string>, baselineId: string | null, engineVersion: string, rows: Array<{ key: string, label: string, unit: Unit, reason: string | null, baseline: { exact: string, value: string } | null, scenario: { exact: string, value: string } | null, change: { exact: string, value: string } | null }> } } | null };
+
+export type PreviewScenarioQueryVariables = Exact<{
+  sessionId: string;
+  scenario: ScenarioPreviewInput;
+}>;
+
+
+export type PreviewScenarioQuery = { previewScenario: { errors: Array<{ field: string, message: string }>, comparison: { status: string, notes: Array<string>, baselineId: string | null, engineVersion: string, rows: Array<{ key: string, label: string, unit: Unit, reason: string | null, baseline: { exact: string, value: string } | null, scenario: { exact: string, value: string } | null, change: { exact: string, value: string } | null }> } | null } };
+
+export type SessionScenarioQueryVariables = Exact<{
+  id: string;
+}>;
+
+
+export type SessionScenarioQuery = { planningSession: { id: string, inputsRevision: number, scenarioComparison: { status: string, notes: Array<string>, baselineId: string | null, engineVersion: string, rows: Array<{ key: string, label: string, unit: Unit, reason: string | null, baseline: { exact: string, value: string } | null, scenario: { exact: string, value: string } | null, change: { exact: string, value: string } | null }> } } | null };
 
 export type AreaReadinessFieldsFragment = { areaId: string, sessionId: string | null, assessedAt: string, asOf: string, demo: boolean, basis: AssessmentBasis, capabilities: Array<{ capability: Capability, state: ReadinessState, reasons: Array<string>, technicalSupport: TechnicalSupport, requiresLocalMeasurement: boolean, requiresReviewedModel: boolean, registeredSourceIds: Array<string>, demo: boolean }>, inputs: Array<{ input: ReadinessInput, label: string, unit: CanonicalUnit, state: ReadinessState, reasons: Array<string>, action: string, manualEntryAllowed: boolean, ownerPrompt: string | null, manualValue: string | null, demo: boolean }>, metrics: Array<{ metric: string, state: ReadinessState, reasons: Array<string>, blockedInputs: Array<ReadinessInput>, demo: boolean }> };
 
@@ -842,6 +1115,124 @@ export const AccountClaimFieldsFragmentDoc = new TypedDocumentString(`
   closedSessionId
 }
     `, {"fragmentName":"AccountClaimFields"}) as unknown as TypedDocumentString<AccountClaimFieldsFragment, unknown>;
+export const EvidenceLinkFieldsFragmentDoc = new TypedDocumentString(`
+    fragment EvidenceLinkFields on EvidenceLink {
+  input
+  capability
+  snapshotId
+  manualInputId
+  title
+  publisher
+  url
+  asOf
+  quality
+  method
+  uncertainty
+  note
+  demo
+}
+    `, {"fragmentName":"EvidenceLinkFields"}) as unknown as TypedDocumentString<EvidenceLinkFieldsFragment, unknown>;
+export const BaselineFieldsFragmentDoc = new TypedDocumentString(`
+    fragment BaselineFields on Baseline {
+  id
+  areaId
+  sessionId
+  asOf
+  engineVersion
+  exceedanceP
+  windowDays
+  demo
+  basis
+  window {
+    start
+    endExclusive
+    days
+  }
+  missingEssentials
+  missingOptional
+  notes
+  metrics {
+    metric
+    name
+    formula
+    unit
+    availability
+    exact
+    value
+    reason
+    reasons
+    origin
+    daily
+    asOf
+    assumptions
+    demo
+    recordedDays
+    periodDays
+    evidence {
+      ...EvidenceLinkFields
+    }
+    supporting {
+      key
+      exact
+      value
+      unit
+    }
+  }
+  indicators {
+    indicator
+    name
+    capability
+    statistic
+    variable
+    parameter
+    unit
+    availability
+    exact
+    value
+    observedOn
+    reason
+    reasons
+    origin
+    demo
+    window {
+      start
+      endExclusive
+      days
+    }
+    evidence {
+      ...EvidenceLinkFields
+    }
+  }
+  chart {
+    monthly
+    buckets {
+      start
+      endExclusive
+      days
+    }
+    series {
+      key
+      values
+      origin
+      demo
+    }
+  }
+}
+    fragment EvidenceLinkFields on EvidenceLink {
+  input
+  capability
+  snapshotId
+  manualInputId
+  title
+  publisher
+  url
+  asOf
+  quality
+  method
+  uncertainty
+  note
+  demo
+}`, {"fragmentName":"BaselineFields"}) as unknown as TypedDocumentString<BaselineFieldsFragment, unknown>;
 export const MutationErrorFieldsFragmentDoc = new TypedDocumentString(`
     fragment MutationErrorFields on MutationError {
   code
@@ -943,6 +1334,55 @@ export const FundingMatchFieldsFragmentDoc = new TypedDocumentString(`
   currency
   exponent
 }`, {"fragmentName":"FundingMatchFields"}) as unknown as TypedDocumentString<FundingMatchFieldsFragment, unknown>;
+export const GoalAssessmentFieldsFragmentDoc = new TypedDocumentString(`
+    fragment GoalAssessmentFields on GoalAssessment {
+  outcome
+  summary
+  nextSteps
+  catalogueVersion
+  baselineId
+  target {
+    outcome
+    message
+    metric
+    unit
+    baseline
+    targetLevel
+    caveats
+  }
+  constraints {
+    code
+    message
+    outcome
+  }
+  conflicts {
+    code
+    message
+    outcome
+  }
+  interventions {
+    interventionId
+    name
+    family
+    relevant
+    outcome
+    benefit
+    preferred
+    site {
+      outcome
+      message
+    }
+    cost {
+      outcome
+      message
+    }
+    time {
+      outcome
+      message
+    }
+  }
+}
+    `, {"fragmentName":"GoalAssessmentFields"}) as unknown as TypedDocumentString<GoalAssessmentFieldsFragment, unknown>;
 export const PlaceCandidateFieldsFragmentDoc = new TypedDocumentString(`
     fragment PlaceCandidateFields on PlaceCandidate {
   placeId
@@ -1025,8 +1465,13 @@ export const PlanningSessionFieldsFragmentDoc = new TypedDocumentString(`
     id
     kind
     description
+    targetParameter
     timelineDays
+    horizonDays
     priority
+    also
+    confirmed
+    preferredInterventions
     budget {
       ...MoneyFields
     }
@@ -1034,6 +1479,40 @@ export const PlanningSessionFieldsFragmentDoc = new TypedDocumentString(`
       mode
       quantity {
         ...QuantityFields
+      }
+    }
+    site {
+      scale
+      storageSpace
+      pipedSupply
+      groundwaterUse
+      restrictions
+      roofArea {
+        ...QuantityFields
+      }
+      openGround {
+        ...QuantityFields
+      }
+    }
+    estimates {
+      interventionId
+      note
+      cost {
+        low {
+          ...MoneyFields
+        }
+        high {
+          ...MoneyFields
+        }
+      }
+      buildDays {
+        low
+        high
+      }
+      effects {
+        key
+        low
+        high
       }
     }
   }
@@ -1059,6 +1538,369 @@ fragment QuantityFields on Quantity {
   value
   unit
 }`, {"fragmentName":"PlanningSessionFields"}) as unknown as TypedDocumentString<PlanningSessionFieldsFragment, unknown>;
+export const ExactNumberFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ExactNumberFields on ExactNumber {
+  exact
+  value
+}
+    `, {"fragmentName":"ExactNumberFields"}) as unknown as TypedDocumentString<ExactNumberFieldsFragment, unknown>;
+export const ScenarioComparisonFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ScenarioComparisonFields on ScenarioComparison {
+  status
+  notes
+  baselineId
+  engineVersion
+  rows {
+    key
+    label
+    unit
+    reason
+    baseline {
+      ...ExactNumberFields
+    }
+    scenario {
+      ...ExactNumberFields
+    }
+    change {
+      ...ExactNumberFields
+    }
+  }
+}
+    fragment ExactNumberFields on ExactNumber {
+  exact
+  value
+}`, {"fragmentName":"ScenarioComparisonFields"}) as unknown as TypedDocumentString<ScenarioComparisonFieldsFragment, unknown>;
+export const ImpactCitationFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ImpactCitationFields on ImpactCitation {
+  kind
+  ref
+  label
+  asOf
+}
+    `, {"fragmentName":"ImpactCitationFields"}) as unknown as TypedDocumentString<ImpactCitationFieldsFragment, unknown>;
+export const ImpactContextFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ImpactContextFields on ImpactContext {
+  areaName
+  nearbyRadiusM
+  groundwater
+  groundwaterCitations {
+    ...ImpactCitationFields
+  }
+  waterQualityNote
+  boundaries {
+    level
+    label
+    detail
+    system
+    linkage
+    citations {
+      ...ImpactCitationFields
+    }
+  }
+  nearby {
+    name
+    communityId
+    distanceM
+    links {
+      system
+      linkage
+      evidenceIds
+    }
+  }
+  waterQuality {
+    parameter
+    value {
+      ...ExactNumberFields
+    }
+    unit
+    observedOn
+    method
+    citations {
+      ...ImpactCitationFields
+    }
+  }
+  unavailable {
+    key
+    label
+    reason
+  }
+}
+    fragment ExactNumberFields on ExactNumber {
+  exact
+  value
+}
+fragment ImpactCitationFields on ImpactCitation {
+  kind
+  ref
+  label
+  asOf
+}`, {"fragmentName":"ImpactContextFields"}) as unknown as TypedDocumentString<ImpactContextFieldsFragment, unknown>;
+export const ImpactFindingFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ImpactFindingFields on ImpactFinding {
+  id
+  kind
+  statement
+  basis
+  uncertainty
+  system
+  direction
+  linkage
+  interventionIds
+  related
+  magnitude {
+    metricId
+    unit
+    baseline {
+      ...ExactNumberFields
+    }
+    atLowEstimates {
+      ...ExactNumberFields
+    }
+    atHighEstimates {
+      ...ExactNumberFields
+    }
+  }
+  citations {
+    ...ImpactCitationFields
+  }
+}
+    fragment ExactNumberFields on ExactNumber {
+  exact
+  value
+}
+fragment ImpactCitationFields on ImpactCitation {
+  kind
+  ref
+  label
+  asOf
+}`, {"fragmentName":"ImpactFindingFields"}) as unknown as TypedDocumentString<ImpactFindingFieldsFragment, unknown>;
+export const WiderImpactFieldsFragmentDoc = new TypedDocumentString(`
+    fragment WiderImpactFields on WiderImpact {
+  id
+  engineVersion
+  catalogueVersion
+  inputHash
+  localBenefits {
+    ...ImpactFindingFields
+  }
+  externalities {
+    ...ImpactFindingFields
+  }
+  falseResilience {
+    ...ImpactFindingFields
+  }
+  tradeoffs {
+    ...ImpactFindingFields
+  }
+  reviews {
+    kind
+    label
+    required
+    reasons
+    interventionIds
+  }
+}
+    fragment ExactNumberFields on ExactNumber {
+  exact
+  value
+}
+fragment ImpactCitationFields on ImpactCitation {
+  kind
+  ref
+  label
+  asOf
+}
+fragment ImpactFindingFields on ImpactFinding {
+  id
+  kind
+  statement
+  basis
+  uncertainty
+  system
+  direction
+  linkage
+  interventionIds
+  related
+  magnitude {
+    metricId
+    unit
+    baseline {
+      ...ExactNumberFields
+    }
+    atLowEstimates {
+      ...ExactNumberFields
+    }
+    atHighEstimates {
+      ...ExactNumberFields
+    }
+  }
+  citations {
+    ...ImpactCitationFields
+  }
+}`, {"fragmentName":"WiderImpactFields"}) as unknown as TypedDocumentString<WiderImpactFieldsFragment, unknown>;
+export const ComparedOptionFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ComparedOptionFields on ComparedOption {
+  id
+  rank
+  name
+  interventionIds
+  why
+  tradeoffs
+  uncertainty
+  firstBenefit
+  pessimistic {
+    ...ExactNumberFields
+  }
+  optimistic {
+    ...ExactNumberFields
+  }
+  margin {
+    ...ExactNumberFields
+  }
+  waterLow {
+    ...ExactNumberFields
+  }
+  waterHigh {
+    ...ExactNumberFields
+  }
+  uncountedHigh {
+    ...ExactNumberFields
+  }
+  cost {
+    low {
+      ...MoneyFields
+    }
+    high {
+      ...MoneyFields
+    }
+  }
+  buildDays {
+    low
+    high
+  }
+  measures {
+    interventionId
+    name
+    benefitTiming
+    effects {
+      key
+      label
+      unit
+      origin
+      low {
+        ...ExactNumberFields
+      }
+      high {
+        ...ExactNumberFields
+      }
+    }
+    waterLow {
+      ...ExactNumberFields
+    }
+    waterHigh {
+      ...ExactNumberFields
+    }
+    cost {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    buildDays {
+      low
+      high
+    }
+  }
+  sensitivity {
+    interventionId
+    key
+    label
+    swing {
+      ...ExactNumberFields
+    }
+  }
+  stress {
+    key
+    label
+    meetsTarget
+    value {
+      ...ExactNumberFields
+    }
+  }
+  impact {
+    ...WiderImpactFields
+  }
+}
+    fragment MoneyFields on Money {
+  minorUnits
+  currency
+  exponent
+}
+fragment ExactNumberFields on ExactNumber {
+  exact
+  value
+}
+fragment ImpactCitationFields on ImpactCitation {
+  kind
+  ref
+  label
+  asOf
+}
+fragment ImpactFindingFields on ImpactFinding {
+  id
+  kind
+  statement
+  basis
+  uncertainty
+  system
+  direction
+  linkage
+  interventionIds
+  related
+  magnitude {
+    metricId
+    unit
+    baseline {
+      ...ExactNumberFields
+    }
+    atLowEstimates {
+      ...ExactNumberFields
+    }
+    atHighEstimates {
+      ...ExactNumberFields
+    }
+  }
+  citations {
+    ...ImpactCitationFields
+  }
+}
+fragment WiderImpactFields on WiderImpact {
+  id
+  engineVersion
+  catalogueVersion
+  inputHash
+  localBenefits {
+    ...ImpactFindingFields
+  }
+  externalities {
+    ...ImpactFindingFields
+  }
+  falseResilience {
+    ...ImpactFindingFields
+  }
+  tradeoffs {
+    ...ImpactFindingFields
+  }
+  reviews {
+    kind
+    label
+    required
+    reasons
+    interventionIds
+  }
+}`, {"fragmentName":"ComparedOptionFields"}) as unknown as TypedDocumentString<ComparedOptionFieldsFragment, unknown>;
 export const AreaReadinessFieldsFragmentDoc = new TypedDocumentString(`
     fragment AreaReadinessFields on AreaReadiness {
   areaId
@@ -1280,6 +2122,117 @@ fragment MutationErrorFields on MutationError {
   currentVersion
   requestId
 }`) as unknown as TypedDocumentString<CancelAccountClaimMutation, CancelAccountClaimMutationVariables>;
+export const AreaBaselineDocument = new TypedDocumentString(`
+    query AreaBaseline($areaId: ID!, $sessionId: ID) {
+  area(id: $areaId) {
+    id
+    name
+    unitSystem
+    baseline(sessionId: $sessionId) {
+      ...BaselineFields
+    }
+  }
+}
+    fragment EvidenceLinkFields on EvidenceLink {
+  input
+  capability
+  snapshotId
+  manualInputId
+  title
+  publisher
+  url
+  asOf
+  quality
+  method
+  uncertainty
+  note
+  demo
+}
+fragment BaselineFields on Baseline {
+  id
+  areaId
+  sessionId
+  asOf
+  engineVersion
+  exceedanceP
+  windowDays
+  demo
+  basis
+  window {
+    start
+    endExclusive
+    days
+  }
+  missingEssentials
+  missingOptional
+  notes
+  metrics {
+    metric
+    name
+    formula
+    unit
+    availability
+    exact
+    value
+    reason
+    reasons
+    origin
+    daily
+    asOf
+    assumptions
+    demo
+    recordedDays
+    periodDays
+    evidence {
+      ...EvidenceLinkFields
+    }
+    supporting {
+      key
+      exact
+      value
+      unit
+    }
+  }
+  indicators {
+    indicator
+    name
+    capability
+    statistic
+    variable
+    parameter
+    unit
+    availability
+    exact
+    value
+    observedOn
+    reason
+    reasons
+    origin
+    demo
+    window {
+      start
+      endExclusive
+      days
+    }
+    evidence {
+      ...EvidenceLinkFields
+    }
+  }
+  chart {
+    monthly
+    buckets {
+      start
+      endExclusive
+      days
+    }
+    series {
+      key
+      values
+      origin
+      demo
+    }
+  }
+}`) as unknown as TypedDocumentString<AreaBaselineQuery, AreaBaselineQueryVariables>;
 export const CommunitiesDocument = new TypedDocumentString(`
     query Communities($filter: CommunityFilter, $first: Int, $after: String) {
   communities(filter: $filter, first: $first, after: $after) {
@@ -1717,6 +2670,170 @@ fragment FundingMatchFields on FundingMatch {
     }
   }
 }`) as unknown as TypedDocumentString<MatchFundingMutation, MatchFundingMutationVariables>;
+export const InterventionCatalogueDocument = new TypedDocumentString(`
+    query InterventionCatalogue {
+  interventionCatalogue {
+    version
+    interventions {
+      id
+      family
+      name
+      summary
+      serves
+      scales
+      requires
+      blockedBy
+      permissions
+      maintenance
+      costInputs {
+        key
+        label
+      }
+      costSources
+      construction
+      benefitTiming
+      benefitNote
+      evidence
+      effectModel
+      cautions
+      effectInputs {
+        key
+        label
+        unit
+        minimum
+        maximum
+        required
+        note
+      }
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<InterventionCatalogueQuery, InterventionCatalogueQueryVariables>;
+export const CheckGoalDocument = new TypedDocumentString(`
+    query CheckGoal($sessionId: ID!, $goal: GoalInput!) {
+  checkGoal(sessionId: $sessionId, goal: $goal) {
+    errors {
+      field
+      message
+    }
+    assessment {
+      ...GoalAssessmentFields
+    }
+  }
+}
+    fragment GoalAssessmentFields on GoalAssessment {
+  outcome
+  summary
+  nextSteps
+  catalogueVersion
+  baselineId
+  target {
+    outcome
+    message
+    metric
+    unit
+    baseline
+    targetLevel
+    caveats
+  }
+  constraints {
+    code
+    message
+    outcome
+  }
+  conflicts {
+    code
+    message
+    outcome
+  }
+  interventions {
+    interventionId
+    name
+    family
+    relevant
+    outcome
+    benefit
+    preferred
+    site {
+      outcome
+      message
+    }
+    cost {
+      outcome
+      message
+    }
+    time {
+      outcome
+      message
+    }
+  }
+}`) as unknown as TypedDocumentString<CheckGoalQuery, CheckGoalQueryVariables>;
+export const GoalAssessmentDocument = new TypedDocumentString(`
+    query GoalAssessment($sessionId: ID!) {
+  planningSession(id: $sessionId) {
+    id
+    inputsRevision
+    goalAssessment {
+      ...GoalAssessmentFields
+    }
+  }
+}
+    fragment GoalAssessmentFields on GoalAssessment {
+  outcome
+  summary
+  nextSteps
+  catalogueVersion
+  baselineId
+  target {
+    outcome
+    message
+    metric
+    unit
+    baseline
+    targetLevel
+    caveats
+  }
+  constraints {
+    code
+    message
+    outcome
+  }
+  conflicts {
+    code
+    message
+    outcome
+  }
+  interventions {
+    interventionId
+    name
+    family
+    relevant
+    outcome
+    benefit
+    preferred
+    site {
+      outcome
+      message
+    }
+    cost {
+      outcome
+      message
+    }
+    time {
+      outcome
+      message
+    }
+  }
+}`) as unknown as TypedDocumentString<GoalAssessmentQuery, GoalAssessmentQueryVariables>;
+export const GoalAreaDocument = new TypedDocumentString(`
+    query GoalArea($id: ID!) {
+  area(id: $id) {
+    id
+    name
+    currency
+  }
+}
+    `) as unknown as TypedDocumentString<GoalAreaQuery, GoalAreaQueryVariables>;
 export const ResolveLocationDocument = new TypedDocumentString(`
     query ResolveLocation($text: String!) {
   resolveLocation(text: $text) {
@@ -1963,8 +3080,13 @@ fragment PlanningSessionFields on PlanningSession {
     id
     kind
     description
+    targetParameter
     timelineDays
+    horizonDays
     priority
+    also
+    confirmed
+    preferredInterventions
     budget {
       ...MoneyFields
     }
@@ -1972,6 +3094,40 @@ fragment PlanningSessionFields on PlanningSession {
       mode
       quantity {
         ...QuantityFields
+      }
+    }
+    site {
+      scale
+      storageSpace
+      pipedSupply
+      groundwaterUse
+      restrictions
+      roofArea {
+        ...QuantityFields
+      }
+      openGround {
+        ...QuantityFields
+      }
+    }
+    estimates {
+      interventionId
+      note
+      cost {
+        low {
+          ...MoneyFields
+        }
+        high {
+          ...MoneyFields
+        }
+      }
+      buildDays {
+        low
+        high
+      }
+      effects {
+        key
+        low
+        high
       }
     }
   }
@@ -2022,8 +3178,13 @@ fragment PlanningSessionFields on PlanningSession {
     id
     kind
     description
+    targetParameter
     timelineDays
+    horizonDays
     priority
+    also
+    confirmed
+    preferredInterventions
     budget {
       ...MoneyFields
     }
@@ -2031,6 +3192,40 @@ fragment PlanningSessionFields on PlanningSession {
       mode
       quantity {
         ...QuantityFields
+      }
+    }
+    site {
+      scale
+      storageSpace
+      pipedSupply
+      groundwaterUse
+      restrictions
+      roofArea {
+        ...QuantityFields
+      }
+      openGround {
+        ...QuantityFields
+      }
+    }
+    estimates {
+      interventionId
+      note
+      cost {
+        low {
+          ...MoneyFields
+        }
+        high {
+          ...MoneyFields
+        }
+      }
+      buildDays {
+        low
+        high
+      }
+      effects {
+        key
+        low
+        high
       }
     }
   }
@@ -2171,8 +3366,13 @@ fragment PlanningSessionFields on PlanningSession {
     id
     kind
     description
+    targetParameter
     timelineDays
+    horizonDays
     priority
+    also
+    confirmed
+    preferredInterventions
     budget {
       ...MoneyFields
     }
@@ -2180,6 +3380,40 @@ fragment PlanningSessionFields on PlanningSession {
       mode
       quantity {
         ...QuantityFields
+      }
+    }
+    site {
+      scale
+      storageSpace
+      pipedSupply
+      groundwaterUse
+      restrictions
+      roofArea {
+        ...QuantityFields
+      }
+      openGround {
+        ...QuantityFields
+      }
+    }
+    estimates {
+      interventionId
+      note
+      cost {
+        low {
+          ...MoneyFields
+        }
+        high {
+          ...MoneyFields
+        }
+      }
+      buildDays {
+        low
+        high
+      }
+      effects {
+        key
+        low
+        high
       }
     }
   }
@@ -2245,8 +3479,13 @@ fragment PlanningSessionFields on PlanningSession {
     id
     kind
     description
+    targetParameter
     timelineDays
+    horizonDays
     priority
+    also
+    confirmed
+    preferredInterventions
     budget {
       ...MoneyFields
     }
@@ -2254,6 +3493,40 @@ fragment PlanningSessionFields on PlanningSession {
       mode
       quantity {
         ...QuantityFields
+      }
+    }
+    site {
+      scale
+      storageSpace
+      pipedSupply
+      groundwaterUse
+      restrictions
+      roofArea {
+        ...QuantityFields
+      }
+      openGround {
+        ...QuantityFields
+      }
+    }
+    estimates {
+      interventionId
+      note
+      cost {
+        low {
+          ...MoneyFields
+        }
+        high {
+          ...MoneyFields
+        }
+      }
+      buildDays {
+        low
+        high
+      }
+      effects {
+        key
+        low
+        high
       }
     }
   }
@@ -2270,6 +3543,362 @@ fragment PlanningSessionFields on PlanningSession {
     }
   }
 }`) as unknown as TypedDocumentString<UpdatePlanningSessionMutation, UpdatePlanningSessionMutationVariables>;
+export const PlanComparisonDocument = new TypedDocumentString(`
+    query PlanComparison($id: ID!) {
+  planningSession(id: $id) {
+    id
+    inputsRevision
+    selectedPlanOptionId
+    planComparison {
+      id
+      engineVersion
+      scenarioEngineVersion
+      catalogueVersion
+      baselineId
+      status
+      summary
+      metric
+      unit
+      needs
+      excluded
+      assumptions
+      ranking
+      maxOptions
+      stressTests
+      baselineValue {
+        ...ExactNumberFields
+      }
+      scenarioValue {
+        ...ExactNumberFields
+      }
+      targetLevel {
+        ...ExactNumberFields
+      }
+      rejections {
+        evaluated
+        onlyOptimistic
+        missedTarget
+        overBudget
+        budgetUncertain
+        tooSlow
+        timeUncertain
+        notMinimal
+        truncated
+      }
+      options {
+        ...ComparedOptionFields
+      }
+      impactEngineVersion
+      impactContext {
+        ...ImpactContextFields
+      }
+    }
+    scenarioComparison {
+      ...ScenarioComparisonFields
+    }
+  }
+}
+    fragment MoneyFields on Money {
+  minorUnits
+  currency
+  exponent
+}
+fragment ExactNumberFields on ExactNumber {
+  exact
+  value
+}
+fragment ScenarioComparisonFields on ScenarioComparison {
+  status
+  notes
+  baselineId
+  engineVersion
+  rows {
+    key
+    label
+    unit
+    reason
+    baseline {
+      ...ExactNumberFields
+    }
+    scenario {
+      ...ExactNumberFields
+    }
+    change {
+      ...ExactNumberFields
+    }
+  }
+}
+fragment ImpactCitationFields on ImpactCitation {
+  kind
+  ref
+  label
+  asOf
+}
+fragment ImpactFindingFields on ImpactFinding {
+  id
+  kind
+  statement
+  basis
+  uncertainty
+  system
+  direction
+  linkage
+  interventionIds
+  related
+  magnitude {
+    metricId
+    unit
+    baseline {
+      ...ExactNumberFields
+    }
+    atLowEstimates {
+      ...ExactNumberFields
+    }
+    atHighEstimates {
+      ...ExactNumberFields
+    }
+  }
+  citations {
+    ...ImpactCitationFields
+  }
+}
+fragment WiderImpactFields on WiderImpact {
+  id
+  engineVersion
+  catalogueVersion
+  inputHash
+  localBenefits {
+    ...ImpactFindingFields
+  }
+  externalities {
+    ...ImpactFindingFields
+  }
+  falseResilience {
+    ...ImpactFindingFields
+  }
+  tradeoffs {
+    ...ImpactFindingFields
+  }
+  reviews {
+    kind
+    label
+    required
+    reasons
+    interventionIds
+  }
+}
+fragment ImpactContextFields on ImpactContext {
+  areaName
+  nearbyRadiusM
+  groundwater
+  groundwaterCitations {
+    ...ImpactCitationFields
+  }
+  waterQualityNote
+  boundaries {
+    level
+    label
+    detail
+    system
+    linkage
+    citations {
+      ...ImpactCitationFields
+    }
+  }
+  nearby {
+    name
+    communityId
+    distanceM
+    links {
+      system
+      linkage
+      evidenceIds
+    }
+  }
+  waterQuality {
+    parameter
+    value {
+      ...ExactNumberFields
+    }
+    unit
+    observedOn
+    method
+    citations {
+      ...ImpactCitationFields
+    }
+  }
+  unavailable {
+    key
+    label
+    reason
+  }
+}
+fragment ComparedOptionFields on ComparedOption {
+  id
+  rank
+  name
+  interventionIds
+  why
+  tradeoffs
+  uncertainty
+  firstBenefit
+  pessimistic {
+    ...ExactNumberFields
+  }
+  optimistic {
+    ...ExactNumberFields
+  }
+  margin {
+    ...ExactNumberFields
+  }
+  waterLow {
+    ...ExactNumberFields
+  }
+  waterHigh {
+    ...ExactNumberFields
+  }
+  uncountedHigh {
+    ...ExactNumberFields
+  }
+  cost {
+    low {
+      ...MoneyFields
+    }
+    high {
+      ...MoneyFields
+    }
+  }
+  buildDays {
+    low
+    high
+  }
+  measures {
+    interventionId
+    name
+    benefitTiming
+    effects {
+      key
+      label
+      unit
+      origin
+      low {
+        ...ExactNumberFields
+      }
+      high {
+        ...ExactNumberFields
+      }
+    }
+    waterLow {
+      ...ExactNumberFields
+    }
+    waterHigh {
+      ...ExactNumberFields
+    }
+    cost {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    buildDays {
+      low
+      high
+    }
+  }
+  sensitivity {
+    interventionId
+    key
+    label
+    swing {
+      ...ExactNumberFields
+    }
+  }
+  stress {
+    key
+    label
+    meetsTarget
+    value {
+      ...ExactNumberFields
+    }
+  }
+  impact {
+    ...WiderImpactFields
+  }
+}`) as unknown as TypedDocumentString<PlanComparisonQuery, PlanComparisonQueryVariables>;
+export const PreviewScenarioDocument = new TypedDocumentString(`
+    query PreviewScenario($sessionId: ID!, $scenario: ScenarioPreviewInput!) {
+  previewScenario(sessionId: $sessionId, scenario: $scenario) {
+    errors {
+      field
+      message
+    }
+    comparison {
+      ...ScenarioComparisonFields
+    }
+  }
+}
+    fragment ExactNumberFields on ExactNumber {
+  exact
+  value
+}
+fragment ScenarioComparisonFields on ScenarioComparison {
+  status
+  notes
+  baselineId
+  engineVersion
+  rows {
+    key
+    label
+    unit
+    reason
+    baseline {
+      ...ExactNumberFields
+    }
+    scenario {
+      ...ExactNumberFields
+    }
+    change {
+      ...ExactNumberFields
+    }
+  }
+}`) as unknown as TypedDocumentString<PreviewScenarioQuery, PreviewScenarioQueryVariables>;
+export const SessionScenarioDocument = new TypedDocumentString(`
+    query SessionScenario($id: ID!) {
+  planningSession(id: $id) {
+    id
+    inputsRevision
+    scenarioComparison {
+      ...ScenarioComparisonFields
+    }
+  }
+}
+    fragment ExactNumberFields on ExactNumber {
+  exact
+  value
+}
+fragment ScenarioComparisonFields on ScenarioComparison {
+  status
+  notes
+  baselineId
+  engineVersion
+  rows {
+    key
+    label
+    unit
+    reason
+    baseline {
+      ...ExactNumberFields
+    }
+    scenario {
+      ...ExactNumberFields
+    }
+    change {
+      ...ExactNumberFields
+    }
+  }
+}`) as unknown as TypedDocumentString<SessionScenarioQuery, SessionScenarioQueryVariables>;
 export const AreaReadinessDocument = new TypedDocumentString(`
     query AreaReadiness($areaId: ID!, $sessionId: ID) {
   area(id: $areaId) {

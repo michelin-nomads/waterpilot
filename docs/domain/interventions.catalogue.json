@@ -1,0 +1,719 @@
+{
+  "version": "interventions-3",
+  "interventions": [
+    {
+      "id": "rooftop_rainwater_harvesting",
+      "family": "rainwater_harvesting",
+      "name": "Rooftop rainwater harvesting for use",
+      "summary": "Collect roof runoff through gutters and a first-flush diverter into a tank for later use.",
+      "serves": [
+        "reduce_shortage",
+        "reduce_tanker_dependence",
+        "reduce_water_bills"
+      ],
+      "scales": [
+        "household",
+        "building",
+        "neighbourhood"
+      ],
+      "requires": [
+        "roof_area",
+        "storage_space"
+      ],
+      "blocked_by": [],
+      "permissions": [
+        "Check local building, water and planning rules before work starts.",
+        "Some places require harvesting on new buildings."
+      ],
+      "maintenance": [
+        "Clean gutters, filter and first-flush diverter before and during the rainy season.",
+        "Keep the tank covered and clean it periodically."
+      ],
+      "cost_inputs": [
+        {
+          "key": "roof_area_connected",
+          "label": "Roof area connected (square metres)"
+        },
+        {
+          "key": "tank_volume",
+          "label": "Tank volume (litres)"
+        },
+        {
+          "key": "filtration",
+          "label": "Filter and first-flush parts"
+        },
+        {
+          "key": "labour",
+          "label": "Labour and plumbing"
+        }
+      ],
+      "cost_sources": [],
+      "construction": "Gutters, downpipes, a filter and a tank; no excavation unless the tank is underground.",
+      "construction_days": null,
+      "benefit_timing": "after_rainfall",
+      "benefit_note": "Water is available only after rain falls once the system is built; supply in dry months depends on tank size.",
+      "evidence": [],
+      "effect_model": null,
+      "effect_inputs": [
+        {
+          "key": "collection_efficiency",
+          "label": "Share of roof rainfall that reaches the tank and is used",
+          "unit": "ratio",
+          "minimum": "0",
+          "maximum": "1",
+          "required": true,
+          "note": "Losses from first flush, spills and overflow when the tank is full."
+        },
+        {
+          "key": "annual_rainfall",
+          "label": "Rainfall in a typical year (millimetres)",
+          "unit": "mm",
+          "minimum": "0",
+          "maximum": "20000",
+          "required": false,
+          "note": "Used only when no rainfall source covers a full year here."
+        }
+      ],
+      "cautions": [
+        "Harvested water used for drinking needs treatment and testing."
+      ],
+      "wider_effects": [
+        {
+          "key": "less_runoff_downstream",
+          "system": "catchment",
+          "direction": "either",
+          "mechanism": "Less roof runoff reaches drains: this can ease local flooding, and can also reduce water reaching streams or recharge downstream.",
+          "matters_when": "Many roofs in the catchment harvest, or downstream users rely on that runoff."
+        }
+      ],
+      "reviews": [
+        {
+          "kind": "water_quality",
+          "required": false,
+          "reason": "Before harvested water is used for drinking or cooking."
+        },
+        {
+          "kind": "structural",
+          "required": false,
+          "reason": "If the tank sits on a roof or is built underground."
+        }
+      ]
+    },
+    {
+      "id": "rooftop_recharge_pit",
+      "family": "recharge",
+      "name": "Rooftop runoff recharge pit",
+      "summary": "Route filtered roof runoff into a pit or trench so it soaks into the ground.",
+      "serves": [
+        "improve_groundwater",
+        "reduce_flood_risk"
+      ],
+      "scales": [
+        "household",
+        "building",
+        "neighbourhood"
+      ],
+      "requires": [
+        "roof_area",
+        "open_ground"
+      ],
+      "blocked_by": [
+        "no_recharge",
+        "no_excavation"
+      ],
+      "permissions": [
+        "Check local building, water and planning rules before work starts."
+      ],
+      "maintenance": [
+        "Clean the filter media and remove silt after heavy rain."
+      ],
+      "cost_inputs": [
+        {
+          "key": "pit_volume",
+          "label": "Pit or trench size"
+        },
+        {
+          "key": "filter_media",
+          "label": "Filter media"
+        },
+        {
+          "key": "labour",
+          "label": "Digging and labour"
+        }
+      ],
+      "cost_sources": [],
+      "construction": "Excavate a pit or trench, fill with filter media, connect downpipes.",
+      "construction_days": null,
+      "benefit_timing": "after_wet_seasons",
+      "benefit_note": "Any groundwater response builds up over one or more wet seasons and is not guaranteed locally.",
+      "evidence": [],
+      "effect_model": null,
+      "effect_inputs": [],
+      "cautions": [
+        "Only roof water: keep away from sewage, septic tanks and polluted runoff.",
+        "Recharge can carry contaminants into groundwater without filtering."
+      ],
+      "wider_effects": [
+        {
+          "key": "adds_to_groundwater",
+          "system": "aquifer",
+          "direction": "possible_benefit",
+          "mechanism": "Water soaking into the ground may add to groundwater that others also draw on.",
+          "matters_when": "The ground lets water through and the aquifer below is used by others."
+        },
+        {
+          "key": "contaminants_into_groundwater",
+          "system": "aquifer",
+          "direction": "possible_harm",
+          "mechanism": "Runoff that is not clean can carry contaminants into groundwater that others may drink.",
+          "matters_when": "The runoff picks up pollution, or wells nearby draw from shallow groundwater."
+        }
+      ],
+      "reviews": [
+        {
+          "kind": "hydrogeological",
+          "required": true,
+          "reason": "Check the soil takes water and the water table is deep enough."
+        },
+        {
+          "kind": "water_quality",
+          "required": true,
+          "reason": "Check the runoff is clean enough to put into the ground."
+        }
+      ]
+    },
+    {
+      "id": "recharge_well",
+      "family": "recharge",
+      "name": "Recharge well or shaft",
+      "summary": "A deeper shaft that lets filtered runoff reach permeable layers.",
+      "serves": [
+        "improve_groundwater",
+        "reduce_flood_risk"
+      ],
+      "scales": [
+        "building",
+        "neighbourhood",
+        "utility"
+      ],
+      "requires": [
+        "open_ground"
+      ],
+      "blocked_by": [
+        "no_recharge",
+        "no_excavation",
+        "no_permit_works"
+      ],
+      "permissions": [
+        "Check local building, water and planning rules before work starts.",
+        "Deep shafts often need approval from the local water or groundwater authority."
+      ],
+      "maintenance": [
+        "Desilt the shaft and renew the filter periodically."
+      ],
+      "cost_inputs": [
+        {
+          "key": "depth",
+          "label": "Shaft depth"
+        },
+        {
+          "key": "lining",
+          "label": "Lining and filter"
+        },
+        {
+          "key": "labour",
+          "label": "Drilling or digging"
+        }
+      ],
+      "cost_sources": [],
+      "construction": "Drill or dig a lined shaft with a silt trap and filter.",
+      "construction_days": null,
+      "benefit_timing": "after_wet_seasons",
+      "benefit_note": "Depends on soil and aquifer conditions that need a local survey.",
+      "evidence": [],
+      "effect_model": null,
+      "effect_inputs": [],
+      "cautions": [
+        "Needs a site survey of soil, aquifer and nearby pollution sources."
+      ],
+      "wider_effects": [
+        {
+          "key": "adds_to_groundwater",
+          "system": "aquifer",
+          "direction": "possible_benefit",
+          "mechanism": "Water soaking into the ground may add to groundwater that others also draw on.",
+          "matters_when": "The ground lets water through and the aquifer below is used by others."
+        },
+        {
+          "key": "contaminants_into_groundwater",
+          "system": "aquifer",
+          "direction": "possible_harm",
+          "mechanism": "Runoff that is not clean can carry contaminants into groundwater that others may drink.",
+          "matters_when": "The runoff picks up pollution, or wells nearby draw from shallow groundwater."
+        }
+      ],
+      "reviews": [
+        {
+          "kind": "hydrogeological",
+          "required": true,
+          "reason": "A shaft reaches deeper layers directly; the aquifer and nearby wells need a survey."
+        },
+        {
+          "kind": "water_quality",
+          "required": true,
+          "reason": "Water entering a shaft bypasses soil filtering."
+        },
+        {
+          "kind": "structural",
+          "required": true,
+          "reason": "Drilling or digging and lining a shaft."
+        }
+      ]
+    },
+    {
+      "id": "leak_detection_and_repair",
+      "family": "leakage_reduction",
+      "name": "Leak detection and repair",
+      "summary": "Find and fix leaks in pipes, tanks, valves and fittings.",
+      "serves": [
+        "reduce_shortage",
+        "reduce_tanker_dependence",
+        "reduce_water_bills"
+      ],
+      "scales": [
+        "household",
+        "building",
+        "neighbourhood",
+        "utility"
+      ],
+      "requires": [
+        "piped_supply"
+      ],
+      "blocked_by": [],
+      "permissions": [
+        "Work on public mains is for the utility; private pipes are the owner's."
+      ],
+      "maintenance": [
+        "Repeat checks periodically; leaks recur as pipes age."
+      ],
+      "cost_inputs": [
+        {
+          "key": "survey",
+          "label": "Leak survey"
+        },
+        {
+          "key": "repairs",
+          "label": "Repairs and parts"
+        }
+      ],
+      "cost_sources": [],
+      "construction": "A survey, then repairs; buried pipes may need digging.",
+      "construction_days": null,
+      "benefit_timing": "after_commissioning",
+      "benefit_note": "Savings start once repairs are done; their size depends on how much is leaking, which needs measuring.",
+      "evidence": [],
+      "effect_model": null,
+      "effect_inputs": [
+        {
+          "key": "leakage_share",
+          "label": "Share of piped supply lost to leaks",
+          "unit": "ratio",
+          "minimum": "0",
+          "maximum": "1",
+          "required": true,
+          "note": "From a water audit or meter comparison."
+        },
+        {
+          "key": "recovered_share",
+          "label": "Share of those losses the repairs stop",
+          "unit": "ratio",
+          "minimum": "0",
+          "maximum": "1",
+          "required": true,
+          "note": "Repairs rarely stop every leak."
+        }
+      ],
+      "cautions": [
+        "Without metering the leak volume, savings cannot be estimated."
+      ],
+      "wider_effects": [
+        {
+          "key": "water_kept_in_network",
+          "system": "supply_network",
+          "direction": "possible_benefit",
+          "mechanism": "Water no longer lost to leaks can stay in the network for others.",
+          "matters_when": "The leaks are on pipes shared with others."
+        },
+        {
+          "key": "less_leakage_recharge",
+          "system": "aquifer",
+          "direction": "possible_harm",
+          "mechanism": "Leaking pipes can feed shallow groundwater; stopping them may lower it slightly where they did.",
+          "matters_when": "Shallow wells nearby depend on water from leaking pipes."
+        }
+      ],
+      "reviews": []
+    },
+    {
+      "id": "greywater_reuse",
+      "family": "greywater_reuse",
+      "name": "Greywater reuse",
+      "summary": "Treat water from basins, showers and laundry for non-drinking uses such as toilet flushing or gardens.",
+      "serves": [
+        "reduce_shortage",
+        "reduce_tanker_dependence",
+        "reduce_water_bills"
+      ],
+      "scales": [
+        "household",
+        "building",
+        "neighbourhood"
+      ],
+      "requires": [
+        "storage_space"
+      ],
+      "blocked_by": [
+        "no_greywater_reuse",
+        "no_structural_changes"
+      ],
+      "permissions": [
+        "Check local building, water and planning rules before work starts.",
+        "Reuse rules and treatment standards vary by place."
+      ],
+      "maintenance": [
+        "Regular cleaning of filters and treatment units.",
+        "Periodic water-quality checks."
+      ],
+      "cost_inputs": [
+        {
+          "key": "separate_plumbing",
+          "label": "Separate plumbing"
+        },
+        {
+          "key": "treatment_unit",
+          "label": "Treatment unit"
+        },
+        {
+          "key": "operation",
+          "label": "Power and upkeep"
+        }
+      ],
+      "cost_sources": [],
+      "construction": "Separate drain and supply pipes, a treatment unit and a tank.",
+      "construction_days": null,
+      "benefit_timing": "after_commissioning",
+      "benefit_note": "Savings start once the system runs.",
+      "evidence": [],
+      "effect_model": null,
+      "effect_inputs": [
+        {
+          "key": "reuse_share",
+          "label": "Share of remaining water use that treated greywater can replace",
+          "unit": "ratio",
+          "minimum": "0",
+          "maximum": "1",
+          "required": true,
+          "note": "Typically flushing and garden use only."
+        }
+      ],
+      "cautions": [
+        "Never for drinking or cooking.",
+        "Poor treatment is a health risk."
+      ],
+      "wider_effects": [
+        {
+          "key": "less_return_flow",
+          "system": "catchment",
+          "direction": "either",
+          "mechanism": "Less wastewater returns to drains or sewers, which can change the flow others downstream receive.",
+          "matters_when": "Downstream users or treatment works rely on that flow."
+        }
+      ],
+      "reviews": [
+        {
+          "kind": "water_quality",
+          "required": true,
+          "reason": "The treatment must meet the local reuse standard for its use."
+        }
+      ]
+    },
+    {
+      "id": "efficient_fixtures",
+      "family": "demand_conservation",
+      "name": "Water-efficient fixtures",
+      "summary": "Low-flow taps and showers, dual-flush toilets and similar fittings.",
+      "serves": [
+        "reduce_shortage",
+        "reduce_tanker_dependence",
+        "reduce_water_bills"
+      ],
+      "scales": [
+        "household",
+        "building"
+      ],
+      "requires": [],
+      "blocked_by": [],
+      "permissions": [
+        "Usually none for replacing fittings."
+      ],
+      "maintenance": [
+        "Clean aerators; replace worn seals."
+      ],
+      "cost_inputs": [
+        {
+          "key": "fixture_count",
+          "label": "Number of fixtures"
+        },
+        {
+          "key": "fixture_price",
+          "label": "Price per fixture"
+        },
+        {
+          "key": "labour",
+          "label": "Fitting labour"
+        }
+      ],
+      "cost_sources": [],
+      "construction": "Replace fittings.",
+      "construction_days": null,
+      "benefit_timing": "after_commissioning",
+      "benefit_note": "Savings start once fittings are replaced; their size depends on current use.",
+      "evidence": [],
+      "effect_model": null,
+      "effect_inputs": [
+        {
+          "key": "demand_reduction",
+          "label": "Share of water use the fixtures save",
+          "unit": "ratio",
+          "minimum": "0",
+          "maximum": "1",
+          "required": true,
+          "note": "Depends on which fixtures are replaced and how they are used."
+        }
+      ],
+      "cautions": [],
+      "wider_effects": [
+        {
+          "key": "less_draw_on_shared_supply",
+          "system": "supply_network",
+          "direction": "possible_benefit",
+          "mechanism": "Drawing less from a shared supply can leave more water or pressure for others on the same network.",
+          "matters_when": "The site is on a supply network that others also depend on."
+        }
+      ],
+      "reviews": []
+    },
+    {
+      "id": "metering_and_demand_awareness",
+      "family": "demand_conservation",
+      "name": "Metering and demand awareness",
+      "summary": "Meter use and share it so households can see and reduce consumption.",
+      "serves": [
+        "reduce_shortage",
+        "reduce_tanker_dependence",
+        "reduce_water_bills"
+      ],
+      "scales": [
+        "building",
+        "neighbourhood",
+        "utility"
+      ],
+      "requires": [
+        "piped_supply"
+      ],
+      "blocked_by": [],
+      "permissions": [
+        "Check local building, water and planning rules before work starts.",
+        "Meters on utility connections are the utility's."
+      ],
+      "maintenance": [
+        "Read and maintain meters; keep sharing results."
+      ],
+      "cost_inputs": [
+        {
+          "key": "meters",
+          "label": "Meters"
+        },
+        {
+          "key": "installation",
+          "label": "Installation"
+        },
+        {
+          "key": "outreach",
+          "label": "Outreach"
+        }
+      ],
+      "cost_sources": [],
+      "construction": "Install meters and set up reading and feedback.",
+      "construction_days": null,
+      "benefit_timing": "after_commissioning",
+      "benefit_note": "Any saving depends on how people respond and is not assumed.",
+      "evidence": [],
+      "effect_model": null,
+      "effect_inputs": [
+        {
+          "key": "demand_reduction",
+          "label": "Share of water use saved by metering and feedback",
+          "unit": "ratio",
+          "minimum": "0",
+          "maximum": "1",
+          "required": true,
+          "note": "Savings can fade without continued feedback."
+        }
+      ],
+      "cautions": [],
+      "wider_effects": [
+        {
+          "key": "less_draw_on_shared_supply",
+          "system": "supply_network",
+          "direction": "possible_benefit",
+          "mechanism": "Drawing less from a shared supply can leave more water or pressure for others on the same network.",
+          "matters_when": "The site is on a supply network that others also depend on."
+        }
+      ],
+      "reviews": []
+    },
+    {
+      "id": "storage_tank",
+      "family": "storage",
+      "name": "Additional storage",
+      "summary": "More tank capacity to bridge gaps between supply days.",
+      "serves": [
+        "reduce_shortage",
+        "reduce_tanker_dependence"
+      ],
+      "scales": [
+        "household",
+        "building",
+        "neighbourhood"
+      ],
+      "requires": [
+        "storage_space"
+      ],
+      "blocked_by": [],
+      "permissions": [
+        "Check local building, water and planning rules before work starts.",
+        "Rooftop tanks may need a structural check."
+      ],
+      "maintenance": [
+        "Keep covered; clean periodically."
+      ],
+      "cost_inputs": [
+        {
+          "key": "tank_volume",
+          "label": "Tank volume (litres)"
+        },
+        {
+          "key": "installation",
+          "label": "Base, plumbing and installation"
+        }
+      ],
+      "cost_sources": [],
+      "construction": "Install a tank and connect it.",
+      "construction_days": null,
+      "benefit_timing": "after_commissioning",
+      "benefit_note": "Storage shifts when water is available; it adds no water.",
+      "evidence": [],
+      "effect_model": null,
+      "effect_inputs": [],
+      "cautions": [
+        "Does not increase total supply."
+      ],
+      "wider_effects": [
+        {
+          "key": "filling_lowers_pressure",
+          "system": "supply_network",
+          "direction": "possible_harm",
+          "mechanism": "Filling large tanks while supply runs can lower pressure for others on the same network.",
+          "matters_when": "Supply is intermittent and shared, and many tanks fill at once."
+        }
+      ],
+      "reviews": [
+        {
+          "kind": "structural",
+          "required": false,
+          "reason": "If the tank sits on a roof or raised stand."
+        }
+      ]
+    },
+    {
+      "id": "stormwater_detention_and_permeable_surfaces",
+      "family": "stormwater",
+      "name": "Stormwater detention and permeable surfaces",
+      "summary": "Slow and hold storm runoff with permeable paving, swales or detention areas.",
+      "serves": [
+        "reduce_flood_risk",
+        "improve_groundwater"
+      ],
+      "scales": [
+        "building",
+        "neighbourhood",
+        "utility"
+      ],
+      "requires": [
+        "open_ground"
+      ],
+      "blocked_by": [
+        "no_excavation"
+      ],
+      "permissions": [
+        "Check local building, water and planning rules before work starts.",
+        "Changes to drains or public land need the local authority."
+      ],
+      "maintenance": [
+        "Clear silt and litter; keep surfaces permeable."
+      ],
+      "cost_inputs": [
+        {
+          "key": "area_treated",
+          "label": "Area treated (square metres)"
+        },
+        {
+          "key": "materials",
+          "label": "Materials"
+        },
+        {
+          "key": "labour",
+          "label": "Labour"
+        }
+      ],
+      "cost_sources": [],
+      "construction": "Earthworks and paving changes.",
+      "construction_days": null,
+      "benefit_timing": "after_rainfall",
+      "benefit_note": "Effect appears in storms after construction; its size needs local drainage data.",
+      "evidence": [],
+      "effect_model": null,
+      "effect_inputs": [],
+      "cautions": [],
+      "wider_effects": [
+        {
+          "key": "slower_runoff_downstream",
+          "system": "catchment",
+          "direction": "either",
+          "mechanism": "Holding storm runoff can reduce flooding downstream, and it also delays or reduces water reaching downstream channels.",
+          "matters_when": "Downstream areas flood, or rely on storm flows."
+        },
+        {
+          "key": "urban_runoff_into_groundwater",
+          "system": "aquifer",
+          "direction": "possible_harm",
+          "mechanism": "Street and yard runoff soaking in can carry oil, metals and other pollutants into groundwater.",
+          "matters_when": "The runoff comes from roads or polluted surfaces, or wells draw from shallow groundwater nearby."
+        }
+      ],
+      "reviews": [
+        {
+          "kind": "structural",
+          "required": true,
+          "reason": "Earthworks and changes to drainage."
+        },
+        {
+          "kind": "hydrogeological",
+          "required": false,
+          "reason": "Where runoff is meant to soak in near wells."
+        }
+      ]
+    }
+  ]
+}

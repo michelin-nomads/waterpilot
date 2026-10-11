@@ -71,8 +71,8 @@ artifacts are private. See ADR 0007.
 Built in guide Prompt 07 (behind 3.png's coverage and 8.png's "Key Supporting Data"):
 runtime source manifests, strict ingestion with private raw evidence, and a per-area,
 per-metric readiness gate. Step 1 now shows what can be calculated, data coverage and
-"What you can provide", with typed-in values labelled "Entered by you"; no metric values
-are shown until Prompt 09. Screenshot sources (KSGWD, BWSSB, KSRSC) are **not
+"What you can provide", with typed-in values labelled "Entered by you". Metric values
+first appear in Prompt 09's baseline (below). Screenshot sources (KSGWD, BWSSB, KSRSC) are **not
 registered**; their licences and coverage are unverified. See ADR 0008,
 `docs/data-readiness.md` and `docs/data/ingestion-runbook.md`.
 
@@ -100,21 +100,102 @@ location step on Step 1.
   - Device fixes keep no street address.
   - Live Google behaviour and real dataset coverage are **unverified**; see
     `docs/build/live-integration-tests.md`.
+- **Close-out (2026-10-11):** all six acceptance cases pass in unit, GraphQL and e2e
+  tests: geolocation denial, search outside India, ambiguous name, map outage, custom
+  location and coverage-limited area. The test evidence is listed in `docs/progress.md`.
+  The live Google Places test did **not** run.
+
+Built in guide Prompt 09 (3.png's metric cards and chart toggle, 8.png's supporting data):
+"Your water baseline" on Step 1 (ADR 0010).
+
+- **Cards:** demand, delivered supply, reliable supply (an MLD level) and the supply gap.
+  Below them, the three reliability measures appear side by side and are never
+  substituted for one another:
+  - dependable supply ratio;
+  - volume reliability;
+  - time reliability.
+
+  Shortage days, tanker dependence and days until shortage follow. Days until shortage
+  stays unavailable until Prompt 11.
+
+- **Values:** each value is computed by the deterministic engine from ready inputs only,
+  and labelled measured, your estimate or modelled. A missing value shows "Unavailable"
+  with a reason, never 0.
+- **Details:** definition, formula, exact value, window, coverage, as-of, assumptions,
+  evidence links and uncertainty, in an accordion.
+- **Chart:** a supply-and-demand line chart with an equivalent table built from the same
+  exact strings. A missing day or month breaks the line and reads "Unavailable".
+- **Context indicators:** rainfall, groundwater, surface water and water quality, each
+  shown only when its source is ready. Flood risk and land cover are category layers and
+  stay unsupported.
+- **Screenshot values:** 63%, 74 days and 1.6 MLD are examples. They are not reproduced;
+  the fixture's golden values (80% / 94% / 70%, 3 days) come from the engine.
+- **Close-out:**
+  - cards, chart, table and details share one rate unit, and chart series show their
+    origin;
+  - synthetic series read "Synthetic demo", never "Measured";
+  - MGD is labelled million US gallons per day.
+- **Next action:** "Set your goal", following the ADR 0002 stage order, or "Add …" for the
+  first missing essential input. The screenshot's "Explore Future Scenarios" CTA belongs
+  to Prompt 11.
+- **Coverage (Prompt 10 verification):** an average over part of the window says
+  "Average of N of M days" on the card itself and is never reported as complete. Demo
+  records reach only the demo area.
+
+Built in guide Prompt 10 (5.png's goal cards, custom goal, constraints and Continue):
+"Set Your Goal" on Step 2 (ADR 0011).
+
+- **Goal cards:** presets for tanker dependence, shortage days, groundwater, water bills,
+  flooding and water quality. Each maps to the structured goal and is an editable
+  starting point. Choosing one asserts nothing about feasibility.
+- **Custom goal:** typed wording that must be confirmed. It is matched to standard
+  objectives through "Other goals to balance". No language model interprets it yet
+  (Prompt 14).
+- **Constraints:**
+  - budget in the location's currency, stored as integer minor units;
+  - maximum implementation time, separate from the planning horizon;
+  - priority;
+  - site facts and restrictions.
+    All are behind progressive disclosure.
+- **Feedback:** "Check goal" gives can be planned, cannot be met as set, or not yet
+  assessable. It explains the target against the baseline, constraints, conflicts
+  between goals and each measure's fit, with next steps. There is no confidence score.
+- **Continue:** saving persists the goal on the session with `expectedVersion`. It clears
+  the selected plan and older plan comparisons, then offers "Continue to compare plans".
+- **Screenshot values:** "₹ 10 Lakhs", "60 days" and "At least 50% reduction" are
+  examples. No default budget or local price is shipped.
+
+Built in guide Prompt 12 (6.png's "Neighbourhood Impact" and its False-Resilience
+warning, 2.png's proposal content and the report snapshot): a wider-system impact
+assessment for every compared plan (ADR 0013, `docs/domain/impact-assessment.md`).
+
+- **Evidence:** shared aquifer, catchment or supply network is known only from reviewed
+  connectivity records. Nearby places are geography only, and none is reviewed yet, so
+  every connection reads "Connection unknown".
+- **What is shown:** local benefit with numbers, possible effects beyond the site
+  without size, tradeoffs, professional reviews and "Not assessed".
+- **False resilience:** warned only for a declared borewell or sourced pumping.
+- **Water quality:** readings are context with parameter, method and date, never a
+  drinkability verdict.
+- **Snapshots:** the chosen plan keeps the assessment with its provenance in the
+  report snapshot and proposal inputs (v2). The report and proposal screens are Prompt 20.
+- **Not built:** the illustrative map and its legend, because no coupled evidence
+  exists.
 
 Phase ownership summary (legacy numbering):
 
-| Screen (file)            | Capability                                                    | Primary phase | Supporting phases   |
-| ------------------------ | ------------------------------------------------------------- | ------------- | ------------------- |
-| Global shell / nav (all) | AppShell, five-stage stepper, mode toggle, theme/palette      | 03 ✅         | 02, 05              |
-| (no image) S1 Welcome    | Start as an anonymous guest or sign in (Google, email)        | 05 ✅         | —                   |
-| 3.png                    | Understand Your Area                                          | 08            | 01, 04, 05, 07      |
-| 8.png                    | Water Source Details                                          | 08            | 01, 07, 14 (export) |
-| 4.png                    | What-if panel (in workspace; formerly Test a Future Scenario) | 09            | 10 (custom), 04     |
-| 5.png                    | Set Your Goal                                                 | 11            | 10 (custom), 04     |
-| 6.png                    | Compare AI-Recommended Plans                                  | 12            | 07, 04              |
-| 1.png                    | Make It Happen + funding                                      | 13            | 12, 10/ADK, 04      |
-| 2.png                    | Generate Proposal                                             | 14            | 13, 10/ADK          |
-| 7.png                    | Take Action & Track                                           | 15            | 12, 16              |
+| Screen (file)            | Capability                                                    | Primary phase    | Supporting phases   |
+| ------------------------ | ------------------------------------------------------------- | ---------------- | ------------------- |
+| Global shell / nav (all) | AppShell, five-stage stepper, mode toggle, theme/palette      | 03 ✅            | 02, 05              |
+| (no image) S1 Welcome    | Start as an anonymous guest or sign in (Google, email)        | 05 ✅            | —                   |
+| 3.png                    | Understand Your Area                                          | 08               | 01, 04, 05, 07      |
+| 8.png                    | Water Source Details                                          | 08               | 01, 07, 14 (export) |
+| 4.png                    | What-if panel (in workspace; formerly Test a Future Scenario) | 09               | 10 (custom), 04     |
+| 5.png                    | Set Your Goal                                                 | 11 ✅ (guide 10) | 10 (custom), 04     |
+| 6.png                    | Compare AI-Recommended Plans                                  | 12               | 07, 04              |
+| 1.png                    | Make It Happen + funding                                      | 13               | 12, 10/ADK, 04      |
+| 2.png                    | Generate Proposal                                             | 14               | 13, 10/ADK          |
+| 7.png                    | Take Action & Track                                           | 15               | 12, 16              |
 
 ---
 
@@ -138,22 +219,22 @@ Phase ownership summary (legacy numbering):
 
 Capability: area selection, water profile, reliability, demand, deficit, map.
 
-| Control                                                                                        | Acceptance criteria                                                                                                                                                                                   | Phase                  |
-| ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
-| Heading "Understand Your Area" + subtitle                                                      | Static section copy.                                                                                                                                                                                  | 08                     |
-| Area search field (value "Koramangala, Bengaluru") with clear (×) and dropdown chevron         | Lists only **supported** pilot areas; selecting one loads its baseline assessment from the API (not hardcoded metrics); clear resets selection; unsupported areas are not presented as calibrated.    | 08                     |
-| Map panel with community boundary, shared-aquifer (estimated), neighbouring-communities layers | Bounded GeoJSON/SVG layers (no unlicensed tile service); shared-aquifer/neighbour layers shown only when sourced; accessible text alternative provided.                                               | 08                     |
-| Map pin label, zoom ± controls, recenter control, scale bar "2 km"                             | Zoom/pan/recenter work via keyboard and pointer; scale reflects real projection.                                                                                                                      | 08                     |
-| Map legend (Community Boundary · Shared Aquifer (Estimated) · Neighbouring Communities)        | Legend entries match rendered layers; "(Estimated)" preserved where evidence is modelled not measured.                                                                                                | 08                     |
-| Area summary card (name, description) + "View Details →"                                       | "View Details" opens the Water Source Details modal (8.png) for the selected assessment version.                                                                                                      | 08                     |
-| Metric card — Water Stress ("Moderate") + info (i)                                             | Shows computed categorical stress for the selected area; info tooltip gives the definition; unavailable → "unavailable", never a default.                                                             | 01, 08                 |
-| Metric card — Summer Shortage Days ("74 days / Per year (estimated)") + info                   | Shows computed shortage-day **count** per the metric definition, labelled estimated; distinct from days-until-shortage.                                                                               | 01, 08                 |
-| Metric card — Reliable Supply ("63% / Of annual demand met") + info                            | Binds to exactly one metric ID — `volume_reliability` (proposed default), `time_reliability` or `dependable_supply_ratio` — and shows its computed value; these are never substituted for each other. | 01, 08                 |
-| Metric card — Current Deficit ("1.6 MLD / Estimated water deficit") + info                     | Shows computed deficit in MLD with unit label; reconciles with demand − reliable supply.                                                                                                              | 01, 08                 |
-| Key Insight panel (narrative)                                                                  | Narrative generated only from the computed assessment facts; numbers must match the metrics shown; no invented claims.                                                                                | 08 (+10 if AI-drafted) |
-| Footer stats/chart toggle icon                                                                 | Toggles an accessible chart/table view of the headline metrics.                                                                                                                                       | 08                     |
-| "See how this works" link                                                                      | Opens methodology/provenance explanation (links to metric definitions).                                                                                                                               | 08                     |
-| "Explore Future Scenarios →" primary CTA                                                       | Carries the exact selected assessment version to Step 2 (4.png).                                                                                                                                      | 08                     |
+| Control                                                                                        | Acceptance criteria                                                                                                                                                                                   | Phase                                                                                                                                                                           |
+| ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Heading "Understand Your Area" + subtitle                                                      | Static section copy.                                                                                                                                                                                  | 08                                                                                                                                                                              |
+| Area search field (value "Koramangala, Bengaluru") with clear (×) and dropdown chevron         | Lists only **supported** pilot areas; selecting one loads its baseline assessment from the API (not hardcoded metrics); clear resets selection; unsupported areas are not presented as calibrated.    | 08                                                                                                                                                                              |
+| Map panel with community boundary, shared-aquifer (estimated), neighbouring-communities layers | Bounded GeoJSON/SVG layers (no unlicensed tile service); shared-aquifer/neighbour layers shown only when sourced; accessible text alternative provided.                                               | 08                                                                                                                                                                              |
+| Map pin label, zoom ± controls, recenter control, scale bar "2 km"                             | Zoom/pan/recenter work via keyboard and pointer; scale reflects real projection.                                                                                                                      | 08                                                                                                                                                                              |
+| Map legend (Community Boundary · Shared Aquifer (Estimated) · Neighbouring Communities)        | Legend entries match rendered layers; "(Estimated)" preserved where evidence is modelled not measured.                                                                                                | 08                                                                                                                                                                              |
+| Area summary card (name, description) + "View Details →"                                       | "View Details" opens the Water Source Details modal (8.png) for the selected assessment version.                                                                                                      | 08                                                                                                                                                                              |
+| Metric card — Water Stress ("Moderate") + info (i)                                             | Shows computed categorical stress for the selected area; info tooltip gives the definition; unavailable → "unavailable", never a default.                                                             | 01, 08 (not built: the registry defines no categorical stress metric; it stays unavailable rather than defaulted)                                                               |
+| Metric card — Summer Shortage Days ("74 days / Per year (estimated)") + info                   | Shows computed shortage-day **count** per the metric definition, labelled estimated; distinct from days-until-shortage.                                                                               | 01, 08, **09 ✅** (computed `shortage_days`, labelled by origin; unavailable without a daily series)                                                                            |
+| Metric card — Reliable Supply ("63% / Of annual demand met") + info                            | Binds to exactly one metric ID — `volume_reliability` (proposed default), `time_reliability` or `dependable_supply_ratio` — and shows its computed value; these are never substituted for each other. | 01, 08, **09 ✅** (all three measures shown separately; the headline card is the `reliable_supply` level; which percentage the screenshot means is still pending domain review) |
+| Metric card — Current Deficit ("1.6 MLD / Estimated water deficit") + info                     | Shows computed deficit in MLD with unit label; reconciles with demand − reliable supply.                                                                                                              | 01, 08, **09 ✅** (`deficit = max(0, demand − reliable_supply)` in MLD; details show the inputs)                                                                                |
+| Key Insight panel (narrative)                                                                  | Narrative generated only from the computed assessment facts; numbers must match the metrics shown; no invented claims.                                                                                | 08 (+10 if AI-drafted); not built in Prompt 09, because no narrative is generated without a reviewed template                                                                   |
+| Footer stats/chart toggle icon                                                                 | Toggles an accessible chart/table view of the headline metrics.                                                                                                                                       | 08, **09 ✅** (chart with a "Show table" toggle; table equivalence tested)                                                                                                      |
+| "See how this works" link                                                                      | Opens methodology/provenance explanation (links to metric definitions).                                                                                                                               | 08, **09 ✅** ("Details, evidence and uncertainty" accordion with definitions and formulas)                                                                                     |
+| "Explore Future Scenarios →" primary CTA                                                       | Carries the exact selected assessment version to Step 2 (4.png).                                                                                                                                      | 08                                                                                                                                                                              |
 
 ---
 
@@ -186,6 +267,27 @@ as an agent tool), not on a separate page or stepper stage. "Save Scenario" no l
 creates a named draft; the adjustment is part of the recoverable planning session, and
 "Analyse Scenario" stays within the current stage.
 
+> Built in guide Prompt 11 and revised in its review (ADR 0012 §6,
+> `docs/domain/option-engine.md`). Scenario exploration is an **Agent-mode** capability:
+> the agent pane carries the what-if tool. Traditional mode has ordinary goal and
+> constraint editing and no what-if controls. When a what-if is saved, the Plans page
+> shows it read-only, labelled "What-if from Agent mode · Agent-generated", with "Open
+> Agent mode" to change or remove it. Differences from the screenshot:
+>
+> - Typed changes (raise, lower by a share, or set a value) replace sliders, and no
+>   example value becomes a default. Until a language model is connected (Prompts 14–17),
+>   the agent's tool takes these structured fields rather than words.
+> - Parameters are demand ("urban expansion"), supply other than tankers and rainfall.
+>   Groundwater has no reviewed response model, so it is not offered.
+> - Tankers are not cut directly: they absorb the change in the gap between demand and
+>   other supply, and the rule is shown with the result.
+> - Results are exact rows against the same baseline (demand, supply, tanker deliveries,
+>   tanker dependence, rainfall, shortage days), with reasons where a value is unknown.
+>   There is no water-stress category or narrative yet.
+> - "Preview" saves nothing: the baseline and chosen plan are untouched. "Apply to plans"
+>   saves the what-if with the session (no named drafts) and clears a chosen plan. A
+>   what-if parsed from words waits for "Confirm what-if" before any result uses it.
+
 | Control                                                                      | Acceptance criteria                                                                                                                                                                   | Phase                  |
 | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
 | Heading + subtitle                                                           | Static section copy.                                                                                                                                                                  | 09                     |
@@ -211,6 +313,11 @@ creates a named draft; the adjustment is part of the recoverable planning sessio
 
 Capability: targets, budget, deadline, priority, custom input.
 
+> Built in guide Prompt 10 (see the note above). Differences from the screenshot: presets
+> also cover tanker dependence; "Community Scope" waits for Prompt 21; budget, timeline
+> and priority are typed fields rather than fixed dropdowns, so no example value becomes
+> a default.
+
 | Control                                                               | Acceptance criteria                                                                                                                                               | Phase  |
 | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
 | Heading + subtitle                                                    | Static copy.                                                                                                                                                      | 11     |
@@ -232,17 +339,44 @@ Capability: targets, budget, deadline, priority, custom input.
 
 Capability: feasible alternatives, costs, benefits, neighbour impact.
 
-| Control                                                                                                                                        | Acceptance criteria                                                                                                                                                                                                                                                                          | Phase |
-| ---------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| Heading + subtitle                                                                                                                             | Static copy.                                                                                                                                                                                                                                                                                 | 12    |
-| Plan A card — Balanced Plan (Recommended badge): Est. Cost, Implementation Time, First Benefit, Projected Deficit Reduction + "View Details →" | Generated from bounded feasible combinations evaluated by the same simulation engine; shows ranges/assumptions; "Recommended" reflects transparent ranking, not a fabricated winner.                                                                                                         | 12    |
-| Plan B card — Lowest Cost Plan (same fields)                                                                                                   | Distinct feasible alternative; above-budget options separately labelled, never "feasible".                                                                                                                                                                                                   | 12    |
-| Plan C card — Highest Impact Plan (same fields)                                                                                                | Distinct feasible alternative; show fewer than three with explanation if only one/two are feasible (no forced duplicates).                                                                                                                                                                   | 12    |
-| "View Details →" per plan                                                                                                                      | Expands plan composition, cost basis, economics and assumptions.                                                                                                                                                                                                                             | 12    |
-| Projected Water Availability chart (2025–2030; Plan A/B/C + Current Baseline) + info                                                           | Accessible SVG chart with table alternative; series are immutable run outputs.                                                                                                                                                                                                               | 12    |
-| Neighbourhood Impact (Illustrative) map + legend (High/Moderate positive · Neutral · Potential risk · No significant impact) + info            | Shown only from adequate coupled evidence; "Illustrative" label preserved; qualitative/insufficient-evidence states where quantitative impact is unsupported; distance alone never becomes a validated score. False-Resilience warning surfaced where a model shows local gain + wider harm. | 12    |
-| "Back"                                                                                                                                         | Returns to goal step preserving state.                                                                                                                                                                                                                                                       | 12    |
-| "Proceed with Selected Plan →"                                                                                                                 | Carries the chosen immutable plan version to Make It Happen.                                                                                                                                                                                                                                 | 12    |
+> Comparison built in guide Prompt 11 (ADR 0012). Up to three genuinely feasible options
+> appear: each passes the target, budget, build time and horizon at the low end of every
+> estimate. If fewer pass, fewer are shown with the reason, and "no feasible plan" and
+> "more input needed" are explicit states. Differences from the screenshot:
+>
+> - Options are named by their measures, not "Balanced / Lowest cost / Highest impact".
+>   The ranking rule follows the goal's priority and is shown.
+> - Each card shows the result range, the water each measure adds (no double counting),
+>   cost and build ranges (your estimates), the first benefit, trade-offs, uncertainty,
+>   sensitivity and stress tests.
+> - No projection chart and no neighbourhood map. Wider effects (Prompt 12, ADR 0013)
+>   appear on every card before choosing:
+>   - the local benefit with its numbers;
+>   - possible effects beyond the site, each with system, direction and "Connection
+>     unknown", and no size;
+>   - a "Possible false resilience" warning only when the site pumps groundwater
+>     (declared or sourced);
+>   - professional reviews.
+>     Below the cards: an influence-boundaries table, nearby places labelled "geography
+>     only", groundwater use, water-quality readings with parameter, method and date (no
+>     drinkability verdict), and "Not assessed". The map stays unbuilt because no reviewed
+>     connectivity evidence exists.
+> - Each measure lists the effect values it was computed from, with their origin (your
+>   estimate, sourced baseline value, or set by the what-if).
+> - "Choose this plan" stores the option with its comparison id; "Continue to funding"
+>   then appears. A new location, goal, what-if or baseline value clears the choice.
+
+| Control                                                                                                                                        | Acceptance criteria                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Phase |
+| ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----- |
+| Heading + subtitle                                                                                                                             | Static copy.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | 12    |
+| Plan A card — Balanced Plan (Recommended badge): Est. Cost, Implementation Time, First Benefit, Projected Deficit Reduction + "View Details →" | Generated from bounded feasible combinations evaluated by the same simulation engine; shows ranges/assumptions; "Recommended" reflects transparent ranking, not a fabricated winner.                                                                                                                                                                                                                                                                                                                                                                                                                                                       | 12    |
+| Plan B card — Lowest Cost Plan (same fields)                                                                                                   | Distinct feasible alternative; above-budget options separately labelled, never "feasible".                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | 12    |
+| Plan C card — Highest Impact Plan (same fields)                                                                                                | Distinct feasible alternative; show fewer than three with explanation if only one/two are feasible (no forced duplicates).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | 12    |
+| "View Details →" per plan                                                                                                                      | Expands plan composition, cost basis, economics and assumptions.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | 12    |
+| Projected Water Availability chart (2025–2030; Plan A/B/C + Current Baseline) + info                                                           | Accessible SVG chart with table alternative; series are immutable run outputs.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | 12    |
+| Neighbourhood Impact (Illustrative) map + legend (High/Moderate positive · Neutral · Potential risk · No significant impact) + info            | Shown only from adequate coupled evidence; "Illustrative" label preserved; qualitative/insufficient-evidence states where quantitative impact is unsupported; distance alone never becomes a validated score. False-Resilience warning surfaced where a model shows local gain + wider harm. **Prompt 12:** text alternative built (boundaries table, nearby places as geography only, per-option externalities with linkage `UNKNOWN` unless a reviewed record lists both areas; proximity rejected as evidence). The false-resilience warning needs sourced or declared groundwater reliance. Map not built: no coupled evidence exists. | 12    |
+| "Back"                                                                                                                                         | Returns to goal step preserving state.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | 12    |
+| "Proceed with Selected Plan →"                                                                                                                 | Carries the chosen immutable plan version to Make It Happen.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | 12    |
 
 ---
 

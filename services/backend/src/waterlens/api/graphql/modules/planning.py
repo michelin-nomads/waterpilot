@@ -6,10 +6,23 @@ import strawberry
 
 from waterlens.api.graphql.context import Info, attempt, call
 from waterlens.api.graphql.loaders import load_existing
+from waterlens.api.graphql.modules.baseline import Baseline
+from waterlens.api.graphql.modules.goals import (
+    DayRange,
+    GoalAssessment,
+    GoalCheck,
+    MeasureEstimate,
+    MeasureEstimateInput,
+    SiteConstraints,
+    SiteConstraintsInput,
+)
+from waterlens.api.graphql.modules.impact import WiderImpact
+from waterlens.api.graphql.modules.options import PlanComparison, ScenarioComparison
 from waterlens.api.graphql.modules.readiness import AreaReadiness
 from waterlens.api.graphql.scalars import DecimalString, LocalDate, UtcDateTime
 from waterlens.api.graphql.types_common import (
     Connection,
+    FieldError,
     MeasuredValue,
     Money,
     MoneyInput,
@@ -128,6 +141,21 @@ class Area:
         )
 
     @strawberry.field(
+        description="Baseline metrics from ready inputs only (same access rules as "
+        "readiness). With sessionId it also uses the values you entered."
+    )
+    async def baseline(self, info: Info, session_id: strawberry.ID | None = None) -> Baseline:
+        b = info.context.services.baseline
+        return Baseline.of(
+            await call(
+                b.baseline,
+                info.context.ctx,
+                str(self.id),
+                str(session_id) if session_id is not None else None,
+            )
+        )
+
+    @strawberry.field(
         description="Per-capability, per-input and per-metric readiness. With sessionId "
         "(yours, for this area) it also counts the values you entered."
     )
@@ -188,9 +216,22 @@ class Goal:
     kind: dp.GoalKind
     description: str
     target: GoalTarget | None
+    target_parameter: str | None = strawberry.field(
+        description="The parameter a water-quality or custom target refers to."
+    )
     budget: Money | None
-    timeline_days: int | None
+    timeline_days: int | None = strawberry.field(description="Maximum implementation time.")
+    horizon_days: int | None = strawberry.field(
+        description="Planning horizon over which benefits count (separate from build time)."
+    )
     priority: dp.Priority | None
+    also: list[dp.GoalKind] = strawberry.field(
+        description="Further objectives checked for conflicts with the main goal."
+    )
+    site: SiteConstraints
+    preferred_interventions: list[str]
+    estimates: list[MeasureEstimate]
+    confirmed: bool = strawberry.field(description="A custom goal's wording was confirmed.")
 
     @staticmethod
     def of(g: dp.Goal) -> Goal:
@@ -201,9 +242,16 @@ class Goal:
             target=GoalTarget(mode=g.target.mode, quantity=Quantity.of(g.target.quantity))
             if g.target
             else None,
+            target_parameter=g.target_parameter,
             budget=Money.of(g.budget) if g.budget else None,
             timeline_days=g.timeline_days,
+            horizon_days=g.horizon_days,
             priority=g.priority,
+            also=list(g.also),
+            site=SiteConstraints.of(g.site),
+            preferred_interventions=list(g.preferred_interventions),
+            estimates=[MeasureEstimate.of(e) for e in g.estimates],
+            confirmed=g.confirmed,
         )
 
 
@@ -237,12 +285,6 @@ class Scenario:
 
 
 @strawberry.type
-class DayRange:
-    low: int
-    high: int
-
-
-@strawberry.type
 class ImpactMetric:
     metric_id: str
     baseline: MeasuredValue
@@ -257,6 +299,10 @@ class ImpactAssessment:
     neighbour_effect: MeasuredValue
     assumptions: list[str]
     provenance: Provenance
+    wider: WiderImpact | None = strawberry.field(
+        description="The wider-system assessment shown with the option when it was chosen, "
+        "with its provenance; null for options stored before it existed."
+    )
 
     @staticmethod
     def of(i: dp.ImpactAssessment) -> ImpactAssessment:
@@ -274,11 +320,12 @@ class ImpactAssessment:
             neighbour_effect=MeasuredValue.of(i.neighbour_effect),
             assumptions=list(i.assumptions),
             provenance=Provenance.of(i.provenance),
+            wider=WiderImpact.of(i.wider) if i.wider else None,
         )
 
 
 def _days(r: dp.DayRange | None) -> DayRange | None:
-    return DayRange(low=r.low, high=r.high) if r else None
+    return DayRange.of(r)
 
 
 @strawberry.type
@@ -299,6 +346,11 @@ class PlanOption:
         description="The session inputsRevision this option was calculated for; an option "
         "from an older revision is out of date and cannot be selected."
     )
+    comparison_id: str | None = strawberry.field(
+        description="PlanComparison.id it came from; null for options stored before the engine."
+    )
+    engine_version: str | None
+    intervention_ids: list[str]
 
     @staticmethod
     def of(o: dp.PlanOption) -> PlanOption:
@@ -316,6 +368,9 @@ class PlanOption:
             best_fit_reason=o.best_fit_reason,
             impact=ImpactAssessment.of(o.impact),
             inputs_revision=o.inputs_revision,
+            comparison_id=o.comparison_id,
+            engine_version=o.engine_version,
+            intervention_ids=list(o.intervention_ids),
         )
 
 
@@ -332,7 +387,8 @@ class PlanningSession:
     scenario: Scenario | None
     selected_plan_option_id: strawberry.ID | None
     inputs_revision: int = strawberry.field(
-        description="Increases whenever location, goal or scenario actually change. "
+        description="Increases whenever location, goal or scenario actually change, or a "
+        "baseline value is recorded for the session; each also clears the selected plan. "
         "Derived results (plan options, funding matches, proposal previews) are keyed by it."
     )
     created_at: UtcDateTime
@@ -358,6 +414,37 @@ class PlanningSession:
             updated_at=UtcDateTime(s.updated_at),
         )
 
+    @strawberry.field(
+        description="Feasibility of the saved goal for this session's location (null "
+        "without a goal). Recomputed from current inputs on every read."
+    )
+    async def goal_assessment(self, info: Info) -> GoalAssessment | None:
+        g = info.context.services.goals
+        found = await call(g.assessment, info.context.ctx, str(self.id))
+        return GoalAssessment.of(found) if found else None
+
+    @strawberry.field(
+        description="Up to three genuinely feasible options for the saved goal under the "
+        "confirmed scenario, computed deterministically from current inputs. Select one "
+        "with updatePlanningSession(selectedPlanOptionId)."
+    )
+    async def plan_comparison(self, info: Info) -> PlanComparison:
+        o = info.context.services.options
+        return PlanComparison.of(await call(o.assessed, info.context.ctx, str(self.id)))
+
+    @strawberry.field(
+        description="Whether the chosen plan's stored assessment still matches a fresh one. "
+        "IMPACT_CHANGED or NOT_CURRENT: choose again before finalizing."
+    )
+    async def selected_plan_status(self, info: Info) -> SelectionStatus:
+        o = info.context.services.options
+        return await call(o.selection_status, info.context.ctx, str(self.id))
+
+    @strawberry.field(description="The saved scenario against the same baseline.")
+    async def scenario_comparison(self, info: Info) -> ScenarioComparison:
+        o = info.context.services.options
+        return ScenarioComparison.of(await call(o.scenario, info.context.ctx, str(self.id)))
+
     @strawberry.field
     async def area(self, info: Info) -> Area | None:
         if self.area_id is None:
@@ -378,9 +465,16 @@ class GoalInput:
     kind: dp.GoalKind
     description: str = ""
     target: GoalTargetInput | None = None
+    target_parameter: str | None = None
     budget: MoneyInput | None = None
     timeline_days: int | None = None
+    horizon_days: int | None = None
     priority: dp.Priority | None = None
+    also: list[dp.GoalKind] = strawberry.field(default_factory=list)
+    site: SiteConstraintsInput | None = None
+    preferred_interventions: list[str] = strawberry.field(default_factory=list)
+    estimates: list[MeasureEstimateInput] = strawberry.field(default_factory=list)
+    confirmed: bool = False
 
 
 @strawberry.input
@@ -458,7 +552,19 @@ class Query:
         found = await call(info.context.services.sessions.current, info.context.ctx)
         return PlanningSession.of(found) if found else None
 
-    @strawberry.field
+    @strawberry.field(
+        description="Validate and screen a draft goal for a session without saving it. "
+        "Uses the same rules as updatePlanningSession."
+    )
+    async def check_goal(self, info: Info, session_id: strawberry.ID, goal: GoalInput) -> GoalCheck:
+        g = info.context.services.goals
+        result = await call(g.check, info.context.ctx, str(session_id), input_data(goal))
+        return GoalCheck(
+            errors=[FieldError(field=e.field, message=e.message) for e in result.errors],
+            assessment=GoalAssessment.of(result.assessment) if result.assessment else None,
+        )
+
+    @strawberry.field(description="Plan options for the session's current inputs only.")
     async def plan_options(
         self,
         info: Info,

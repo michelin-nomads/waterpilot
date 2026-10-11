@@ -8,6 +8,7 @@ capability, and the newest manual inputs of one session.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal, InvalidOperation
 from typing import Any
@@ -71,6 +72,16 @@ def _field_error(field: str, message: str) -> DomainError:
     )
 
 
+@dataclass(frozen=True, slots=True)
+class Evidence:
+    """Readiness plus the records it was judged from, for services that compute on it."""
+
+    area: Area
+    readiness: AreaReadiness
+    manual: dict[InputId, ManualInput]
+    snapshots: dict[str, SourceSnapshot]
+
+
 class ReadinessService:
     def __init__(self, deps: Deps, areas: AreaService) -> None:
         self._d = deps
@@ -99,11 +110,11 @@ class ReadinessService:
                 latest.setdefault(item.input, item)
         return latest
 
-    def _assess(
+    def _evaluate(
         self, area: Area, session_id: str | None, manual: dict[InputId, ManualInput]
-    ) -> AreaReadiness:
+    ) -> Evidence:
         snapshots, registrations = self._evidence()
-        return assess_area(
+        readiness = assess_area(
             area,
             self._d.clock(),
             snapshots,
@@ -112,11 +123,12 @@ class ReadinessService:
             session_id=session_id,
             allow_demo=self._d.demo_evidence,
         )
+        return Evidence(area, readiness, manual, {s.id: s for s in snapshots})
 
-    def assess(self, ctx: RequestContext, area_id: str, session_id: str | None) -> AreaReadiness:
+    def evaluate(self, ctx: RequestContext, area_id: str, session_id: str | None) -> Evidence:
         area = self._areas.get(area_id, viewer_uid(ctx))
         if session_id is None:
-            return self._assess(area, None, {})
+            return self._evaluate(area, None, {})
         session = owned_session(
             self._d.store,
             require_id(session_id, IdKind.SESSION, "sessionId"),
@@ -124,12 +136,15 @@ class ReadinessService:
         )
         if session.area_id != area.id:
             raise not_found("planning session")
-        return self._assess(area, session.id, self._manual(session.id, area.id))
+        return self._evaluate(area, session.id, self._manual(session.id, area.id))
+
+    def assess(self, ctx: RequestContext, area_id: str, session_id: str | None) -> AreaReadiness:
+        return self.evaluate(ctx, area_id, session_id).readiness
 
     def coverage(self, ctx: RequestContext, area_id: str) -> Coverage:
         """Per-capability summary derived from the same gate."""
         area = self._areas.get(area_id, viewer_uid(ctx))
-        result = self._assess(area, None, {})
+        result = self._evaluate(area, None, {}).readiness
         return Coverage(
             area_id=area.id,
             items=tuple(
@@ -189,7 +204,20 @@ class ReadinessService:
             except ValueError as err:
                 message = str(err).split("Value error, ")[-1].split("\n")[0]
                 raise _field_error("value", message) from None
-            return (store.manual_inputs.insert(item).id,)
+            store.manual_inputs.insert(item)
+            # A new value changes the baseline every comparison is made against, so
+            # derived results and the plan chosen from them no longer hold.
+            store.sessions.replace(
+                session.model_copy(
+                    update={
+                        "inputs_revision": session.inputs_revision + 1,
+                        "selected_plan_option_id": None,
+                        "updated_at": now,
+                    }
+                ),
+                session.version,
+            )
+            return (item.id,)
 
         def tx() -> tuple[str, ...]:
             owned_session(store, session_id, principal)

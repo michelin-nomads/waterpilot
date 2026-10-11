@@ -39,6 +39,7 @@ from waterlens.application.ports import (
     ProposalRenderer,
 )
 from waterlens.application.repositories import Store
+from waterlens.application.series import ArtifactSeriesReader
 from waterlens.application.services import Deps, Services
 from waterlens.config import ConfigError, Settings
 from waterlens.domain.jobs import JobPolicy
@@ -217,6 +218,7 @@ def build_api_runtime(settings: Settings, clock: Callable[[], datetime] = _utc_n
     jobs: JobRunner = (
         MemoryJobQueue() if settings.local_store == "memory" else build_local_job_runner(settings)
     )
+    artifacts = ArtifactStore(build_object_storage(settings))
     deps = Deps(
         store=store,
         clock=clock,
@@ -224,11 +226,12 @@ def build_api_runtime(settings: Settings, clock: Callable[[], datetime] = _utc_n
         claim_policy=settings.claim_policy,
         demo_evidence=not settings.is_pilot,
         places=build_place_search(settings),
+        series=ArtifactSeriesReader(artifacts),
     )
     return ApiRuntime(
         services=Services.build(deps),
         verifier=build_identity_verifier(settings, clock),
-        artifacts=ArtifactStore(build_object_storage(settings)),
+        artifacts=artifacts,
     )
 
 

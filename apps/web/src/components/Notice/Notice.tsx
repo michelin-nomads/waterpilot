@@ -4,9 +4,18 @@ import { Icon, type IconName } from '../Icon/Icon';
 import styles from './Notice.module.scss';
 
 export type NoticeKind =
-  'stale' | 'offline' | 'partial' | 'archived' | 'budget' | 'auth-cancelled' | 'restored' | 'info';
+  | 'stale'
+  | 'offline'
+  | 'partial'
+  | 'archived'
+  | 'budget'
+  | 'auth-cancelled'
+  | 'restored'
+  | 'info'
+  | 'caution';
 
 const KINDS: Record<NoticeKind, { icon: IconName; tone: 'neutral' | 'info' | 'warning' }> = {
+  caution: { icon: 'alert', tone: 'warning' },
   stale: { icon: 'history', tone: 'warning' },
   offline: { icon: 'wifi-off', tone: 'neutral' },
   partial: { icon: 'layers', tone: 'info' },

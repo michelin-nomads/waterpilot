@@ -6,6 +6,7 @@ import { usePlanningSession } from '../../session/sessionContext';
 import { LocationStep } from '../location/LocationStep';
 import { LocationSummary } from '../location/LocationSummary';
 import { StagePage } from '../planning/StagePage';
+import { BaselinePanel } from './BaselinePanel';
 import { ReadinessPanel } from './ReadinessPanel';
 
 /** The synthetic demo area served by local mode only; never present in the pilot. */
@@ -46,11 +47,17 @@ function Body() {
     );
   }
   const saved = savedArea === areaId;
+  const sessionId = saved && view ? view.id : null;
   return (
     <>
-      {!saved && <Notice kind="stale">Saving your location change; readiness will update.</Notice>}
+      {!saved && (
+        <Notice kind="stale">
+          Saving your location change; the baseline and readiness will update.
+        </Notice>
+      )}
       <LocationSummary areaId={areaId} onChange={() => setChanging(true)} />
-      <ReadinessPanel areaId={areaId} sessionId={saved && view ? view.id : null} />
+      <BaselinePanel areaId={areaId} sessionId={sessionId} />
+      <ReadinessPanel areaId={areaId} sessionId={sessionId} />
     </>
   );
 }

@@ -23,8 +23,10 @@ from waterlens.api.graphql.modules import (
     accounts,
     communities,
     funding,
+    goals,
     jobs,
     locations,
+    options,
     planning,
     readiness,
     reports,
@@ -39,7 +41,19 @@ MAX_DEPTH = 8
 MAX_TOKENS = 2_000
 MAX_ALIASES = 15
 
-_MODULES = (planning, locations, readiness, funding, reports, communities, tracking, jobs, accounts)
+_MODULES = (
+    planning,
+    goals,
+    options,
+    locations,
+    readiness,
+    funding,
+    reports,
+    communities,
+    tracking,
+    jobs,
+    accounts,
+)
 
 Query = merge_types("Query", tuple(m.Query for m in _MODULES if hasattr(m, "Query")))
 Mutation = merge_types("Mutation", tuple(m.Mutation for m in _MODULES if hasattr(m, "Mutation")))

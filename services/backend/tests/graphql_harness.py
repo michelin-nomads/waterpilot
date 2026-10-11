@@ -28,11 +28,13 @@ from waterlens.api.main import create_app
 from waterlens.application.artifacts import ArtifactStore
 from waterlens.application.identity import AccountKind, IdentityVerifier, Principal
 from waterlens.application.repositories import Store
+from waterlens.application.series import ArtifactSeriesReader
 from waterlens.application.services import Deps, Services
 from waterlens.config import Settings
 from waterlens.domain.accounts import ClaimPolicy
 from waterlens.domain.errors import DomainError, ErrorCode
 from waterlens.domain.ids import IdKind, new_id
+from waterlens.domain.impact import ConnectivityEvidence
 from waterlens.domain.planning import DayRange, Feasibility, ImpactAssessment, PlanOption
 from waterlens.domain.values import EvidenceQuality, MeasuredValue, Money, MoneyRange, Provenance
 
@@ -64,6 +66,7 @@ class Harness:
     store: Any  # MemoryStore, or FirestoreStore in the emulator parity suite
     jobs: MemoryJobQueue
     storage: LocalObjectStorage
+    services: Services | None = None
 
     def gql(
         self, query: str, variables: dict[str, Any] | None = None, token: str | None = None
@@ -85,32 +88,37 @@ def make_harness(
     verifier: IdentityVerifier | None = None,
     claim_policy: ClaimPolicy | None = None,
     store: Store | None = None,
+    connectivity: tuple[ConnectivityEvidence, ...] = (),
 ) -> Harness:
     store = store or MemoryStore(
         areas=synthetic_area_catalogue(), funding_schemes=synthetic_funding_catalogue()
     )
     jobs = MemoryJobQueue()
     storage = LocalObjectStorage(tmp_path / "artifacts")
+    artifacts = ArtifactStore(storage)
+    services = Services.build(
+        Deps(
+            store=store,
+            clock=clock,
+            jobs=jobs,
+            claim_policy=claim_policy or ClaimPolicy(),
+            places=build_place_search(settings),
+            series=ArtifactSeriesReader(artifacts),
+            connectivity=connectivity,
+        )
+    )
     runtime = ApiRuntime(
-        services=Services.build(
-            Deps(
-                store=store,
-                clock=clock,
-                jobs=jobs,
-                claim_policy=claim_policy or ClaimPolicy(),
-                places=build_place_search(settings),
-            )
-        ),
+        services=services,
         verifier=verifier or FakeVerifier(),
-        artifacts=ArtifactStore(storage),
+        artifacts=artifacts,
     )
     app = create_app(settings, runtime=lambda: runtime, stream_poll_seconds=0.01)
-    return Harness(TestClient(app), store, jobs, storage)
+    return Harness(TestClient(app), store, jobs, storage, services)
 
 
 def seed_plan_option(store: Any, session_id: str, cost_high_paise: int) -> str:
-    """Insert a plan option as the (future) deterministic plan engine would: for the
-    session's current inputs."""
+    """Insert a stored option without a comparison id, as options were stored before the
+    option engine (ADR 0012); it is selectable under the inputs-revision rule."""
     session = store.sessions.get(session_id)
     option = PlanOption(
         id=new_id(IdKind.PLAN_OPTION),

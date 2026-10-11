@@ -19,7 +19,7 @@ from waterlens.domain.errors import DomainError, ErrorCode
 DEFAULT_PAGE_SIZE = 20
 MAX_PAGE_SIZE = 50
 
-type FilterValue = str | bool | None
+type FilterValue = str | int | bool | None
 
 
 @dataclass(frozen=True, slots=True)

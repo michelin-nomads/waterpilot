@@ -8,12 +8,15 @@ import { queryKeys } from '../graphql/queryKeys';
 import { DESKTOP_QUERY } from '../lib/useMediaQuery';
 import { routes } from '../routes';
 import { AuthTestProviders } from '../test/AuthTestProviders';
+import { preloadLazyRoutes } from '../test/preloadRoutes';
 import { FakeAuthBackend, guest, permanent } from '../test/fakeAuth';
 import { FakeSessionServer } from '../test/fakeSession';
 import { setMediaQuery } from '../test/mediaQueryMock';
 import { DisplayPreferencesProvider } from '../theme/DisplayPreferencesProvider';
 import { MemoryRecoveryStore } from './recoveryStore';
 import { usePlanningSession } from './sessionContext';
+
+beforeAll(() => preloadLazyRoutes(routes), 60_000);
 
 const GOAL_A = { kind: 'REDUCE_SHORTAGE', description: 'Cut demand by a fifth' } as const;
 const GOAL_B = { kind: 'REDUCE_SHORTAGE', description: 'Cut demand by a third' } as const;
@@ -125,7 +128,7 @@ describe('planning session in the app', () => {
     const { id } = sessions.seed('user-1');
     renderApp({ sessions });
     await vi.waitFor(() => expect(session().state.status).toBe('ready'));
-    const stages = screen.getByRole('navigation', { name: 'Planning stages' });
+    const stages = await screen.findByRole('navigation', { name: 'Planning stages' });
     fireEvent.click(within(stages).getByRole('link', { name: /compare plans/i }));
     await vi.waitFor(() => expect(sessions.sessions.get(id)?.stage).toBe('COMPARE'));
   });

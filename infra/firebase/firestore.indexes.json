@@ -47,6 +47,24 @@
       ]
     },
     {
+      "collectionGroup": "planOptions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "inputs_revision",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "session_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "_sort",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "fundingMatches",
       "queryScope": "COLLECTION",
       "fields": [

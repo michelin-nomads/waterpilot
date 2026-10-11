@@ -82,9 +82,10 @@ function ChartTable({ data }: { data: ChartData }) {
               <th scope="row">{category}</th>
               {data.series.map((series) => {
                 const value = series.values[row] ?? null;
+                const text = series.display?.[row] ?? null;
                 return (
                   <td key={series.id} data-unavailable={value === null || undefined}>
-                    {value === null ? 'Unavailable' : formatChartValue(data, value)}
+                    {value === null ? 'Unavailable' : (text ?? formatChartValue(data, value))}
                   </td>
                 );
               })}

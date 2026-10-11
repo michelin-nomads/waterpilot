@@ -84,6 +84,25 @@ def test_changing_the_goal_clears_the_selected_plan(h: Harness) -> None:
     assert changed["inputsRevision"] == session["inputsRevision"] + 1
 
 
+def test_changing_the_scenario_clears_the_selected_plan(h: Harness) -> None:
+    session = ok(patch(h, create(h), {"goal": {"kind": "REDUCE_SHORTAGE"}}))
+    option = seed_plan_option(h.store, session["id"], 50_000_000)
+    session = ok(patch(h, session, {"selectedPlanOptionId": option}))
+    changed = ok(patch(h, session, {"scenario": {"adjustments": [], "confirmed": True}}))
+    assert changed["selectedPlanOptionId"] is None
+    assert changed["inputsRevision"] == session["inputsRevision"] + 1
+
+
+def test_resaving_the_same_scenario_keeps_the_selected_plan(h: Harness) -> None:
+    scenario = {"adjustments": [], "confirmed": True}
+    session = ok(patch(h, create(h), {"goal": {"kind": "REDUCE_SHORTAGE"}, "scenario": scenario}))
+    option = seed_plan_option(h.store, session["id"], 50_000_000)
+    session = ok(patch(h, session, {"selectedPlanOptionId": option}))
+    again = ok(patch(h, session, {"scenario": scenario}))
+    assert again["selectedPlanOptionId"] == option
+    assert again["inputsRevision"] == session["inputsRevision"]
+
+
 def test_a_plan_from_earlier_inputs_cannot_be_selected(h: Harness) -> None:
     session = create(h)
     stale = seed_plan_option(h.store, session["id"], 50_000_000)  # revision 0
@@ -91,8 +110,12 @@ def test_a_plan_from_earlier_inputs_cannot_be_selected(h: Harness) -> None:
     result = patch(h, session, {"selectedPlanOptionId": stale})
     assert result["error"]["code"] == "PRECONDITION_FAILED"
     assert result["error"]["fieldErrors"][0]["field"] == "selectedPlanOptionId"
+    # The edit cleared earlier results from view; options for the current inputs remain.
     nodes = h.gql(OPTIONS, {"id": session["id"]}, TOKEN)["data"]["planOptions"]["nodes"]
-    assert nodes == [{"id": stale, "inputsRevision": 0}]
+    assert nodes == []
+    current = seed_plan_option(h.store, session["id"], 50_000_000)  # revision 1
+    nodes = h.gql(OPTIONS, {"id": session["id"]}, TOKEN)["data"]["planOptions"]["nodes"]
+    assert nodes == [{"id": current, "inputsRevision": 1}]
 
 
 def test_a_goal_change_and_a_stale_selection_in_one_patch_is_refused(h: Harness) -> None:

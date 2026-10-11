@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import dataclasses
 from collections.abc import Callable
+from fractions import Fraction
 from typing import Any, Generic, TypeVar
 
 import strawberry
@@ -11,6 +12,7 @@ import strawberry
 from waterlens.api.graphql import enums as _enums  # noqa: F401  (registers enums)
 from waterlens.api.graphql.scalars import DecimalString, MinorUnits, UtcDateTime
 from waterlens.application.pagination import Page, PageArgs
+from waterlens.domain import baseline as _bl
 from waterlens.domain import values as v
 from waterlens.domain.errors import DomainError, ErrorCode
 
@@ -164,3 +166,15 @@ def input_data(value: object) -> Any:
 
 def page_args(first: int | None, after: str | None) -> PageArgs:
     return PageArgs(first=first, after=after)
+
+
+@strawberry.type(description="An exact rational and its decimal form.")
+class ExactNumber:
+    exact: str = strawberry.field(description="Integer or reduced fraction, e.g. 7/30.")
+    value: DecimalString = strawberry.field(
+        description="Decimal string; exact when it terminates, else 28 significant digits."
+    )
+
+    @staticmethod
+    def of(v: Fraction) -> ExactNumber:
+        return ExactNumber(exact=_bl.exact_text(v), value=DecimalString(_bl.decimal_text(v)))

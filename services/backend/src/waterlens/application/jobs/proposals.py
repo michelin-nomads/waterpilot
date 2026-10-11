@@ -10,6 +10,12 @@ never linked if the attempt lost its lease.
 Rendering (PDF + HTML with constrained narrative) is Prompt 20. Without a renderer the
 job fails with ``SERVICE_UNAVAILABLE`` and the proposal is marked failed; nothing is
 presented as a generated proposal.
+
+Inputs schema 2 (``inputs-v2.json``, ADR 0013) replaced schema 1 (``inputs-v1.json``,
+ADR 0007). Compatibility: v1 files already written are never rewritten or deleted (a
+different, create-only name); any delivery from now on, including a retry of a proposal
+queued before the change, writes v2 from the same immutable report. Reports finalized
+before wider impact existed give ``impact: null`` with ``impactStatus`` saying why.
 """
 
 from __future__ import annotations
@@ -26,18 +32,28 @@ from waterlens.domain.jobs import JobRecord
 from waterlens.domain.reports import Proposal, ProposalStatus, Report
 from waterlens.domain.values import utc_iso
 
-INPUTS_SCHEMA = "waterlens.proposal-inputs/1"
-INPUTS_NAME = "inputs-v1.json"
+INPUTS_SCHEMA = "waterlens.proposal-inputs/2"
+INPUTS_NAME = "inputs-v2.json"
 _OPEN = frozenset({ProposalStatus.QUEUED, ProposalStatus.DRAFTING})
 
 
 def proposal_inputs(report: Report, proposal: Proposal) -> dict[str, JsonValue]:
-    """Everything a renderer may use, taken from the immutable report snapshot."""
+    """Everything a renderer may use, taken from the immutable report snapshot. The
+    wider-system impact goes in whole, with its provenance (ADR 0013): a renderer may
+    summarize it with citations but has nothing else to draw on."""
     goal: dict[str, JsonValue] = report.goal.model_dump(mode="json")
+    impact: JsonValue = report.impact.model_dump(mode="json") if report.impact else None
+    reviews: list[JsonValue] = [r.model_dump(mode="json") for r in report.required_reviews()]
     return {
         "schema": INPUTS_SCHEMA,
         "proposalId": proposal.id,
         "sections": [s.value for s in proposal.sections],
+        # Every proposal states these, whatever sections were requested.
+        "requiredReviews": reviews,
+        # assessed | not_assessed (chosen before the impact engine) | not_recorded
+        # (finalized before reports kept impact): a renderer says "not assessed", never
+        # treats a missing assessment as no effect.
+        "impactStatus": report.impact_status(),
         "report": {
             "id": report.id,
             "version": report.version,
@@ -45,7 +61,9 @@ def proposal_inputs(report: Report, proposal: Proposal) -> dict[str, JsonValue]:
             "areaId": report.area_id,
             "goal": goal,
             "planOptionId": report.plan_option_id,
+            "planName": report.plan_name,
             "finalizedAt": utc_iso(report.finalized_at),
+            "impact": impact,
         },
     }
 

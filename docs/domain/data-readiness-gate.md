@@ -22,6 +22,9 @@ policy are PROPOSED and need domain review.
 
 A metric takes the worst state of its required inputs; a missing optional input makes it
 `partial`. Synthetic demo snapshots count only in local mode and are labelled `demo`.
+They count only for the demo area itself: `is_demo_area` requires a catalogue origin and
+synthetic evidence, and `assess_area` applies that check, so a real place never receives
+synthetic evidence. It is excluded, not ranked below real sources (ADR 0011 §8).
 
 **Technical support ≠ area readiness.** `capability-matrix.json → technicalSupport` says
 whether WaterLens has (or could have) a method for a capability in general. This gate says

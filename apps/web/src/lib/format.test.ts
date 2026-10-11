@@ -1,9 +1,14 @@
 import {
+  canonicalDecimal,
   formatDecimal,
   formatInrPaise,
+  formatMgdFromLitresPerDay,
   formatMldFromLitresPerDay,
+  formatPercentFromRatio,
+  mgdFromLitresPerDay,
   paiseToRupeeString,
   shiftDecimalLeft,
+  shiftDecimalRight,
 } from './format';
 
 // Intl inserts narrow/no-break spaces in some locales; compare on normalised text.
@@ -26,6 +31,23 @@ describe('shiftDecimalLeft (exact decimal division by 10^n)', () => {
   it('rejects non-plain decimals rather than guessing', () => {
     expect(() => shiftDecimalLeft('1e6', 2)).toThrow(RangeError);
     expect(() => shiftDecimalLeft('1,000', 2)).toThrow(RangeError);
+  });
+});
+
+describe('canonicalDecimal (one spelling per number)', () => {
+  it.each([
+    ['0.20', '0.2'],
+    ['400.0', '400'],
+    ['007', '7'],
+    ['-0', '0'],
+    ['-0.50', '-0.5'],
+    ['120', '120'],
+  ])('%s → %s', (value, expected) => {
+    expect(canonicalDecimal(value)).toBe(expected);
+  });
+
+  it('leaves non-decimals for the server to refuse', () => {
+    expect(canonicalDecimal('1,000')).toBe('1,000');
   });
 });
 
@@ -76,5 +98,49 @@ describe('formatDecimal', () => {
   it('rounds decimal strings half to even', () => {
     expect(formatDecimal('2.25', 1)).toBe('2.2');
     expect(formatDecimal('1234567.891', 2)).toBe('12,34,567.89');
+  });
+});
+
+describe('shiftDecimalRight (exact multiplication by 10^n)', () => {
+  it.each([
+    ['0.94', 2, '94'],
+    ['0.2673267326732673267326732673', 2, '26.73267326732673267326732673'],
+    ['1', 2, '100'],
+    ['0.005', 2, '0.5'],
+    ['-0.25', 2, '-25'],
+    ['0', 2, '0'],
+  ])('%s * 10^%i = %s', (value, places, expected) => {
+    expect(shiftDecimalRight(value, places)).toBe(expected);
+  });
+});
+
+describe('formatPercentFromRatio', () => {
+  it.each([
+    ['0.8', '80%'],
+    ['0.94', '94%'],
+    ['0.7', '70%'],
+    ['0.2673267326732673267326732673', '27%'],
+    ['0.125', '12%'], // 12.5 rounds half-even to 12
+    ['0.135', '14%'],
+    ['1', '100%'],
+    ['0', '0%'],
+  ])('%s -> %s', (ratio, expected) => {
+    expect(formatPercentFromRatio(ratio)).toBe(expected);
+  });
+
+  it('keeps decimals when asked', () => {
+    expect(formatPercentFromRatio('0.2673267326732673267326732673', 1)).toBe('26.7%');
+  });
+});
+
+describe('million US gallons per day (exact, half-even)', () => {
+  it('uses 3.785411784 L per gallon exactly', () => {
+    expect(mgdFromLitresPerDay('3785411.784', 3)).toBe('1');
+    expect(mgdFromLitresPerDay('10000000', 4)).toBe('2.6417');
+    expect(mgdFromLitresPerDay('0')).toBe('0');
+  });
+
+  it('formats with the unit', () => {
+    expect(norm(formatMgdFromLitresPerDay('10000000'))).toBe('2.64 MGD');
   });
 });

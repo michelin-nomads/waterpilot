@@ -28,8 +28,9 @@ enum AccountKind {
 }
 
 enum AdjustmentChange {
-  RELATIVE
-  ABSOLUTE
+  INCREASE_BY
+  DECREASE_BY
+  SET_TO
 }
 
 type AdminContext {
@@ -148,6 +149,11 @@ type Area {
   coverage: Coverage!
 
   """
+  Baseline metrics from ready inputs only (same access rules as readiness). With sessionId it also uses the values you entered.
+  """
+  baseline(sessionId: ID = null): Baseline!
+
+  """
   Per-capability, per-input and per-metric readiness. With sessionId (yours, for this area) it also counts the values you entered.
   """
   readiness(sessionId: ID = null): AreaReadiness!
@@ -195,12 +201,124 @@ enum Availability {
   UNAVAILABLE
 }
 
+"""
+What is known about this area now, from ready inputs only. Deterministic from stored records: the same inputs give the same id; a new value revises it.
+"""
+type Baseline {
+  id: ID!
+  areaId: ID!
+  sessionId: ID
+  asOf: LocalDate!
+  engineVersion: String!
+  exceedanceP: DecimalString!
+  window: DateWindow
+
+  """Nominal trailing window in days."""
+  windowDays: Int!
+  demo: Boolean!
+  basis: AssessmentBasis!
+  metrics: [BaselineMetric!]!
+  indicators: [BaselineIndicator!]!
+  chart: BaselineChart
+  missingEssentials: [ReadinessInput!]!
+  missingOptional: [ReadinessInput!]!
+  notes: [String!]!
+}
+
+"""Daily values (window up to 31 days) or calendar-month means."""
+type BaselineChart {
+  monthly: Boolean!
+  buckets: [DateWindow!]!
+  series: [ChartSeries!]!
+}
+
+type BaselineIndicator {
+  """Indicator id from the metrics registry."""
+  indicator: String!
+  name: String!
+  capability: Capability!
+  statistic: IndicatorStatistic!
+  variable: String
+  parameter: String
+  unit: CanonicalUnit
+  availability: Availability!
+  exact: String
+  value: DecimalString
+  observedOn: LocalDate
+  window: DateWindow
+  reason: BaselineReason
+  reasons: [String!]!
+  origin: ValueOrigin
+  evidence: [EvidenceLink!]!
+  demo: Boolean!
+}
+
+type BaselineMetric {
+  """Metric id from the metrics registry."""
+  metric: String!
+  name: String!
+  formula: String!
+
+  """Canonical unit (L/day, ratio, day)."""
+  unit: CanonicalUnit!
+  availability: Availability!
+  exact: String
+  value: DecimalString
+  reason: BaselineReason
+  reasons: [String!]!
+  origin: ValueOrigin
+
+  """Computed from day-by-day values."""
+  daily: Boolean!
+  asOf: LocalDate
+  evidence: [EvidenceLink!]!
+  assumptions: [String!]!
+  supporting: [SupportingValue!]!
+  demo: Boolean!
+
+  """Days of records the value uses (null when not computed from records)."""
+  recordedDays: Int
+
+  """
+  Days in the reporting window; recordedDays below this is a partial window.
+  """
+  periodDays: Int
+}
+
+"""Why a baseline value is unavailable."""
+enum BaselineReason {
+  MISSING_INPUT
+  EMPTY_WINDOW
+  ZERO_TOTAL_SUPPLY
+  ZERO_TOTAL_DEMAND
+  ZERO_MEAN_DEMAND
+  NEEDS_DAILY_SERIES
+  SERIES_TOO_SHORT
+  MIXED_RESOLUTION
+  INCONSISTENT_INPUTS
+  NEEDS_FORWARD_SERIES
+  UNSUPPORTED_FORMAT
+  INCOMPATIBLE_UNIT
+}
+
 type BeginAccountClaimPayload {
   claim: AccountClaim
 
   """Returned once and never stored in clear. Keep it in memory only."""
   claimSecret: String
   error: MutationError
+}
+
+enum BenefitTiming {
+  AFTER_COMMISSIONING
+  AFTER_RAINFALL
+  AFTER_WET_SEASONS
+}
+
+enum BoundaryLevel {
+  SITE
+  AREA
+  SHARED_SYSTEM
 }
 
 input CancelAccountClaimInput {
@@ -253,6 +371,31 @@ type CapabilityReadiness {
   requiresReviewedModel: Boolean!
 }
 
+type ChartSeries {
+  """delivered_supply, demand or tanker_supply."""
+  key: String!
+
+  """L/day per bucket; null where any day in the bucket is missing."""
+  values: [DecimalString]!
+
+  """
+  Same origin rule as the metric cards: the weakest of the series' inputs.
+  """
+  origin: ValueOrigin
+
+  """True when the series uses synthetic demo data."""
+  demo: Boolean!
+}
+
+enum CitationKind {
+  CATALOGUE
+  COMPARISON
+  SITE_FACT
+  SOURCE
+  USER_INPUT
+  CONNECTIVITY
+}
+
 type Community {
   id: ID!
   version: Int!
@@ -293,6 +436,40 @@ enum CommunityStatus {
   ARCHIVED
 }
 
+"""A genuinely feasible plan: passes at your low estimates."""
+type ComparedOption {
+  id: ID!
+  rank: Int!
+  interventionIds: [String!]!
+  name: String!
+  measures: [OptionMeasure!]!
+
+  """Goal metric at low estimates."""
+  pessimistic: ExactNumber!
+
+  """Goal metric at high estimates."""
+  optimistic: ExactNumber!
+
+  """How far the pessimistic result is past the target, in the metric unit."""
+  margin: ExactNumber!
+  waterLow: ExactNumber
+  waterHigh: ExactNumber
+
+  """L/day beyond the tanker deliveries it replaces, not counted."""
+  uncountedHigh: ExactNumber
+  cost: MoneyRange
+  buildDays: DayRange
+  firstBenefit: BenefitTiming!
+  why: String!
+  tradeoffs: [String!]!
+  uncertainty: [String!]!
+  sensitivity: [OptionSensitivity!]!
+  stress: [OptionStress!]!
+
+  """Wider-system impact, shown before you choose (ADR 0013)."""
+  impact: WiderImpact!
+}
+
 input CompleteAccountClaimInput {
   claimId: ID!
   claimSecret: String!
@@ -327,6 +504,11 @@ input ConfirmLocationInput {
 type ConfirmLocationPayload {
   area: Area
   error: MutationError
+}
+
+type CostInput {
+  key: String!
+  label: String!
 }
 
 type Country {
@@ -387,7 +569,19 @@ enum CriterionStatus {
   NEEDS_CHECK
 }
 
+"""Half-open local-date window [start, endExclusive)."""
+type DateWindow {
+  start: LocalDate!
+  endExclusive: LocalDate!
+  days: Int!
+}
+
 type DayRange {
+  low: Int!
+  high: Int!
+}
+
+input DayRangeInput {
   low: Int!
   high: Int!
 }
@@ -396,6 +590,49 @@ type DayRange {
 An exact decimal number as a string (e.g. '1250000.5'). Parse with a decimal library, never as a binary float.
 """
 scalar DecimalString
+
+enum EffectDirection {
+  POSSIBLE_BENEFIT
+  POSSIBLE_HARM
+  EITHER
+}
+
+"""Your range for one of a measure's effect inputs."""
+type EffectEstimate {
+  key: String!
+  low: DecimalString!
+  high: DecimalString!
+}
+
+input EffectEstimateInput {
+  key: String!
+  low: DecimalString!
+  high: DecimalString!
+}
+
+"""
+Something a measure's water effect depends on. The catalogue holds only physical bounds; the value is always your estimate (or a sourced site fact).
+"""
+type EffectInput {
+  key: String!
+  label: String!
+  unit: Unit!
+  minimum: DecimalString!
+  maximum: DecimalString!
+
+  """False when a registered source can supply the value instead."""
+  required: Boolean!
+  note: String!
+}
+
+"""
+Where an effect value came from: USER_ESTIMATE (your range), BASELINE (the sourced baseline value) or SCENARIO (set by the confirmed what-if). The catalogue never supplies effect values.
+"""
+enum EffectOrigin {
+  USER_ESTIMATE
+  BASELINE
+  SCENARIO
+}
 
 enum ErrorCode {
   UNAUTHENTICATED
@@ -415,12 +652,40 @@ enum ErrorCode {
   INTERNAL
 }
 
+"""Where a value comes from: an imported snapshot or your entry."""
+type EvidenceLink {
+  input: ReadinessInput
+  capability: Capability
+  snapshotId: String
+  manualInputId: ID
+  title: String!
+  publisher: String
+  url: String
+  asOf: LocalDate
+
+  """Review status of an imported snapshot; null for a value you entered."""
+  quality: EvidenceQuality
+  method: ObservationMethod
+  uncertainty: String!
+  note: String
+  demo: Boolean!
+}
+
 enum EvidenceQuality {
   UNREVIEWED
   VALIDATED
   PROVISIONAL
   QUARANTINED
   SYNTHETIC
+}
+
+"""An exact rational and its decimal form."""
+type ExactNumber {
+  """Integer or reduced fraction, e.g. 7/30."""
+  exact: String!
+
+  """Decimal string; exact when it terminates, else 28 significant digits."""
+  value: DecimalString!
 }
 
 """
@@ -448,6 +713,25 @@ input FinalizeReportInput {
   sessionId: ID!
   title: String!
   idempotencyKey: String!
+}
+
+enum FindingBasis {
+  ENGINE_ESTIMATE
+  MECHANISM
+  DECLARED
+  SOURCED
+}
+
+enum FindingKind {
+  LOCAL_BENEFIT
+  EXTERNALITY
+  FALSE_RESILIENCE
+  TRADEOFF
+}
+
+type FitCheck {
+  outcome: GoalOutcome!
+  message: String!
 }
 
 """
@@ -529,18 +813,71 @@ type Goal {
   kind: GoalKind!
   description: String!
   target: GoalTarget
+
+  """The parameter a water-quality or custom target refers to."""
+  targetParameter: String
   budget: Money
+
+  """Maximum implementation time."""
   timelineDays: Int
+
+  """Planning horizon over which benefits count (separate from build time)."""
+  horizonDays: Int
   priority: Priority
+
+  """Further objectives checked for conflicts with the main goal."""
+  also: [GoalKind!]!
+  site: SiteConstraints!
+  preferredInterventions: [String!]!
+  estimates: [MeasureEstimate!]!
+
+  """A custom goal's wording was confirmed."""
+  confirmed: Boolean!
+}
+
+"""
+Screens a goal: FEASIBLE means consistent and plannable, never that a plan will reach it. No confidence score is given.
+"""
+type GoalAssessment {
+  outcome: GoalOutcome!
+  summary: String!
+  target: TargetCheck!
+  constraints: [GoalFinding!]!
+  conflicts: [GoalFinding!]!
+  interventions: [InterventionFit!]!
+  nextSteps: [String!]!
+  catalogueVersion: String!
+  baselineId: String
+}
+
+type GoalCheck {
+  """Input that cannot be saved; when present there is no assessment."""
+  errors: [FieldError!]!
+  assessment: GoalAssessment
+}
+
+type GoalFinding {
+  code: String!
+  message: String!
+
+  """Null for a note that does not change the outcome."""
+  outcome: GoalOutcome
 }
 
 input GoalInput {
   kind: GoalKind!
   description: String! = ""
   target: GoalTargetInput = null
+  targetParameter: String = null
   budget: MoneyInput = null
   timelineDays: Int = null
+  horizonDays: Int = null
   priority: Priority = null
+  also: [GoalKind!]! = []
+  site: SiteConstraintsInput = null
+  preferredInterventions: [String!]! = []
+  estimates: [MeasureEstimateInput!]! = []
+  confirmed: Boolean! = false
 }
 
 enum GoalKind {
@@ -549,7 +886,14 @@ enum GoalKind {
   REDUCE_TANKER_DEPENDENCE
   REDUCE_FLOOD_RISK
   IMPROVE_WATER_QUALITY
+  REDUCE_WATER_BILLS
   CUSTOM
+}
+
+enum GoalOutcome {
+  FEASIBLE
+  INFEASIBLE
+  NOT_ASSESSABLE
 }
 
 type GoalTarget {
@@ -562,12 +906,84 @@ input GoalTargetInput {
   quantity: QuantityInput!
 }
 
+enum GroundwaterReliance {
+  SOURCED
+  DECLARED
+  NONE_RECORDED
+  UNKNOWN
+}
+
 type ImpactAssessment {
   id: ID!
   metrics: [ImpactMetric!]!
   neighbourEffect: MeasuredValue!
   assumptions: [String!]!
   provenance: Provenance!
+
+  """
+  The wider-system assessment shown with the option when it was chosen, with its provenance; null for options stored before it existed.
+  """
+  wider: WiderImpact
+}
+
+"""What a finding or boundary rests on."""
+type ImpactCitation {
+  kind: CitationKind!
+
+  """
+  Catalogue entry (version:id), comparison id, site field, snapshot or connectivity record id.
+  """
+  ref: String!
+  label: String!
+  asOf: LocalDate
+}
+
+type ImpactContext {
+  areaId: ID
+  areaName: String
+  boundaries: [InfluenceBoundary!]!
+  nearby: [NearbyPlace!]!
+  nearbyRadiusM: Int!
+  groundwater: GroundwaterReliance!
+  groundwaterCitations: [ImpactCitation!]!
+  waterQuality: [QualityReading!]!
+  waterQualityNote: String!
+  unavailable: [UnavailableAssessment!]!
+}
+
+type ImpactFinding {
+  """Stable within the assessment; cite as [F:id]."""
+  id: String!
+  kind: FindingKind!
+  statement: String!
+  basis: FindingBasis!
+
+  """What is not known about it."""
+  uncertainty: String!
+  citations: [ImpactCitation!]!
+  system: SharedSystem
+  direction: EffectDirection
+
+  """For a shared system: whether evidence shows this area shares it."""
+  linkage: Linkage
+
+  """Only for a local benefit; never for effects beyond the site."""
+  magnitude: ImpactMagnitude
+  interventionIds: [String!]!
+
+  """Findings a trade-off weighs."""
+  related: [String!]!
+}
+
+"""
+A goal metric at the site: baseline, then the option's result at your low and at your high estimates. Only computed metrics can carry one.
+"""
+type ImpactMagnitude {
+  metricId: String!
+  unit: Unit!
+  baseline: ExactNumber
+  atLowEstimates: ExactNumber!
+  atHighEstimates: ExactNumber!
 }
 
 type ImpactMetric {
@@ -575,6 +991,19 @@ type ImpactMetric {
   baseline: MeasuredValue!
   projectedLow: MeasuredValue!
   projectedHigh: MeasuredValue!
+}
+
+"""A qualified check the plan's measures need."""
+type ImpactReview {
+  kind: ReviewKind!
+
+  """Who does it."""
+  label: String!
+
+  """True: needed before work starts. False: only in the stated case."""
+  required: Boolean!
+  reasons: [String!]!
+  interventionIds: [String!]!
 }
 
 type ImplementationProject {
@@ -601,6 +1030,22 @@ type ImplementationProjectPayload {
   error: MutationError
 }
 
+enum IndicatorStatistic {
+  WINDOW_TOTAL
+  WINDOW_MEAN
+  LATEST
+}
+
+"""A declared influence boundary."""
+type InfluenceBoundary {
+  level: BoundaryLevel!
+  label: String!
+  detail: String!
+  system: SharedSystem
+  linkage: Linkage
+  citations: [ImpactCitation!]!
+}
+
 type InputReadiness {
   input: ReadinessInput!
   label: String!
@@ -618,6 +1063,80 @@ type InputReadiness {
   manualInputId: ID
   manualValue: DecimalString
   demo: Boolean!
+}
+
+type Intervention {
+  id: String!
+  family: InterventionFamily!
+  name: String!
+  summary: String!
+  serves: [GoalKind!]!
+  scales: [SiteScale!]!
+  requires: [SiteRequirement!]!
+
+  """Declared restrictions that rule this measure out."""
+  blockedBy: [SiteRestriction!]!
+  permissions: [String!]!
+  maintenance: [String!]!
+
+  """What the cost depends on. Amounts come from a source or your estimate."""
+  costInputs: [CostInput!]!
+
+  """Registered sources of reviewed local costs; empty means none exist."""
+  costSources: [String!]!
+  construction: String!
+
+  """Reviewed build time; null until evidence exists."""
+  constructionDays: DayRange
+  benefitTiming: BenefitTiming!
+  benefitNote: String!
+
+  """Registered effect evidence; empty means the effect is not evidenced."""
+  evidence: [String!]!
+
+  """Reviewed effect model; null means the effect is not modelled."""
+  effectModel: String
+  cautions: [String!]!
+
+  """
+  Inputs the option engine needs to count this measure; empty means its water effect is not modelled and it never counts towards a target.
+  """
+  effectInputs: [EffectInput!]!
+}
+
+type InterventionCatalogue {
+  version: String!
+  interventions: [Intervention!]!
+}
+
+enum InterventionFamily {
+  RAINWATER_HARVESTING
+  RECHARGE
+  LEAKAGE_REDUCTION
+  GREYWATER_REUSE
+  DEMAND_CONSERVATION
+  STORAGE
+  STORMWATER
+}
+
+type InterventionFit {
+  interventionId: String!
+  name: String!
+  family: InterventionFamily!
+
+  """Serves the main goal or a further one."""
+  relevant: Boolean!
+  outcome: GoalOutcome!
+  site: FitCheck!
+
+  """Null when no budget is set."""
+  cost: FitCheck
+
+  """Null when no maximum implementation time is set."""
+  time: FitCheck
+  benefit: String!
+  estimate: MeasureEstimate
+  preferred: Boolean!
 }
 
 type Job {
@@ -659,6 +1178,15 @@ input LeaveCommunityInput {
 
   """Your membership's version."""
   expectedVersion: Int!
+}
+
+"""
+Whether places share a system, from reviewed evidence only. Unknown unless a record says otherwise; being close never decides it.
+"""
+enum Linkage {
+  LINKED
+  NOT_LINKED
+  UNKNOWN
 }
 
 """A calendar date (YYYY-MM-DD) in the relevant area's IANA timezone."""
@@ -705,6 +1233,27 @@ input MatchFundingInput {
 type MatchFundingPayload {
   matches: [FundingMatch!]
   error: MutationError
+}
+
+"""Your own figures for one measure: always your estimate."""
+type MeasureEstimate {
+  interventionId: String!
+  cost: MoneyRange
+  buildDays: DayRange
+
+  """
+  Your ranges for what the measure's water effect depends on (Intervention.effectInputs), in each input's unit.
+  """
+  effects: [EffectEstimate!]!
+  note: String!
+}
+
+input MeasureEstimateInput {
+  interventionId: String!
+  cost: MoneyRangeInput = null
+  buildDays: DayRangeInput = null
+  effects: [EffectEstimateInput!]! = []
+  note: String! = ""
 }
 
 """
@@ -811,6 +1360,11 @@ type MoneyRange {
   high: Money!
 }
 
+input MoneyRangeInput {
+  low: MoneyInput!
+  high: MoneyInput!
+}
+
 type Mutation {
   createPlanningSession(input: CreatePlanningSessionInput!): PlanningSessionPayload!
   updatePlanningSession(input: UpdatePlanningSessionInput!): PlanningSessionPayload!
@@ -897,6 +1451,18 @@ type NearbyCommunityConnection {
   candidatesTruncated: Boolean!
 }
 
+"""A place near the area: geography only."""
+type NearbyPlace {
+  name: String!
+  communityId: ID!
+  distanceM: Int!
+
+  """
+  Per shared system; unknown unless one evidence record lists both areas.
+  """
+  links: [SystemLinkage!]!
+}
+
 type NearbyPlaces {
   """At most 5, nearest first."""
   candidates: [PlaceCandidate!]!
@@ -927,9 +1493,85 @@ enum ObservationEvidence {
   REJECTED
 }
 
+enum ObservationMethod {
+  IN_SITU_MEASUREMENT
+  ADMINISTRATIVE_RECORD
+  REMOTE_SENSING
+  MODEL_OUTPUT
+  SURVEY
+}
+
 type ObservationPayload {
   observation: Observation
   error: MutationError
+}
+
+"""One effect value a measure line was computed from."""
+type OptionEffect {
+  key: String!
+  label: String!
+  unit: Unit!
+  low: ExactNumber!
+  high: ExactNumber!
+  origin: EffectOrigin!
+}
+
+type OptionMeasure {
+  interventionId: String!
+  name: String!
+
+  """
+  L/day this measure saves or adds at your low estimates, after the measures before it, so lines add up without double counting.
+  """
+  waterLow: ExactNumber
+  waterHigh: ExactNumber
+  cost: MoneyRange
+  buildDays: DayRange
+  benefitTiming: BenefitTiming!
+
+  """Every effect value behind this line, with where it came from."""
+  effects: [OptionEffect!]!
+}
+
+"""Why combinations were not shown. Counts, never options."""
+type OptionRejections {
+  evaluated: Int!
+
+  """Would meet the target only with optimistic estimates."""
+  onlyOptimistic: Int!
+  missedTarget: Int!
+  overBudget: Int!
+
+  """Could exceed the budget."""
+  budgetUncertain: Int!
+  tooSlow: Int!
+
+  """Could take longer than allowed."""
+  timeUncertain: Int!
+
+  """Passed, but a smaller passing combination exists."""
+  notMinimal: Int!
+
+  """The combination limit was reached."""
+  truncated: Boolean!
+}
+
+"""How far the result moves when one estimate goes low to high."""
+type OptionSensitivity {
+  interventionId: String!
+  key: String!
+  label: String!
+  swing: ExactNumber!
+}
+
+"""The option at your low estimates under a documented stress."""
+type OptionStress {
+  key: String!
+  label: String!
+  value: ExactNumber
+
+  """Null when the stress does not apply to this option."""
+  meetsTarget: Boolean
 }
 
 type PageInfo {
@@ -947,6 +1589,63 @@ type PlaceCandidate {
   admin: AdminContext!
   types: [String!]!
   scope: GeographicScope!
+}
+
+"""
+Up to three genuinely feasible, diverse options for the saved goal under the confirmed scenario. Fewer, or none, when fewer pass; never padded.
+"""
+type PlanComparison {
+  """
+  Hash of engine, catalogue, baseline, goal and scenario versions; any change gives a new id and new results.
+  """
+  id: String!
+  engineVersion: String!
+  scenarioEngineVersion: String!
+  catalogueVersion: String!
+  baselineId: String
+  status: PlanComparisonStatus!
+  summary: String!
+  metric: PlanMetric
+  unit: Unit
+  baselineValue: ExactNumber
+  scenarioValue: ExactNumber
+  targetLevel: ExactNumber
+  options: [ComparedOption!]!
+
+  """Input that would let more be compared."""
+  needs: [String!]!
+  excluded: [String!]!
+  rejections: OptionRejections!
+  assumptions: [String!]!
+
+  """The stable ranking rule used."""
+  ranking: String!
+  maxOptions: Int!
+
+  """Documented stress parameters."""
+  stressTests: [String!]!
+
+  """
+  Influence boundaries, nearby places (geography only), groundwater reliance, water-quality readings and what is not assessed; shared by every option.
+  """
+  impactContext: ImpactContext!
+  impactEngineVersion: String!
+}
+
+"""
+OPTIONS, or why there are none: NO_FEASIBLE_PLAN, NEEDS_INPUT, TARGET_ALREADY_MET, NOT_SUPPORTED.
+"""
+enum PlanComparisonStatus {
+  OPTIONS
+  NO_FEASIBLE_PLAN
+  NEEDS_INPUT
+  TARGET_ALREADY_MET
+  NOT_SUPPORTED
+}
+
+enum PlanMetric {
+  TANKER_DEPENDENCE
+  SHORTAGE_DAYS
 }
 
 type PlanOption {
@@ -967,6 +1666,13 @@ type PlanOption {
   The session inputsRevision this option was calculated for; an option from an older revision is out of date and cannot be selected.
   """
   inputsRevision: Int!
+
+  """
+  PlanComparison.id it came from; null for options stored before the engine.
+  """
+  comparisonId: String
+  engineVersion: String
+  interventionIds: [String!]!
 }
 
 type PlanOptionConnection {
@@ -992,11 +1698,24 @@ type PlanningSession {
   selectedPlanOptionId: ID
 
   """
-  Increases whenever location, goal or scenario actually change. Derived results (plan options, funding matches, proposal previews) are keyed by it.
+  Increases whenever location, goal or scenario actually change, or a baseline value is recorded for the session; each also clears the selected plan. Derived results (plan options, funding matches, proposal previews) are keyed by it.
   """
   inputsRevision: Int!
   createdAt: UtcDateTime!
   updatedAt: UtcDateTime!
+
+  """
+  Feasibility of the saved goal for this session's location (null without a goal). Recomputed from current inputs on every read.
+  """
+  goalAssessment: GoalAssessment
+
+  """
+  Up to three genuinely feasible options for the saved goal under the confirmed scenario, computed deterministically from current inputs. Select one with updatePlanningSession(selectedPlanOptionId).
+  """
+  planComparison: PlanComparison!
+
+  """The saved scenario against the same baseline."""
+  scenarioComparison: ScenarioComparison!
   area: Area
 }
 
@@ -1066,6 +1785,7 @@ enum ProposalSection {
   EXECUTIVE_SUMMARY
   BASELINE
   PLAN
+  WIDER_IMPACT
   COSTS
   FUNDING
   ASSUMPTIONS
@@ -1088,6 +1808,16 @@ type Provenance {
   asOf: UtcDateTime!
 }
 
+"""One parameter's reading with method and date; not a verdict."""
+type QualityReading {
+  parameter: String
+  value: ExactNumber!
+  unit: Unit!
+  observedOn: LocalDate
+  method: String
+  citations: [ImpactCitation!]!
+}
+
 """An exact value in a canonical unit (rates are L/day)."""
 type Quantity {
   value: DecimalString!
@@ -1108,7 +1838,22 @@ type Query {
 
   """The caller's active session, for recovery."""
   currentPlanningSession: PlanningSession
+
+  """
+  Validate and screen a draft goal for a session without saving it. Uses the same rules as updatePlanningSession.
+  """
+  checkGoal(sessionId: ID!, goal: GoalInput!): GoalCheck!
+
+  """Plan options for the session's current inputs only."""
   planOptions(sessionId: ID!, first: Int = null, after: String = null): PlanOptionConnection!
+
+  """The versioned intervention catalogue."""
+  interventionCatalogue: InterventionCatalogue!
+
+  """
+  Compare a scenario with the same baseline without saving it. Uses the same validation as updatePlanningSession.
+  """
+  previewScenario(sessionId: ID!, scenario: ScenarioPreviewInput!): ScenarioPreview!
 
   """Candidate places for free text (search or agent message)."""
   resolveLocation(text: String!): LocationResolution!
@@ -1211,6 +1956,12 @@ type Report {
   areaId: ID!
   goal: Goal!
   planOptionId: ID!
+  planName: String
+
+  """
+  The chosen option's impact assessment, copied at finalization with its provenance; null for reports finalized before it existed.
+  """
+  impact: ImpactAssessment
   finalizedAt: UtcDateTime!
   archivedAt: UtcDateTime
   createdAt: UtcDateTime!
@@ -1242,6 +1993,12 @@ enum ReportStatus {
   ARCHIVED
 }
 
+enum ReviewKind {
+  STRUCTURAL
+  HYDROGEOLOGICAL
+  WATER_QUALITY
+}
+
 type Scenario {
   id: ID!
   adjustments: [ScenarioAdjustment!]!
@@ -1261,10 +2018,52 @@ input ScenarioAdjustmentInput {
   quantity: QuantityInput!
 }
 
+"""The baseline and a scenario, side by side, from one baseline."""
+type ScenarioComparison {
+  """
+  none, applied, or awaiting_confirmation (parsed from words, not yet confirmed; results ignore it until then).
+  """
+  status: String!
+  rows: [ScenarioRow!]!
+  notes: [String!]!
+  baselineId: String
+  engineVersion: String!
+}
+
 input ScenarioInput {
   adjustments: [ScenarioAdjustmentInput!]! = []
   interpretedFrom: String = null
   confirmed: Boolean! = false
+}
+
+type ScenarioPreview {
+  """Input that cannot be used; when present there is no comparison."""
+  errors: [FieldError!]!
+  comparison: ScenarioComparison
+}
+
+input ScenarioPreviewAdjustmentInput {
+  parameter: String!
+  change: AdjustmentChange!
+  quantity: QuantityInput!
+}
+
+input ScenarioPreviewInput {
+  adjustments: [ScenarioPreviewAdjustmentInput!]! = []
+}
+
+type ScenarioRow {
+  key: String!
+  label: String!
+  unit: Unit!
+  baseline: ExactNumber
+  scenario: ExactNumber
+
+  """scenario minus baseline."""
+  change: ExactNumber
+
+  """Why a value is unavailable."""
+  reason: String
 }
 
 enum SessionStatus {
@@ -1272,11 +2071,97 @@ enum SessionStatus {
   CLOSED
 }
 
+"""A system that can carry a measure's effect beyond the site."""
+enum SharedSystem {
+  AQUIFER
+  CATCHMENT
+  SUPPLY_NETWORK
+}
+
+"""What is known about the site; null means not known."""
+type SiteConstraints {
+  scale: SiteScale
+
+  """m2 of roof to collect from."""
+  roofArea: Quantity
+
+  """m2 of open or unpaved ground that could be dug or opened."""
+  openGround: Quantity
+  storageSpace: Boolean
+  pipedSupply: Boolean
+
+  """Whether the site pumps groundwater (a borewell or well), as you said."""
+  groundwaterUse: Boolean
+  restrictions: [SiteRestriction!]!
+}
+
+input SiteConstraintsInput {
+  scale: SiteScale = null
+  roofArea: QuantityInput = null
+  openGround: QuantityInput = null
+  storageSpace: Boolean = null
+  pipedSupply: Boolean = null
+  groundwaterUse: Boolean = null
+  restrictions: [SiteRestriction!]! = []
+}
+
+enum SiteRequirement {
+  ROOF_AREA
+  OPEN_GROUND
+  STORAGE_SPACE
+  PIPED_SUPPLY
+}
+
+enum SiteRestriction {
+  NO_EXCAVATION
+  NO_STRUCTURAL_CHANGES
+  NO_RECHARGE
+  NO_GREYWATER_REUSE
+  NO_PERMIT_WORKS
+}
+
+enum SiteScale {
+  HOUSEHOLD
+  BUILDING
+  NEIGHBOURHOOD
+  UTILITY
+}
+
 input StartImplementationProjectInput {
   reportId: ID!
   title: String!
   milestones: [MilestoneInput!]! = []
   idempotencyKey: String!
+}
+
+type SupportingValue {
+  key: String!
+  exact: String!
+  value: DecimalString!
+  unit: CanonicalUnit!
+}
+
+type SystemLinkage {
+  system: SharedSystem!
+  linkage: Linkage!
+  evidenceIds: [String!]!
+}
+
+type TargetCheck {
+  outcome: GoalOutcome!
+  message: String!
+
+  """Baseline metric compared with."""
+  metric: String
+  unit: Unit
+  baseline: DecimalString
+
+  """Exact rational baseline."""
+  baselineExact: String
+
+  """The level the target asks for (a relative target applied exactly)."""
+  targetLevel: DecimalString
+  caveats: [String!]!
 }
 
 enum TargetMode {
@@ -1288,6 +2173,14 @@ enum TechnicalSupport {
   SUPPORTED
   PROVISIONAL
   UNAVAILABLE
+}
+
+"""Something not assessed, and why. Never shown as zero or safe."""
+type UnavailableAssessment {
+  """Cite as [U:key]."""
+  key: String!
+  label: String!
+  reason: String!
 }
 
 """Canonical stored units. Display units such as MLD are not stored."""
@@ -1329,9 +2222,36 @@ An instant in UTC, ISO-8601 with a 'Z' suffix (e.g. 2026-10-07T18:30:00Z).
 """
 scalar UtcDateTime
 
+"""
+Measured, your estimate or modelled; shown distinctly wherever a value is.
+"""
+enum ValueOrigin {
+  MEASURED
+  USER_ESTIMATE
+  MODELED
+}
+
 type Viewer {
   uid: ID!
   kind: AccountKind!
+}
+
+"""
+Wider-system impact of one option: local benefits, possible effects beyond the site, false-resilience warnings, trade-offs, reviews and what is not assessed. Its id derives from everything it used.
+"""
+type WiderImpact {
+  id: ID!
+  optionId: ID!
+  engineVersion: String!
+  catalogueVersion: String!
+  comparisonId: String!
+  inputHash: String!
+  localBenefits: [ImpactFinding!]!
+  externalities: [ImpactFinding!]!
+  falseResilience: [ImpactFinding!]!
+  tradeoffs: [ImpactFinding!]!
+  reviews: [ImpactReview!]!
+  context: ImpactContext!
 }
 
 enum WindowStatus {

@@ -25,8 +25,13 @@ fragment PlanningSessionFields on PlanningSession {
     id
     kind
     description
+    targetParameter
     timelineDays
+    horizonDays
     priority
+    also
+    confirmed
+    preferredInterventions
     budget {
       ...MoneyFields
     }
@@ -34,6 +39,40 @@ fragment PlanningSessionFields on PlanningSession {
       mode
       quantity {
         ...QuantityFields
+      }
+    }
+    site {
+      scale
+      storageSpace
+      pipedSupply
+      groundwaterUse
+      restrictions
+      roofArea {
+        ...QuantityFields
+      }
+      openGround {
+        ...QuantityFields
+      }
+    }
+    estimates {
+      interventionId
+      note
+      cost {
+        low {
+          ...MoneyFields
+        }
+        high {
+          ...MoneyFields
+        }
+      }
+      buildDays {
+        low
+        high
+      }
+      effects {
+        key
+        low
+        high
       }
     }
   }

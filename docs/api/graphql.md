@@ -102,13 +102,20 @@ The HTTP routes are described in `packages/contracts/openapi.json`.
 ## Planning session inputs
 
 `PlanningSession.inputsRevision` (and `PlanOption.inputsRevision`) count real changes to
-the inputs that derived results depend on: `areaId`, `goal` and `scenario`. Mode, stage
-and an unchanged value never bump it. In the same update, the server applies the
-dependency rules: a new area clears the scenario and the selected plan; a new goal clears
-the selected plan; a new scenario keeps the selection (the option is re-validated below).
+the inputs that derived results depend on: `areaId`, `goal` and `scenario`, plus every
+value recorded with `recordManualInput` for the session (it changes the baseline). Mode,
+stage and an unchanged value never bump it. In the same transaction, the server applies
+the dependency rules: a new area clears the scenario and the selected plan; a new goal, a
+new scenario or a recorded value clears the selected plan (ADR 0012). Previewing a
+scenario changes nothing. After `recordManualInput` the web client refreshes the session,
+because its version moved.
 `selectedPlanOptionId` must name an option computed for the session's resulting
 revision, otherwise the update fails with `PRECONDITION_FAILED` and the field error
 `selectedPlanOptionId`, so a plan can never be chosen for inputs it was not compared on.
+`planOptions(sessionId)` lists only options computed for the session's current
+`inputsRevision`, so after any input edit the list is empty until plans are compared
+again (ADR 0011). A goal in an update is validated by the same rules as `checkGoal`
+below; an invalid goal fails with `VALIDATION_FAILED` and `goal.…` field errors.
 A closed session (replaced by `createPlanningSession`) answers `PRECONDITION_FAILED`
 without a field error.
 
@@ -180,8 +187,229 @@ Without `sessionId` it is public and uses only imported sources. With one, the c
 must own the session and the session's saved area must be this area; that session's
 entered values are included. Results fed by synthetic demo data have `demo: true`, and
 that data is used only in local mode. `Area.coverage` derives from the same assessment.
-It carries no metric values: those are calculated in Prompt 09, and only where readiness
-allows. See ADR 0008 and `docs/data-readiness.md`.
+It carries no metric values; those come from `Area.baseline` (below), and only where
+readiness allows. See ADR 0008 and `docs/data-readiness.md`.
+
+## Baseline
+
+`Area.baseline(sessionId)` returns the area's water baseline, calculated by the
+deterministic engine in `domain/baseline.py` (ADR 0010). It uses the same access rules as
+readiness. Without `sessionId` it is public and uses imported sources only. With one, the
+caller must own the session, otherwise the result is `NOT_FOUND`, or `UNAUTHENTICATED`
+when the caller is signed out. That session's entered values are then included.
+
+- `Baseline`:
+  - `id` (`bsl_…`, stable for the same evidence, and new when an input or source
+    version changes), `asOf`, `engineVersion`, `exceedanceP`;
+  - `window` (`start`, `endExclusive`, `days`) and `windowDays`;
+  - `demo` and `basis` (`SOURCED`, `LIMITED` or `USER_INPUT`);
+  - `metrics`, `indicators` and `chart`;
+  - `missingEssentials`, `missingOptional` and `notes`.
+- `BaselineMetric`:
+  - `metric`, `name`, `formula`, `unit`, `daily` (whether the metric is defined day by
+    day);
+  - `availability`: `AVAILABLE`, `PROVISIONAL` (for example, it uses entered values or
+    covers only part of the window), or `UNAVAILABLE`;
+  - when there is a value: `exact` (an integer or `p/q`) and `value` (a decimal string);
+  - when unavailable: `reason` (a `BaselineReason`). Either way, `reasons` gives the
+    plain-language explanations;
+  - `origin` (`MEASURED`, `USER_ESTIMATE` or `MODELED`), `asOf`, `demo`;
+  - `recordedDays` and `periodDays` when the value comes from records. A value that
+    averages fewer recorded days than the period is never `AVAILABLE` (the server
+    refuses to build one), and the card says "Average of N of M days";
+  - `assumptions`, `supporting` (for example `daily_deficit_total` in L), and `evidence`.
+    Each `EvidenceLink` has the input or capability, snapshot or manual input id, title,
+    publisher, URL, as-of, quality, method, uncertainty, note and `demo`.
+
+  A missing value is always `null` with a reason, never `"0"`.
+
+- `BaselineIndicator`:
+  - context indicators: rainfall, groundwater, surface water, water quality, flood risk
+    and land cover;
+  - each has `statistic`, `unit`, `availability`, `observedOn` or `window`, `origin` and
+    `evidence`;
+  - an indicator has a value only when its capability is ready and its unit is
+    compatible;
+  - category indicators return `UNSUPPORTED_FORMAT`.
+- `BaselineChart`:
+  - `monthly`;
+  - `buckets` (`DateWindow`s);
+  - `series` (`key`; `values` as exact decimal strings in L/day, with `null` for a
+    bucket that has any missing day; `origin` and `demo`, using the same rule as the
+    cards).
+
+Rates are canonical L/day. The web converts them for display only, using exact string
+arithmetic and one unit per baseline:
+
+- MLD, or kL/day when every nonzero rate is below 1 MLD;
+- for US customary areas, MGD, meaning million US gallons per day (1 US gallon =
+  3.785411784 L exactly).
+
+## Goals and constraints
+
+ADR 0011. The goal is part of the planning session (`PlanningSession.goal`), saved
+through `updatePlanningSession` with `expectedVersion`. A changed goal bumps
+`inputsRevision` and clears the selected plan.
+
+- `GoalInput` / `Goal`:
+  - `kind` (`REDUCE_SHORTAGE`, `IMPROVE_GROUNDWATER`, `REDUCE_WATER_BILLS`,
+    `REDUCE_FLOOD_RISK`, `IMPROVE_WATER_QUALITY`, `REDUCE_TANKER_DEPENDENCE`, `CUSTOM`),
+    `description`, and `confirmed` (custom wording must be confirmed);
+  - `target` (`mode`: `RELATIVE_REDUCTION` with a `RATIO` quantity such as `"0.3"`, or
+    `ABSOLUTE_LEVEL` with a unit allowed for the kind), and `targetParameter` for water
+    quality;
+  - `budget` (`minorUnits`, `currency`), `timelineDays` (maximum implementation time),
+    `horizonDays` (planning horizon) and `priority`;
+  - `also`: up to three further standard objectives;
+  - `site`: `scale`, `roofArea` and `openGround` (`SQUARE_METRE`), `storageSpace`,
+    `pipedSupply` and `restrictions` (`NO_EXCAVATION`, `NO_STRUCTURAL_CHANGES`,
+    `NO_RECHARGE`, `NO_GREYWATER_REUSE`, `NO_PERMIT_WORKS`);
+  - `preferredInterventions`: a measure whose site prerequisites are unmet, or that a
+    restriction blocks, is a field error;
+  - `estimates`: the user's own cost range and/or build days per measure, in the goal's
+    currency, with a note, plus `effects` (`key`, `low`, `high`): ranges for the
+    measure's catalogue `effectInputs`, in their canonical units (shares as ratios),
+    checked against the catalogue's keys and bounds.
+
+  Values are canonical. Formatted strings (`"10,00,000"`, `"30%"`) are rejected, never
+  parsed.
+
+- `Query.checkGoal(sessionId, goal)` returns `GoalCheck { errors, assessment }` without
+  saving. `errors` are field errors (`goal.target.quantity.value`, …). `assessment` is
+  `null` when there are errors.
+- `PlanningSession.goalAssessment` gives the same assessment for the saved goal.
+- `GoalAssessment`:
+  - `outcome` (`FEASIBLE`, `INFEASIBLE`, `NOT_ASSESSABLE`), `summary` and `nextSteps`;
+  - `target` (the outcome, message, metric, unit, baseline value and target level as
+    exact decimal strings, and caveats);
+  - `constraints` and `conflicts` (`GoalFinding`: code, message, and outcome, where
+    `null` marks a note);
+  - per measure `interventions` (relevance, outcome, benefit timing, preferred, and
+    `site` / `cost` / `time` fits);
+  - `catalogueVersion` and `baselineId`.
+
+  There is no confidence or score.
+
+- `Query.interventionCatalogue` returns the versioned catalogue (`interventions-3`, which
+  adds wider effects and professional reviews per measure, ADR 0013).
+  `costSources`, `evidence` and `effectModel` are empty until reviewed. `effectInputs`
+  (`key`, `label`, `unit`, `minimum`, `maximum`, `required`, `note`) say what a measure's
+  water effect depends on; the catalogue holds bounds only, never values (ADR 0012). A copy is in
+  `docs/domain/interventions.catalogue.json` (`npm run intervention-catalogue`).
+
+The agent tools in `application/tools/goals.py` (`check_goal`, `explain_goal_fit`,
+`list_interventions`) call the same `GoalService` and return the same results.
+
+## Scenarios and plan comparison
+
+ADR 0012; rules in `docs/domain/option-engine.md`. Both engines are deterministic, exact
+and versioned. A language model may turn words into a scenario, but never computes a
+result.
+
+- `ExactNumber { exact, value }`: `exact` is an integer or `p/q`, and `value` is a
+  decimal string (28 significant digits). Clients round only for display. A missing value
+  is `null`, never 0.
+- `PlanningSession.scenarioComparison` gives the saved scenario against the same baseline:
+  - `status`: `none`, `applied`, or `awaiting_confirmation` (parsed from words, not yet
+    confirmed; results ignore it);
+  - `rows` (`key`, `label`, `unit`, `baseline`, `scenario`, `change`, and `reason` when
+    a value is unavailable), `notes`, `baselineId`, `engineVersion`.
+- `Query.previewScenario(sessionId, scenario)` returns `ScenarioPreview { errors,
+comparison }` without saving. Adjustments use `parameter` (`demand`, `piped_supply`,
+  `rainfall`), `change` and a `quantity`: a `RATIO` in (0, 1] for relative changes, or
+  the parameter's unit for `SET_TO`. Session saves and agent tools use the same
+  validation (`scenario.adjustments.N.…` field errors).
+- `PlanningSession.planComparison` returns `PlanComparison`:
+  - `id`: the comparison key, a hash of the engine, catalogue, baseline, goal and scenario
+    versions. Any change gives a new id;
+  - `engineVersion`, `scenarioEngineVersion`, `catalogueVersion`, `baselineId`;
+  - `status` (`OPTIONS`, `NO_FEASIBLE_PLAN`, `NEEDS_INPUT`, `TARGET_ALREADY_MET`,
+    `NOT_SUPPORTED`) and `summary`;
+  - `metric` (`TANKER_DEPENDENCE`, `SHORTAGE_DAYS`), `unit`, `baselineValue`,
+    `scenarioValue`, `targetLevel`;
+  - `options`: 0 to `maxOptions` (3) `ComparedOption`s, never padded;
+  - `needs` (what would let more be compared), `excluded` (measures that cannot count, and
+    why), `rejections` (counts of failed combinations), `assumptions`, `ranking` (the
+    rule as text) and `stressTests`.
+- `ComparedOption`:
+  - `id` (derived from the comparison id and its measures), `rank`, `interventionIds`,
+    `name`;
+  - `measures` (`OptionMeasure`: water saved or added at low and high estimates, after
+    the measures before it, so lines add up; cost, build days, benefit timing; and
+    `effects`, every effect value the line was computed from, as `OptionEffect`: `key`,
+    `label`, `unit`, exact `low` and `high`, and `origin` — `USER_ESTIMATE`, `BASELINE`
+    (sourced baseline value) or `SCENARIO` (set by the confirmed what-if). The catalogue
+    never supplies an effect value);
+  - `pessimistic`, `optimistic`, `margin`, `waterLow`, `waterHigh`, `uncountedHigh`
+    (water beyond the tanker deliveries it could replace, not counted);
+  - `cost`, `buildDays`, `firstBenefit`, `why`, `tradeoffs`, `uncertainty`;
+  - `sensitivity` (swing per estimate) and `stress` (`value` and `meetsTarget` per stress
+    test, both `null` when the test does not apply).
+  - `impact` (`WiderImpact`, below), assessed for every option before selection.
+- `PlanComparison.impactContext` (`ImpactContext`) and `impactEngineVersion` (`impact-1`).
+- `PlanOption` (stored when chosen) adds `comparisonId`, `engineVersion` and
+  `interventionIds`, and `impact.wider` holds the `WiderImpact` exactly as shown.
+
+### Wider-system impact
+
+ADR 0013; rules in `docs/domain/impact-assessment.md`.
+
+- `WiderImpact`:
+  - `id`, `optionId`, `engineVersion`, `catalogueVersion`, `comparisonId`, and
+    `inputHash` (SHA-256 over every input; any change gives a new id);
+  - `localBenefits`, `externalities`, `falseResilience` and `tradeoffs`, each a list of
+    `ImpactFinding`;
+  - `reviews` (`ImpactReview`) and `context`.
+- `ImpactFinding`:
+  - `id`, `kind`, `statement`, `basis` (`ENGINE_ESTIMATE`, `MECHANISM`, `DECLARED`,
+    `SOURCED`), `uncertainty`, `citations` (`ImpactCitation`: `kind`, `ref`, `label`,
+    `asOf`), `interventionIds` and `related`;
+  - beyond the site: `system` (`AQUIFER`, `CATCHMENT`, `SUPPLY_NETWORK`), `direction`
+    (`POSSIBLE_BENEFIT`, `POSSIBLE_HARM`, `EITHER`) and `linkage` (`LINKED`,
+    `NOT_LINKED`, `UNKNOWN`);
+  - `magnitude` (`metricId`, `unit`, exact `baseline`, `atLowEstimates`,
+    `atHighEstimates`) appears only on local benefits, and only for `tanker_dependence`
+    or `shortage_days`. Effects beyond the site never carry a number.
+- `ImpactReview`: `kind` (`STRUCTURAL`, `HYDROGEOLOGICAL`, `WATER_QUALITY`), `label`,
+  `required`, `reasons` and `interventionIds`.
+- `ImpactContext`:
+  - `boundaries` (`InfluenceBoundary`: `level` `SITE`/`AREA`/`SHARED_SYSTEM`, `label`,
+    `detail`, `system`, `linkage`, `citations`);
+  - `nearby` (`NearbyPlace`: `name`, `communityId`, `distanceM`, and `links` per system
+    with `linkage` and `evidenceIds`), within `nearbyRadiusM`. This is geography only:
+    `UNKNOWN` unless one evidence record lists both areas;
+  - `groundwater` (`SOURCED`, `DECLARED`, `NONE_RECORDED`, `UNKNOWN`) and
+    `groundwaterCitations`;
+  - `waterQuality` (`QualityReading`: `parameter`, exact `value`, `unit`, `observedOn`,
+    `method`, `citations`) and `waterQualityNote`. There is no potability field;
+  - `unavailable` (`UnavailableAssessment`: `key`, `label`, `reason`).
+- `SiteConstraints.groundwaterUse` / `SiteConstraintsInput.groundwaterUse`: optional.
+  Whether the site pumps from a borewell or well.
+- `Report.planName` and `Report.impact`: the chosen option's name and impact assessment
+  (with `wider`), copied when the report is finalized and never recomputed.
+- Proposal inputs are `waterlens.proposal-inputs/2` (`inputs-v2.json`), with
+  `report.planName` and `report.impact`. `ProposalSection` adds `WIDER_IMPACT`.
+
+**Where scenarios are explored.** In the web app only Agent mode explores scenarios (the
+agent pane's what-if tool, calling `previewScenario` and saving through the session).
+Traditional mode has no what-if controls; the Plans page shows a saved scenario read-only,
+labelled "Agent-generated" (ADR 0012 §6).
+
+**Choosing a plan.** `updatePlanningSession` with `selectedPlanOptionId` recomputes the
+comparison for the resulting inputs. The id must be among its current options, otherwise
+`PRECONDITION_FAILED` with field `selectedPlanOptionId`. The option is stored before the
+session transaction. Options stored before Prompt 11 (no `comparisonId`) keep the
+revision rule above.
+
+Agent tools in `application/tools/options.py` (`compare_plans`, `preview_scenario`,
+`explain_option`, `check_impact_summary`) call the same `OptionService` and return the
+same results, including each option's `impact`. `check_impact_summary(sessionId,
+optionId, text)` returns `{ok, problems, impactId}`. A model-written summary is shown
+only if:
+
+- every sentence cites `[F:<finding id>]` or `[U:<unavailable key>]`;
+- its numbers come from the cited findings;
+- it neither certifies drinking water nor claims an absence of harm.
 
 ## Location
 
@@ -282,11 +510,19 @@ cleared on sign-in, sign-out and account linking** (wired in Phase 05).
 | `['areas', 'search', query, page]`                                                    | `SearchAreas`                                             |
 | `['areas', areaId]`                                                                   | `AreaCoverage`, `AreaLocation`                            |
 | `['readiness', areaId, sessionId]`                                                    | `AreaReadiness` (data readiness; `sessionId` may be null) |
+| `['baseline', areaId, sessionId]`                                                     | `AreaBaseline` (fetched in parallel with readiness)       |
 | `['locations', 'countries']`                                                          | `Countries`                                               |
 | `['session', 'current']`                                                              | `CurrentPlanningSession`                                  |
 | `['session', sessionId]`                                                              | `PlanningSession`                                         |
 | `['session', sessionId, 'derived', inputsRevision, 'planOptions', page]`              | `PlanOptions`                                             |
 | `['session', sessionId, 'derived', inputsRevision, 'fundingMatches', optionId, page]` | `FundingMatches`                                          |
+| `['session', sessionId, 'derived', inputsRevision, 'goalAssessment']`                 | `GoalAssessment` (saved goal)                             |
+| `['session', sessionId, 'derived', inputsRevision, 'goalCheck', draftJson]`           | `CheckGoal` (unsaved draft)                               |
+| `['session', sessionId, 'derived', inputsRevision, 'planComparison']`                 | `PlanComparison` (with the saved scenario's comparison)   |
+| `['session', sessionId, 'derived', inputsRevision, 'scenarioPreview', scenarioJson]`  | `PreviewScenario` (unsaved what-if)                       |
+| `['session', sessionId, 'derived', inputsRevision, 'scenarioComparison']`             | `SessionScenario` (saved what-if, agent pane)             |
+| `['areas', areaId, 'goal']`                                                           | `GoalArea` (name and currency for budgets)                |
+| `['goals', 'catalogue']`                                                              | `InterventionCatalogue`                                   |
 | `['reports', 'list', filter, page]`                                                   | `Reports`                                                 |
 | `['reports', reportId]`                                                               | `Report` (with proposals)                                 |
 | `['proposals', proposalId]`                                                           | `Proposal`                                                |
@@ -312,26 +548,30 @@ the stage pages say that derived results will be worked out again.
 Implemented in `apps/web/src/graphql/invalidation.ts`. It runs after every answered
 mutation, including typed errors, because a `VERSION_CONFLICT` needs the fresh record.
 
-| Mutation                     | Invalidates (prefixes)                                                                                |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `createPlanningSession`      | `['session','current']`, `['session']`                                                                |
-| `updatePlanningSession`      | `['session', id]` (session, plan options, matches), `['session','current']`                           |
-| `matchFunding`               | `['session', sessionId, 'derived']`                                                                   |
-| `finalizeReport`             | `['reports']`, `['session', sessionId]`                                                               |
-| `archiveReport`              | `['reports']`, `['reports', id]`                                                                      |
-| `generateProposal`           | `['reports', reportId]`                                                                               |
-| `createCommunity`            | `['communities']`                                                                                     |
-| `joinCommunity`              | `['communities', id]`, `['communities','list']`, `['communities','nearby']`, `['communities','mine']` |
-| `leaveCommunity`             | the join set plus `['reports']` and `['projects']` (shared records may disappear)                     |
-| `archiveCommunity`           | `['communities']`, `['communities', id]`                                                              |
-| `startImplementationProject` | `['projects']`                                                                                        |
-| `updateMilestone`            | `['projects']`                                                                                        |
-| `recordObservation`          | `['projects', projectId, 'observations']`                                                             |
-| `recordManualInput`          | `['readiness']`                                                                                       |
-| `confirmLocation`            | `['areas']` (the session's `areaId` is then set by the coordinator)                                   |
-| `beginAccountClaim`          | nothing (claims are not cached)                                                                       |
-| `cancelAccountClaim`         | nothing                                                                                               |
-| `completeAccountClaim`       | `['viewer']`, `['session']` (the guest's session now belongs to the account)                          |
+| Mutation                     | Invalidates (prefixes)                                                                                                          |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `createPlanningSession`      | `['session','current']`, `['session']`                                                                                          |
+| `updatePlanningSession`      | `['session', id]` (session, plan options, matches), `['session','current']`                                                     |
+| `matchFunding`               | `['session', sessionId, 'derived']`                                                                                             |
+| `finalizeReport`             | `['reports']`, `['session', sessionId]`                                                                                         |
+| `archiveReport`              | `['reports']`, `['reports', id]`                                                                                                |
+| `generateProposal`           | `['reports', reportId]`                                                                                                         |
+| `createCommunity`            | `['communities']`                                                                                                               |
+| `joinCommunity`              | `['communities', id]`, `['communities','list']`, `['communities','nearby']`, `['communities','mine']`                           |
+| `leaveCommunity`             | the join set plus `['reports']` and `['projects']` (shared records may disappear)                                               |
+| `archiveCommunity`           | `['communities']`, `['communities', id]`                                                                                        |
+| `startImplementationProject` | `['projects']`                                                                                                                  |
+| `updateMilestone`            | `['projects']`                                                                                                                  |
+| `recordObservation`          | `['projects', projectId, 'observations']`                                                                                       |
+| `recordManualInput`          | `['readiness']`, `['baseline']`, `['session', sessionId, 'derived']`; the coordinator then refreshes the session (new revision) |
+| `confirmLocation`            | `['areas']` (the session's `areaId` is then set by the coordinator)                                                             |
+| `beginAccountClaim`          | nothing (claims are not cached)                                                                                                 |
+| `cancelAccountClaim`         | nothing                                                                                                                         |
+| `completeAccountClaim`       | `['viewer']`, `['session']` (the guest's session now belongs to the account)                                                    |
+
+`invalidateAfter` cancels in-flight fetches for each prefix before invalidating it.
+TanStack Query otherwise joins a first load that is still running, and that load's
+response, computed before the mutation, would be shown as current.
 
 The session coordinator writes through `updatePlanningSession` itself and, after each
 acknowledged write, invalidates `['session', id]` and `['session','current']`; when the

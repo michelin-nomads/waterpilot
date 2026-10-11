@@ -37,6 +37,11 @@ export interface ChartSeries {
   label: string;
   /** One value per category; `null` means unavailable and is never drawn as zero. */
   values: ReadonlyArray<number | null>;
+  /**
+   * Pre-formatted text per category for the table, from the exact value. When given, the
+   * table shows it instead of re-formatting the plotted number.
+   */
+  display?: ReadonlyArray<string | null>;
 }
 
 export interface ChartData {

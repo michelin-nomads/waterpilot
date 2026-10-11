@@ -1,8 +1,13 @@
+import { lazy, Suspense } from 'react';
+
 import { Badge } from '../../components/Badge/Badge';
 import { Button } from '../../components/Button/Button';
 import { Icon } from '../../components/Icon/Icon';
 import { EmptyState } from '../../components/StatePanel/StatePanel';
 import styles from './AgentPanel.module.scss';
+
+const AgentGoalCheck = lazy(() => import('../goals/AgentGoalCheck'));
+const AgentScenario = lazy(() => import('../plans/AgentScenario'));
 
 /**
  * Agent pane. The agent is not connected in this build, and the pane says so instead of
@@ -37,6 +42,12 @@ export function AgentPanel({ onUseTraditional }: { onUseTraditional: () => void 
           (Phase 13). Until then, use the workspace.
         </p>
       </EmptyState>
+      <Suspense fallback={null}>
+        <AgentGoalCheck />
+      </Suspense>
+      <Suspense fallback={null}>
+        <AgentScenario />
+      </Suspense>
     </div>
   );
 }

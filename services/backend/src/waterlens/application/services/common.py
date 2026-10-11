@@ -12,8 +12,10 @@ from pydantic import BaseModel, ValidationError
 from waterlens.application.pagination import Page, PageArgs, PageQuery
 from waterlens.application.ports import JobRunner, NoPlaceSearch, PlaceSearch
 from waterlens.application.repositories import Store, Where
+from waterlens.application.series import SeriesReader
 from waterlens.domain.accounts import ClaimPolicy
 from waterlens.domain.errors import DomainError, ErrorCode, FieldError
+from waterlens.domain.impact import REVIEWED_CONNECTIVITY, ConnectivityEvidence
 from waterlens.domain.jobs import JobPolicy
 
 type Clock = Callable[[], datetime]
@@ -34,6 +36,12 @@ class Deps:
     """Count SYNTHETIC demo snapshots in readiness (labelled ``demo``). Local mode only;
     pilot never sets it, so synthetic data there is always ``unavailable``."""
     places: PlaceSearch = field(default_factory=NoPlaceSearch)
+    connectivity: tuple[ConnectivityEvidence, ...] = REVIEWED_CONNECTIVITY
+    """Reviewed connectivity records for the impact assessment (ADR 0013). None exists
+    yet; tests pass their own to exercise linked and separate systems."""
+    series: SeriesReader | None = None
+    """Reads imported snapshots' daily series. Without it the baseline uses typed-in
+    values only and says that sourced series could not be read."""
 
 
 def page_of[T](repo: _Pageable[T], where: Where, page: PageArgs) -> Page[T]:

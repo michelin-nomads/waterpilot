@@ -444,13 +444,18 @@ describe('location step', () => {
     });
   });
 
-  it('keeps search usable when the map fails to load', async () => {
+  it('completes the step by search when the map fails to load', async () => {
     const places = new FakePlaces();
     places.hasMap = true;
-    renderStep(places);
+    const { sessions } = renderStep(places);
     expect(await screen.findByText('The map is unavailable')).toBeInTheDocument();
     await search('Nairobi');
-    expect(await screen.findByRole('option', { name: /nairobi/i })).toBeInTheDocument();
+    fireEvent.click(await screen.findByRole('option', { name: /nairobi/i }));
+    await confirmReview();
+    expect(confirms()[0]).toMatchObject({ origin: 'PLACE_SEARCH', placeId: 'fixture:nairobi' });
+    await waitFor(() =>
+      expect(sessions.applied.at(-1)?.patch).toEqual({ areaId: 'are_0000000000000000000000NEW1' }),
+    );
   });
 
   it('retries a lost confirmation with the same idempotency key', async () => {

@@ -5,51 +5,37 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import Field
-
 from waterlens.application.idempotency import run_once
 from waterlens.application.identity import RequestContext
 from waterlens.application.pagination import Page, PageArgs
 from waterlens.application.policies import active_membership, existing_community, owned_session
+from waterlens.application.repositories import Where
 from waterlens.application.services.common import Deps, build, page_of
+from waterlens.application.services.goals import GoalInput, require_valid
+from waterlens.application.services.options import (
+    OptionService,
+    ScenarioInput,
+    require_valid_scenario,
+)
 from waterlens.domain.communities import CommunityStatus
 from waterlens.domain.errors import DomainError, ErrorCode, not_found
 from waterlens.domain.ids import IdKind, new_id, require_id
 from waterlens.domain.planning import (
     Goal,
-    GoalKind,
-    GoalTarget,
     PlanningMode,
     PlanningSession,
     PlanningStage,
     PlanOption,
-    Priority,
     Scenario,
-    ScenarioAdjustment,
     SessionStatus,
 )
-from waterlens.domain.values import Frozen, Money
+from waterlens.domain.values import Frozen
 
 
 class CreateSessionInput(Frozen):
     mode: PlanningMode
     area_id: str | None = None
     community_id: str | None = None
-
-
-class GoalInput(Frozen):
-    kind: GoalKind
-    description: str = Field(default="", max_length=2000)
-    target: GoalTarget | None = None
-    budget: Money | None = None
-    timeline_days: int | None = Field(default=None, ge=1, le=36_500)
-    priority: Priority | None = None
-
-
-class ScenarioInput(Frozen):
-    adjustments: tuple[ScenarioAdjustment, ...] = Field(default=(), max_length=20)
-    interpreted_from: str | None = Field(default=None, max_length=2000)
-    confirmed: bool = False
 
 
 class SessionPatch(Frozen):
@@ -67,8 +53,9 @@ _REQUIRED_WHEN_SET = ("mode", "stage")
 
 
 class SessionService:
-    def __init__(self, deps: Deps) -> None:
+    def __init__(self, deps: Deps, options: OptionService) -> None:
         self._d = deps
+        self._options = options
 
     def get(self, ctx: RequestContext, session_id: str) -> PlanningSession:
         principal = ctx.require_principal()
@@ -83,8 +70,11 @@ class SessionService:
     def plan_options(
         self, ctx: RequestContext, session_id: str, page: PageArgs
     ) -> Page[PlanOption]:
+        """Options for the session's current inputs only: an edit to location, goal or
+        scenario clears earlier results from view (they stay stored, unselectable)."""
         session = self.get(ctx, session_id)
-        return page_of(self._d.store.plan_options, {"session_id": session.id}, page)
+        where: Where = {"session_id": session.id, "inputs_revision": session.inputs_revision}
+        return page_of(self._d.store.plan_options, where, page)
 
     def create(
         self, ctx: RequestContext, data: dict[str, Any], idempotency_key: str
@@ -148,6 +138,10 @@ class SessionService:
         patch = build(SessionPatch, data)
         store = self._d.store
         session_id = require_id(session_id, IdKind.SESSION)
+        if patch.scenario is not None:
+            require_valid_scenario(patch.scenario)
+        if "selected_plan_option_id" in patch.model_fields_set:
+            self._store_selected(ctx, session_id, patch.selected_plan_option_id)
 
         def tx() -> PlanningSession:
             session = owned_session(store, session_id, principal)
@@ -159,6 +153,26 @@ class SessionService:
             return store.sessions.replace(session.model_copy(update=update), expected_version)
 
         return store.transaction(tx)
+
+    def _store_selected(self, ctx: RequestContext, session_id: str, option_id: str | None) -> None:
+        """Options are computed, not stored; selecting one stores it, and only when it is
+        among the options for the session's current inputs. Options stored before the
+        engine (no comparison id) keep the revision rule in ``_apply``."""
+        if option_id is None:
+            return
+        require_id(option_id, IdKind.PLAN_OPTION, "selectedPlanOptionId")
+        stored = self._d.store.plan_options.get(option_id)
+        if stored is not None and stored.comparison_id is None:
+            return
+        record = self._options.selectable(ctx, session_id, option_id)
+        # Choosing again stores the assessment the person sees now: the option id comes
+        # from the comparison key, which does not cover evidence or nearby places.
+        if (
+            stored is None
+            or stored.inputs_revision != record.inputs_revision
+            or stored.impact.wider != record.impact.wider
+        ):
+            self._d.store.plan_options.add(record)
 
     def _apply(self, session: PlanningSession, patch: SessionPatch) -> dict[str, Any]:
         provided = patch.model_fields_set
@@ -181,6 +195,8 @@ class SessionService:
             update |= {"area_id": patch.area_id, "scenario": None, "selected_plan_option_id": None}
             upstream_changed = True
         if "goal" in provided:
+            if patch.goal is not None:
+                require_valid(patch.goal)
             goal = (
                 None
                 if patch.goal is None
@@ -203,7 +219,8 @@ class SessionService:
                 )
             )
             if scenario != session.scenario:
-                update["scenario"] = scenario
+                # Options are compared under the scenario, so the selection no longer holds.
+                update |= {"scenario": scenario, "selected_plan_option_id": None}
                 upstream_changed = True
         revision = session.inputs_revision + 1 if upstream_changed else session.inputs_revision
         if upstream_changed:

@@ -7,7 +7,8 @@ from enum import StrEnum
 
 from pydantic import Field
 
-from waterlens.domain.planning import Goal
+from waterlens.domain.impact_records import ReviewNeed
+from waterlens.domain.planning import Goal, ImpactAssessment
 from waterlens.domain.records import Record
 from waterlens.domain.values import UtcDateTime
 
@@ -28,12 +29,27 @@ class Report(Record):
     plan_option_id: str
     finalized_at: UtcDateTime
     archived_at: UtcDateTime | None = None
+    plan_name: str | None = Field(default=None, max_length=200)
+    impact: ImpactAssessment | None = None
+    """The chosen option's impact assessment, copied at finalization with its provenance
+    (ADR 0013); None for reports finalized before it existed."""
+
+    def required_reviews(self) -> tuple[ReviewNeed, ...]:
+        wider = self.impact.wider if self.impact else None
+        return tuple(r for r in wider.reviews if r.required) if wider else ()
+
+    def impact_status(self) -> str:
+        """``assessed``, or why there is no wider-impact assessment (older records)."""
+        if self.impact is None:
+            return "not_recorded"
+        return "assessed" if self.impact.wider is not None else "not_assessed"
 
 
 class ProposalSection(StrEnum):
     EXECUTIVE_SUMMARY = "executive_summary"
     BASELINE = "baseline"
     PLAN = "plan"
+    WIDER_IMPACT = "wider_impact"
     COSTS = "costs"
     FUNDING = "funding"
     ASSUMPTIONS = "assumptions"

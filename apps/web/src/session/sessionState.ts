@@ -1,11 +1,14 @@
 import type {
   GoalInput,
   PlanningMode,
+  QuantityInput,
+  Unit,
   PlanningSessionFieldsFragment,
   PlanningStage,
   ScenarioInput,
   SessionStatus,
 } from '../graphql/generated/graphql';
+import { canonicalDecimal } from '../lib/format';
 
 /** The session fields a user (or the agent) edits. */
 export interface SessionInputs {
@@ -45,22 +48,55 @@ export const UPSTREAM_FIELDS: ReadonlySet<SessionField> = new Set(['areaId', 'go
 
 const NAVIGATION_FIELDS: ReadonlySet<SessionField> = new Set(['mode', 'stage']);
 
+const money = (m: { minorUnits: string; currency: string } | null | undefined) =>
+  m ? { minorUnits: m.minorUnits, currency: m.currency } : null;
+const quantity = (q: { value: string; unit: Unit } | null | undefined) =>
+  q ? { value: canonicalDecimal(q.value), unit: q.unit } : null;
+const days = (d: { low: number; high: number } | null | undefined) =>
+  d ? { low: d.low, high: d.high } : null;
+
 function canonicalGoal(goal: GoalInput | null | undefined): GoalInput | null {
   if (!goal) return null;
+  const site = goal.site;
   return {
     kind: goal.kind,
     description: goal.description ?? '',
     target: goal.target
-      ? {
-          mode: goal.target.mode,
-          quantity: { value: goal.target.quantity.value, unit: goal.target.quantity.unit },
-        }
+      ? { mode: goal.target.mode, quantity: quantity(goal.target.quantity) as QuantityInput }
       : null,
-    budget: goal.budget
-      ? { minorUnits: goal.budget.minorUnits, currency: goal.budget.currency }
-      : null,
+    targetParameter: goal.targetParameter ?? null,
+    budget: money(goal.budget),
     timelineDays: goal.timelineDays ?? null,
+    horizonDays: goal.horizonDays ?? null,
     priority: goal.priority ?? null,
+    also: [...(goal.also ?? [])],
+    site: {
+      scale: site?.scale ?? null,
+      roofArea: quantity(site?.roofArea),
+      openGround: quantity(site?.openGround),
+      storageSpace: site?.storageSpace ?? null,
+      pipedSupply: site?.pipedSupply ?? null,
+      groundwaterUse: site?.groundwaterUse ?? null,
+      restrictions: [...(site?.restrictions ?? [])],
+    },
+    preferredInterventions: [...(goal.preferredInterventions ?? [])],
+    estimates: (goal.estimates ?? []).map((e) => ({
+      interventionId: e.interventionId,
+      cost: e.cost
+        ? {
+            low: { minorUnits: e.cost.low.minorUnits, currency: e.cost.low.currency },
+            high: { minorUnits: e.cost.high.minorUnits, currency: e.cost.high.currency },
+          }
+        : null,
+      buildDays: days(e.buildDays),
+      effects: (e.effects ?? []).map((x) => ({
+        key: x.key,
+        low: canonicalDecimal(x.low),
+        high: canonicalDecimal(x.high),
+      })),
+      note: e.note ?? '',
+    })),
+    confirmed: goal.confirmed ?? false,
   };
 }
 
@@ -70,7 +106,7 @@ function canonicalScenario(scenario: ScenarioInput | null | undefined): Scenario
     adjustments: (scenario.adjustments ?? []).map((a) => ({
       parameter: a.parameter,
       change: a.change,
-      quantity: { value: a.quantity.value, unit: a.quantity.unit },
+      quantity: { value: canonicalDecimal(a.quantity.value), unit: a.quantity.unit },
     })),
     interpretedFrom: scenario.interpretedFrom ?? null,
     confirmed: scenario.confirmed ?? false,
@@ -107,20 +143,7 @@ export function fromFragment(s: PlanningSessionFieldsFragment): SessionState {
     areaId: s.areaId ?? null,
     areaName: s.area?.name ?? null,
     communityId: s.communityId ?? null,
-    goal: canonicalGoal(
-      s.goal
-        ? {
-            kind: s.goal.kind,
-            description: s.goal.description,
-            target: s.goal.target ?? null,
-            budget: s.goal.budget
-              ? { minorUnits: s.goal.budget.minorUnits, currency: s.goal.budget.currency }
-              : null,
-            timelineDays: s.goal.timelineDays ?? null,
-            priority: s.goal.priority ?? null,
-          }
-        : null,
-    ),
+    goal: canonicalGoal(s.goal),
     scenario: canonicalScenario(
       s.scenario
         ? {
@@ -152,7 +175,8 @@ export function patchFields(patch: SessionPatch): SessionField[] {
 /**
  * The session as the user should see it: the server copy with pending edits on top. Mirrors
  * the server's dependency rules, so a pending upstream change never shows a stale choice:
- * a new location clears the scenario and plan choice, a new goal clears the plan choice.
+ * a new location clears the scenario and plan choice; a new goal or scenario clears the plan
+ * choice.
  */
 export function applyPatch(server: SessionState, patch: SessionPatch): SessionState {
   const next: SessionState = { ...server };
@@ -164,7 +188,9 @@ export function applyPatch(server: SessionState, patch: SessionPatch): SessionSt
       if (!('scenario' in patch)) next.scenario = null;
       if (!('selectedPlanOptionId' in patch)) next.selectedPlanOptionId = null;
     }
-    if (field === 'goal' && !('selectedPlanOptionId' in patch)) next.selectedPlanOptionId = null;
+    if ((field === 'goal' || field === 'scenario') && !('selectedPlanOptionId' in patch)) {
+      next.selectedPlanOptionId = null;
+    }
   }
   return next;
 }

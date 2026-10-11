@@ -1,0 +1,112 @@
+fragment EvidenceLinkFields on EvidenceLink {
+  input
+  capability
+  snapshotId
+  manualInputId
+  title
+  publisher
+  url
+  asOf
+  quality
+  method
+  uncertainty
+  note
+  demo
+}
+
+fragment BaselineFields on Baseline {
+  id
+  areaId
+  sessionId
+  asOf
+  engineVersion
+  exceedanceP
+  windowDays
+  demo
+  basis
+  window {
+    start
+    endExclusive
+    days
+  }
+  missingEssentials
+  missingOptional
+  notes
+  metrics {
+    metric
+    name
+    formula
+    unit
+    availability
+    exact
+    value
+    reason
+    reasons
+    origin
+    daily
+    asOf
+    assumptions
+    demo
+    recordedDays
+    periodDays
+    evidence {
+      ...EvidenceLinkFields
+    }
+    supporting {
+      key
+      exact
+      value
+      unit
+    }
+  }
+  indicators {
+    indicator
+    name
+    capability
+    statistic
+    variable
+    parameter
+    unit
+    availability
+    exact
+    value
+    observedOn
+    reason
+    reasons
+    origin
+    demo
+    window {
+      start
+      endExclusive
+      days
+    }
+    evidence {
+      ...EvidenceLinkFields
+    }
+  }
+  chart {
+    monthly
+    buckets {
+      start
+      endExclusive
+      days
+    }
+    series {
+      key
+      values
+      origin
+      demo
+    }
+  }
+}
+
+query AreaBaseline($areaId: ID!, $sessionId: ID) {
+  area(id: $areaId) {
+    id
+    name
+    unitSystem
+    baseline(sessionId: $sessionId) {
+      ...BaselineFields
+    }
+  }
+}

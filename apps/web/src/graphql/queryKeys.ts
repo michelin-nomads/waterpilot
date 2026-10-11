@@ -14,6 +14,8 @@ export const queryKeys = {
   areas: {
     search: (query: string, page: Page = {}) => ['areas', 'search', query, page] as const,
     detail: (areaId: string) => ['areas', areaId] as const,
+    /** The location's name and currency, for goal budgets (never converted). */
+    goalArea: (areaId: string) => ['areas', areaId, 'goal'] as const,
   },
 
   /** Place search and reverse lookups are never cached (provider terms, ADR 0009). */
@@ -30,6 +32,15 @@ export const queryKeys = {
     area: (areaId: string, sessionId: string | null) => ['readiness', areaId, sessionId] as const,
   },
 
+  baseline: {
+    all: () => ['baseline'] as const,
+    /**
+     * The server derives the result id from the area, the as-of date, the source snapshots
+     * and the session's entered values, so this key only needs the area and session.
+     */
+    area: (areaId: string, sessionId: string | null) => ['baseline', areaId, sessionId] as const,
+  },
+
   sessions: {
     current: () => ['session', 'current'] as const,
     detail: (sessionId: string) => ['session', sessionId] as const,
@@ -39,6 +50,24 @@ export const queryKeys = {
      * whole `derived` prefix is removed when the revision changes.
      */
     derived: (sessionId: string) => ['session', sessionId, 'derived'] as const,
+    /** The saved goal's feasibility; also depends on the baseline (see recordManualInput). */
+    goalAssessment: (sessionId: string, inputsRevision: number) =>
+      ['session', sessionId, 'derived', inputsRevision, 'goalAssessment'] as const,
+    /** A draft goal checked without saving; `draft` is its canonical JSON. */
+    goalCheck: (sessionId: string, inputsRevision: number, draft: string) =>
+      ['session', sessionId, 'derived', inputsRevision, 'goalCheck', draft] as const,
+    /**
+     * Options and the scenario comparison for the session's inputs. The server also keys
+     * the result by the baseline and engine versions, so a recorded value (which changes
+     * the baseline without a new revision) is covered by invalidating `derived`.
+     */
+    planComparison: (sessionId: string, inputsRevision: number) =>
+      ['session', sessionId, 'derived', inputsRevision, 'planComparison'] as const,
+    scenarioComparison: (sessionId: string, inputsRevision: number) =>
+      ['session', sessionId, 'derived', inputsRevision, 'scenarioComparison'] as const,
+    /** A what-if checked without saving; `scenario` is its canonical JSON. */
+    scenarioPreview: (sessionId: string, inputsRevision: number, scenario: string) =>
+      ['session', sessionId, 'derived', inputsRevision, 'scenarioPreview', scenario] as const,
     planOptions: (sessionId: string, inputsRevision: number, page: Page = {}) =>
       ['session', sessionId, 'derived', inputsRevision, 'planOptions', page] as const,
     fundingMatches: (
@@ -56,6 +85,11 @@ export const queryKeys = {
         planOptionId,
         page,
       ] as const,
+  },
+
+  goals: {
+    /** Versioned and static per deployment. */
+    catalogue: () => ['goals', 'catalogue'] as const,
   },
 
   reports: {
