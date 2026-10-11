@@ -1,0 +1,108 @@
+fragment JobFields on Job {
+  id
+  version
+  kind
+  status
+  stage
+  attempts
+  maxAttempts
+  errorCode
+  eventsPath
+  updatedAt
+}
+
+fragment ReportFields on Report {
+  id
+  version
+  title
+  status
+  sessionId
+  communityId
+  areaId
+  planOptionId
+  finalizedAt
+  archivedAt
+}
+
+fragment ProposalFields on Proposal {
+  id
+  version
+  reportId
+  sections
+  status
+  flaggedCount
+  downloadPath
+  job {
+    ...JobFields
+  }
+}
+
+query Reports($filter: ReportFilter, $first: Int, $after: String) {
+  reports(filter: $filter, first: $first, after: $after) {
+    nodes {
+      ...ReportFields
+    }
+    pageInfo {
+      ...PageInfoFields
+    }
+  }
+}
+
+query Report($id: ID!) {
+  report(id: $id) {
+    ...ReportFields
+    proposals(first: 10) {
+      nodes {
+        ...ProposalFields
+      }
+      pageInfo {
+        ...PageInfoFields
+      }
+    }
+  }
+}
+
+query Proposal($id: ID!) {
+  proposal(id: $id) {
+    ...ProposalFields
+  }
+}
+
+query Job($id: ID!) {
+  job(id: $id) {
+    ...JobFields
+  }
+}
+
+mutation FinalizeReport($input: FinalizeReportInput!) {
+  finalizeReport(input: $input) {
+    report {
+      ...ReportFields
+    }
+    error {
+      ...MutationErrorFields
+    }
+  }
+}
+
+mutation ArchiveReport($input: ArchiveReportInput!) {
+  archiveReport(input: $input) {
+    report {
+      ...ReportFields
+    }
+    error {
+      ...MutationErrorFields
+    }
+  }
+}
+
+mutation GenerateProposal($input: GenerateProposalInput!) {
+  generateProposal(input: $input) {
+    proposal {
+      ...ProposalFields
+    }
+    error {
+      ...MutationErrorFields
+    }
+  }
+}

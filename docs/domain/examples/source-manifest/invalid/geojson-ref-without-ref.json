@@ -1,0 +1,45 @@
+{
+  "id": "synthetic-utility-supply",
+  "recordKind": "ingested_snapshot",
+  "title": "Synthville daily supply (SYNTHETIC)",
+  "publisher": "WaterLens test fixtures",
+  "sourceUrl": "https://example.org/synthetic",
+  "licence": {
+    "name": "Synthetic test data",
+    "usageRights": "open",
+    "authorization": {
+      "status": "authorized",
+      "authorizedUses": ["internal_analysis"],
+      "reviewedAt": "2026-10-08",
+      "evidenceRef": "docs/domain/fixtures/README.md"
+    }
+  },
+  "capability": "utility_supply",
+  "variables": [
+    {
+      "name": "delivered_supply",
+      "rawUnit": "MLD",
+      "normalizedUnit": "L/day"
+    }
+  ],
+  "temporalCoverage": {
+    "start": "2026-01-01",
+    "endExclusive": "2026-01-11",
+    "boundary": "half_open_start_inclusive_end_exclusive",
+    "timezone": "Asia/Kolkata"
+  },
+  "spatialCoverage": {
+    "type": "geojson_ref",
+    "crs": "EPSG:4326"
+  },
+  "observationTimestamp": "2026-01-10T18:29:59Z",
+  "ingestionTimestamp": "2026-10-08T00:00:00Z",
+  "qualityStatus": "synthetic",
+  "transformationVersion": "fixture-0.2",
+  "checksum": {
+    "algo": "sha256",
+    "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "rawObjectRef": "fixtures/synthetic-sample.input.json",
+  "accessTier": "public_global"
+}

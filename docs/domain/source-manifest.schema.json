@@ -2,11 +2,12 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://waterlens/docs/domain/source-manifest.schema.json",
   "title": "WaterLens Source Manifest",
-  "description": "Provenance record for one ingested dataset. Mirrors HLD §11 provenance requirements. Status is PROPOSED pending domain review. A manifest entry does not assert local suitability or licensing rights — those are checked separately.",
+  "description": "Provenance record for one data source. Version 0.3, PROPOSED pending domain review (0.3 adds optional provenance fields only; every 0.2 manifest stays valid). Mirrors HLD §11. recordKind separates registered source metadata (no data imported yet) from an ingested immutable snapshot (raw object + checksum required). A manifest entry does not by itself establish local suitability or authorized use: the data-readiness gate checks those. Cross-field rules JSON Schema cannot express (date order, IANA timezone validity, bbox ordering) are enforced by the semantic validator in services/backend/tests/domain/test_source_manifest.py; the runtime model services/backend/src/waterlens/domain/sources.py enforces schema and semantics together (parity-tested). Validate with format checking enabled.",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "id",
+    "recordKind",
     "title",
     "publisher",
     "sourceUrl",
@@ -15,10 +16,7 @@
     "variables",
     "temporalCoverage",
     "spatialCoverage",
-    "observationTimestamp",
-    "ingestionTimestamp",
     "qualityStatus",
-    "transformationVersion",
     "accessTier"
   ],
   "properties": {
@@ -27,29 +25,33 @@
       "description": "Stable manifest id (slug).",
       "pattern": "^[a-z0-9][a-z0-9-]{2,63}$"
     },
-    "title": { "type": "string", "minLength": 1 },
-    "publisher": { "type": "string", "minLength": 1 },
-    "sourceUrl": { "type": "string", "format": "uri" },
+    "recordKind": {
+      "type": "string",
+      "enum": ["registered_source", "ingested_snapshot"],
+      "description": "registered_source: catalogued metadata, nothing imported. ingested_snapshot: an immutable imported raw object with checksum."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "publisher": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sourceUrl": {
+      "type": "string",
+      "format": "uri"
+    },
     "licence": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["name", "usageRights"],
-      "properties": {
-        "name": { "type": "string" },
-        "url": { "type": "string", "format": "uri" },
-        "usageRights": {
-          "type": "string",
-          "enum": ["unverified", "non_commercial", "open", "restricted", "prohibited"]
-        },
-        "attributionText": { "type": "string" }
-      }
+      "$ref": "#/$defs/licence"
     },
     "capability": {
       "type": "string",
       "description": "Which capability this source feeds (see capability-matrix.json).",
       "enum": [
         "rainfall",
-        "groundwater",
+        "groundwater_abstraction",
+        "groundwater_level",
         "surface_water",
         "water_quality",
         "flood_risk",
@@ -62,44 +64,13 @@
       "type": "array",
       "minItems": 1,
       "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["name", "unit"],
-        "properties": {
-          "name": { "type": "string" },
-          "unit": {
-            "type": "string",
-            "description": "Canonical unit per conventions.md",
-            "enum": [
-              "L",
-              "L/day",
-              "MLD",
-              "m3",
-              "m3/day",
-              "mm",
-              "m_bgl",
-              "ratio",
-              "percent",
-              "m2",
-              "km2",
-              "INR_paise",
-              "count",
-              "category"
-            ]
-          },
-          "bandOrField": { "type": "string" },
-          "scaleMeters": {
-            "type": "number",
-            "exclusiveMinimum": 0,
-            "description": "Native spatial scale/resolution in metres, where applicable."
-          }
-        }
+        "$ref": "#/$defs/variable"
       }
     },
     "temporalCoverage": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["start", "endExclusive", "boundary"],
+      "required": ["start", "endExclusive", "boundary", "timezone"],
       "properties": {
         "start": {
           "type": "string",
@@ -109,78 +80,107 @@
         "endExclusive": {
           "type": "string",
           "format": "date",
-          "description": "Exclusive local calendar end (half-open [start,endExclusive))."
+          "description": "Exclusive local calendar end (half-open [start,endExclusive)); must be after start (semantic check)."
         },
-        "boundary": { "type": "string", "const": "half_open_start_inclusive_end_exclusive" },
+        "boundary": {
+          "type": "string",
+          "const": "half_open_start_inclusive_end_exclusive"
+        },
         "timezone": {
           "type": "string",
-          "description": "IANA tz for local-date semantics, e.g. Asia/Kolkata."
+          "minLength": 1,
+          "description": "IANA tz name giving the local-date semantics of start/endExclusive, e.g. Asia/Kolkata. Validity is a semantic check."
         }
       }
     },
     "spatialCoverage": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["type", "crs"],
-      "properties": {
-        "type": { "type": "string", "enum": ["bbox", "geojson_ref", "admin_area"] },
-        "crs": { "type": "string", "description": "e.g. EPSG:4326", "default": "EPSG:4326" },
-        "bbox": {
-          "type": "array",
-          "items": { "type": "number" },
-          "minItems": 4,
-          "maxItems": 4,
-          "description": "[minLon, minLat, maxLon, maxLat] when type=bbox."
-        },
-        "geojsonObjectRef": {
-          "type": "string",
-          "description": "Object-storage key for large geometry (not inlined)."
-        },
-        "adminAreaId": { "type": "string" }
-      }
+      "$ref": "#/$defs/spatialCoverage"
     },
     "observationTimestamp": {
       "type": "string",
       "format": "date-time",
-      "description": "UTC instant the data represents / was observed (ISO-8601 Z)."
+      "pattern": "Z$",
+      "description": "UTC instant the data represents / was observed (ISO-8601 with Z)."
     },
     "ingestionTimestamp": {
       "type": "string",
       "format": "date-time",
-      "description": "UTC instant of ingestion (ISO-8601 Z)."
+      "pattern": "Z$",
+      "description": "UTC instant of ingestion (ISO-8601 with Z). Snapshots only."
+    },
+    "retrievedAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$",
+      "description": "v0.3. UTC instant the raw object was retrieved from the publisher (ISO-8601 with Z). observationTimestamp is the as-of time of the data itself."
     },
     "qualityStatus": {
       "type": "string",
-      "enum": ["proposed", "validated", "provisional", "quarantined", "unavailable", "synthetic"],
-      "description": "See conventions.md §5. 'synthetic' must never be presented as live evidence."
+      "enum": ["unreviewed", "validated", "provisional", "quarantined", "synthetic"],
+      "description": "Evidence quality status (conventions.md §5c). 'synthetic' must never be presented as live evidence."
     },
     "qualityFlags": {
       "type": "array",
-      "items": { "type": "string" },
+      "items": {
+        "type": "string"
+      },
       "description": "e.g. coverage_gap, unit_mismatch, stale, unverified_licence."
     },
     "transformationVersion": {
       "type": "string",
-      "description": "Version of the normalization/transformation pipeline applied."
+      "minLength": 1,
+      "description": "Version of the normalization/transformation pipeline applied. Snapshots only."
+    },
+    "transformations": {
+      "type": "array",
+      "description": "v0.3. Ordered processing steps applied (parse, timezone, unit conversions with exact factors, footprint narrowing).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["step", "detail"],
+        "properties": {
+          "step": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{1,40}$"
+          },
+          "detail": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        }
+      }
     },
     "checksum": {
       "type": "object",
       "additionalProperties": false,
       "required": ["algo", "value"],
       "properties": {
-        "algo": { "type": "string", "enum": ["sha256"] },
-        "value": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        "algo": {
+          "type": "string",
+          "enum": ["sha256"]
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
       },
-      "description": "Checksum of the immutable raw object."
+      "description": "Checksum of the immutable raw object. Snapshots only."
     },
     "rawObjectRef": {
       "type": "string",
-      "description": "Object-storage key of the immutable raw import."
+      "pattern": "^(?!/)(?!.*(^|/)\\.\\.(/|$))[A-Za-z0-9._/-]+$",
+      "description": "Relative object-storage key of the immutable raw import. Snapshots only."
+    },
+    "normalizedObjectRef": {
+      "type": "string",
+      "pattern": "^(?!/)(?!.*(^|/)\\.\\.(/|$))[A-Za-z0-9._/-]+$",
+      "description": "v0.3. Relative object-storage key of the normalized series derived from rawObjectRef. Snapshots only."
     },
     "accessTier": {
       "type": "string",
       "enum": ["public_global", "licensed", "local_measured", "restricted"],
-      "description": "Governs storage location and tenant visibility."
+      "description": "Storage location and tenant visibility only. This is NOT the usage right; see licence.usageRights and licence.authorization."
     },
     "eligibilityNotes": {
       "type": "string",
@@ -190,6 +190,402 @@
       "type": "boolean",
       "description": "True if the fed capability cannot be inferred from imagery alone."
     },
-    "supersedes": { "type": "string", "description": "Manifest id this entry replaces, if any." }
+    "observationMethod": {
+      "type": "string",
+      "enum": [
+        "in_situ_measurement",
+        "administrative_record",
+        "remote_sensing",
+        "model_output",
+        "survey"
+      ],
+      "description": "v0.3. How the values were obtained. Readiness criterion 4 accepts only in_situ_measurement or administrative_record as local measurement."
+    },
+    "supersedes": {
+      "type": "string",
+      "description": "Manifest id this entry replaces, if any."
+    },
+    "registeredSourceId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{2,63}$",
+      "description": "v0.3. Snapshots only: the registered_source this snapshot was imported for."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "recordKind": {
+            "const": "ingested_snapshot"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "observationTimestamp",
+          "ingestionTimestamp",
+          "transformationVersion",
+          "rawObjectRef",
+          "checksum"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "recordKind": {
+            "const": "registered_source"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "qualityStatus": {
+            "enum": ["unreviewed", "synthetic"]
+          }
+        },
+        "not": {
+          "anyOf": [
+            {
+              "required": ["rawObjectRef"]
+            },
+            {
+              "required": ["checksum"]
+            },
+            {
+              "required": ["ingestionTimestamp"]
+            },
+            {
+              "required": ["normalizedObjectRef"]
+            },
+            {
+              "required": ["registeredSourceId"]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "qualityStatus": {
+            "const": "validated"
+          }
+        },
+        "required": ["qualityStatus"]
+      },
+      "then": {
+        "properties": {
+          "variables": {
+            "items": {
+              "required": ["normalizedUnit"]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "licence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "usageRights", "authorization"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "usageRights": {
+          "type": "string",
+          "enum": [
+            "unverified",
+            "open",
+            "non_commercial",
+            "by_agreement",
+            "restricted",
+            "prohibited"
+          ],
+          "description": "What the licence text grants. 'by_agreement' = rights come from a signed agreement/data-sharing licence. A label alone (e.g. non_commercial) is not a blanket right for every product use; see authorization."
+        },
+        "attributionText": {
+          "type": "string"
+        },
+        "authorization": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status"],
+          "description": "Explicit review of whether WaterLens's intended uses are permitted under usageRights.",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": ["not_reviewed", "authorized", "not_authorized"]
+            },
+            "authorizedUses": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "enum": [
+                  "internal_analysis",
+                  "derived_metrics",
+                  "pilot_display",
+                  "redistribution",
+                  "commercial_use"
+                ]
+              }
+            },
+            "reviewedAt": {
+              "type": "string",
+              "format": "date"
+            },
+            "evidenceRef": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Where the authorization evidence lives (agreement id, email ref, licence clause)."
+            },
+            "conditions": {
+              "type": "string"
+            }
+          },
+          "if": {
+            "properties": {
+              "status": {
+                "const": "authorized"
+              }
+            }
+          },
+          "then": {
+            "required": ["authorizedUses", "reviewedAt", "evidenceRef"],
+            "properties": {
+              "authorizedUses": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      },
+      "if": {
+        "properties": {
+          "usageRights": {
+            "enum": ["unverified", "prohibited"]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "authorization": {
+            "properties": {
+              "status": {
+                "not": {
+                  "const": "authorized"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "variable": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "rawUnit"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "parameter": {
+          "type": "string",
+          "description": "Measured parameter where the name is generic, e.g. nitrate, turbidity."
+        },
+        "rawUnit": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Unit exactly as published by the source (any string). Never rejected for being non-canonical."
+        },
+        "normalizedUnit": {
+          "type": "string",
+          "description": "Canonical stored unit after normalization (conventions.md §1). Absent until a reviewed mapping exists; required when qualityStatus is validated.",
+          "enum": [
+            "L",
+            "L/day",
+            "mm",
+            "m_bgl",
+            "m2",
+            "ratio",
+            "day",
+            "INR_paise",
+            "count",
+            "category",
+            "mg/L",
+            "NTU",
+            "uS/cm",
+            "pH",
+            "CFU/100mL"
+          ]
+        },
+        "bandOrField": {
+          "type": "string"
+        },
+        "scaleMeters": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Native spatial scale/resolution in metres, where applicable."
+        },
+        "uncertainty": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "description": "v0.3. Stated uncertainty. absolute = ± value in the normalized unit; relative = ± fraction of each value in [0,1]; not_quantified records that the publisher states none.",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": ["absolute", "relative", "not_quantified"]
+            },
+            "value": {
+              "type": "string",
+              "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+            },
+            "basis": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "kind": {
+                    "enum": ["absolute", "relative"]
+                  }
+                }
+              },
+              "then": {
+                "required": ["value"]
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "kind": {
+                    "const": "not_quantified"
+                  }
+                }
+              },
+              "then": {
+                "not": {
+                  "required": ["value"]
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "spatialCoverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "crs"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["bbox", "geojson_ref", "admin_area"]
+        },
+        "crs": {
+          "type": "string",
+          "pattern": "^EPSG:[0-9]+$",
+          "description": "e.g. EPSG:4326"
+        },
+        "bbox": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "type": "number",
+              "minimum": -180,
+              "maximum": 180
+            },
+            {
+              "type": "number",
+              "minimum": -90,
+              "maximum": 90
+            },
+            {
+              "type": "number",
+              "minimum": -180,
+              "maximum": 180
+            },
+            {
+              "type": "number",
+              "minimum": -90,
+              "maximum": 90
+            }
+          ],
+          "minItems": 4,
+          "maxItems": 4,
+          "description": "[minLon, minLat, maxLon, maxLat] in EPSG:4326; min <= max (semantic check; antimeridian-crossing boxes are not supported)."
+        },
+        "geojsonObjectRef": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Object-storage key for large geometry (not inlined)."
+        },
+        "adminAreaId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "adminAreaScheme": {
+          "type": "string",
+          "description": "Code list the id belongs to, e.g. LGD or census-2011."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "bbox"
+              }
+            }
+          },
+          "then": {
+            "required": ["bbox"],
+            "properties": {
+              "crs": {
+                "const": "EPSG:4326"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "geojson_ref"
+              }
+            }
+          },
+          "then": {
+            "required": ["geojsonObjectRef"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "admin_area"
+              }
+            }
+          },
+          "then": {
+            "required": ["adminAreaId"]
+          }
+        }
+      ]
+    }
   }
 }

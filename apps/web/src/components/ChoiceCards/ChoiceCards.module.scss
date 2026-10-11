@@ -1,0 +1,155 @@
+@use 'mixins' as *;
+
+.fieldset {
+  display: grid;
+  gap: var(--wl-space-3);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.legend {
+  padding: 0;
+  font-size: var(--wl-text-lg);
+  font-weight: 700;
+}
+
+.hiddenLegend {
+  @include visually-hidden;
+}
+
+.hint {
+  color: var(--wl-color-text-muted);
+  font-size: var(--wl-text-sm);
+}
+
+.grid {
+  display: grid;
+  gap: var(--wl-space-3);
+}
+
+.cols2 {
+  @include tablet-up {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.cols3 {
+  @include tablet-up {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @include wide-up {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.card {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--wl-space-3);
+  min-height: var(--wl-tap-target);
+  padding: var(--wl-space-4);
+  border: 1px solid var(--wl-color-border);
+  border-radius: var(--wl-radius-lg);
+  background: var(--wl-color-surface);
+  cursor: pointer;
+  transition:
+    border-color var(--wl-motion-fast) var(--wl-ease),
+    background-color var(--wl-motion-fast) var(--wl-ease);
+
+  &:hover:not([data-disabled]) {
+    border-color: var(--wl-color-accent);
+  }
+
+  &:has(:checked) {
+    border: 2px solid var(--wl-color-accent);
+    padding: calc(var(--wl-space-4) - 1px);
+    background: var(--wl-color-accent-soft);
+  }
+
+  &:has(:focus-visible) {
+    @include focus-ring;
+  }
+
+  &[data-disabled] {
+    border-style: dashed;
+    background: var(--wl-color-surface-sunken);
+    cursor: not-allowed;
+  }
+}
+
+// The radio stays in the accessibility tree and keyboard order; the card shows its state.
+.input {
+  @include visually-hidden;
+}
+
+.icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: var(--wl-color-accent-soft);
+  color: var(--wl-color-accent-strong);
+
+  [data-disabled] & {
+    background: var(--wl-color-surface);
+    color: var(--wl-color-text-muted);
+  }
+}
+
+.content {
+  display: grid;
+  flex: 1;
+  gap: var(--wl-space-1);
+  min-width: 0;
+}
+
+.titleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--wl-space-2);
+}
+
+.title {
+  font-weight: 700;
+}
+
+.description {
+  color: var(--wl-color-text-muted);
+  font-size: var(--wl-text-sm);
+}
+
+.reason {
+  color: var(--wl-color-text);
+  font-size: var(--wl-text-sm);
+  font-style: italic;
+}
+
+.check {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 2px solid var(--wl-color-border-strong);
+  border-radius: 50%;
+  color: transparent;
+
+  .card:has(:checked) & {
+    border-color: var(--wl-color-accent);
+    background: var(--wl-color-accent);
+    color: var(--wl-color-on-accent);
+  }
+}
+
+@include reduced-motion {
+  .card {
+    transition: none;
+  }
+}

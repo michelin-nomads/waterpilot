@@ -11,36 +11,126 @@ a build-guide phase.
 
 - **Control** = a visible UI element or user action in the screenshot.
 - **Acceptance criteria** = observable behaviour that proves the control works, consistent with the HLD integrity rules.
-- **Phase** = the build-guide prompt (00–20) that owns the control.
+- **Phase** = the owning prompt in the **legacy** repository guide numbering (00–20), as written when each row was added. Since 2026-10-10 the end-to-end guide's Prompts 00–26 are authoritative; use the lookup below (and `docs/build/implementation-status.md`) to find the current owner. Rows are not renumbered, so the history stays readable.
 - Numbers shown in screenshots are **illustrative examples**, not scientific requirements (see [Example values vs. model requirements](#example-values-vs-model-requirements)). Acceptance criteria require real/fixture-labelled data, never the literal screenshot figure.
 - Contradictions between screenshots are recorded in [Recorded screenshot inconsistencies](#recorded-screenshot-inconsistencies); equations are never altered to reproduce them.
 
-Phase ownership summary:
+> **Revised scope (ADR 0002, 2026-10-10).** The stepper has **five** stages; 4.png's
+> "Test a Future Scenario" becomes a What-if panel inside the workspace (no separate
+> page; `/scenarios` redirects to `/area`). Traditional and Agent modes share one
+> planning session; on desktop the agent is on the left and the workspace on the right.
+> Reports, communities and global location selection are added. "STEP N OF 6" labels
+> in the screenshots now read "Step N of 5". Per-capability status lives in
+> `docs/build/implementation-status.md`. The screen/state contract that later phases
+> implement (screens S1–S16, states, layouts, language) is `docs/design/ux-spec.md`;
+> its §2 records, per reference image, what is kept and what changes. Stage 4's route is
+> `/make-it-happen` (old `/funding` links redirect).
 
-| Screen (file)            | Capability                                 | Primary phase | Supporting phases   |
-| ------------------------ | ------------------------------------------ | ------------- | ------------------- |
-| Global shell / nav (all) | AppShell, six-stage stepper, theme/palette | 03            | 02, 05              |
-| 3.png                    | Understand Your Area                       | 08            | 01, 04, 05, 07      |
-| 8.png                    | Water Source Details                       | 08            | 01, 07, 14 (export) |
-| 4.png                    | Test a Future Scenario                     | 09            | 10 (custom), 04     |
-| 5.png                    | Set Your Goal                              | 11            | 10 (custom), 04     |
-| 6.png                    | Compare AI-Recommended Plans               | 12            | 07, 04              |
-| 1.png                    | Make It Happen + funding                   | 13            | 12, 10/ADK, 04      |
-| 2.png                    | Generate Proposal                          | 14            | 13, 10/ADK          |
-| 7.png                    | Take Action & Track                        | 15            | 12, 16              |
+Legacy phase → guide prompt (00–26) lookup:
+
+| Legacy phase | Legacy title                                     | Guide prompt(s) now                                    |
+| ------------ | ------------------------------------------------ | ------------------------------------------------------ |
+| 00–02        | Rules, metric definitions, scaffold              | 00 (domain specs also feed 07, 09)                     |
+| 03           | Design system and shell                          | 01 (navigation replaced in 05)                         |
+| 04           | API foundation and Firestore repositories        | 02 (GraphQL), 04 (Firestore, authorization)            |
+| 05           | Authentication and isolation                     | 03 (identity), 04 (authorization), 21 (communities UI) |
+| 06           | Durable jobs                                     | 06                                                     |
+| 07           | Public data ingestion                            | 07                                                     |
+| 08           | Understand Your Area                             | 08 (location, map), 09 (baseline, charts)              |
+| 09           | What-if engine                                   | 11 (engines), 17 (workspace panel)                     |
+| 10           | Vertex AI interpretation / agent runtime         | 14 (Vertex), 15–17 (ADK)                               |
+| 11           | Goals                                            | 10                                                     |
+| 12           | Plans and economics                              | 11, 12, 13                                             |
+| 13           | Make It Happen, funding, ADK                     | 18, 19 (funding), 16 (agent tools)                     |
+| 14           | Proposal / PDF, finalized reports                | 20                                                     |
+| 15           | Execute and Track                                | 22                                                     |
+| 16           | Operator tools and data maintenance              | 07, 18 (catalogue upkeep), 23                          |
+| 17           | Security, accessibility and release verification | 23, 24                                                 |
+| 18           | GCP infrastructure and cost plan                 | 25                                                     |
+| 19–20        | Deploy, recovery rehearsal, handover             | 26                                                     |
+
+Built in guide Prompt 04 (no screenshot control; storage and authorization underneath
+every screen): Firestore repositories behind the `Store` port, ownership/role/archive
+checks inside each transaction, deny-all browser rules, and nearby community discovery
+(`nearbyCommunities`, used by the communities UI in Prompt 21). See ADR 0005.
+
+Built in guide Prompt 05 (navigation and the shared session behind every stage): Welcome
+with the S2 mode choice or `Continue planning`, `/start` New report, `/dashboard`
+(S10), the five-stage stepper and both modes on one planning session through the session
+coordinator (save status, conflict choice, device recovery, account-switch clearing).
+The screenshots' stepper controls now also record the stage on the session, so
+`Continue planning` returns to the same step. See ADR 0006.
+
+Built in guide Prompt 06 (behind 8.png's "Generate PDF" and the HLD's generation
+progress row): durable proposal jobs through a transactional outbox, Cloud Tasks and a
+private worker, with real job stages (no fake percentage) on `/jobs/:jobId`, which
+survives refresh. The PDF itself is not produced until the Prompt 20 renderer exists: the
+job fails visibly and no placeholder document is stored. Downloads are owner-checked and
+artifacts are private. See ADR 0007.
+
+Built in guide Prompt 07 (behind 3.png's coverage and 8.png's "Key Supporting Data"):
+runtime source manifests, strict ingestion with private raw evidence, and a per-area,
+per-metric readiness gate. Step 1 now shows what can be calculated, data coverage and
+"What you can provide", with typed-in values labelled "Entered by you"; no metric values
+are shown until Prompt 09. Screenshot sources (KSGWD, BWSSB, KSRSC) are **not
+registered**; their licences and coverage are unverified. See ADR 0008,
+`docs/data-readiness.md` and `docs/data/ingestion-runbook.md`.
+
+Built in guide Prompt 08 (3.png's location header and map, 8.png's place context): the
+location step on Step 1.
+
+- **Ways to set a location:** worldwide place search; device location after a button
+  press, always confirmed; a map click; or a typed-in location.
+- **Fallbacks:** permission denial, timeout, an inaccurate fix, no match, provider outage
+  and map outage.
+- **Review screen:** it explains that a name or point is not a catchment, and offers a
+  reference point or a radius the person defines. No boundary is drawn.
+- **After confirming:** a location summary shows country, currency, time zone and units,
+  and readiness shows a labelled user-input assessment where nothing covers the area.
+- **Screenshot data:** the screenshot's "Koramangala, Bengaluru" is an example, not a
+  default. Searching it returns candidates and asks which one is meant.
+- **Providers:** Google Maps and Places only in a pilot with a key. Local mode uses a
+  labelled fixture gazetteer with approximate coordinates. See ADR 0009.
+- **Prompt 08 review:**
+  - The extent has no default and must be chosen.
+  - Currency and time zone are previewed with certainty and can be corrected
+    (`regionSetByUser`).
+  - Fixture places carry a "Test place" badge.
+  - Manual inputs count only for the area they were entered for.
+  - Device fixes keep no street address.
+  - Live Google behaviour and real dataset coverage are **unverified**; see
+    `docs/build/live-integration-tests.md`.
+
+Phase ownership summary (legacy numbering):
+
+| Screen (file)            | Capability                                                    | Primary phase | Supporting phases   |
+| ------------------------ | ------------------------------------------------------------- | ------------- | ------------------- |
+| Global shell / nav (all) | AppShell, five-stage stepper, mode toggle, theme/palette      | 03 ✅         | 02, 05              |
+| (no image) S1 Welcome    | Start as an anonymous guest or sign in (Google, email)        | 05 ✅         | —                   |
+| 3.png                    | Understand Your Area                                          | 08            | 01, 04, 05, 07      |
+| 8.png                    | Water Source Details                                          | 08            | 01, 07, 14 (export) |
+| 4.png                    | What-if panel (in workspace; formerly Test a Future Scenario) | 09            | 10 (custom), 04     |
+| 5.png                    | Set Your Goal                                                 | 11            | 10 (custom), 04     |
+| 6.png                    | Compare AI-Recommended Plans                                  | 12            | 07, 04              |
+| 1.png                    | Make It Happen + funding                                      | 13            | 12, 10/ADK, 04      |
+| 2.png                    | Generate Proposal                                             | 14            | 13, 10/ADK          |
+| 7.png                    | Take Action & Track                                           | 15            | 12, 16              |
 
 ---
 
 ## Global application shell (visible on all screens)
 
-| Control                                                                                                                                                              | Acceptance criteria                                                                                                                                                  | Phase |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| WaterLens logo + droplet mark (top-left)                                                                                                                             | Renders approved logo if supplied; otherwise a clearly provisional SVG droplet/lens mark (see [Missing references](#missing-references-flagged)). Links to app home. | 03    |
-| Tagline "Smarter Communities. More Water Secure."                                                                                                                    | Static brand copy, present in header.                                                                                                                                | 03    |
-| Header strapline "From insight to action for Water Resilient Communities"                                                                                            | Static copy; wording/icon varies across screenshots — see inconsistency #1.                                                                                          | 03    |
-| Account / profile icon (top-right)                                                                                                                                   | Opens authenticated account menu (profile, sign out); hidden/disabled when unauthenticated.                                                                          | 05    |
-| Six-stage stepper: 1 Understand Your Area · 2 Test a Future Scenario · 3 Set Your Goal · 4 Compare (AI-Recommended) Plans · 5 Make It Happen · 6 Take Action & Track | Current step highlighted; completed steps marked; navigation preserves tenant/area context and respects auth guards. Deep links restore the correct step.            | 03    |
-| Decorative skyline/landscape + water-flow motif                                                                                                                      | CSS/SVG transforms/opacity only; respects `prefers-reduced-motion`; pauses when hidden; purely decorative (no data meaning).                                         | 03    |
+| Control                                                                                                                                                | Acceptance criteria                                                                                                                                                         | Phase                |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| WaterLens logo + droplet mark (top-left)                                                                                                               | Renders approved logo if supplied; otherwise a clearly provisional SVG droplet/lens mark (see [Missing references](#missing-references-flagged)). Links to app home.        | 03                   |
+| Tagline "Smarter Communities. More Water Secure."                                                                                                      | Static brand copy, present in header.                                                                                                                                       | 03                   |
+| Header strapline "From insight to action for Water Resilient Communities"                                                                              | Canonical copy "From insight to action for water-resilient communities" (inconsistency #1 resolved in Phase 03). Hidden below tablet width.                                 | 03 ✅                |
+| Account / profile icon (top-right)                                                                                                                     | Built as `AccountMenu`: shows the signed-in name/email and Sign out; guests see a "Guest" label and Sign in (which upgrades, never discards); signed-out users see Sign in. | 05 ✅                |
+| ~~Six-stage~~ **Five-stage** stepper: 1 Understand Your Area · 2 Set Your Goal · 3 Compare Plans · 4 Make It Happen · 5 Take Action & Track (ADR 0002) | Current step has `aria-current="step"`; deep links restore the step. Completed-step markers wait for the planning session (04/05) — progress is never guessed.              | 03 ✅                |
+| Traditional / Agent mode toggle (new, ADR 0002)                                                                                                        | Persistent preference; Agent mode puts the agent pane left of the workspace on desktop, Agent/Workspace tabs below desktop; the workspace never remounts on toggle.         | 03 ✅ (agent: 10/13) |
+| Display menu: theme (system/light/dark) and palette (three, provisional) (new)                                                                         | Independent, persistent preferences; applied before first paint; contrast checked in all six combinations.                                                                  | 03 ✅                |
+| Primary nav: Plan · Reports · Communities (new, ADR 0002)                                                                                              | Routes exist with honest empty states until their phases.                                                                                                                   | 03 ✅ (05, 14)       |
+| Decorative skyline/landscape + water-flow motif                                                                                                        | Implemented as an abstract Earth graticule and a water band (no skyline asset invented). CSS transforms/opacity only; off under reduced motion; paused when hidden.         | 03 ✅                |
 
 ---
 
@@ -48,22 +138,22 @@ Phase ownership summary:
 
 Capability: area selection, water profile, reliability, demand, deficit, map.
 
-| Control                                                                                        | Acceptance criteria                                                                                                                                                                                | Phase                  |
-| ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
-| Heading "Understand Your Area" + subtitle                                                      | Static section copy.                                                                                                                                                                               | 08                     |
-| Area search field (value "Koramangala, Bengaluru") with clear (×) and dropdown chevron         | Lists only **supported** pilot areas; selecting one loads its baseline assessment from the API (not hardcoded metrics); clear resets selection; unsupported areas are not presented as calibrated. | 08                     |
-| Map panel with community boundary, shared-aquifer (estimated), neighbouring-communities layers | Bounded GeoJSON/SVG layers (no unlicensed tile service); shared-aquifer/neighbour layers shown only when sourced; accessible text alternative provided.                                            | 08                     |
-| Map pin label, zoom ± controls, recenter control, scale bar "2 km"                             | Zoom/pan/recenter work via keyboard and pointer; scale reflects real projection.                                                                                                                   | 08                     |
-| Map legend (Community Boundary · Shared Aquifer (Estimated) · Neighbouring Communities)        | Legend entries match rendered layers; "(Estimated)" preserved where evidence is modelled not measured.                                                                                             | 08                     |
-| Area summary card (name, description) + "View Details →"                                       | "View Details" opens the Water Source Details modal (8.png) for the selected assessment version.                                                                                                   | 08                     |
-| Metric card — Water Stress ("Moderate") + info (i)                                             | Shows computed categorical stress for the selected area; info tooltip gives the definition; unavailable → "unavailable", never a default.                                                          | 01, 08                 |
-| Metric card — Summer Shortage Days ("74 days / Per year (estimated)") + info                   | Shows computed shortage-day **count** per the metric definition, labelled estimated; distinct from days-until-shortage.                                                                            | 01, 08                 |
-| Metric card — Reliable Supply ("63% / Of annual demand met") + info                            | Shows computed reliability per definition (volume vs. time reliability disambiguated).                                                                                                             | 01, 08                 |
-| Metric card — Current Deficit ("1.6 MLD / Estimated water deficit") + info                     | Shows computed deficit in MLD with unit label; reconciles with demand − reliable supply.                                                                                                           | 01, 08                 |
-| Key Insight panel (narrative)                                                                  | Narrative generated only from the computed assessment facts; numbers must match the metrics shown; no invented claims.                                                                             | 08 (+10 if AI-drafted) |
-| Footer stats/chart toggle icon                                                                 | Toggles an accessible chart/table view of the headline metrics.                                                                                                                                    | 08                     |
-| "See how this works" link                                                                      | Opens methodology/provenance explanation (links to metric definitions).                                                                                                                            | 08                     |
-| "Explore Future Scenarios →" primary CTA                                                       | Carries the exact selected assessment version to Step 2 (4.png).                                                                                                                                   | 08                     |
+| Control                                                                                        | Acceptance criteria                                                                                                                                                                                   | Phase                  |
+| ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| Heading "Understand Your Area" + subtitle                                                      | Static section copy.                                                                                                                                                                                  | 08                     |
+| Area search field (value "Koramangala, Bengaluru") with clear (×) and dropdown chevron         | Lists only **supported** pilot areas; selecting one loads its baseline assessment from the API (not hardcoded metrics); clear resets selection; unsupported areas are not presented as calibrated.    | 08                     |
+| Map panel with community boundary, shared-aquifer (estimated), neighbouring-communities layers | Bounded GeoJSON/SVG layers (no unlicensed tile service); shared-aquifer/neighbour layers shown only when sourced; accessible text alternative provided.                                               | 08                     |
+| Map pin label, zoom ± controls, recenter control, scale bar "2 km"                             | Zoom/pan/recenter work via keyboard and pointer; scale reflects real projection.                                                                                                                      | 08                     |
+| Map legend (Community Boundary · Shared Aquifer (Estimated) · Neighbouring Communities)        | Legend entries match rendered layers; "(Estimated)" preserved where evidence is modelled not measured.                                                                                                | 08                     |
+| Area summary card (name, description) + "View Details →"                                       | "View Details" opens the Water Source Details modal (8.png) for the selected assessment version.                                                                                                      | 08                     |
+| Metric card — Water Stress ("Moderate") + info (i)                                             | Shows computed categorical stress for the selected area; info tooltip gives the definition; unavailable → "unavailable", never a default.                                                             | 01, 08                 |
+| Metric card — Summer Shortage Days ("74 days / Per year (estimated)") + info                   | Shows computed shortage-day **count** per the metric definition, labelled estimated; distinct from days-until-shortage.                                                                               | 01, 08                 |
+| Metric card — Reliable Supply ("63% / Of annual demand met") + info                            | Binds to exactly one metric ID — `volume_reliability` (proposed default), `time_reliability` or `dependable_supply_ratio` — and shows its computed value; these are never substituted for each other. | 01, 08                 |
+| Metric card — Current Deficit ("1.6 MLD / Estimated water deficit") + info                     | Shows computed deficit in MLD with unit label; reconciles with demand − reliable supply.                                                                                                              | 01, 08                 |
+| Key Insight panel (narrative)                                                                  | Narrative generated only from the computed assessment facts; numbers must match the metrics shown; no invented claims.                                                                                | 08 (+10 if AI-drafted) |
+| Footer stats/chart toggle icon                                                                 | Toggles an accessible chart/table view of the headline metrics.                                                                                                                                       | 08                     |
+| "See how this works" link                                                                      | Opens methodology/provenance explanation (links to metric definitions).                                                                                                                               | 08                     |
+| "Explore Future Scenarios →" primary CTA                                                       | Carries the exact selected assessment version to Step 2 (4.png).                                                                                                                                      | 08                     |
 
 ---
 
@@ -87,9 +177,14 @@ Capability: contributions, data sources, assumptions, export.
 
 ---
 
-## 4.png — Test a Future Scenario (STEP 2 OF 6)
+## 4.png — Test a Future Scenario (STEP 2 OF 6) → What-if panel
 
 Capability: suggested prompts, controls, custom scenario, confirmation, simulation.
+
+Per ADR 0002 these controls live in a What-if panel inside the planning workspace (and
+as an agent tool), not on a separate page or stepper stage. "Save Scenario" no longer
+creates a named draft; the adjustment is part of the recoverable planning session, and
+"Analyse Scenario" stays within the current stage.
 
 | Control                                                                      | Acceptance criteria                                                                                                                                                                   | Phase                  |
 | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
@@ -178,6 +273,14 @@ Capability: five detail accordions and funding drawer.
 | Drawer — "Add to funding plan"                                                                                                    | Persists the chosen candidate with source + rule version; duplicate adds handled.                                                                             | 13     |
 | Drawer — "View source" (external link)                                                                                            | Links to the official document URL (allowlisted); no arbitrary fetch.                                                                                         | 13     |
 
+**API contract (Phase 04).** `FundingMatch` returns a status for each criterion (`MET`,
+`NOT_MET`, `NEEDS_CHECK`), an overall `FundingMatchStatus`, the window status and the
+rules version `funding-rules/1`. It returns **no match percentage**. The screenshot's
+92% / 70% / 50% figures therefore have no backing yet. A percentage may appear only if
+Phase 13 documents a deterministic rule for it; otherwise the UI shows the criterion
+counts. Scheme amounts keep their native currency. A cost criterion compared across
+currencies is `NEEDS_CHECK` and is never converted.
+
 ---
 
 ## 2.png — Generate Proposal (modal over Make It Happen)
@@ -243,8 +346,8 @@ literal numbers.
 Recorded for domain review. **Do not alter equations or definitions to reproduce
 screenshot numbers.**
 
-1. **Nav label / header strapline drift.** Step 4 is labelled "Compare AI-Recommended Plans" on 3/4/5/6/8 but "Compare Plans" on 1/2. The header mark/strapline is a blue droplet with "From insight to action for Water Resilient Communities" on most screens, but a green leaf with "From planning to real impact / for water resilient communities" on 1/2. → Canonicalise one nav label and one header treatment in Phase 03.
-2. **Reliable supply wording.** 3.png says "63% / Of annual demand met"; 8.png repeats 63% as "Reliable Supply … Of annual demand met" with a "+8% vs last year". Confirm whether 63% is volume reliability or share-of-demand-met (these are different metrics — Phase 01).
+1. **Nav label / header strapline drift.** Step 4 is labelled "Compare AI-Recommended Plans" on 3/4/5/6/8 but "Compare Plans" on 1/2. The header mark/strapline is a blue droplet with "From insight to action for Water Resilient Communities" on most screens, but a green leaf with "From planning to real impact / for water resilient communities" on 1/2. → **Resolved in Phase 03:** nav label "Compare Plans" (the page may still describe plans as recommended once Phase 12 ranks them transparently), strapline "From insight to action for water-resilient communities", and a single provisional droplet/lens mark (no leaf variant).
+2. **Reliable supply wording.** 3.png says "63% / Of annual demand met"; 8.png repeats 63% as "Reliable Supply … Of annual demand met" with a "+8% vs last year". Phase 01 defines three distinct candidates — `dependable_supply_ratio` (reliable supply ÷ demand), `volume_reliability` and `time_reliability` (synthetic fixture: 80% / 94% / 70%). The wording reads as `volume_reliability`; the binding stays **pending domain review** (`metrics.md` C2).
 3. **Scenario "Tanker Dependency" unit.** 4.png shows "Tanker Dependency 74 days (+48 days compared to current)" — "dependency" is labelled in _days_, matching the 74 shortage-days figure elsewhere. Clarify whether this card means tanker dependence (%) or shortage days (Phase 01/09).
 4. **Scenario deficit vs. baseline.** 3.png baseline deficit = 1.6 MLD, yet 4.png scenario result also shows 1.6 MLD but "+75% compared to current". The baseline and scenario numbers conflict — treat as placeholder (Phase 09).
 5. **Compare-plans deficit reductions nearly equal.** 6.png shows Plan A 36% vs Plan B 35% (almost identical) while the workflow narrative uses 58% / 32% / 74%. Plan A time reads "6 – 60 days" on 6.png but "45 – 60 days" on 1.png (likely a typo). → placeholders; real ranking is engine-computed (Phase 12).
@@ -256,5 +359,6 @@ screenshot numbers.**
 - **Approved visual preview / stylesheet-theme tokens / logo** — `docs/design/approved/` is **empty**. Exact palettes, typography tokens and the official logo are therefore **unavailable**. Per the build guide, visual fidelity cannot yet be verified; Phase 03 must use clearly provisional tokens and a provisional droplet/lens mark and must not claim to reproduce the prior design. The prior preview's palette and logo must not be invented.
 - **Original workflow** — present at `docs/product/WaterLens-work-flow.txt` (used above). ✓
 - **Eight reference images** — all present (`1.png`–`8.png`) and inspected. ✓
-- **Metric definitions, source manifests and licences** — not yet created (owned by Phases 01/07); all screenshot metrics remain proposed/illustrative until then.
-- **Pilot area data readiness** — Koramangala, Bengaluru is the candidate shown, but its data suitability is unverified (Phase 01/07 data-readiness gate).
+- **Metric definitions** — created in Phase 01 (`docs/domain/metrics.md`, `metrics.registry.json`, corrected after review R3); all are still **proposed pending domain review**, and screenshot metrics remain illustrative.
+- **Source manifests and licences** — the manifest schema and readiness gate run in the backend since Prompt 07 (ADR 0008), but **no real source, licence or authorization has been onboarded**; only the labelled synthetic demo source exists (`docs/data-readiness.md`).
+- **Pilot area data readiness** — Koramangala, Bengaluru is the candidate shown; its gate status is **UNVERIFIED — NOT PASSED** (`docs/domain/data-readiness-gate.md`).

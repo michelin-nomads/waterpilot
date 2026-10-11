@@ -1,0 +1,45 @@
+@use 'mixins' as *;
+
+.tabs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--wl-space-3);
+}
+
+// Scrolls inside its own track at narrow widths instead of widening the page.
+.list {
+  display: flex;
+  min-width: 0;
+  gap: var(--wl-space-1);
+  overflow-x: auto;
+  border-bottom: 1px solid var(--wl-color-border);
+}
+
+.tab {
+  flex: none;
+  padding: var(--wl-space-2) var(--wl-space-4);
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: var(--wl-color-text-muted);
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--wl-color-text);
+  }
+
+  &[aria-selected='true'] {
+    color: var(--wl-color-accent);
+    border-bottom-color: var(--wl-color-accent);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+    outline-offset: -3px;
+  }
+}
+
+.panel:focus-visible {
+  @include focus-ring;
+}

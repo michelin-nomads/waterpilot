@@ -1,0 +1,120 @@
+@use 'sass:map';
+@use 'mixins' as *;
+@use 'token-values' as *;
+
+.root {
+  position: relative;
+}
+
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wl-space-1);
+  min-height: 2.5rem;
+  padding: 0.25rem 0.75rem;
+  border: 1px solid var(--wl-color-border-strong);
+  border-radius: var(--wl-radius-pill);
+  background: var(--wl-color-surface);
+  color: var(--wl-color-text);
+  font-weight: 600;
+  cursor: pointer;
+
+  &[aria-expanded='true'] {
+    border-color: var(--wl-color-accent);
+    background: var(--wl-color-accent-soft);
+  }
+
+  @include focus-visible;
+}
+
+.triggerLabel {
+  @media (max-width: 479px) {
+    @include visually-hidden;
+  }
+}
+
+.panel {
+  position: absolute;
+  z-index: var(--wl-z-drawer);
+  top: calc(100% + 0.5rem);
+  right: 0;
+  display: grid;
+  gap: var(--wl-space-3);
+  width: min(20rem, calc(100vw - 2rem));
+  padding: var(--wl-space-4);
+  border: 1px solid var(--wl-color-border);
+  border-radius: var(--wl-radius-lg);
+  background: var(--wl-color-surface-raised);
+  box-shadow: var(--wl-shadow-lg);
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+.group {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.legend {
+  margin-bottom: var(--wl-space-2);
+  padding: 0;
+  font-size: var(--wl-text-sm);
+  font-weight: 700;
+}
+
+.options {
+  display: grid;
+  gap: var(--wl-space-1);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--wl-space-2);
+  padding: var(--wl-space-2);
+  border-radius: var(--wl-radius-md);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--wl-color-surface-sunken);
+  }
+
+  &:has(input:checked) {
+    background: var(--wl-color-accent-soft);
+    font-weight: 600;
+  }
+
+  input {
+    margin: 0;
+    accent-color: var(--wl-color-accent);
+  }
+}
+
+.swatch {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  border: 1px solid var(--wl-color-border-strong);
+
+  // Each swatch previews its own palette's light accent, independent of the active palette.
+  @each $palette, $themes in $palettes {
+    &[data-swatch='#{$palette}'] {
+      background: map.get($themes, light, accent);
+    }
+  }
+}
+
+.hint {
+  margin-left: auto;
+  font-size: var(--wl-text-xs);
+  font-weight: 400;
+  color: var(--wl-color-text-muted);
+}
+
+.note {
+  font-size: var(--wl-text-xs);
+  color: var(--wl-color-text-muted);
+}

@@ -1,0 +1,54 @@
+{
+  "id": "wq-nitrate-snapshot-example",
+  "recordKind": "ingested_snapshot",
+  "title": "Example lab nitrate samples (EXAMPLE)",
+  "publisher": "Example utility lab",
+  "sourceUrl": "https://example.org/lab-reports/2026-q1",
+  "licence": {
+    "name": "Example data-sharing agreement",
+    "usageRights": "by_agreement",
+    "authorization": {
+      "status": "authorized",
+      "authorizedUses": ["derived_metrics", "pilot_display"],
+      "reviewedAt": "2026-09-30",
+      "evidenceRef": "agreement EXAMPLE-001 clause 4"
+    }
+  },
+  "capability": "water_quality",
+  "variables": [
+    {
+      "name": "nitrate_as_no3",
+      "parameter": "nitrate",
+      "rawUnit": "mg/l",
+      "normalizedUnit": "mg/L"
+    },
+    {
+      "name": "turbidity",
+      "parameter": "turbidity",
+      "rawUnit": "NTU",
+      "normalizedUnit": "NTU"
+    }
+  ],
+  "temporalCoverage": {
+    "start": "2026-01-01",
+    "endExclusive": "2026-04-01",
+    "boundary": "half_open_start_inclusive_end_exclusive",
+    "timezone": "Asia/Kolkata"
+  },
+  "spatialCoverage": {
+    "type": "admin_area",
+    "crs": "EPSG:4326",
+    "adminAreaId": "EXAMPLE-WARD-151",
+    "adminAreaScheme": "example"
+  },
+  "observationTimestamp": "2026-03-31T18:30:00Z",
+  "ingestionTimestamp": "2026-04-02T06:00:00Z",
+  "qualityStatus": "validated",
+  "transformationVersion": "wq-normalize-0.1",
+  "checksum": {
+    "algo": "sha256",
+    "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "accessTier": "local_measured",
+  "requiresLocalMeasurement": true
+}

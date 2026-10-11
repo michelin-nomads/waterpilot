@@ -1,6 +1,6 @@
 # WaterLens — Metric Dictionary
 
-Version 0.1 · **ALL DEFINITIONS PROPOSED pending domain review** · Phase 01 · 2026-10-08
+Version 0.2 · **ALL DEFINITIONS PROPOSED pending domain review** · Phase 01 (corrected 2026-10-08, review R3)
 
 Specifications for the deterministic engine. These are _definitions and contracts_,
 not a calibrated scientific model. Equations here are **never** altered to reproduce
@@ -12,7 +12,12 @@ screenshot example numbers (those are illustrative — see
 **Global null rule:** when a required input is missing/unverified, the metric is
 `unavailable` — it is **never** silently set to `0` or a fabricated value. Metrics that
 require local measurement or a reviewed response model (see
-`capability-matrix.md`) stay `unavailable` until that evidence exists.
+`capability-matrix.md`) stay `unavailable` until that evidence exists. A ratio whose
+denominator is zero is `unavailable` (undefined), never `0` or `100%`.
+
+**Raw vs display:** every value below has an exact/full-precision **raw** value (stored,
+compared, reused) and a **display** value rounded only at the presentation boundary
+(conventions §2). "Display rounding" entries never describe internal precision.
 
 Each metric below records: **definition · unit · time window · geography · formula or
 required method · provenance requirements · null semantics · display rounding · status**.
@@ -34,6 +39,10 @@ These pairs are **different metrics** and must never be conflated:
    - _Percentage change_: relative change, `(new − old) / old`. Reliability 60% → 72% is a **+20% change**.
    - _Percentage-point change_: absolute difference of two percentages. The same move is **+12 percentage points (pp)**.
    - UI labels must state which one is shown. Scenario/goal interpretation must resolve which the user means (Phase 10 confirmation).
+4. **Three different "how much of demand is met" numbers.** In the synthetic fixture they are 80%, 94% and 70% — none may be substituted for another:
+   - _Dependable-supply ratio_ (`dependable_supply_ratio`, §3b): `reliable_supply / demand` — the dependable (p-exceedance) yield as a share of mean demand. Fixture: 8 / 10 = **80%**.
+   - _Volume reliability_ (`volume_reliability`, §7a): share of demanded **volume** actually met, day by day. Fixture: **94%**.
+   - _Time reliability_ (`time_reliability`, §7b): share of **days** fully met. Fixture: **70%**.
 
 ---
 
@@ -41,7 +50,7 @@ These pairs are **different metrics** and must never be conflated:
 
 - **Definition:** Total water volume required by the area's users per day over the window (domestic + non-domestic), at the chosen service standard.
 - **Unit:** MLD (stored `L/day`).
-- **Time window:** daily series aggregated to a window mean; default reporting window = one hydrological year `[start, start+365d)`.
+- **Time window:** daily series aggregated to a window mean; default reporting window = one `calendar_year` window (a calendar or hydrological year, `[start, start + 1 calendar year)`, 365 **or 366** days — conventions §3a). An explicit 365-day scenario is a separate `fixed_days` window.
 - **Geography:** the selected area polygon.
 - **Formula / required method (PROPOSED):** `demand_day = population × per_capita_lpcd + non_domestic_demand_day`. `per_capita_lpcd` and `non_domestic_demand_day` are **required local inputs**; not inferable from imagery.
 - **Provenance:** population source + date; per-capita standard source; non-domestic estimate source.
@@ -52,6 +61,7 @@ These pairs are **different metrics** and must never be conflated:
 ## 2. Delivered supply (`delivered_supply`)
 
 - **Definition:** Actual water volume delivered to the area per day, summed across all contributing sources, regardless of whether it met demand.
+- **Accounting boundary (PROPOSED):** delivered supply is **source inflow into the area's distribution**, measured before any storage. It is _not_ "demand-serving supply": on surplus days (the fixture has seven) the excess over demand is delivered but not served. The demand-serving quantity is `served_supply_day = min(delivered_supply_day, demand_day)`, used by `volume_reliability`. When storage/overflow is introduced (Phase 09), carry-over and spill must be modelled as explicit storage terms; the meaning of `delivered_supply` must not silently change — any change to this boundary needs an ADR and new golden fixtures.
 - **Unit:** MLD.
 - **Time window:** daily series → window mean; same default year window.
 - **Geography:** selected area.
@@ -64,15 +74,27 @@ These pairs are **different metrics** and must never be conflated:
 ## 3. Reliable supply (`reliable_supply`)
 
 - **Definition (PROPOSED):** The **dependable** supply level available on at least a target fraction `p` of days in the window (firm yield at exceedance `p`). Default `p = 0.90`.
-- **Unit:** MLD (may also be expressed as a ratio of demand — see distinction note below).
+- **Unit:** MLD. (Its share of demand is a separate metric, `dependable_supply_ratio`, §3b.)
 - **Time window:** the full reporting window of the daily supply series.
 - **Geography:** selected area.
-- **Required method:** sort daily `delivered_supply`; `reliable_supply = max{ v : P(delivered_supply_day ≥ v) ≥ p }`. `p` is an explicit, versioned parameter.
-- **Distinction:** "63% / of annual demand met" in screenshots is a **ratio of demand** (`reliable_supply / demand`), which is a _volume-reliability_ framing, **not** the same as the dependable-yield level in MLD. The registry defines `reliable_supply` (MLD) and `volume_reliability` (ratio) as separate IDs. Which one a screen shows must be explicit.
+- **Required method:** sort daily `delivered_supply`; `reliable_supply = max{ v : P(delivered_supply_day ≥ v) ≥ p }`, where `P` is the empirical fraction of days in the window. `p` is an explicit, versioned parameter.
+- **Distinction:** `reliable_supply` is a level in MLD. Dividing it by demand gives `dependable_supply_ratio` (§3b), which is **not** volume reliability (§7a) — in the fixture they are 80% vs 94%. See key distinction 4.
 - **Provenance:** inherits delivered-supply provenance + the chosen `p`.
 - **Null semantics:** `unavailable` if the daily series is too short/incomplete to estimate exceedance at `p`.
-- **Display rounding:** 1 decimal MLD (or integer % when shown as ratio of demand).
+- **Display rounding:** 1 decimal MLD.
 - **Status:** proposed.
+
+## 3b. Dependable-supply ratio (`dependable_supply_ratio`)
+
+- **Definition (PROPOSED):** The dependable (p-exceedance) supply level as a share of mean demand over the same window.
+- **Unit:** ratio `[0, ∞)` (display %). Can exceed 1 when dependable supply exceeds demand; it is not capped.
+- **Time window:** reporting window.
+- **Geography:** selected area.
+- **Formula:** `reliable_supply / demand` (both window-level, same `p`).
+- **Provenance:** `reliable_supply` + `demand` provenance.
+- **Null semantics:** `unavailable` if either input is unavailable or mean demand is 0.
+- **Display rounding:** integer %.
+- **Status:** proposed. **Not** volume reliability and **not** time reliability.
 
 ## 4. Deficit (`deficit`)
 
@@ -118,7 +140,7 @@ These pairs are **different metrics** and must never be conflated:
 - **Formula:** `Σ_day min(delivered_supply_day, demand_day) / Σ_day demand_day`.
 - **Provenance:** daily supply + demand provenance.
 - **Null semantics:** `unavailable` if demand total is 0 or series incomplete.
-- **Display rounding:** integer % (ratio to 3 dp internally).
+- **Display rounding:** integer % (raw ratio kept exact — conventions §2).
 - **Status:** proposed.
 
 ## 7b. Time reliability (`time_reliability`)
@@ -128,9 +150,9 @@ These pairs are **different metrics** and must never be conflated:
 - **Time window:** reporting window.
 - **Formula:** `count{ day : delivered_supply_day ≥ demand_day } / count{ day ∈ window }`.
 - **Provenance:** as above.
-- **Null semantics:** `unavailable` if series incomplete.
+- **Null semantics:** `unavailable` if series incomplete or the window has zero days.
 - **Display rounding:** integer %.
-- **Status:** proposed. The generic screen label "Reliability/Supply Reliability" must bind to exactly one of `volume_reliability` or `time_reliability`; default headline = `volume_reliability` (**proposed**).
+- **Status:** proposed. The generic screen label "Reliability/Supply Reliability" must bind to exactly one of `volume_reliability`, `time_reliability` or `dependable_supply_ratio`; default headline = `volume_reliability` (**proposed**, pending domain review).
 
 ## 8. Tanker dependence (`tanker_dependence`)
 
@@ -139,8 +161,8 @@ These pairs are **different metrics** and must never be conflated:
 - **Time window:** reporting window.
 - **Formula:** `Σ_day tanker_contribution_day / Σ_day delivered_supply_day`.
 - **Provenance:** tanker source manifest + total supply provenance.
-- **Null semantics:** `unavailable` if tanker contribution or total supply unavailable.
-- **Display rounding:** integer % (ratio to 3 dp internally).
+- **Null semantics:** `unavailable` if tanker contribution or total supply unavailable, **or if total delivered supply over the window is 0** (the share is undefined — not 0%). A tanker contribution that is known to be zero with non-zero total supply is a genuine `0`.
+- **Display rounding:** integer % (raw ratio kept exact, e.g. `27/101` — conventions §2).
 - **Status:** proposed. See inconsistency re. screenshot labelling this in "days" (§ below).
 
 ## 9. Cost (`project_cost`)
@@ -152,7 +174,7 @@ These pairs are **different metrics** and must never be conflated:
 - **Formula:** `project_cost = Σ_intervention capital_cost_intervention` (each with source + basis date). Ranges are preserved where the catalog gives ranges; no invented precision.
 - **Provenance:** intervention catalog entry (source, date, range) per item.
 - **Null semantics:** `unavailable` if any selected intervention lacks a costed basis.
-- **Display rounding:** whole INR internally; UI may show lakh with 1 dp (UI concern).
+- **Display rounding:** stored and computed in integer paise; displayed as whole INR, or lakh with 1 dp (UI concern). No whole-INR internal rounding.
 - **Status:** proposed.
 
 ## 10. Avoided cost (`avoided_cost`)
@@ -160,7 +182,7 @@ These pairs are **different metrics** and must never be conflated:
 - **Definition:** Expenditure the plan is projected to avoid (primarily reduced tanker purchases) over an explicit horizon, from explicit volume and unit-price assumptions.
 - **Unit:** INR (integer paise), per horizon (and/or per year).
 - **Time window:** explicit horizon (e.g. 3 years); annual breakdown retained.
-- **Formula:** `avoided_cost_year = avoided_volume_year × unit_price`; `avoided_cost = Σ_year avoided_cost_year`. `avoided_volume` comes from the deterministic engine; `unit_price` (e.g. ₹/L tanker) has a dated source. **Do not** double-count savings already represented elsewhere.
+- **Formula:** `avoided_cost_year = quantize_paise(avoided_volume_year × unit_price)` (exact product, then `ROUND_HALF_EVEN` to integer paise once per year — conventions §4); `avoided_cost = Σ_year avoided_cost_year`. `avoided_volume` comes from the deterministic engine; `unit_price` (e.g. ₹/L tanker) has a dated source. **Do not** double-count savings already represented elsewhere.
 - **Provenance:** engine run id for avoided volume + dated unit-price source.
 - **Null semantics:** `unavailable` if avoided volume or unit price is unverified (label "illustrative estimate" only when inputs are explicitly assumptions).
 - **Display rounding:** whole INR.
@@ -184,8 +206,9 @@ These pairs are **different metrics** and must never be conflated:
 - **Time window:** evaluated over the horizon; if cumulative never reaches 0, result is **`no_payback`** (not a large number, not 0).
 - **Formula:** find the first period where running cumulative `≥ 0`; interpolate within the year: `payback_years = full_years_before_breakeven + (remaining_outlay / net_benefit_in_breakeven_year)`; `payback_months = round(payback_years × 12)`.
 - **Provenance:** the cash-flow series behind `net_benefit`.
-- **Null semantics:** `unavailable` if cash flows unavailable; `no_payback` if never breaks even within horizon.
-- **Display rounding:** integer months.
+- **Raw value:** exact years (e.g. `20/7`) and exact months (`240/7`); `payback_months` above is the display value.
+- **Null semantics:** `unavailable` if cash flows unavailable; `no_payback` if never breaks even within horizon (including when net annual benefit ≤ 0); `0` months only when there is no capital outlay (`project_cost = 0`).
+- **Display rounding:** integer months, `ROUND_HALF_EVEN`.
 - **Status:** proposed.
 
 ---
@@ -197,16 +220,23 @@ reviewed models exist, and must render as unavailable (never 0): groundwater lev
 trend, drinking-water quality, utility-supply reliability, and shared-aquifer / neighbour
 hydraulic effects. Flood risk is provisional at best from imagery alone.
 
+**Groundwater abstraction ≠ groundwater level.** The volume pumped from groundwater into
+supply (`groundwater_abstraction`, a supply contribution in MLD from pumping/borewell
+records) is a different capability from the aquifer's water-table level and trend
+(`groundwater_level`, m bgl from monitoring wells). Having one says nothing about the
+other: the synthetic fixture supplies abstraction volumes while groundwater level stays
+`unavailable`.
+
 ## Contradictory screenshot values
 
 Recorded for domain review. **Equations are not changed to reproduce these.** Cross-ref
 `docs/product/traceability.md` → "Recorded screenshot inconsistencies".
 
-| #   | Screenshot values                                                                                                                        | Conflict                                                                     | Resolution policy                                                                                       |
-| --- | ---------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| C1  | Workflow: demand 12.4 MLD, reliable supply 10.8 MLD, deficit 1.6 MLD → deficit = 12.9% of demand. 8.png labels deficit "−37% of demand". | 1.6/12.4 ≈ 13%, not 37%.                                                     | Keep `deficit = max(0, demand − reliable_supply)`; treat the 37% label as placeholder; flag for review. |
-| C2  | 3.png "Reliable Supply 63% / of annual demand met".                                                                                      | 63% is a ratio-of-demand, but the metric can also be a dependable-yield MLD. | Separate IDs: `reliable_supply` (MLD) vs `volume_reliability` (ratio). Screen must bind one.            |
-| C3  | 4.png "Tanker Dependency 74 days".                                                                                                       | Dependence is a share (%), not days; 74 coincides with shortage-day count.   | `tanker_dependence` stays a ratio; the "74 days" card is mislabelled — flag.                            |
-| C4  | 4.png scenario "Water Deficit 1.6 MLD (+75% vs current)" while 3.png current deficit is also 1.6 MLD.                                    | A +75% change cannot leave the value unchanged at 1.6.                       | Numbers are illustrative placeholders; engine computes real baseline vs scenario (Phase 09).            |
-| C5  | 6.png Plan A deficit reduction 36% vs workflow 58%; Plan A time "6–60 days" (6.png) vs "45–60 days" (1.png).                             | Inconsistent reductions/times across assets.                                 | Illustrative; real ranking/economics are engine-computed (Phase 12).                                    |
-| C6  | Reliability shown as 87%→72% (workflow) vs 63% (3.png).                                                                                  | Mixed reliability framings/scenarios.                                        | Disambiguate volume vs time reliability; label change as % vs pp.                                       |
+| #   | Screenshot values                                                                                                                        | Conflict                                                                                                                                      | Resolution policy                                                                                                                                                  |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| C1  | Workflow: demand 12.4 MLD, reliable supply 10.8 MLD, deficit 1.6 MLD → deficit = 12.9% of demand. 8.png labels deficit "−37% of demand". | 1.6/12.4 ≈ 13%, not 37%.                                                                                                                      | Keep `deficit = max(0, demand − reliable_supply)`; treat the 37% label as placeholder; flag for review.                                                            |
+| C2  | 3.png "Reliable Supply 63% / of annual demand met".                                                                                      | A % "of demand met" could mean `dependable_supply_ratio`, `volume_reliability` or `time_reliability`; these differ (fixture 80% / 94% / 70%). | Separate IDs. The wording "of annual demand met" reads as `volume_reliability`, but the binding stays **pending domain review**; the screen must bind exactly one. |
+| C3  | 4.png "Tanker Dependency 74 days".                                                                                                       | Dependence is a share (%), not days; 74 coincides with shortage-day count.                                                                    | `tanker_dependence` stays a ratio; the "74 days" card is mislabelled — flag.                                                                                       |
+| C4  | 4.png scenario "Water Deficit 1.6 MLD (+75% vs current)" while 3.png current deficit is also 1.6 MLD.                                    | A +75% change cannot leave the value unchanged at 1.6.                                                                                        | Numbers are illustrative placeholders; engine computes real baseline vs scenario (Phase 09).                                                                       |
+| C5  | 6.png Plan A deficit reduction 36% vs workflow 58%; Plan A time "6–60 days" (6.png) vs "45–60 days" (1.png).                             | Inconsistent reductions/times across assets.                                                                                                  | Illustrative; real ranking/economics are engine-computed (Phase 12).                                                                                               |
+| C6  | Reliability shown as 87%→72% (workflow) vs 63% (3.png).                                                                                  | Mixed reliability framings/scenarios.                                                                                                         | Disambiguate volume vs time reliability; label change as % vs pp.                                                                                                  |

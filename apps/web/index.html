@@ -3,10 +3,69 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
     <title>WaterLens</title>
+    <!-- Critical launch-state CSS only; shown until the app script replaces #root. -->
+    <style>
+      .wl-boot {
+        display: grid;
+        place-content: center;
+        justify-items: center;
+        gap: 1rem;
+        min-height: 100vh;
+        margin: 0;
+        font-family:
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+        color: #485864;
+        background: #f3f8f8;
+      }
+      .wl-boot svg {
+        width: 4rem;
+        height: 4rem;
+        animation: wl-boot-bob 2.4s ease-in-out infinite;
+      }
+      @keyframes wl-boot-bob {
+        50% {
+          transform: translateY(-4px);
+        }
+      }
+      @media (prefers-color-scheme: dark) {
+        .wl-boot {
+          color: #a3b5bf;
+          background: #0a1417;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .wl-boot svg {
+          animation: none;
+        }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="wl-boot" role="status">
+        <svg viewBox="0 0 40 40" aria-hidden="true">
+          <circle
+            cx="20"
+            cy="20"
+            r="17"
+            fill="none"
+            stroke="#0f6e67"
+            stroke-width="2.5"
+            stroke-dasharray="80 27"
+            stroke-linecap="round"
+          />
+          <path d="M20 8.5s-8 9.2-8 14.6a8 8 0 0 0 16 0c0-5.4-8-14.6-8-14.6Z" fill="#0f6e67" />
+        </svg>
+        <p>Loading WaterLens…</p>
+      </div>
+    </div>
+    <noscript>WaterLens needs JavaScript enabled.</noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

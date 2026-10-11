@@ -1,0 +1,106 @@
+fragment ProjectFields on ImplementationProject {
+  id
+  version
+  reportId
+  communityId
+  title
+  status
+  startedAt
+}
+
+fragment MilestoneFields on Milestone {
+  id
+  version
+  projectId
+  title
+  plannedOn
+  status
+  completedAt
+}
+
+fragment ObservationFields on Observation {
+  id
+  version
+  projectId
+  metricId
+  observedOn
+  method
+  note
+  evidence
+  recordedByViewer
+  quantity {
+    ...QuantityFields
+  }
+}
+
+query MyImplementationProjects($first: Int, $after: String) {
+  myImplementationProjects(first: $first, after: $after) {
+    nodes {
+      ...ProjectFields
+    }
+    pageInfo {
+      ...PageInfoFields
+    }
+  }
+}
+
+query ImplementationProject($id: ID!) {
+  implementationProject(id: $id) {
+    ...ProjectFields
+    milestones(first: 30) {
+      nodes {
+        ...MilestoneFields
+      }
+      pageInfo {
+        ...PageInfoFields
+      }
+    }
+  }
+}
+
+query Observations($projectId: ID!, $first: Int, $after: String) {
+  implementationProject(id: $projectId) {
+    id
+    observations(first: $first, after: $after) {
+      nodes {
+        ...ObservationFields
+      }
+      pageInfo {
+        ...PageInfoFields
+      }
+    }
+  }
+}
+
+mutation StartImplementationProject($input: StartImplementationProjectInput!) {
+  startImplementationProject(input: $input) {
+    project {
+      ...ProjectFields
+    }
+    error {
+      ...MutationErrorFields
+    }
+  }
+}
+
+mutation UpdateMilestone($input: UpdateMilestoneInput!) {
+  updateMilestone(input: $input) {
+    milestone {
+      ...MilestoneFields
+    }
+    error {
+      ...MutationErrorFields
+    }
+  }
+}
+
+mutation RecordObservation($input: RecordObservationInput!) {
+  recordObservation(input: $input) {
+    observation {
+      ...ObservationFields
+    }
+    error {
+      ...MutationErrorFields
+    }
+  }
+}

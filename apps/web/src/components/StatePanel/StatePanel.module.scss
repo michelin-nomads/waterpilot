@@ -1,0 +1,75 @@
+@use 'mixins' as *;
+
+.panel {
+  display: grid;
+  justify-items: center;
+  gap: var(--wl-space-2);
+  padding: var(--wl-space-6) var(--wl-space-5);
+  border: 1px dashed var(--wl-color-border-strong);
+  border-radius: var(--wl-radius-lg);
+  background: var(--wl-color-surface);
+  text-align: center;
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+}
+
+.neutral .icon {
+  color: var(--wl-color-accent-strong);
+  background: var(--wl-color-accent-soft);
+}
+
+.danger {
+  border-style: solid;
+  border-color: var(--wl-color-danger);
+
+  .icon {
+    color: var(--wl-color-danger);
+    background: var(--wl-color-danger-soft);
+  }
+}
+
+.warning .icon {
+  color: var(--wl-color-warning);
+  background: var(--wl-color-warning-soft);
+}
+
+.title {
+  font-size: var(--wl-text-lg);
+}
+
+.body {
+  display: grid;
+  gap: var(--wl-space-2);
+  max-width: 40rem;
+  color: var(--wl-color-text-muted);
+
+  ul {
+    display: grid;
+    gap: var(--wl-space-1);
+    margin: 0;
+    padding-left: 1.25rem;
+    text-align: start;
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--wl-space-2);
+  margin-top: var(--wl-space-2);
+}
+
+.meta {
+  font-size: var(--wl-text-xs);
+
+  code {
+    font-family: var(--wl-font-mono);
+  }
+}

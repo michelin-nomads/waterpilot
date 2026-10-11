@@ -1,0 +1,163 @@
+@use 'mixins' as *;
+
+.layer {
+  position: fixed;
+  inset: 0;
+  z-index: var(--wl-z-dialog);
+  display: flex;
+}
+
+// Below tablet width dialogs and drawers become full-screen sheets (ux-spec §4.1).
+.dialog {
+  align-items: stretch;
+  justify-content: center;
+
+  @include tablet-up {
+    align-items: center;
+    padding: var(--wl-space-4);
+  }
+}
+
+.drawer {
+  z-index: var(--wl-z-drawer);
+  justify-content: flex-end;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--wl-color-overlay) 55%, transparent);
+  animation: fade var(--wl-motion-base) var(--wl-ease);
+}
+
+.panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+  background: var(--wl-color-surface);
+  color: var(--wl-color-text);
+  box-shadow: var(--wl-shadow-lg);
+
+  &:focus-visible {
+    @include focus-ring;
+    outline-offset: -3px;
+  }
+}
+
+.dialog .panel {
+  width: 100%;
+  max-height: 100%;
+  animation: rise var(--wl-motion-slow) var(--wl-ease);
+
+  @include tablet-up {
+    max-height: calc(100vh - 2rem);
+    border-radius: var(--wl-radius-lg);
+  }
+}
+
+.dialog .sm {
+  max-width: 28rem;
+}
+
+.dialog .md {
+  max-width: 40rem;
+}
+
+.dialog .lg {
+  max-width: 56rem;
+}
+
+.drawer .panel {
+  width: min(100%, 28rem);
+  height: 100%;
+  animation: slide var(--wl-motion-slow) var(--wl-ease);
+
+  @include tablet-up {
+    border-radius: var(--wl-radius-lg) 0 0 var(--wl-radius-lg);
+  }
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--wl-space-3);
+  padding: var(--wl-space-4) var(--wl-space-5);
+  border-bottom: 1px solid var(--wl-color-border);
+}
+
+.headings {
+  flex: 1;
+  display: grid;
+  gap: var(--wl-space-1);
+}
+
+.title {
+  font-size: var(--wl-text-xl);
+}
+
+.description {
+  color: var(--wl-color-text-muted);
+  font-size: var(--wl-text-sm);
+}
+
+.close {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--wl-color-text-muted);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--wl-color-surface-sunken);
+    color: var(--wl-color-text);
+  }
+
+  @include focus-visible;
+}
+
+.body {
+  flex: 1;
+  overflow: auto;
+  padding: var(--wl-space-5);
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--wl-space-2);
+  padding: var(--wl-space-4) var(--wl-space-5);
+  border-top: 1px solid var(--wl-color-border);
+}
+
+@include reduced-motion {
+  .backdrop,
+  .dialog .panel,
+  .drawer .panel {
+    animation: none;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem) scale(0.98);
+  }
+}
+
+@keyframes slide {
+  from {
+    transform: translateX(100%);
+  }
+}

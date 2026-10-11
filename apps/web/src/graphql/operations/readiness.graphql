@@ -1,0 +1,66 @@
+fragment AreaReadinessFields on AreaReadiness {
+  areaId
+  sessionId
+  assessedAt
+  asOf
+  demo
+  basis
+  capabilities {
+    capability
+    state
+    reasons
+    technicalSupport
+    requiresLocalMeasurement
+    requiresReviewedModel
+    registeredSourceIds
+    demo
+  }
+  inputs {
+    input
+    label
+    unit
+    state
+    reasons
+    action
+    manualEntryAllowed
+    ownerPrompt
+    manualValue
+    demo
+  }
+  metrics {
+    metric
+    state
+    reasons
+    blockedInputs
+    demo
+  }
+}
+
+query AreaReadiness($areaId: ID!, $sessionId: ID) {
+  area(id: $areaId) {
+    id
+    name
+    evidence
+    readiness(sessionId: $sessionId) {
+      ...AreaReadinessFields
+    }
+  }
+}
+
+mutation RecordManualInput($input: RecordManualInputInput!) {
+  recordManualInput(input: $input) {
+    manualInput {
+      id
+      input
+      value
+      unit
+      enteredValue
+      enteredUnit
+      asOf
+      note
+    }
+    error {
+      ...MutationErrorFields
+    }
+  }
+}

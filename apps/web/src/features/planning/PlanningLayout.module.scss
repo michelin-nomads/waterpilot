@@ -1,0 +1,80 @@
+@use 'mixins' as *;
+
+.planning {
+  display: grid;
+  gap: var(--wl-space-4);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--wl-space-3);
+
+  > nav {
+    flex: 1 1 32rem;
+    min-width: 0;
+  }
+}
+
+.paneTabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 0.1875rem;
+  border: 1px solid var(--wl-color-border-strong);
+  border-radius: var(--wl-radius-pill);
+  background: var(--wl-color-surface);
+}
+
+.paneTab {
+  padding: var(--wl-space-2);
+  border: 0;
+  border-radius: var(--wl-radius-pill);
+  background: transparent;
+  font-weight: 700;
+  cursor: pointer;
+
+  &[aria-selected='true'] {
+    background: var(--wl-color-accent);
+    color: var(--wl-color-on-accent);
+  }
+
+  @include focus-visible;
+}
+
+.panes {
+  display: grid;
+  gap: var(--wl-space-5);
+  align-items: start;
+
+  @include desktop-up {
+    &[data-mode='agent'] {
+      grid-template-columns:
+        var(--wl-agent-pane-width, var(--wl-agent-width))
+        auto
+        minmax(0, 1fr);
+      column-gap: var(--wl-space-2);
+      align-items: stretch;
+    }
+  }
+}
+
+.agentPane {
+  padding: var(--wl-space-4);
+  border: 1px solid var(--wl-color-border);
+  border-radius: var(--wl-radius-lg);
+  background: var(--wl-color-surface);
+
+  @include desktop-up {
+    align-self: start;
+    position: sticky;
+    top: 6rem;
+    max-height: calc(100vh - 7rem);
+    overflow-y: auto;
+  }
+}
+
+.workspace {
+  min-width: 0;
+}

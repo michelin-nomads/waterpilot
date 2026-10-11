@@ -1,0 +1,176 @@
+@use 'mixins' as *;
+
+.figure {
+  @include card;
+
+  display: grid;
+  gap: var(--wl-space-2);
+  margin: 0;
+  padding: var(--wl-space-4);
+}
+
+.figureHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wl-space-2);
+}
+
+.title {
+  font-weight: 700;
+}
+
+.unit {
+  font-weight: 400;
+  color: var(--wl-color-text-muted);
+}
+
+.description {
+  font-size: var(--wl-text-sm);
+  color: var(--wl-color-text-muted);
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wl-space-1);
+  padding: 0.25rem 0.625rem;
+  border: 1px solid var(--wl-color-border-strong);
+  border-radius: var(--wl-radius-pill);
+  background: var(--wl-color-surface);
+  color: var(--wl-color-text);
+  font-size: var(--wl-text-sm);
+  cursor: pointer;
+
+  &[aria-pressed='true'] {
+    background: var(--wl-color-accent-soft);
+    border-color: var(--wl-color-accent);
+    color: var(--wl-color-accent-strong);
+  }
+
+  @include focus-visible;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.gridLine {
+  stroke: var(--wl-color-border);
+  stroke-width: 1;
+}
+
+.zeroLine {
+  stroke: var(--wl-color-border-strong);
+  stroke-width: 1.5;
+}
+
+.axisLabel {
+  fill: var(--wl-color-text-muted);
+  font-size: 12px;
+}
+
+.unavailableMark {
+  fill: var(--wl-color-text-muted);
+  font-size: 11px;
+  font-style: italic;
+}
+
+@for $i from 1 through 4 {
+  .series#{$i} {
+    fill: var(--wl-color-chart-#{$i});
+    stroke: var(--wl-color-chart-#{$i});
+    color: var(--wl-color-chart-#{$i});
+    background: var(--wl-color-chart-#{$i});
+  }
+}
+
+.line {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.dash1 {
+  stroke-dasharray: none;
+}
+
+.dash2 {
+  stroke-dasharray: 8 5;
+}
+
+.dash3 {
+  stroke-dasharray: 2 5;
+}
+
+.dash4 {
+  stroke-dasharray: 10 4 2 4;
+}
+
+.point {
+  stroke: var(--wl-color-surface);
+  stroke-width: 1.5;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wl-space-2) var(--wl-space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--wl-text-sm);
+
+  li {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--wl-space-1);
+  }
+}
+
+.swatch {
+  display: inline-block;
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 3px;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  font-size: var(--wl-text-sm);
+
+  th,
+  td {
+    padding: var(--wl-space-2) var(--wl-space-3);
+    border-bottom: 1px solid var(--wl-color-border);
+    text-align: end;
+  }
+
+  th[scope='row'],
+  thead th:first-child {
+    text-align: start;
+  }
+
+  thead th {
+    color: var(--wl-color-text-muted);
+    font-weight: 600;
+  }
+
+  td[data-unavailable='true'] {
+    color: var(--wl-color-text-muted);
+    font-style: italic;
+  }
+}
+
+.caption {
+  @include visually-hidden;
+}

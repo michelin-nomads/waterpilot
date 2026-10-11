@@ -1,6 +1,7 @@
 node_modules
 dist
 build
+!docs/build
 coverage
 playwright-report
 test-results
@@ -10,9 +11,13 @@ uv.lock
 package-lock.json
 packages/contracts/src/openapi.ts
 packages/contracts/openapi.json
+packages/contracts/schema.graphql
+apps/web/src/graphql/generated
 docs/design/reference
 
 # Provided source-of-truth documents — preserve verbatim, never reformat.
 docs/WaterLens-HLD.md
 docs/WaterLens-Cursor-Build-Guide.md
 docs/product/WaterLens-work-flow.txt
+docs/reviews/
+archives

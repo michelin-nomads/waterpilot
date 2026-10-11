@@ -1,0 +1,93 @@
+{
+  "description": "LOCAL TEST GAZETTEER — used by local mode and tests instead of Google Places so no billable call is made. Coordinates are approximate centre points rounded to 4 decimals, for exercising the location flow only; they are not authoritative and carry no boundaries. Viewports are deliberately omitted.",
+  "places": [
+    {
+      "placeId": "fixture:koramangala",
+      "name": "Koramangala",
+      "formattedAddress": "Koramangala, Bengaluru, Karnataka, India",
+      "latitude": "12.9352",
+      "longitude": "77.6245",
+      "countryCode": "IN",
+      "admin": {
+        "countryName": "India",
+        "admin1": "Karnataka",
+        "locality": "Bengaluru",
+        "sublocality": "Koramangala"
+      },
+      "types": ["sublocality", "sublocality_level_1", "political"]
+    },
+    {
+      "placeId": "fixture:koramangala-1st-block",
+      "name": "Koramangala 1st Block",
+      "formattedAddress": "Koramangala 1st Block, Bengaluru, Karnataka, India",
+      "latitude": "12.9279",
+      "longitude": "77.6271",
+      "countryCode": "IN",
+      "admin": {
+        "countryName": "India",
+        "admin1": "Karnataka",
+        "locality": "Bengaluru",
+        "sublocality": "Koramangala"
+      },
+      "types": ["neighborhood", "political"]
+    },
+    {
+      "placeId": "fixture:bengaluru",
+      "name": "Bengaluru",
+      "formattedAddress": "Bengaluru, Karnataka, India",
+      "latitude": "12.9716",
+      "longitude": "77.5946",
+      "countryCode": "IN",
+      "admin": { "countryName": "India", "admin1": "Karnataka", "locality": "Bengaluru" },
+      "types": ["locality", "political"]
+    },
+    {
+      "placeId": "fixture:nairobi",
+      "name": "Nairobi",
+      "formattedAddress": "Nairobi, Kenya",
+      "latitude": "-1.2864",
+      "longitude": "36.8172",
+      "countryCode": "KE",
+      "admin": { "countryName": "Kenya", "admin1": "Nairobi County", "locality": "Nairobi" },
+      "types": ["locality", "political"]
+    },
+    {
+      "placeId": "fixture:lima",
+      "name": "Lima",
+      "formattedAddress": "Lima, Peru",
+      "latitude": "-12.0464",
+      "longitude": "-77.0428",
+      "countryCode": "PE",
+      "admin": { "countryName": "Peru", "admin1": "Lima", "locality": "Lima" },
+      "types": ["locality", "political"]
+    },
+    {
+      "placeId": "fixture:springfield-il",
+      "name": "Springfield",
+      "formattedAddress": "Springfield, Illinois, United States",
+      "latitude": "39.7817",
+      "longitude": "-89.6501",
+      "countryCode": "US",
+      "admin": {
+        "countryName": "United States",
+        "admin1": "Illinois",
+        "locality": "Springfield"
+      },
+      "types": ["locality", "political"]
+    },
+    {
+      "placeId": "fixture:springfield-ma",
+      "name": "Springfield",
+      "formattedAddress": "Springfield, Massachusetts, United States",
+      "latitude": "42.1015",
+      "longitude": "-72.5898",
+      "countryCode": "US",
+      "admin": {
+        "countryName": "United States",
+        "admin1": "Massachusetts",
+        "locality": "Springfield"
+      },
+      "types": ["locality", "political"]
+    }
+  ]
+}

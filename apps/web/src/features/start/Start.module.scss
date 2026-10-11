@@ -1,0 +1,14 @@
+.page {
+  display: grid;
+  gap: var(--wl-space-5);
+  max-width: var(--wl-measure);
+}
+
+.error {
+  margin: 0;
+  padding: var(--wl-space-3) var(--wl-space-4);
+  border: 1px solid var(--wl-color-danger);
+  border-inline-start-width: 4px;
+  border-radius: var(--wl-radius-md);
+  background: var(--wl-color-danger-soft);
+}

@@ -2,11 +2,29 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "WaterLens Metric Registry",
   "description": "Machine-readable companion to docs/domain/metrics.md. All definitions are PROPOSED pending domain review. Equations must not be altered to reproduce screenshot example numbers.",
-  "version": "0.1",
+  "version": "0.2",
   "status": "proposed",
-  "generatedBy": "Phase 01",
+  "generatedBy": "Phase 01 (corrected after review R3)",
   "conventionsRef": "docs/domain/conventions.md",
-  "nullRule": "A missing/unverified input yields status 'unavailable' — never 0 or a fabricated value.",
+  "nullRule": "A missing/unverified input, or a zero denominator, yields availability 'unavailable' — never 0 or a fabricated value.",
+  "precision": {
+    "rawValues": "Exact rationals, integer base units, or decimal with 28 significant digits; no binary float; no intermediate rounding except money quantized to integer paise per cash-flow line item per period.",
+    "goldenRepresentation": "Exact decimal string (e.g. '10.1') or reduced fraction (e.g. '27/101').",
+    "comparisonTolerance": "Exact rational equality; a 28-digit Decimal approximation of a non-terminating value must be within 1e-20 of the exact value.",
+    "displayRounding": "Applied only at the presentation boundary, ROUND_HALF_EVEN; never fed back into computation.",
+    "ref": "conventions.md §2"
+  },
+  "statusVocabularies": {
+    "definitionStatus": ["proposed", "approved"],
+    "availability": ["available", "provisional", "unavailable"],
+    "evidenceQualityStatus": ["unreviewed", "validated", "provisional", "quarantined", "synthetic"],
+    "ref": "conventions.md §5"
+  },
+  "windowKinds": {
+    "calendar_year": "[start, start + 1 calendar year): 365 or 366 days; 29 Feb start rejected",
+    "fixed_days": "[start, start + N days) with explicit N",
+    "ref": "conventions.md §3a"
+  },
   "methodTypes": {
     "deterministic": "Computable now from validated inputs by pure engine code.",
     "requires_local_measurement": "Needs in-situ/local data; not inferable from imagery.",
@@ -20,7 +38,7 @@
       "storedUnit": "L/day",
       "valueType": "rate",
       "timeWindow": "daily_series_to_window_mean",
-      "defaultWindow": "P1Y_half_open",
+      "defaultWindow": "calendar_year",
       "geography": "area_polygon",
       "direction": "neutral",
       "methodType": "requires_local_measurement",
@@ -31,7 +49,11 @@
         "non_domestic_estimate_source"
       ],
       "nullSemantics": "unavailable if population or per-capita standard missing",
-      "displayRounding": { "type": "decimal_places", "value": 1, "unit": "MLD" },
+      "displayRounding": {
+        "type": "decimal_places",
+        "value": 1,
+        "unit": "MLD"
+      },
       "status": "proposed"
     },
     {
@@ -48,8 +70,13 @@
       "noDoubleCount": ["reuse", "recharge", "carry_over"],
       "provenance": ["per_source_manifest_entry"],
       "nullSemantics": "provisional with named missing source; missing source is NOT treated as 0",
-      "displayRounding": { "type": "decimal_places", "value": 1, "unit": "MLD" },
-      "status": "proposed"
+      "displayRounding": {
+        "type": "decimal_places",
+        "value": 1,
+        "unit": "MLD"
+      },
+      "status": "proposed",
+      "accountingBoundary": "source inflow into distribution, before storage; not demand-serving supply (served_supply_day = min(delivered_supply_day, demand_day))"
     },
     {
       "id": "reliable_supply",
@@ -61,12 +88,39 @@
       "geography": "area_polygon",
       "direction": "higher_better",
       "methodType": "deterministic",
-      "parameters": { "exceedance_p": 0.9 },
+      "parameters": {
+        "exceedance_p": 0.9
+      },
       "formula": "max{ v : P(delivered_supply_day >= v) >= p }",
-      "distinctFrom": ["volume_reliability"],
+      "distinctFrom": ["dependable_supply_ratio", "volume_reliability"],
       "provenance": ["delivered_supply_provenance", "exceedance_p"],
       "nullSemantics": "unavailable if series too short/incomplete to estimate exceedance at p",
-      "displayRounding": { "type": "decimal_places", "value": 1, "unit": "MLD" },
+      "displayRounding": {
+        "type": "decimal_places",
+        "value": 1,
+        "unit": "MLD"
+      },
+      "status": "proposed"
+    },
+    {
+      "id": "dependable_supply_ratio",
+      "name": "Dependable-supply ratio",
+      "unit": "ratio",
+      "range": [0, null],
+      "valueType": "ratio",
+      "timeWindow": "reporting_window",
+      "geography": "area_polygon",
+      "direction": "higher_better",
+      "methodType": "deterministic",
+      "formula": "reliable_supply / demand",
+      "distinctFrom": ["time_reliability", "volume_reliability"],
+      "note": "Not capped at 1. Not volume reliability (fixture 80% vs 94%) and not time reliability (70%).",
+      "provenance": ["reliable_supply", "demand"],
+      "nullSemantics": "unavailable if either input unavailable or mean demand is 0",
+      "displayRounding": {
+        "type": "percent_decimal_places",
+        "value": 0
+      },
       "status": "proposed"
     },
     {
@@ -80,10 +134,16 @@
       "direction": "lower_better",
       "methodType": "deterministic",
       "formula": "max(0, demand - reliable_supply)",
-      "relatedSeries": { "daily_deficit": "max(0, demand_day - delivered_supply_day)" },
+      "relatedSeries": {
+        "daily_deficit": "max(0, demand_day - delivered_supply_day)"
+      },
       "provenance": ["demand_provenance", "supply_provenance"],
       "nullSemantics": "unavailable if either input unavailable; never 0 by default",
-      "displayRounding": { "type": "decimal_places", "value": 1, "unit": "MLD" },
+      "displayRounding": {
+        "type": "decimal_places",
+        "value": 1,
+        "unit": "MLD"
+      },
       "status": "proposed"
     },
     {
@@ -99,7 +159,10 @@
       "distinctFrom": ["days_until_shortage"],
       "provenance": ["daily_supply_demand_series"],
       "nullSemantics": "unavailable if series does not cover window",
-      "displayRounding": { "type": "integer", "unit": "days" },
+      "displayRounding": {
+        "type": "integer",
+        "unit": "days"
+      },
       "status": "proposed"
     },
     {
@@ -115,7 +178,10 @@
       "distinctFrom": ["shortage_days"],
       "provenance": ["forward_daily_series", "reference_date"],
       "nullSemantics": "unavailable if no forward series; '>= horizon' if no shortage in horizon (not 0)",
-      "displayRounding": { "type": "integer", "unit": "days" },
+      "displayRounding": {
+        "type": "integer",
+        "unit": "days"
+      },
       "status": "proposed"
     },
     {
@@ -129,10 +195,13 @@
       "direction": "higher_better",
       "methodType": "deterministic",
       "formula": "sum(min(delivered_supply_day, demand_day)) / sum(demand_day)",
-      "distinctFrom": ["time_reliability"],
+      "distinctFrom": ["dependable_supply_ratio", "time_reliability"],
       "provenance": ["daily_supply_demand_series"],
       "nullSemantics": "unavailable if demand total is 0 or series incomplete",
-      "displayRounding": { "type": "percent_decimal_places", "value": 0, "internalRatioDp": 3 },
+      "displayRounding": {
+        "type": "percent_decimal_places",
+        "value": 0
+      },
       "status": "proposed"
     },
     {
@@ -146,10 +215,13 @@
       "direction": "higher_better",
       "methodType": "deterministic",
       "formula": "count{ day : delivered_supply_day >= demand_day } / count{ day in window }",
-      "distinctFrom": ["volume_reliability"],
+      "distinctFrom": ["dependable_supply_ratio", "volume_reliability"],
       "provenance": ["daily_supply_demand_series"],
-      "nullSemantics": "unavailable if series incomplete",
-      "displayRounding": { "type": "percent_decimal_places", "value": 0, "internalRatioDp": 3 },
+      "nullSemantics": "unavailable if series incomplete or window has zero days",
+      "displayRounding": {
+        "type": "percent_decimal_places",
+        "value": 0
+      },
       "status": "proposed"
     },
     {
@@ -165,8 +237,11 @@
       "formula": "sum(tanker_contribution_day) / sum(delivered_supply_day)",
       "note": "A share, not a day-count. Screenshot label in 'days' is an inconsistency (see metrics.md C3).",
       "provenance": ["tanker_source_manifest", "total_supply_provenance"],
-      "nullSemantics": "unavailable if tanker contribution or total supply unavailable",
-      "displayRounding": { "type": "percent_decimal_places", "value": 0, "internalRatioDp": 3 },
+      "nullSemantics": "unavailable if tanker contribution or total supply unavailable, or if total delivered supply is 0 (undefined share, not 0%)",
+      "displayRounding": {
+        "type": "percent_decimal_places",
+        "value": 0
+      },
       "status": "proposed"
     },
     {
@@ -183,7 +258,10 @@
       "note": "O&M tracked as a separate annual series, not folded into capital.",
       "provenance": ["intervention_catalog_entry_per_item"],
       "nullSemantics": "unavailable if any selected intervention lacks a costed basis",
-      "displayRounding": { "type": "whole_inr" },
+      "displayRounding": {
+        "type": "whole_inr",
+        "note": "display only; raw value is integer paise"
+      },
       "status": "proposed"
     },
     {
@@ -200,7 +278,10 @@
       "noDoubleCount": ["savings_counted_elsewhere"],
       "provenance": ["engine_run_id_for_avoided_volume", "dated_unit_price_source"],
       "nullSemantics": "unavailable if avoided volume or unit price unverified; label 'illustrative estimate' only when inputs are explicit assumptions",
-      "displayRounding": { "type": "whole_inr" },
+      "displayRounding": {
+        "type": "whole_inr",
+        "note": "display only; raw value is integer paise"
+      },
       "status": "proposed"
     },
     {
@@ -218,7 +299,10 @@
       "note": "Funding/grants are NOT added here (they change who pays, not economic benefit).",
       "provenance": ["avoided_cost", "project_cost", "om_cost_series"],
       "nullSemantics": "unavailable if any component unavailable",
-      "displayRounding": { "type": "whole_inr" },
+      "displayRounding": {
+        "type": "whole_inr",
+        "note": "display only; raw value is integer paise"
+      },
       "status": "proposed"
     },
     {
@@ -233,9 +317,14 @@
       "formula": "first period cumulative_cashflow >= 0; interpolate within year; months = round(years*12)",
       "specialValue": "no_payback if cumulative never reaches 0 within horizon",
       "provenance": ["net_benefit_cashflow_series"],
-      "nullSemantics": "unavailable if cash flows unavailable; 'no_payback' (not 0, not large number) if never breaks even",
-      "displayRounding": { "type": "integer", "unit": "months" },
-      "status": "proposed"
+      "nullSemantics": "unavailable if cash flows unavailable; 'no_payback' (not 0, not large number) if never breaks even, including net annual benefit <= 0; 0 months only when project_cost = 0",
+      "displayRounding": {
+        "type": "integer",
+        "unit": "months",
+        "mode": "ROUND_HALF_EVEN"
+      },
+      "status": "proposed",
+      "rawValue": "exact years and months (e.g. 20/7 years, 240/7 months); integer months is the display value"
     }
   ]
 }

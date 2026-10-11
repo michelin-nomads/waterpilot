@@ -1,0 +1,102 @@
+fragment PlaceCandidateFields on PlaceCandidate {
+  placeId
+  name
+  formattedAddress
+  latitude
+  longitude
+  countryCode
+  scope
+  types
+  admin {
+    countryName
+    admin1
+    admin2
+    locality
+    sublocality
+  }
+}
+
+fragment AreaLocationFields on Area {
+  id
+  name
+  countryCode
+  timezone
+  currency
+  unitSystem
+  regionSetByUser
+  evidence
+  origin
+  scope
+  extent
+  radiusMeters
+  private
+  formattedAddress
+  accuracyMeters
+  hasBoundary
+  providerContentExpired
+  admin {
+    countryName
+    admin1
+    admin2
+    locality
+    sublocality
+  }
+}
+
+query ResolveLocation($text: String!) {
+  resolveLocation(text: $text) {
+    query
+    provider
+    needsClarification
+    question
+    candidates {
+      ...PlaceCandidateFields
+    }
+  }
+}
+
+query ReverseLocation($latitude: DecimalString!, $longitude: DecimalString!) {
+  reverseLocation(latitude: $latitude, longitude: $longitude) {
+    candidates {
+      ...PlaceCandidateFields
+    }
+  }
+}
+
+query RegionSettings($latitude: DecimalString!, $longitude: DecimalString!, $countryCode: String!) {
+  regionSettings(latitude: $latitude, longitude: $longitude, countryCode: $countryCode) {
+    currency
+    currencyOptions
+    currencyCertain
+    timezone
+    timezoneOptions
+    timezoneCertain
+    unitSystem
+  }
+}
+
+query Countries {
+  countries {
+    countries {
+      code
+      name
+    }
+  }
+}
+
+query AreaLocation($id: ID!) {
+  area(id: $id) {
+    ...AreaLocationFields
+  }
+}
+
+mutation ConfirmLocation($input: ConfirmLocationInput!) {
+  confirmLocation(input: $input) {
+    area {
+      ...AreaLocationFields
+    }
+    error {
+      ...MutationErrorFields
+    }
+  }
+}

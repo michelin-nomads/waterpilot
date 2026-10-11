@@ -1,0 +1,56 @@
+{
+  "id": "synthetic-utility-supply-demo",
+  "recordKind": "registered_source",
+  "title": "Synthville daily utility and tanker supply (SYNTHETIC DEMO — not a real source)",
+  "publisher": "WaterLens test fixtures",
+  "sourceUrl": "https://example.invalid/synthetic-demo",
+  "licence": {
+    "name": "Synthetic test data (hand-authored)",
+    "usageRights": "open",
+    "authorization": {
+      "status": "authorized",
+      "authorizedUses": ["internal_analysis", "derived_metrics", "pilot_display"],
+      "reviewedAt": "2026-10-10",
+      "evidenceRef": "docs/domain/fixtures/README.md (synthetic fixture, no third-party rights)"
+    }
+  },
+  "capability": "utility_supply",
+  "variables": [
+    {
+      "name": "delivered_supply",
+      "rawUnit": "MLD",
+      "normalizedUnit": "L/day",
+      "bandOrField": "delivered_supply_mld",
+      "uncertainty": {
+        "kind": "not_quantified",
+        "basis": "Synthetic values have no measurement process."
+      }
+    },
+    {
+      "name": "tanker_supply",
+      "rawUnit": "MLD",
+      "normalizedUnit": "L/day",
+      "bandOrField": "tanker_mld",
+      "uncertainty": {
+        "kind": "not_quantified",
+        "basis": "Synthetic values have no measurement process."
+      }
+    }
+  ],
+  "temporalCoverage": {
+    "start": "2026-01-01",
+    "endExclusive": "2026-01-11",
+    "boundary": "half_open_start_inclusive_end_exclusive",
+    "timezone": "Asia/Kolkata"
+  },
+  "spatialCoverage": {
+    "type": "bbox",
+    "crs": "EPSG:4326",
+    "bbox": [-0.05, -0.05, 0.05, 0.05]
+  },
+  "qualityStatus": "synthetic",
+  "accessTier": "local_measured",
+  "observationMethod": "administrative_record",
+  "requiresLocalMeasurement": true,
+  "eligibilityNotes": "Demo/test data only. Readiness counts it only in local mode and labels every result DEMO."
+}

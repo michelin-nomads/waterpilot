@@ -1,0 +1,26 @@
+fragment MutationErrorFields on MutationError {
+  code
+  message
+  fieldErrors {
+    field
+    message
+  }
+  currentVersion
+  requestId
+}
+
+fragment MoneyFields on Money {
+  minorUnits
+  currency
+  exponent
+}
+
+fragment QuantityFields on Quantity {
+  value
+  unit
+}
+
+fragment PageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}

@@ -1,0 +1,61 @@
+@use 'mixins' as *;
+
+.field {
+  display: grid;
+  gap: var(--wl-space-1);
+}
+
+.label {
+  font-weight: 600;
+  font-size: var(--wl-text-sm);
+}
+
+.required {
+  font-weight: 400;
+  color: var(--wl-color-text-muted);
+}
+
+.hint {
+  font-size: var(--wl-text-sm);
+  color: var(--wl-color-text-muted);
+}
+
+.error {
+  font-size: var(--wl-text-sm);
+  color: var(--wl-color-danger);
+  font-weight: 600;
+}
+
+.control {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--wl-color-border-strong);
+  border-radius: var(--wl-radius-md);
+  background: var(--wl-color-surface);
+  color: var(--wl-color-text);
+
+  &::placeholder {
+    color: var(--wl-color-text-muted);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+    outline-offset: 0;
+  }
+
+  &[aria-invalid='true'] {
+    border-color: var(--wl-color-danger);
+    border-width: 2px;
+  }
+
+  &:disabled {
+    background: var(--wl-color-surface-sunken);
+    cursor: not-allowed;
+  }
+}
+
+.textarea {
+  min-height: 5rem;
+  resize: vertical;
+}

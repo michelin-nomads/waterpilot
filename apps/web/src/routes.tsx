@@ -1,0 +1,58 @@
+import type { ComponentType } from 'react';
+import { Navigate, type RouteObject } from 'react-router-dom';
+
+import { env } from './config/env';
+import AppShell from './shell/AppShell';
+import { LaunchScreen } from './shell/LaunchScreen';
+import { NotFoundPage, RouteError } from './shell/RouteStatus';
+
+const lazyPage = (load: () => Promise<{ default: ComponentType }>) => async () => ({
+  Component: (await load()).default,
+});
+
+/**
+ * Feature routes are lazy so each feature ships in its own chunk. The planning stages share
+ * PlanningLayout (stepper, Traditional/Agent mode, agent + workspace panes).
+ */
+export const routes: RouteObject[] = [
+  {
+    path: '/',
+    element: <AppShell />,
+    HydrateFallback: LaunchScreen,
+    errorElement: <RouteError />,
+    children: [
+      {
+        // Pathless boundary so route errors render inside the shell.
+        errorElement: <RouteError />,
+        children: [
+          // Signed-in accounts are sent on to their dashboard from Welcome.
+          { index: true, lazy: lazyPage(() => import('./features/welcome')) },
+          { path: 'dashboard', lazy: lazyPage(() => import('./features/dashboard')) },
+          { path: 'start', lazy: lazyPage(() => import('./features/start')) },
+          {
+            lazy: lazyPage(() => import('./features/planning/PlanningLayout')),
+            children: [
+              { path: 'area', lazy: lazyPage(() => import('./features/area')) },
+              { path: 'goals', lazy: lazyPage(() => import('./features/goals')) },
+              { path: 'plans', lazy: lazyPage(() => import('./features/plans')) },
+              { path: 'make-it-happen', lazy: lazyPage(() => import('./features/funding')) },
+              { path: 'tracking', lazy: lazyPage(() => import('./features/tracking')) },
+            ],
+          },
+          // What-if is a workspace panel now (ADR 0002); keep old links working.
+          { path: 'scenarios', element: <Navigate to="/area" replace /> },
+          // Stage 4 covers review, funding and proposal (ux-spec §3).
+          { path: 'funding', element: <Navigate to="/make-it-happen" replace /> },
+          { path: 'proposals', lazy: lazyPage(() => import('./features/proposals')) },
+          { path: 'reports', lazy: lazyPage(() => import('./features/reports')) },
+          { path: 'communities', lazy: lazyPage(() => import('./features/communities')) },
+          { path: 'jobs/:jobId', lazy: lazyPage(() => import('./features/jobs')) },
+          ...(env.appMode === 'local'
+            ? [{ path: 'design-system', lazy: lazyPage(() => import('./features/design-system')) }]
+            : []),
+          { path: '*', element: <NotFoundPage /> },
+        ],
+      },
+    ],
+  },
+];

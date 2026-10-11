@@ -1,0 +1,42 @@
+fragment AccountClaimFields on AccountClaim {
+  id
+  version
+  status
+  expiresAt
+  transferredSessionId
+  closedSessionId
+}
+
+mutation BeginAccountClaim {
+  beginAccountClaim {
+    claim {
+      ...AccountClaimFields
+    }
+    claimSecret
+    error {
+      ...MutationErrorFields
+    }
+  }
+}
+
+mutation CompleteAccountClaim($input: CompleteAccountClaimInput!) {
+  completeAccountClaim(input: $input) {
+    claim {
+      ...AccountClaimFields
+    }
+    error {
+      ...MutationErrorFields
+    }
+  }
+}
+
+mutation CancelAccountClaim($input: CancelAccountClaimInput!) {
+  cancelAccountClaim(input: $input) {
+    claim {
+      ...AccountClaimFields
+    }
+    error {
+      ...MutationErrorFields
+    }
+  }
+}

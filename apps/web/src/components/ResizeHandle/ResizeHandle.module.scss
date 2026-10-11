@@ -1,0 +1,33 @@
+@use 'mixins' as *;
+
+// 12px hit area around a 2px line; the full-height strip is the drag target.
+.handle {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 0.75rem;
+  border-radius: var(--wl-radius-pill);
+  cursor: col-resize;
+  touch-action: none;
+
+  @include focus-visible;
+
+  &:hover .line,
+  &:focus-visible .line {
+    background: var(--wl-color-accent);
+  }
+}
+
+.line {
+  width: 2px;
+  height: 100%;
+  border-radius: var(--wl-radius-pill);
+  background: var(--wl-color-border);
+  transition: background-color var(--wl-motion-fast) var(--wl-ease);
+}
+
+@include reduced-motion {
+  .line {
+    transition: none;
+  }
+}

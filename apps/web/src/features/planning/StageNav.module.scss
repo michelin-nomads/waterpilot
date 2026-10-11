@@ -1,0 +1,88 @@
+@use 'mixins' as *;
+
+.nav {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--wl-space-1);
+  min-width: 0;
+}
+
+// The page eyebrow shows the step visually; this copy orients screen-reader users in the nav.
+.position {
+  @include visually-hidden;
+}
+
+// Positioned so visually-hidden labels stay inside this scroll container's clip.
+.list {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--wl-space-1);
+  margin: 0;
+  padding: var(--wl-space-1);
+  list-style: none;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  border: 1px solid var(--wl-color-border);
+  border-radius: var(--wl-radius-pill);
+  background: var(--wl-color-surface);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--wl-space-1);
+  flex: none;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wl-space-2);
+  padding: var(--wl-space-1) var(--wl-space-3) var(--wl-space-1) var(--wl-space-1);
+  border-radius: var(--wl-radius-pill);
+  color: var(--wl-color-text);
+  font-size: var(--wl-text-sm);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:hover {
+    background: var(--wl-color-surface-sunken);
+    color: var(--wl-color-text);
+  }
+
+  &[aria-current='step'] {
+    background: var(--wl-color-accent);
+    color: var(--wl-color-on-accent);
+
+    .number {
+      background: var(--wl-color-on-accent);
+      color: var(--wl-color-accent-strong);
+    }
+  }
+}
+
+.number {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: var(--wl-color-surface-sunken);
+  font-weight: 700;
+}
+
+// Narrow screens: only the current stage keeps its label; others show their number.
+.label {
+  @media (max-width: 639px) {
+    .link:not([aria-current='step']) & {
+      @include visually-hidden;
+    }
+  }
+}
+
+.separator {
+  display: inline-flex;
+  color: var(--wl-color-text-muted);
+}

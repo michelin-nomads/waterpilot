@@ -1,0 +1,19 @@
+.account {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wl-space-2);
+  min-width: 0;
+}
+
+.who {
+  max-width: 12rem;
+  overflow: hidden;
+  font-size: var(--wl-text-sm);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  @media (max-width: 479px) {
+    max-width: 7rem;
+  }
+}

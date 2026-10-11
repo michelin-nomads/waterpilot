@@ -4,16 +4,16 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
+from conftest import LOCAL_OK, LoadSettings
 from waterlens.api.main import create_app
-from waterlens.config import AppMode, Settings
 
 
-def _client() -> TestClient:
-    return TestClient(create_app(Settings(app_mode=AppMode.LOCAL, use_emulators=True)))
+def _client(load_settings: LoadSettings) -> TestClient:
+    return TestClient(create_app(load_settings(LOCAL_OK)))
 
 
-def test_healthz_ok() -> None:
-    resp = _client().get("/healthz")
+def test_healthz_ok(load_settings: LoadSettings) -> None:
+    resp = _client(load_settings).get("/healthz")
     assert resp.status_code == 200
     body = resp.json()
     assert body["status"] == "ok"
@@ -21,10 +21,13 @@ def test_healthz_ok() -> None:
     assert "x-request-id" in resp.headers
 
 
-def test_readyz_reports_mode() -> None:
-    resp = _client().get("/readyz")
+def test_readyz_reports_configuration_scope_only(load_settings: LoadSettings) -> None:
+    resp = _client(load_settings).get("/readyz")
     assert resp.status_code == 200
     body = resp.json()
-    assert body["ready"] is True
-    assert body["app_mode"] == "local"
-    assert body["using_emulators"] is True
+    assert body == {
+        "ready": True,
+        "scope": "configuration",
+        "app_mode": "local",
+        "using_emulators": True,
+    }

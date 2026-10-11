@@ -1,0 +1,150 @@
+{
+  "$comment": "Expected rejection per invalid example: layer = schema (JSON Schema with format checks) or semantic (cross-field validator). 'match' is a substring of the expected error.",
+  "cases": {
+    "review-r4-combined.json": {
+      "layer": "schema",
+      "match": "bbox",
+      "why": "Review R4 case: validated, bbox type without bbox, no timezone, end before start"
+    },
+    "bbox-without-coordinates.json": {
+      "layer": "schema",
+      "match": "'bbox' is a required property",
+      "why": "bbox discriminator requires bbox"
+    },
+    "geojson-ref-without-ref.json": {
+      "layer": "schema",
+      "match": "'geojsonObjectRef' is a required property",
+      "why": "geojson_ref discriminator requires geojsonObjectRef"
+    },
+    "admin-area-without-id.json": {
+      "layer": "schema",
+      "match": "'adminAreaId' is a required property",
+      "why": "admin_area discriminator requires adminAreaId"
+    },
+    "missing-timezone.json": {
+      "layer": "schema",
+      "match": "'timezone' is a required property",
+      "why": "local-date coverage requires a timezone"
+    },
+    "end-before-start.json": {
+      "layer": "semantic",
+      "match": "endExclusive must be after start",
+      "why": "half-open window must be non-empty and ordered"
+    },
+    "end-equals-start.json": {
+      "layer": "semantic",
+      "match": "endExclusive must be after start",
+      "why": "empty half-open window"
+    },
+    "invalid-timezone.json": {
+      "layer": "semantic",
+      "match": "not a valid IANA timezone",
+      "why": "timezone must exist in the IANA database"
+    },
+    "bbox-min-greater-than-max.json": {
+      "layer": "semantic",
+      "match": "bbox min must not exceed max",
+      "why": "bbox ordering"
+    },
+    "bbox-crs-mismatch.json": {
+      "layer": "schema",
+      "match": "'EPSG:4326' was expected",
+      "why": "bbox is defined in EPSG:4326 degrees"
+    },
+    "snapshot-without-raw-ref.json": {
+      "layer": "schema",
+      "match": "'rawObjectRef' is a required property",
+      "why": "ingested snapshots need the immutable raw object"
+    },
+    "snapshot-without-checksum.json": {
+      "layer": "schema",
+      "match": "'checksum' is a required property",
+      "why": "ingested snapshots need a checksum"
+    },
+    "registered-source-claims-validated.json": {
+      "layer": "schema",
+      "match": "'validated' is not one of",
+      "why": "only ingested snapshots can be validated"
+    },
+    "registered-source-with-raw-ref.json": {
+      "layer": "schema",
+      "match": "should not be valid",
+      "why": "registered metadata must not pretend to hold a snapshot"
+    },
+    "licence-usage-licensed.json": {
+      "layer": "schema",
+      "match": "'licensed' is not one of",
+      "why": "'licensed' is an access tier, not a usage right"
+    },
+    "prohibited-but-authorized.json": {
+      "layer": "schema",
+      "match": "should not be valid",
+      "why": "prohibited use can never be authorized"
+    },
+    "unverified-but-authorized.json": {
+      "layer": "schema",
+      "match": "should not be valid",
+      "why": "unverified rights can never be authorized"
+    },
+    "authorized-without-evidence.json": {
+      "layer": "schema",
+      "match": "'evidenceRef' is a required property",
+      "why": "authorization must cite evidence"
+    },
+    "authorized-with-no-uses.json": {
+      "layer": "schema",
+      "match": "should be non-empty",
+      "why": "authorization must name the permitted uses"
+    },
+    "licence-without-authorization.json": {
+      "layer": "schema",
+      "match": "'authorization' is a required property",
+      "why": "authorization status must be explicit"
+    },
+    "validated-without-normalized-unit.json": {
+      "layer": "schema",
+      "match": "'normalizedUnit' is a required property",
+      "why": "validated data must be normalized"
+    },
+    "display-unit-as-canonical.json": {
+      "layer": "schema",
+      "match": "'MLD' is not one of",
+      "why": "MLD is a display/input unit, not canonical"
+    },
+    "non-utc-timestamp.json": {
+      "layer": "schema",
+      "match": "does not match 'Z$'",
+      "why": "instants are stored in UTC with Z"
+    },
+    "bad-date-format.json": {
+      "layer": "schema",
+      "match": "is not a 'date'",
+      "why": "format checks are enforced"
+    },
+    "raw-ref-traversal.json": {
+      "layer": "schema",
+      "match": "does not match",
+      "why": "object keys must not traverse"
+    },
+    "old-groundwater-capability.json": {
+      "layer": "schema",
+      "match": "'groundwater' is not one of",
+      "why": "groundwater split into abstraction vs level"
+    },
+    "registered-source-with-snapshot-link.json": {
+      "layer": "schema",
+      "match": "should not be valid",
+      "why": "v0.3: a registered source links to no snapshot source"
+    },
+    "uncertainty-without-value.json": {
+      "layer": "schema",
+      "match": "'value' is a required property",
+      "why": "v0.3: absolute/relative uncertainty needs a value"
+    },
+    "unknown-observation-method.json": {
+      "layer": "schema",
+      "match": "'satellite_guess' is not one of",
+      "why": "v0.3: observation method is a closed vocabulary"
+    }
+  }
+}

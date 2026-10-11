@@ -1,0 +1,82 @@
+@use 'mixins' as *;
+
+.region {
+  display: grid;
+  gap: var(--wl-space-2);
+  animation: appear var(--wl-motion-slow) var(--wl-ease) 150ms both;
+
+  @include reduced-motion {
+    animation: none;
+  }
+}
+
+.skeleton {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: var(--wl-radius-sm);
+  background: var(--wl-color-surface-sunken);
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--wl-color-surface) 70%, transparent),
+      transparent
+    );
+    transform: translateX(-100%);
+    animation: shimmer 1.6s ease-in-out infinite;
+
+    @include ambient-animation;
+  }
+}
+
+.text {
+  height: 0.875rem;
+}
+
+.title {
+  height: 1.5rem;
+}
+
+.block {
+  height: 6rem;
+  border-radius: var(--wl-radius-lg);
+}
+
+.circle {
+  width: 3rem !important;
+  height: 3rem;
+  border-radius: 50%;
+}
+
+.full {
+  width: 100%;
+}
+
+.three-quarters {
+  width: 75%;
+}
+
+.half {
+  width: 50%;
+}
+
+.third {
+  width: 33%;
+}
+
+@keyframes shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+  }
+}

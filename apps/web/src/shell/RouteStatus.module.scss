@@ -1,0 +1,40 @@
+@use 'mixins' as *;
+
+.progress {
+  position: fixed;
+  z-index: var(--wl-z-toast);
+  inset: 0 0 auto;
+  height: 3px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.bar {
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: var(--wl-color-accent);
+  animation: sweep 1.1s var(--wl-ease) infinite;
+
+  @include reduced-motion {
+    width: 100%;
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
+.page {
+  padding: var(--wl-space-5) var(--wl-space-4);
+  max-width: var(--wl-content-max);
+  margin: 0 auto;
+}
+
+@keyframes sweep {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(250%);
+  }
+}

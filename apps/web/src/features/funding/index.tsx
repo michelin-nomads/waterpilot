@@ -1,8 +1,16 @@
+import { StageNotBuilt, StagePage } from '../planning/StagePage';
+
 export default function FundingPage() {
   return (
-    <section>
-      <h1>Make It Happen</h1>
-      <p>Placeholder feature module (ref: 1.png). Implemented in Phase 13.</p>
-    </section>
+    <StagePage stageId="funding">
+      <StageNotBuilt
+        stageId="funding"
+        capabilities={[
+          'Review the selected plan, with expected return calculated from stated assumptions, then finalize a report (permanent sign-in required).',
+          'Show possible funding fits from a curated, verifiable catalogue: which listed criteria are met or need checking, never a guaranteed outcome.',
+          'Generate a proposal you review before downloading it (Phase 14).',
+        ]}
+      />
+    </StagePage>
   );
 }

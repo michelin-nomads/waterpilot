@@ -1,0 +1,104 @@
+@use 'mixins' as *;
+
+.panel {
+  display: grid;
+  gap: var(--wl-space-5);
+}
+
+.section {
+  @include card;
+
+  display: grid;
+  align-content: start;
+  gap: var(--wl-space-3);
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: var(--wl-text-lg);
+}
+
+.intro,
+.meta {
+  margin: 0;
+  color: var(--wl-color-text-muted);
+  font-size: var(--wl-text-sm);
+}
+
+.rows {
+  display: grid;
+  gap: var(--wl-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  gap: var(--wl-space-2);
+  padding-block-start: var(--wl-space-3);
+  border-block-start: 1px solid var(--wl-color-border);
+}
+
+.rowHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wl-space-2);
+}
+
+.rowTitle {
+  font-weight: 600;
+}
+
+.reasons {
+  margin: 0;
+  padding-inline-start: var(--wl-space-5);
+  font-size: var(--wl-text-sm);
+}
+
+.action {
+  margin: 0;
+  font-size: var(--wl-text-sm);
+}
+
+.refreshing {
+  margin: 0;
+  color: var(--wl-color-text-muted);
+  font-size: var(--wl-text-sm);
+}
+
+.form {
+  display: grid;
+  gap: var(--wl-space-3);
+  justify-items: start;
+}
+
+.formRow {
+  display: grid;
+  gap: var(--wl-space-3);
+  width: 100%;
+
+  @include tablet-up {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.form > :not(.formRow) {
+  width: 100%;
+}
+
+.form > button {
+  width: auto;
+}
+
+.error {
+  margin: 0;
+  color: var(--wl-color-danger-text);
+}
+
+.saved {
+  margin: 0;
+  color: var(--wl-color-success-text);
+}

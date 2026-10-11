@@ -19,6 +19,7 @@ export default tseslint.config(
       '**/.venv/**',
       // Generated contract types — checked by tsc, not linted for style.
       'packages/contracts/src/openapi.ts',
+      'apps/web/src/graphql/generated/**',
     ],
   },
   js.configs.recommended,

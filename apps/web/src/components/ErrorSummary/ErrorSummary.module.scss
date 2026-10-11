@@ -1,0 +1,35 @@
+@use 'mixins' as *;
+
+.summary {
+  display: grid;
+  gap: var(--wl-space-2);
+  padding: var(--wl-space-4);
+  border: 2px solid var(--wl-color-danger);
+  border-radius: var(--wl-radius-md);
+  background: var(--wl-color-danger-soft);
+
+  &:focus-visible,
+  &:focus {
+    @include focus-ring;
+  }
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: var(--wl-space-2);
+  color: var(--wl-color-danger);
+  font-size: var(--wl-text-md);
+}
+
+.list {
+  display: grid;
+  gap: var(--wl-space-1);
+  margin: 0;
+  padding-left: 1.25rem;
+
+  a {
+    color: var(--wl-color-text);
+    font-weight: 600;
+  }
+}

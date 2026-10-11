@@ -1,20 +1,21 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "WaterLens Supported-Capability Matrix",
-  "description": "Which data capabilities WaterLens supports, their candidate source families, and whether they need local measurement or can be inferred from imagery. PROPOSED pending domain review. 'supported: false' capabilities render as 'unavailable', never 0.",
-  "version": "0.1",
+  "description": "Which data capabilities WaterLens can technically support, their candidate source families, and whether they need local measurement or can be inferred from imagery. PROPOSED pending domain review. technicalSupport describes whether a method/source family exists in principle; it says NOTHING about whether any particular area has onboarded, validated data — that is area readiness, assessed per area by data-readiness-gate.md. Values not ready for an area render as 'unavailable', never 0.",
+  "version": "0.2",
   "status": "proposed",
   "legend": {
-    "supportLevel": {
-      "supported": "A deterministic method + validated source can produce this now.",
-      "provisional": "Partially derivable; needs caveats and/or a reviewed model.",
-      "unavailable": "Not derivable from current evidence; needs local data / reviewed model."
-    }
+    "technicalSupport": {
+      "supported": "A deterministic method and a candidate source family exist; once a validated, authorized source is onboarded for an area, the capability can be produced without a new model. Does not imply any area is ready.",
+      "provisional": "Partially derivable; needs caveats and/or a reviewed model even with validated data.",
+      "unavailable": "No adequate method without local measurement and/or a reviewed model that WaterLens does not yet have."
+    },
+    "areaReadinessRef": "docs/domain/data-readiness-gate.md"
   },
   "capabilities": [
     {
       "capability": "rainfall",
-      "supportLevel": "provisional",
+      "technicalSupport": "provisional",
       "candidateSourceFamilies": ["earth_engine_precipitation_collections", "official_imd_gauges"],
       "inferableFromImageryAlone": true,
       "requiresLocalMeasurement": false,
@@ -22,17 +23,26 @@
       "notes": "Gridded precipitation is available from EE, but converting rainfall to usable supply (runoff/harvesting) needs a reviewed response model (see metrics.md). Rainfall depth itself is observable; supply impact is not a flat percentage."
     },
     {
-      "capability": "groundwater",
-      "supportLevel": "unavailable",
-      "candidateSourceFamilies": ["official_groundwater_board_levels", "local_borewell_logs"],
+      "capability": "groundwater_abstraction",
+      "technicalSupport": "supported",
+      "candidateSourceFamilies": ["utility_pumping_records", "borewell_meter_logs"],
+      "inferableFromImageryAlone": false,
+      "requiresLocalMeasurement": true,
+      "requiresReviewedModel": false,
+      "notes": "Volume pumped from groundwater into supply (MLD), from metered pumping/borewell records. A supply contribution, not an aquifer-state measure: abstraction data says nothing about groundwater level or sustainability."
+    },
+    {
+      "capability": "groundwater_level",
+      "technicalSupport": "unavailable",
+      "candidateSourceFamilies": ["official_groundwater_board_levels", "local_monitoring_wells"],
       "inferableFromImageryAlone": false,
       "requiresLocalMeasurement": true,
       "requiresReviewedModel": true,
-      "notes": "Groundwater levels/trends require in-situ well measurements. Satellite proxies (e.g. GRACE) are coarse and not a substitute at community scale. Unavailable until local data onboarded."
+      "notes": "Aquifer water-table level and trend (m bgl) require in-situ monitoring-well measurements. Satellite proxies (e.g. GRACE) are coarse and not a substitute at community scale. Distinct from groundwater_abstraction volumes."
     },
     {
       "capability": "surface_water",
-      "supportLevel": "provisional",
+      "technicalSupport": "provisional",
       "candidateSourceFamilies": ["earth_engine_surface_water_collections", "lake_inflow_records"],
       "inferableFromImageryAlone": true,
       "requiresLocalMeasurement": false,
@@ -41,7 +51,7 @@
     },
     {
       "capability": "water_quality",
-      "supportLevel": "unavailable",
+      "technicalSupport": "unavailable",
       "candidateSourceFamilies": ["local_lab_samples", "utility_quality_reports"],
       "inferableFromImageryAlone": false,
       "requiresLocalMeasurement": true,
@@ -50,7 +60,7 @@
     },
     {
       "capability": "flood_risk",
-      "supportLevel": "unavailable",
+      "technicalSupport": "unavailable",
       "candidateSourceFamilies": ["dem_terrain", "historical_flood_extents", "drainage_models"],
       "inferableFromImageryAlone": false,
       "requiresLocalMeasurement": false,
@@ -59,16 +69,16 @@
     },
     {
       "capability": "land_cover",
-      "supportLevel": "supported",
+      "technicalSupport": "supported",
       "candidateSourceFamilies": ["earth_engine_land_cover_collections"],
       "inferableFromImageryAlone": true,
       "requiresLocalMeasurement": false,
       "requiresReviewedModel": false,
-      "notes": "Land cover / built-up fraction is a standard imagery-derived product with documented classes; most directly supportable, subject to licence and class mapping."
+      "notes": "Land cover / built-up fraction is a standard imagery-derived product with documented classes; technically the most directly supportable, subject to licence authorization and class mapping. No source is onboarded for any area yet."
     },
     {
       "capability": "utility_supply",
-      "supportLevel": "unavailable",
+      "technicalSupport": "unavailable",
       "candidateSourceFamilies": ["utility_board_supply_records", "tanker_delivery_logs"],
       "inferableFromImageryAlone": false,
       "requiresLocalMeasurement": true,
@@ -77,7 +87,7 @@
     },
     {
       "capability": "shared_aquifer_neighbour",
-      "supportLevel": "unavailable",
+      "technicalSupport": "unavailable",
       "candidateSourceFamilies": ["coupled_groundwater_model", "aquifer_boundary_studies"],
       "inferableFromImageryAlone": false,
       "requiresLocalMeasurement": true,

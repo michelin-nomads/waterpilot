@@ -1,0 +1,105 @@
+@use 'mixins' as *;
+
+.card {
+  @include card;
+
+  display: flex;
+  gap: var(--wl-space-3);
+  padding: var(--wl-space-4);
+  min-width: 0;
+}
+
+.icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+}
+
+.body {
+  display: grid;
+  gap: var(--wl-space-1);
+  min-width: 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--wl-space-1);
+}
+
+.label {
+  font-size: var(--wl-text-sm);
+  font-weight: 600;
+}
+
+.value {
+  font-size: var(--wl-text-2xl);
+  font-weight: 700;
+  line-height: var(--wl-leading-tight);
+  overflow-wrap: anywhere;
+}
+
+.unit {
+  font-size: var(--wl-text-lg);
+  font-weight: 600;
+}
+
+.unavailable {
+  font-size: var(--wl-text-xl);
+  font-weight: 600;
+  color: var(--wl-color-text-muted);
+}
+
+.caption {
+  font-size: var(--wl-text-sm);
+  color: var(--wl-color-text-muted);
+}
+
+.delta {
+  font-size: var(--wl-text-sm);
+  font-weight: 600;
+}
+
+.improves {
+  color: var(--wl-color-success);
+}
+
+.worsens {
+  color: var(--wl-color-danger);
+}
+
+.neutral {
+  color: var(--wl-color-text-muted);
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wl-space-1);
+  margin-top: var(--wl-space-1);
+}
+
+@each $tone in (accent, success, warning, danger, info) {
+  .#{$tone} {
+    .icon {
+      @if $tone == accent {
+        color: var(--wl-color-accent-strong);
+        background: var(--wl-color-accent-soft);
+      } @else {
+        color: var(--wl-color-#{$tone});
+        background: var(--wl-color-#{$tone}-soft);
+      }
+    }
+
+    &:not([data-availability='unavailable']) .value {
+      @if $tone == accent {
+        color: var(--wl-color-accent);
+      } @else {
+        color: var(--wl-color-#{$tone});
+      }
+    }
+  }
+}

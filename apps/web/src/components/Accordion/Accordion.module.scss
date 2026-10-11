@@ -1,0 +1,85 @@
+@use 'mixins' as *;
+
+.accordion {
+  display: grid;
+  gap: var(--wl-space-2);
+}
+
+.item {
+  @include card;
+
+  overflow: hidden;
+}
+
+.heading {
+  font-size: inherit;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--wl-space-3);
+  width: 100%;
+  padding: var(--wl-space-3) var(--wl-space-4);
+  border: 0;
+  background: transparent;
+  text-align: start;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--wl-color-surface-sunken);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+    outline-offset: -3px;
+  }
+}
+
+.number {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--wl-color-accent-soft);
+  color: var(--wl-color-accent-strong);
+  font-weight: 700;
+  font-size: var(--wl-text-sm);
+}
+
+.icon {
+  flex: none;
+  color: var(--wl-color-accent);
+}
+
+.text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  font-weight: 700;
+  font-size: var(--wl-text-md);
+}
+
+.summary {
+  font-size: var(--wl-text-sm);
+  color: var(--wl-color-text-muted);
+}
+
+.chevron {
+  flex: none;
+  color: var(--wl-color-text-muted);
+  transition: transform var(--wl-motion-base) var(--wl-ease);
+
+  .item[data-open='true'] & {
+    transform: rotate(180deg);
+  }
+}
+
+.panel {
+  padding: 0 var(--wl-space-4) var(--wl-space-4);
+}

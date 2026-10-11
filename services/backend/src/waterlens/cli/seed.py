@@ -10,7 +10,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from waterlens.adapters.storage_local import LocalObjectStorage
+from waterlens.adapters.factory import build_object_storage
+from waterlens.application.ports import ObjectConflictError
 from waterlens.config import get_settings
 
 
@@ -28,12 +29,17 @@ def seed() -> int:
 
     repo_root = _find_repo_root(Path(__file__).resolve())
     fixtures_dir = repo_root / "docs" / "domain" / "fixtures"
-    storage = LocalObjectStorage(Path(settings.object_storage_dir))
+    storage = build_object_storage(settings)
 
     seeded = 0
     for json_file in sorted(fixtures_dir.glob("*.json")):
         key = f"fixtures/{json_file.name}"
-        storage.put(key, json_file.read_bytes())
+        try:
+            storage.put(key, json_file.read_bytes(), content_type="application/json")
+        except ObjectConflictError:
+            # Objects are immutable; delete the local object directory to refresh.
+            print(f"[seed] kept existing {key} (differs from the fixture)")
+            continue
         print(f"[seed] stored SYNTHETIC {key}")
         seeded += 1
     print(f"[seed] done: {seeded} synthetic fixture file(s) in {settings.object_storage_dir}")

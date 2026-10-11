@@ -1,0 +1,50 @@
+{
+  "$comment": "SYNTHETIC worked examples for conventions.md §3a window kinds. Half-open [start, endExclusive). Checked by services/backend/tests/domain/test_synthetic_fixture.py.",
+  "evidenceQualityStatus": "synthetic",
+  "definitionStatus": "proposed",
+  "cases": [
+    {
+      "kind": "calendar_year",
+      "start": "2026-01-01",
+      "expected": { "endExclusive": "2027-01-01", "days": 365 }
+    },
+    {
+      "kind": "calendar_year",
+      "start": "2028-01-01",
+      "expected": { "endExclusive": "2029-01-01", "days": 366 },
+      "note": "leap year"
+    },
+    {
+      "kind": "calendar_year",
+      "start": "2027-06-01",
+      "expected": { "endExclusive": "2028-06-01", "days": 366 },
+      "note": "hydrological year spanning 29 Feb 2028"
+    },
+    {
+      "kind": "calendar_year",
+      "start": "2028-06-01",
+      "expected": { "endExclusive": "2029-06-01", "days": 365 },
+      "note": "hydrological year after the leap day"
+    },
+    {
+      "kind": "calendar_year",
+      "start": "2028-02-29",
+      "expected": { "rejected": true },
+      "note": "ambiguous anniversary; choose fixed_days or another start"
+    },
+    {
+      "kind": "fixed_days",
+      "start": "2028-01-01",
+      "days": 365,
+      "expected": { "endExclusive": "2028-12-31", "days": 365 },
+      "note": "explicit 365-day scenario in a leap year excludes 31 Dec"
+    },
+    {
+      "kind": "fixed_days",
+      "start": "2026-01-01",
+      "days": 10,
+      "expected": { "endExclusive": "2026-01-11", "days": 10 },
+      "note": "the synthetic-sample reporting window"
+    }
+  ]
+}

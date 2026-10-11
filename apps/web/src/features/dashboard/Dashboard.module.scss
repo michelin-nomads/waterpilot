@@ -1,0 +1,93 @@
+@use 'mixins' as *;
+
+.page {
+  display: grid;
+  gap: var(--wl-space-5);
+}
+
+.section {
+  @include card;
+
+  display: grid;
+  align-content: start;
+  gap: var(--wl-space-3);
+}
+
+.sectionHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--wl-space-2);
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: var(--wl-text-lg);
+}
+
+.grid {
+  display: grid;
+  gap: var(--wl-space-4);
+
+  @include tablet-up {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.plan {
+  display: grid;
+  gap: var(--wl-space-3);
+}
+
+.facts {
+  display: grid;
+  gap: var(--wl-space-2);
+  margin: 0;
+
+  @include tablet-up {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  dt {
+    color: var(--wl-color-text-muted);
+    font-size: var(--wl-text-sm);
+  }
+
+  dd {
+    margin: 0;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wl-space-2);
+}
+
+.list {
+  display: grid;
+  gap: var(--wl-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wl-space-2);
+  overflow-wrap: anywhere;
+}
+
+.meta,
+.empty,
+.refreshing {
+  margin: 0;
+  color: var(--wl-color-text-muted);
+  font-size: var(--wl-text-sm);
+}

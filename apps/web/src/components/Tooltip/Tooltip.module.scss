@@ -1,0 +1,64 @@
+@use 'mixins' as *;
+
+.wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.trigger {
+  display: inline-grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--wl-color-text-muted);
+  cursor: help;
+
+  &:hover {
+    color: var(--wl-color-accent);
+  }
+
+  @include focus-visible;
+}
+
+.tip {
+  position: absolute;
+  z-index: var(--wl-z-toast);
+  top: calc(100% + 0.25rem);
+  left: 50%;
+  width: max-content;
+  max-width: min(18rem, 80vw);
+  padding: var(--wl-space-2) var(--wl-space-3);
+  border-radius: var(--wl-radius-sm);
+  background: var(--wl-color-text);
+  color: var(--wl-color-surface);
+  font-size: var(--wl-text-sm);
+  font-weight: 400;
+  line-height: var(--wl-leading-normal);
+  box-shadow: var(--wl-shadow-md);
+  pointer-events: none;
+  // Closed tips take no layout space, so they can never widen the page at 320 px.
+  // aria-describedby still exposes the text while it is not displayed.
+  display: none;
+  transform: translateX(calc(-50% + var(--tip-shift, 0px)));
+
+  &[data-open='true'] {
+    display: block;
+    animation: tip-in var(--wl-motion-fast) var(--wl-ease);
+  }
+}
+
+@include reduced-motion {
+  .tip[data-open='true'] {
+    animation: none;
+  }
+}
+
+@keyframes tip-in {
+  from {
+    opacity: 0;
+  }
+}

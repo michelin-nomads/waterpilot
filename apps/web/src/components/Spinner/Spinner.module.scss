@@ -1,0 +1,32 @@
+@use 'mixins' as *;
+
+.spinner {
+  display: inline-block;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  animation: spin 0.8s linear infinite;
+
+  @include ambient-animation;
+
+  @include reduced-motion {
+    border-right-color: currentColor;
+    opacity: 0.6;
+  }
+}
+
+.sm {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.md {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

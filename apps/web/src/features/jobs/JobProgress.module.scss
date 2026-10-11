@@ -1,0 +1,36 @@
+@use 'mixins' as *;
+
+.card {
+  @include card;
+
+  display: grid;
+  gap: var(--wl-space-3);
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--wl-space-2);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--wl-text-lg);
+}
+
+.body {
+  display: grid;
+  gap: var(--wl-space-1);
+
+  p {
+    margin: 0;
+  }
+}
+
+.meta {
+  margin: 0;
+  color: var(--wl-color-text-muted);
+  font-size: var(--wl-text-sm);
+}

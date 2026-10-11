@@ -1,0 +1,126 @@
+fragment MembershipFields on Membership {
+  id
+  version
+  communityId
+  role
+  isViewer
+  joinedAt
+}
+
+fragment CommunityFields on Community {
+  id
+  version
+  name
+  description
+  areaId
+  status
+  memberCount
+  archivedAt
+  viewerMembership {
+    ...MembershipFields
+  }
+}
+
+query Communities($filter: CommunityFilter, $first: Int, $after: String) {
+  communities(filter: $filter, first: $first, after: $after) {
+    nodes {
+      ...CommunityFields
+    }
+    pageInfo {
+      ...PageInfoFields
+    }
+  }
+}
+
+query NearbyCommunities($near: NearbyCommunitiesInput!, $first: Int, $after: String) {
+  nearbyCommunities(near: $near, first: $first, after: $after) {
+    nodes {
+      distanceMeters
+      community {
+        ...CommunityFields
+      }
+    }
+    pageInfo {
+      ...PageInfoFields
+    }
+    candidatesTruncated
+  }
+}
+
+query Community($id: ID!) {
+  community(id: $id) {
+    ...CommunityFields
+  }
+}
+
+query CommunityMembers($id: ID!, $first: Int, $after: String) {
+  community(id: $id) {
+    id
+    members(first: $first, after: $after) {
+      nodes {
+        ...MembershipFields
+      }
+      pageInfo {
+        ...PageInfoFields
+      }
+    }
+  }
+}
+
+query MyMemberships($first: Int, $after: String) {
+  myMemberships(first: $first, after: $after) {
+    nodes {
+      ...MembershipFields
+      community {
+        ...CommunityFields
+      }
+    }
+    pageInfo {
+      ...PageInfoFields
+    }
+  }
+}
+
+mutation CreateCommunity($input: CreateCommunityInput!) {
+  createCommunity(input: $input) {
+    community {
+      ...CommunityFields
+    }
+    error {
+      ...MutationErrorFields
+    }
+  }
+}
+
+mutation JoinCommunity($input: JoinCommunityInput!) {
+  joinCommunity(input: $input) {
+    membership {
+      ...MembershipFields
+    }
+    error {
+      ...MutationErrorFields
+    }
+  }
+}
+
+mutation LeaveCommunity($input: LeaveCommunityInput!) {
+  leaveCommunity(input: $input) {
+    membership {
+      ...MembershipFields
+    }
+    error {
+      ...MutationErrorFields
+    }
+  }
+}
+
+mutation ArchiveCommunity($input: ArchiveCommunityInput!) {
+  archiveCommunity(input: $input) {
+    community {
+      ...CommunityFields
+    }
+    error {
+      ...MutationErrorFields
+    }
+  }
+}

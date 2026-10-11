@@ -1,0 +1,1342 @@
+type AccountClaim {
+  id: ID!
+  version: Int!
+  status: AccountClaimStatus!
+  expiresAt: UtcDateTime!
+
+  """The guest's active planning session, now owned by this account."""
+  transferredSessionId: ID
+
+  """This account's previously active session, closed (one active session)."""
+  closedSessionId: ID
+}
+
+type AccountClaimPayload {
+  claim: AccountClaim
+  error: MutationError
+}
+
+enum AccountClaimStatus {
+  OPEN
+  COMPLETED
+  CANCELLED
+}
+
+enum AccountKind {
+  GUEST
+  PERMANENT
+}
+
+enum AdjustmentChange {
+  RELATIVE
+  ABSOLUTE
+}
+
+type AdminContext {
+  countryName: String
+
+  """State, province or region."""
+  admin1: String
+
+  """District or county."""
+  admin2: String
+  locality: String
+  sublocality: String
+}
+
+input AdminContextInput {
+  countryName: String = null
+  admin1: String = null
+  admin2: String = null
+  locality: String = null
+  sublocality: String = null
+}
+
+type AgentRun {
+  id: ID!
+  version: Int!
+  sessionId: ID!
+  status: AgentRunStatus!
+  toolCalls: Int!
+  maxToolCalls: Int!
+  maxOutputTokens: Int!
+  stopReason: AgentStopReason
+
+  """Authenticated SSE stream for this run."""
+  eventsPath: String!
+  createdAt: UtcDateTime!
+  endedAt: UtcDateTime
+}
+
+type AgentRunConnection {
+  nodes: [AgentRun!]!
+  pageInfo: PageInfo!
+}
+
+enum AgentRunStatus {
+  RUNNING
+  COMPLETED
+  STOPPED
+  FAILED
+}
+
+enum AgentStopReason {
+  COMPLETED
+  TOOL_BUDGET
+  TOKEN_BUDGET
+  DAILY_BUDGET
+  CANCELLED
+  ERROR
+}
+
+input ArchiveCommunityInput {
+  id: ID!
+  expectedVersion: Int!
+}
+
+input ArchiveReportInput {
+  id: ID!
+  expectedVersion: Int!
+}
+
+type Area {
+  id: ID!
+  name: String!
+  countryCode: String!
+
+  """IANA timezone used for local dates."""
+  timezone: String!
+  centroidLat: DecimalString!
+  centroidLon: DecimalString!
+  evidence: EvidenceQuality!
+  createdAt: UtcDateTime!
+  origin: AreaOrigin!
+  scope: GeographicScope!
+  extent: ExtentKind!
+
+  """Set for a radius you chose."""
+  radiusMeters: Int
+
+  """Provider-prefixed place id."""
+  placeId: String
+
+  """Device and typed-in locations: owner only."""
+  private: Boolean!
+  formattedAddress: String
+  admin: AdminContext!
+
+  """Reported device accuracy."""
+  accuracyMeters: Int
+
+  """
+  ISO 4217 code for this location (CLDR), separate from interface language.
+  """
+  currency: String
+  unitSystem: UnitSystem!
+
+  """currency and/or timezone when the person corrected the inferred value."""
+  regionSetByUser: [String!]!
+
+  """False when only the reference point is known; no boundary is invented."""
+  hasBoundary: Boolean!
+
+  """After this, provider content must be refreshed by choosing it again."""
+  providerExpiresAt: UtcDateTime
+
+  """True once provider content has expired (choose it again)."""
+  providerContentExpired: Boolean!
+  coverage: Coverage!
+
+  """
+  Per-capability, per-input and per-metric readiness. With sessionId (yours, for this area) it also counts the values you entered.
+  """
+  readiness(sessionId: ID = null): AreaReadiness!
+}
+
+type AreaConnection {
+  nodes: [Area!]!
+  pageInfo: PageInfo!
+}
+
+enum AreaOrigin {
+  CATALOGUE
+  PLACE_SEARCH
+  GEOLOCATION
+  CUSTOM
+}
+
+type AreaReadiness {
+  areaId: ID!
+  sessionId: ID
+  assessedAt: UtcDateTime!
+
+  """Local date windows and ages count from."""
+  asOf: LocalDate!
+  demo: Boolean!
+
+  """
+  USER_INPUT when no imported evidence covers this location: results can use only values you enter, labelled as entered by you.
+  """
+  basis: AssessmentBasis!
+  capabilities: [CapabilityReadiness!]!
+  inputs: [InputReadiness!]!
+  metrics: [MetricReadiness!]!
+}
+
+enum AssessmentBasis {
+  SOURCED
+  LIMITED
+  USER_INPUT
+}
+
+enum Availability {
+  AVAILABLE
+  PROVISIONAL
+  UNAVAILABLE
+}
+
+type BeginAccountClaimPayload {
+  claim: AccountClaim
+
+  """Returned once and never stored in clear. Keep it in memory only."""
+  claimSecret: String
+  error: MutationError
+}
+
+input CancelAccountClaimInput {
+  claimId: ID!
+  expectedVersion: Int!
+}
+
+"""Canonical units a source variable or manual input normalizes to."""
+enum CanonicalUnit {
+  LITRE
+  LITRES_PER_DAY
+  MILLIMETRE
+  METRES_BELOW_GROUND
+  SQUARE_METRE
+  RATIO
+  DAY
+  INR_PAISE
+  COUNT
+  CATEGORY
+  MG_PER_LITRE
+  NTU
+  MICROSIEMENS_PER_CM
+  PH
+  CFU_PER_100ML
+}
+
+enum Capability {
+  RAINFALL
+  GROUNDWATER_ABSTRACTION
+  GROUNDWATER_LEVEL
+  SURFACE_WATER
+  WATER_QUALITY
+  FLOOD_RISK
+  LAND_COVER
+  UTILITY_SUPPLY
+  SHARED_AQUIFER_NEIGHBOUR
+}
+
+type CapabilityReadiness {
+  capability: Capability!
+  state: ReadinessState!
+  reasons: [String!]!
+  registeredSourceIds: [String!]!
+  snapshotIds: [String!]!
+
+  """Counts SYNTHETIC demo data (local mode only)."""
+  demo: Boolean!
+  technicalSupport: TechnicalSupport!
+  requiresLocalMeasurement: Boolean!
+  requiresReviewedModel: Boolean!
+}
+
+type Community {
+  id: ID!
+  version: Int!
+  name: String!
+  description: String!
+  areaId: ID
+  status: CommunityStatus!
+  memberCount: Int!
+  archivedAt: UtcDateTime
+  createdAt: UtcDateTime!
+  updatedAt: UtcDateTime!
+  area: Area
+
+  """The caller's active membership, or null."""
+  viewerMembership: Membership
+
+  """Members only."""
+  members(first: Int = null, after: String = null): MembershipConnection!
+}
+
+type CommunityConnection {
+  nodes: [Community!]!
+  pageInfo: PageInfo!
+}
+
+input CommunityFilter {
+  areaId: ID = null
+  includeArchived: Boolean! = false
+}
+
+type CommunityPayload {
+  community: Community
+  error: MutationError
+}
+
+enum CommunityStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+input CompleteAccountClaimInput {
+  claimId: ID!
+  claimSecret: String!
+  idempotencyKey: String!
+}
+
+input ConfirmLocationInput {
+  """PLACE_SEARCH, GEOLOCATION or CUSTOM."""
+  origin: AreaOrigin!
+  placeId: String = null
+  name: String!
+  formattedAddress: String = null
+  latitude: DecimalString!
+  longitude: DecimalString!
+  countryCode: String!
+  admin: AdminContextInput = null
+  types: [String!]! = []
+  accuracyMeters: Int = null
+
+  """Required: REFERENCE_POINT or USER_RADIUS, chosen by the person."""
+  extent: ExtentKind!
+  radiusMeters: Int = null
+
+  """IANA zone correcting the inferred one."""
+  timezone: String = null
+
+  """ISO 4217 code correcting the inferred one."""
+  currency: String = null
+  idempotencyKey: String!
+}
+
+type ConfirmLocationPayload {
+  area: Area
+  error: MutationError
+}
+
+type Country {
+  code: String!
+  name: String!
+}
+
+type CountryList {
+  """Fixed CLDR list (about 250 entries), sorted by English name."""
+  countries: [Country!]!
+}
+
+type Coverage {
+  areaId: ID!
+  items: [CoverageItem!]!
+  assessedAt: UtcDateTime!
+}
+
+type CoverageItem {
+  capability: Capability!
+  availability: Availability!
+  evidence: EvidenceQuality
+  reason: String
+  sourceIds: [String!]!
+}
+
+input CreateCommunityInput {
+  name: String!
+  description: String! = ""
+  areaId: ID = null
+  idempotencyKey: String!
+}
+
+input CreatePlanningSessionInput {
+  mode: PlanningMode!
+  areaId: ID = null
+  communityId: ID = null
+  idempotencyKey: String!
+}
+
+type Criterion {
+  id: String!
+  text: String!
+
+  """True when WaterLens evaluates this criterion deterministically."""
+  machineCheckable: Boolean!
+}
+
+type CriterionResult {
+  criterionId: String!
+  status: CriterionStatus!
+  reason: String!
+}
+
+enum CriterionStatus {
+  MET
+  NOT_MET
+  NEEDS_CHECK
+}
+
+type DayRange {
+  low: Int!
+  high: Int!
+}
+
+"""
+An exact decimal number as a string (e.g. '1250000.5'). Parse with a decimal library, never as a binary float.
+"""
+scalar DecimalString
+
+enum ErrorCode {
+  UNAUTHENTICATED
+  REAUTHENTICATION_REQUIRED
+  PERMANENT_ACCOUNT_REQUIRED
+  FORBIDDEN
+  NOT_FOUND
+  VALIDATION_FAILED
+  VERSION_CONFLICT
+  IDEMPOTENCY_KEY_REUSED
+  PRECONDITION_FAILED
+  ARCHIVED
+  UNSUPPORTED_CURRENCY
+  CURRENCY_MISMATCH
+  BUDGET_EXHAUSTED
+  SERVICE_UNAVAILABLE
+  INTERNAL
+}
+
+enum EvidenceQuality {
+  UNREVIEWED
+  VALIDATED
+  PROVISIONAL
+  QUARANTINED
+  SYNTHETIC
+}
+
+"""
+What coverage checks use: a reviewed boundary, a radius you set, or the point.
+"""
+enum ExtentKind {
+  REVIEWED_BOUNDARY
+  USER_RADIUS
+  REFERENCE_POINT
+}
+
+enum Feasibility {
+  FEASIBLE
+  NEEDS_REVIEW
+  NOT_FEASIBLE
+}
+
+type FieldError {
+  """camelCase input path, e.g. 'goal.budget'."""
+  field: String!
+  message: String!
+}
+
+input FinalizeReportInput {
+  sessionId: ID!
+  title: String!
+  idempotencyKey: String!
+}
+
+"""
+Per-criterion results for one scheme. There is deliberately no match percentage or likelihood.
+"""
+type FundingMatch {
+  id: ID!
+  version: Int!
+  sessionId: ID!
+  planOptionId: ID!
+  schemeId: ID!
+  results: [CriterionResult!]!
+  metCount: Int!
+  notMetCount: Int!
+  needsCheckCount: Int!
+  window: WindowStatus!
+  status: FundingMatchStatus!
+  rulesVersion: String!
+  createdAt: UtcDateTime!
+  updatedAt: UtcDateTime!
+  scheme: FundingScheme!
+}
+
+type FundingMatchConnection {
+  nodes: [FundingMatch!]!
+  pageInfo: PageInfo!
+}
+
+enum FundingMatchStatus {
+  CANDIDATE
+  ADDED
+  DISMISSED
+}
+
+type FundingScheme {
+  id: ID!
+  name: String!
+  funder: String!
+
+  """Catalogue text; untrusted, render as text."""
+  summary: String!
+  currency: String!
+  maxAmount: Money
+  opensOn: LocalDate
+
+  """Exclusive end of the window."""
+  closesOn: LocalDate
+  criteria: [Criterion!]!
+  requiredDocuments: [String!]!
+  sourceUrl: String!
+  lastVerifiedAt: UtcDateTime!
+  evidence: EvidenceQuality!
+}
+
+type FundingSchemeConnection {
+  nodes: [FundingScheme!]!
+  pageInfo: PageInfo!
+}
+
+input GenerateProposalInput {
+  reportId: ID!
+  sections: [ProposalSection!]!
+  idempotencyKey: String!
+}
+
+"""What kind of place a location is. A point or place is not a catchment."""
+enum GeographicScope {
+  COUNTRY
+  REGION
+  LOCALITY
+  SUBLOCALITY
+  NEIGHBOURHOOD
+  POSTAL_CODE
+  POINT
+}
+
+type Goal {
+  id: ID!
+  kind: GoalKind!
+  description: String!
+  target: GoalTarget
+  budget: Money
+  timelineDays: Int
+  priority: Priority
+}
+
+input GoalInput {
+  kind: GoalKind!
+  description: String! = ""
+  target: GoalTargetInput = null
+  budget: MoneyInput = null
+  timelineDays: Int = null
+  priority: Priority = null
+}
+
+enum GoalKind {
+  REDUCE_SHORTAGE
+  IMPROVE_GROUNDWATER
+  REDUCE_TANKER_DEPENDENCE
+  REDUCE_FLOOD_RISK
+  IMPROVE_WATER_QUALITY
+  CUSTOM
+}
+
+type GoalTarget {
+  mode: TargetMode!
+  quantity: Quantity!
+}
+
+input GoalTargetInput {
+  mode: TargetMode!
+  quantity: QuantityInput!
+}
+
+type ImpactAssessment {
+  id: ID!
+  metrics: [ImpactMetric!]!
+  neighbourEffect: MeasuredValue!
+  assumptions: [String!]!
+  provenance: Provenance!
+}
+
+type ImpactMetric {
+  metricId: String!
+  baseline: MeasuredValue!
+  projectedLow: MeasuredValue!
+  projectedHigh: MeasuredValue!
+}
+
+type ImplementationProject {
+  id: ID!
+  version: Int!
+  reportId: ID!
+  communityId: ID
+  title: String!
+  status: ProjectStatus!
+  startedAt: UtcDateTime!
+  createdAt: UtcDateTime!
+  updatedAt: UtcDateTime!
+  milestones(first: Int = null, after: String = null): MilestoneConnection!
+  observations(first: Int = null, after: String = null): ObservationConnection!
+}
+
+type ImplementationProjectConnection {
+  nodes: [ImplementationProject!]!
+  pageInfo: PageInfo!
+}
+
+type ImplementationProjectPayload {
+  project: ImplementationProject
+  error: MutationError
+}
+
+type InputReadiness {
+  input: ReadinessInput!
+  label: String!
+  unit: CanonicalUnit!
+  state: ReadinessState!
+  reasons: [String!]!
+
+  """What a person can do to unblock this input."""
+  action: String!
+  manualEntryAllowed: Boolean!
+
+  """Set when the input arrives with a later build step."""
+  ownerPrompt: String
+  snapshotId: String
+  manualInputId: ID
+  manualValue: DecimalString
+  demo: Boolean!
+}
+
+type Job {
+  id: ID!
+  version: Int!
+  kind: JobKind!
+  status: JobStatus!
+  stage: String
+  attempts: Int!
+  maxAttempts: Int!
+  errorCode: ErrorCode
+
+  """Authenticated SSE stream for this job."""
+  eventsPath: String!
+  createdAt: UtcDateTime!
+  updatedAt: UtcDateTime!
+}
+
+enum JobKind {
+  FUNDING_MATCH
+  PROPOSAL_GENERATION
+}
+
+enum JobStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+}
+
+input JoinCommunityInput {
+  communityId: ID!
+  idempotencyKey: String!
+}
+
+input LeaveCommunityInput {
+  communityId: ID!
+
+  """Your membership's version."""
+  expectedVersion: Int!
+}
+
+"""A calendar date (YYYY-MM-DD) in the relevant area's IANA timezone."""
+scalar LocalDate
+
+type LocationResolution {
+  query: String!
+  candidates: [PlaceCandidate!]!
+
+  """Several places match: ask which one. Nothing is chosen for the person."""
+  needsClarification: Boolean!
+
+  """What to ask the person next."""
+  question: String!
+
+  """google, fixture (local test data) or none."""
+  provider: String!
+}
+
+type ManualInput {
+  id: ID!
+  sessionId: ID!
+  input: ReadinessInput!
+  value: DecimalString!
+  unit: CanonicalUnit!
+  enteredValue: DecimalString!
+  enteredUnit: String!
+  asOf: LocalDate!
+  note: String!
+  createdAt: UtcDateTime!
+}
+
+type ManualInputPayload {
+  manualInput: ManualInput
+  error: MutationError
+}
+
+input MatchFundingInput {
+  sessionId: ID!
+  planOptionId: ID!
+  idempotencyKey: String!
+}
+
+type MatchFundingPayload {
+  matches: [FundingMatch!]
+  error: MutationError
+}
+
+"""
+A value whose absence is explicit: quantity is null when unavailable, and reason explains unavailable or provisional values. Never rendered as zero.
+"""
+type MeasuredValue {
+  availability: Availability!
+  quantity: Quantity
+  reason: String
+  provenance: Provenance
+}
+
+type Membership {
+  id: ID!
+  version: Int!
+  communityId: ID!
+  role: MembershipRole!
+  isViewer: Boolean!
+  joinedAt: UtcDateTime!
+  leftAt: UtcDateTime
+  community: Community!
+}
+
+type MembershipConnection {
+  nodes: [Membership!]!
+  pageInfo: PageInfo!
+}
+
+type MembershipPayload {
+  membership: Membership
+  error: MutationError
+}
+
+enum MembershipRole {
+  MEMBER
+  COORDINATOR
+}
+
+type MetricReadiness {
+  """Metric id from the metrics registry."""
+  metric: String!
+  state: ReadinessState!
+  reasons: [String!]!
+  blockedInputs: [ReadinessInput!]!
+  demo: Boolean!
+}
+
+type Milestone {
+  id: ID!
+  version: Int!
+  projectId: ID!
+  title: String!
+  plannedOn: LocalDate!
+  status: MilestoneStatus!
+  completedAt: UtcDateTime
+}
+
+type MilestoneConnection {
+  nodes: [Milestone!]!
+  pageInfo: PageInfo!
+}
+
+input MilestoneInput {
+  title: String!
+  plannedOn: LocalDate!
+}
+
+type MilestonePayload {
+  milestone: Milestone
+  error: MutationError
+}
+
+enum MilestoneStatus {
+  PLANNED
+  IN_PROGRESS
+  DONE
+  SKIPPED
+}
+
+"""
+An integer amount of a currency's minor unit (e.g. paise for INR) as a string, to avoid 32-bit/53-bit integer limits.
+"""
+scalar MinorUnits
+
+"""Integer minor units of an explicit ISO 4217 currency."""
+type Money {
+  minorUnits: MinorUnits!
+
+  """ISO 4217 code, e.g. INR."""
+  currency: String!
+
+  """Minor-unit exponent (2 for INR: paise)."""
+  exponent: Int!
+}
+
+"""Money as integer minor units; currency must be supported."""
+input MoneyInput {
+  minorUnits: MinorUnits!
+  currency: String!
+}
+
+type MoneyRange {
+  low: Money!
+  high: Money!
+}
+
+type Mutation {
+  createPlanningSession(input: CreatePlanningSessionInput!): PlanningSessionPayload!
+  updatePlanningSession(input: UpdatePlanningSessionInput!): PlanningSessionPayload!
+
+  """
+  Store a location you confirmed and return its area. Set the session's areaId afterwards with updatePlanningSession.
+  """
+  confirmLocation(input: ConfirmLocationInput!): ConfirmLocationPayload!
+
+  """Record a value you know for your session's area."""
+  recordManualInput(input: RecordManualInputInput!): ManualInputPayload!
+
+  """Evaluate catalogue criteria for a session's plan option."""
+  matchFunding(input: MatchFundingInput!): MatchFundingPayload!
+
+  """Create an immutable report from the session."""
+  finalizeReport(input: FinalizeReportInput!): ReportPayload!
+  archiveReport(input: ArchiveReportInput!): ReportPayload!
+
+  """Queue a durable proposal-drafting job."""
+  generateProposal(input: GenerateProposalInput!): ProposalPayload!
+  createCommunity(input: CreateCommunityInput!): CommunityPayload!
+
+  """Join immediately (no approval step)."""
+  joinCommunity(input: JoinCommunityInput!): MembershipPayload!
+  leaveCommunity(input: LeaveCommunityInput!): MembershipPayload!
+
+  """Coordinators only; the community becomes read-only."""
+  archiveCommunity(input: ArchiveCommunityInput!): CommunityPayload!
+  startImplementationProject(input: StartImplementationProjectInput!): ImplementationProjectPayload!
+  updateMilestone(input: UpdateMilestoneInput!): MilestonePayload!
+  recordObservation(input: RecordObservationInput!): ObservationPayload!
+
+  """
+  Guests only. Starts a 10-minute, one-use claim on this guest's work and returns its secret once. A retry issues a new claim and cancels the previous one.
+  """
+  beginAccountClaim: BeginAccountClaimPayload!
+
+  """
+  Signed-in accounts only, within 5 minutes of signing in. Moves the guest's active planning session to this account; nothing else is merged.
+  """
+  completeAccountClaim(input: CompleteAccountClaimInput!): AccountClaimPayload!
+
+  """Guests only: cancel your open claim."""
+  cancelAccountClaim(input: CancelAccountClaimInput!): AccountClaimPayload!
+}
+
+"""An expected failure of a mutation. Safe to show."""
+type MutationError {
+  code: ErrorCode!
+  message: String!
+  fieldErrors: [FieldError!]!
+
+  """Set with VERSION_CONFLICT: the record's current version."""
+  currentVersion: Int
+  requestId: String!
+}
+
+"""A search circle around a point the user chose."""
+input NearbyCommunitiesInput {
+  latitude: DecimalString!
+  longitude: DecimalString!
+
+  """100 to 50000."""
+  radiusMeters: Int!
+}
+
+type NearbyCommunity {
+  community: Community!
+
+  """
+  Great-circle distance to the community's reference point (its location's centroid), whole metres. Nearby is not the same as sharing a water system.
+  """
+  distanceMeters: Int!
+}
+
+type NearbyCommunityConnection {
+  nodes: [NearbyCommunity!]!
+  pageInfo: PageInfo!
+
+  """
+  True when the area is dense and not every community could be considered; a smaller radius gives a complete answer.
+  """
+  candidatesTruncated: Boolean!
+}
+
+type NearbyPlaces {
+  """At most 5, nearest first."""
+  candidates: [PlaceCandidate!]!
+}
+
+type Observation {
+  id: ID!
+  version: Int!
+  projectId: ID!
+  metricId: String!
+  observedOn: LocalDate!
+  quantity: Quantity!
+  method: String!
+  note: String!
+  evidence: ObservationEvidence!
+  recordedByViewer: Boolean!
+  createdAt: UtcDateTime!
+}
+
+type ObservationConnection {
+  nodes: [Observation!]!
+  pageInfo: PageInfo!
+}
+
+enum ObservationEvidence {
+  RECORDED
+  VERIFIED
+  REJECTED
+}
+
+type ObservationPayload {
+  observation: Observation
+  error: MutationError
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  endCursor: String
+}
+
+type PlaceCandidate {
+  placeId: String!
+  name: String!
+  formattedAddress: String
+  latitude: DecimalString!
+  longitude: DecimalString!
+  countryCode: String
+  admin: AdminContext!
+  types: [String!]!
+  scope: GeographicScope!
+}
+
+type PlanOption {
+  id: ID!
+  sessionId: ID!
+  name: String!
+  summary: String!
+  cost: MoneyRange
+  costUnavailableReason: String
+  costBasisDate: LocalDate
+  buildDays: DayRange
+  firstBenefitDays: DayRange
+  feasibility: Feasibility!
+  bestFitReason: String
+  impact: ImpactAssessment!
+
+  """
+  The session inputsRevision this option was calculated for; an option from an older revision is out of date and cannot be selected.
+  """
+  inputsRevision: Int!
+}
+
+type PlanOptionConnection {
+  nodes: [PlanOption!]!
+  pageInfo: PageInfo!
+}
+
+enum PlanningMode {
+  TRADITIONAL
+  AGENT
+}
+
+type PlanningSession {
+  id: ID!
+  version: Int!
+  mode: PlanningMode!
+  stage: PlanningStage!
+  status: SessionStatus!
+  areaId: ID
+  communityId: ID
+  goal: Goal
+  scenario: Scenario
+  selectedPlanOptionId: ID
+
+  """
+  Increases whenever location, goal or scenario actually change. Derived results (plan options, funding matches, proposal previews) are keyed by it.
+  """
+  inputsRevision: Int!
+  createdAt: UtcDateTime!
+  updatedAt: UtcDateTime!
+  area: Area
+}
+
+"""Omitted fields are left unchanged; null clears a field."""
+input PlanningSessionPatch {
+  areaId: ID
+  mode: PlanningMode
+  stage: PlanningStage
+  goal: GoalInput
+  scenario: ScenarioInput
+  selectedPlanOptionId: ID
+}
+
+type PlanningSessionPayload {
+  session: PlanningSession
+  error: MutationError
+}
+
+enum PlanningStage {
+  UNDERSTAND
+  GOAL
+  COMPARE
+  MAKE_IT_HAPPEN
+  TRACK
+}
+
+enum Priority {
+  LOWEST_COST
+  FASTEST_BENEFIT
+  LARGEST_IMPACT
+  LOWEST_NEIGHBOUR_EFFECT
+}
+
+enum ProjectStatus {
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+type Proposal {
+  id: ID!
+  version: Int!
+  reportId: ID!
+  sections: [ProposalSection!]!
+  status: ProposalStatus!
+  flaggedCount: Int!
+  jobId: ID!
+
+  """Authorized HTTP download; only set once the proposal is approved."""
+  downloadPath: String
+  createdAt: UtcDateTime!
+  updatedAt: UtcDateTime!
+  job: Job
+}
+
+type ProposalConnection {
+  nodes: [Proposal!]!
+  pageInfo: PageInfo!
+}
+
+type ProposalPayload {
+  proposal: Proposal
+  error: MutationError
+}
+
+enum ProposalSection {
+  EXECUTIVE_SUMMARY
+  BASELINE
+  PLAN
+  COSTS
+  FUNDING
+  ASSUMPTIONS
+  SOURCES
+}
+
+enum ProposalStatus {
+  QUEUED
+  DRAFTING
+  NEEDS_REVIEW
+  APPROVED
+  FAILED
+}
+
+type Provenance {
+  sourceIds: [String!]!
+  evidence: EvidenceQuality!
+  engineVersion: String
+  inputHash: String
+  asOf: UtcDateTime!
+}
+
+"""An exact value in a canonical unit (rates are L/day)."""
+type Quantity {
+  value: DecimalString!
+  unit: Unit!
+}
+
+input QuantityInput {
+  value: DecimalString!
+  unit: Unit!
+}
+
+type Query {
+  """The verified caller, or null when not signed in."""
+  viewer: Viewer
+  area(id: ID!): Area
+  searchAreas(query: String!, first: Int = null, after: String = null): AreaConnection!
+  planningSession(id: ID!): PlanningSession
+
+  """The caller's active session, for recovery."""
+  currentPlanningSession: PlanningSession
+  planOptions(sessionId: ID!, first: Int = null, after: String = null): PlanOptionConnection!
+
+  """Candidate places for free text (search or agent message)."""
+  resolveLocation(text: String!): LocationResolution!
+
+  """Places near a point; empty when none is known."""
+  reverseLocation(latitude: DecimalString!, longitude: DecimalString!): NearbyPlaces!
+
+  """
+  Region settings a confirmation would infer for a point in a country, with how certain each is. Never derived from the interface language.
+  """
+  regionSettings(latitude: DecimalString!, longitude: DecimalString!, countryCode: String!): RegionSettings!
+
+  """Countries (ISO 3166-1 alpha-2) with English names, from CLDR."""
+  countries: CountryList!
+  fundingScheme(id: ID!): FundingScheme
+  fundingSchemes(currency: String = null, first: Int = null, after: String = null): FundingSchemeConnection!
+  fundingMatches(sessionId: ID!, planOptionId: ID = null, first: Int = null, after: String = null): FundingMatchConnection!
+  report(id: ID!): Report
+  reports(filter: ReportFilter = null, first: Int = null, after: String = null): ReportConnection!
+  proposal(id: ID!): Proposal
+  community(id: ID!): Community
+  communities(filter: CommunityFilter = null, first: Int = null, after: String = null): CommunityConnection!
+
+  """Active communities within the radius, nearest first."""
+  nearbyCommunities(near: NearbyCommunitiesInput!, first: Int = null, after: String = null): NearbyCommunityConnection!
+  myMemberships(first: Int = null, after: String = null): MembershipConnection!
+  implementationProject(id: ID!): ImplementationProject
+  myImplementationProjects(first: Int = null, after: String = null): ImplementationProjectConnection!
+  job(id: ID!): Job
+  agentRun(id: ID!): AgentRun
+  agentRuns(sessionId: ID!, first: Int = null, after: String = null): AgentRunConnection!
+}
+
+enum ReadinessInput {
+  POPULATION
+  PER_CAPITA_STANDARD
+  NON_DOMESTIC_DEMAND
+  DELIVERED_SUPPLY
+  TANKER_SUPPLY
+  FORWARD_SERIES
+  INTERVENTION_COSTS
+  UNIT_PRICE
+  OM_COSTS
+}
+
+enum ReadinessState {
+  AVAILABLE
+  USER_ENTERED
+  PARTIAL
+  STALE
+  UNAVAILABLE
+}
+
+input RecordManualInputInput {
+  sessionId: ID!
+  input: ReadinessInput!
+  value: DecimalString!
+
+  """Unit as entered, e.g. MLD; converted exactly."""
+  unit: String!
+  asOf: LocalDate!
+
+  """Where the figure comes from (3-500 chars)."""
+  note: String!
+  idempotencyKey: String!
+}
+
+input RecordObservationInput {
+  projectId: ID!
+  metricId: String!
+  observedOn: LocalDate!
+  quantity: QuantityInput!
+  method: String!
+  note: String! = ""
+  idempotencyKey: String!
+}
+
+type RegionSettings {
+  """Null where CLDR lists no tender."""
+  currency: String
+  currencyOptions: [String!]!
+
+  """False when the country has several tenders: ask the person to check."""
+  currencyCertain: Boolean!
+  timezone: String!
+  timezoneOptions: [String!]!
+
+  """False when the country spans several zones or the point is offshore."""
+  timezoneCertain: Boolean!
+  unitSystem: UnitSystem!
+}
+
+type Report {
+  id: ID!
+  version: Int!
+  title: String!
+  status: ReportStatus!
+  sessionId: ID!
+  communityId: ID
+  areaId: ID!
+  goal: Goal!
+  planOptionId: ID!
+  finalizedAt: UtcDateTime!
+  archivedAt: UtcDateTime
+  createdAt: UtcDateTime!
+  updatedAt: UtcDateTime!
+
+  """Null when the location is private to its owner."""
+  area: Area
+  proposals(first: Int = null, after: String = null): ProposalConnection!
+}
+
+type ReportConnection {
+  nodes: [Report!]!
+  pageInfo: PageInfo!
+}
+
+input ReportFilter {
+  """Omit for your own reports."""
+  communityId: ID = null
+  status: ReportStatus = null
+}
+
+type ReportPayload {
+  report: Report
+  error: MutationError
+}
+
+enum ReportStatus {
+  FINALIZED
+  ARCHIVED
+}
+
+type Scenario {
+  id: ID!
+  adjustments: [ScenarioAdjustment!]!
+  interpretedFrom: String
+  confirmed: Boolean!
+}
+
+type ScenarioAdjustment {
+  parameter: String!
+  change: AdjustmentChange!
+  quantity: Quantity!
+}
+
+input ScenarioAdjustmentInput {
+  parameter: String!
+  change: AdjustmentChange!
+  quantity: QuantityInput!
+}
+
+input ScenarioInput {
+  adjustments: [ScenarioAdjustmentInput!]! = []
+  interpretedFrom: String = null
+  confirmed: Boolean! = false
+}
+
+enum SessionStatus {
+  ACTIVE
+  CLOSED
+}
+
+input StartImplementationProjectInput {
+  reportId: ID!
+  title: String!
+  milestones: [MilestoneInput!]! = []
+  idempotencyKey: String!
+}
+
+enum TargetMode {
+  RELATIVE_REDUCTION
+  ABSOLUTE_LEVEL
+}
+
+enum TechnicalSupport {
+  SUPPORTED
+  PROVISIONAL
+  UNAVAILABLE
+}
+
+"""Canonical stored units. Display units such as MLD are not stored."""
+enum Unit {
+  LITRE
+  LITRES_PER_DAY
+  RATIO
+  METRES_BELOW_GROUND
+  MILLIMETRE
+  SQUARE_METRE
+  DAY
+  MG_PER_LITRE
+  NTU
+  MICROSIEMENS_PER_CM
+  PH
+  CFU_PER_100ML
+  COUNT
+}
+
+enum UnitSystem {
+  METRIC
+  US_CUSTOMARY
+}
+
+input UpdateMilestoneInput {
+  id: ID!
+  expectedVersion: Int!
+  status: MilestoneStatus!
+}
+
+input UpdatePlanningSessionInput {
+  id: ID!
+  expectedVersion: Int!
+  patch: PlanningSessionPatch!
+}
+
+"""
+An instant in UTC, ISO-8601 with a 'Z' suffix (e.g. 2026-10-07T18:30:00Z).
+"""
+scalar UtcDateTime
+
+type Viewer {
+  uid: ID!
+  kind: AccountKind!
+}
+
+enum WindowStatus {
+  OPEN
+  UPCOMING
+  CLOSED
+  UNKNOWN
+}

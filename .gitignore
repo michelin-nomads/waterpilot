@@ -6,6 +6,7 @@ services/backend/.venv/
 # Build output
 dist/
 build/
+!docs/build/
 apps/web/dist/
 packages/contracts/dist/
 
@@ -48,3 +49,6 @@ __pycache__/
 # OS / editor
 .DS_Store
 *.local
+
+# Source-only review archives (npm run archive:source)
+archives/

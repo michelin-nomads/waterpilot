@@ -1,0 +1,18 @@
+.agent {
+  display: grid;
+  align-content: start;
+  gap: var(--wl-space-4);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--wl-space-2);
+  color: var(--wl-color-accent);
+}
+
+.title {
+  flex: 1;
+  font-size: var(--wl-text-lg);
+  color: var(--wl-color-text);
+}

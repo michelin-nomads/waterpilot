@@ -1,0 +1,181 @@
+fragment AreaFields on Area {
+  id
+  name
+  countryCode
+  timezone
+  evidence
+}
+
+fragment PlanningSessionFields on PlanningSession {
+  id
+  version
+  mode
+  stage
+  status
+  areaId
+  communityId
+  selectedPlanOptionId
+  inputsRevision
+  updatedAt
+  area {
+    id
+    name
+  }
+  goal {
+    id
+    kind
+    description
+    timelineDays
+    priority
+    budget {
+      ...MoneyFields
+    }
+    target {
+      mode
+      quantity {
+        ...QuantityFields
+      }
+    }
+  }
+  scenario {
+    id
+    confirmed
+    interpretedFrom
+    adjustments {
+      parameter
+      change
+      quantity {
+        ...QuantityFields
+      }
+    }
+  }
+}
+
+query Viewer {
+  viewer {
+    uid
+    kind
+  }
+}
+
+query SearchAreas($query: String!, $first: Int, $after: String) {
+  searchAreas(query: $query, first: $first, after: $after) {
+    nodes {
+      ...AreaFields
+    }
+    pageInfo {
+      ...PageInfoFields
+    }
+  }
+}
+
+query AreaCoverage($id: ID!) {
+  area(id: $id) {
+    ...AreaFields
+    coverage {
+      assessedAt
+      items {
+        capability
+        availability
+        evidence
+        reason
+      }
+    }
+  }
+}
+
+query CurrentPlanningSession {
+  currentPlanningSession {
+    ...PlanningSessionFields
+  }
+}
+
+query PlanningSession($id: ID!) {
+  planningSession(id: $id) {
+    ...PlanningSessionFields
+  }
+}
+
+query PlanOptions($sessionId: ID!, $first: Int, $after: String) {
+  planOptions(sessionId: $sessionId, first: $first, after: $after) {
+    nodes {
+      id
+      inputsRevision
+      name
+      summary
+      feasibility
+      bestFitReason
+      costUnavailableReason
+      costBasisDate
+      cost {
+        low {
+          ...MoneyFields
+        }
+        high {
+          ...MoneyFields
+        }
+      }
+      buildDays {
+        low
+        high
+      }
+      impact {
+        id
+        assumptions
+        metrics {
+          metricId
+          baseline {
+            availability
+            reason
+            quantity {
+              ...QuantityFields
+            }
+          }
+          projectedLow {
+            availability
+            reason
+            quantity {
+              ...QuantityFields
+            }
+          }
+          projectedHigh {
+            availability
+            reason
+            quantity {
+              ...QuantityFields
+            }
+          }
+        }
+        neighbourEffect {
+          availability
+          reason
+        }
+      }
+    }
+    pageInfo {
+      ...PageInfoFields
+    }
+  }
+}
+
+mutation CreatePlanningSession($input: CreatePlanningSessionInput!) {
+  createPlanningSession(input: $input) {
+    session {
+      ...PlanningSessionFields
+    }
+    error {
+      ...MutationErrorFields
+    }
+  }
+}
+
+mutation UpdatePlanningSession($input: UpdatePlanningSessionInput!) {
+  updatePlanningSession(input: $input) {
+    session {
+      ...PlanningSessionFields
+    }
+    error {
+      ...MutationErrorFields
+    }
+  }
+}

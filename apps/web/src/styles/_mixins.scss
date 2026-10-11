@@ -1,0 +1,76 @@
+// Shared SCSS helpers. Import with `@use 'mixins' as *;` (load path set in vite.config.ts).
+
+$bp-tablet: 640px;
+$bp-desktop: 1024px;
+$bp-wide: 1280px;
+
+@mixin tablet-up {
+  @media (min-width: $bp-tablet) {
+    @content;
+  }
+}
+
+@mixin desktop-up {
+  @media (min-width: $bp-desktop) {
+    @content;
+  }
+}
+
+@mixin wide-up {
+  @media (min-width: $bp-wide) {
+    @content;
+  }
+}
+
+@mixin focus-ring {
+  outline: 3px solid var(--wl-color-focus);
+  outline-offset: 2px;
+}
+
+@mixin focus-visible {
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+@mixin visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+// Decorative/continuous animations: off for reduced motion, paused while the tab is hidden.
+@mixin ambient-animation {
+  @media (prefers-reduced-motion: reduce) {
+    animation: none !important;
+  }
+
+  :global([data-page-hidden='true']) & {
+    animation-play-state: paused;
+  }
+}
+
+@mixin reduced-motion {
+  @media (prefers-reduced-motion: reduce) {
+    @content;
+  }
+}
+
+// Minimum 44×44 px pointer target (WCAG 2.5.5 / 2.5.8 comfortable size).
+@mixin tap-target {
+  min-width: var(--wl-tap-target);
+  min-height: var(--wl-tap-target);
+}
+
+@mixin card {
+  background: var(--wl-color-surface);
+  border: 1px solid var(--wl-color-border);
+  border-radius: var(--wl-radius-lg);
+  box-shadow: var(--wl-shadow-sm);
+}

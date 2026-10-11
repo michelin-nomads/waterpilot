@@ -1,0 +1,29 @@
+@use 'mixins' as *;
+
+.summary {
+  display: grid;
+  gap: var(--wl-space-2);
+  margin: 0;
+
+  @include tablet-up {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  > div {
+    @include card;
+
+    display: grid;
+    gap: var(--wl-space-1);
+  }
+
+  dt {
+    color: var(--wl-color-text-muted);
+    font-size: var(--wl-text-sm);
+  }
+
+  dd {
+    margin: 0;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+}

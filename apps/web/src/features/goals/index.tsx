@@ -1,8 +1,16 @@
+import { StageNotBuilt, StagePage } from '../planning/StagePage';
+
 export default function GoalsPage() {
   return (
-    <section>
-      <h1>Set Your Goal</h1>
-      <p>Placeholder feature module (ref: 5.png). Implemented in Phase 11.</p>
-    </section>
+    <StagePage stageId="goals">
+      <StageNotBuilt
+        stageId="goals"
+        capabilities={[
+          'Offer quick goals and a custom goal that is interpreted, then confirmed by you before use.',
+          'Capture budget (INR), implementation deadline and priority as explicit constraints.',
+          'Mark goals that need data the location does not have (for example water quality) as unavailable.',
+        ]}
+      />
+    </StagePage>
   );
 }

@@ -1,0 +1,60 @@
+fragment FundingMatchFields on FundingMatch {
+  id
+  version
+  sessionId
+  planOptionId
+  metCount
+  notMetCount
+  needsCheckCount
+  window
+  status
+  rulesVersion
+  results {
+    criterionId
+    status
+    reason
+  }
+  scheme {
+    id
+    name
+    funder
+    summary
+    currency
+    opensOn
+    closesOn
+    sourceUrl
+    lastVerifiedAt
+    evidence
+    requiredDocuments
+    maxAmount {
+      ...MoneyFields
+    }
+    criteria {
+      id
+      text
+      machineCheckable
+    }
+  }
+}
+
+query FundingMatches($sessionId: ID!, $planOptionId: ID, $first: Int, $after: String) {
+  fundingMatches(sessionId: $sessionId, planOptionId: $planOptionId, first: $first, after: $after) {
+    nodes {
+      ...FundingMatchFields
+    }
+    pageInfo {
+      ...PageInfoFields
+    }
+  }
+}
+
+mutation MatchFunding($input: MatchFundingInput!) {
+  matchFunding(input: $input) {
+    matches {
+      ...FundingMatchFields
+    }
+    error {
+      ...MutationErrorFields
+    }
+  }
+}

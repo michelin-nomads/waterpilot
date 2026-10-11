@@ -1,0 +1,58 @@
+{
+  "$comment": "SYNTHETIC null/zero-denominator edge cases for metrics.md null semantics. Each case is a minimal daily series (MLD) with the expected availability/raw value per metric. Checked by services/backend/tests/domain/test_synthetic_fixture.py.",
+  "evidenceQualityStatus": "synthetic",
+  "definitionStatus": "proposed",
+  "cases": [
+    {
+      "id": "zero-total-supply",
+      "days": [
+        { "demandMld": "5", "supplyBySourceMld": { "tanker": "0", "surface_water": "0" } },
+        { "demandMld": "5", "supplyBySourceMld": { "tanker": "0", "surface_water": "0" } }
+      ],
+      "expected": {
+        "tanker_dependence": { "availability": "unavailable", "reason": "zero_total_supply" },
+        "volume_reliability": { "availability": "available", "raw": "0" },
+        "time_reliability": { "availability": "available", "raw": "0" }
+      }
+    },
+    {
+      "id": "zero-demand",
+      "days": [
+        { "demandMld": "0", "supplyBySourceMld": { "tanker": "1", "surface_water": "1" } },
+        { "demandMld": "0", "supplyBySourceMld": { "tanker": "1", "surface_water": "1" } }
+      ],
+      "expected": {
+        "volume_reliability": { "availability": "unavailable", "reason": "zero_total_demand" },
+        "dependable_supply_ratio": { "availability": "unavailable", "reason": "zero_mean_demand" },
+        "tanker_dependence": { "availability": "available", "raw": "1/2" },
+        "time_reliability": { "availability": "available", "raw": "1" }
+      }
+    },
+    {
+      "id": "known-zero-tanker",
+      "days": [{ "demandMld": "4", "supplyBySourceMld": { "tanker": "0", "surface_water": "4" } }],
+      "expected": {
+        "tanker_dependence": { "availability": "available", "raw": "0" },
+        "volume_reliability": { "availability": "available", "raw": "1" }
+      }
+    },
+    {
+      "id": "missing-tanker-record",
+      "days": [{ "demandMld": "4", "supplyBySourceMld": { "tanker": null, "surface_water": "4" } }],
+      "expected": {
+        "tanker_dependence": { "availability": "unavailable", "reason": "missing_input" },
+        "volume_reliability": { "availability": "unavailable", "reason": "missing_input" },
+        "time_reliability": { "availability": "unavailable", "reason": "missing_input" }
+      }
+    },
+    {
+      "id": "empty-window",
+      "days": [],
+      "expected": {
+        "time_reliability": { "availability": "unavailable", "reason": "empty_window" },
+        "volume_reliability": { "availability": "unavailable", "reason": "empty_window" },
+        "tanker_dependence": { "availability": "unavailable", "reason": "empty_window" }
+      }
+    }
+  ]
+}

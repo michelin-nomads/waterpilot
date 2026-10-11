@@ -1,0 +1,88 @@
+@use 'mixins' as *;
+
+// The globe deliberately bleeds off the corner; the fixed container clips it so it never
+// creates page overflow.
+.earth {
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0.07;
+
+  :global([data-theme='dark']) & {
+    opacity: 0.1;
+  }
+}
+
+.globe {
+  position: absolute;
+  right: -18vmin;
+  bottom: -22vmin;
+  width: 75vmin;
+  height: 75vmin;
+}
+
+.outline,
+.line {
+  fill: none;
+  stroke: var(--wl-color-accent);
+  stroke-width: 0.6;
+}
+
+.outline {
+  stroke-width: 1;
+}
+
+// Meridians "rotate" by squashing horizontally — a transform-only effect.
+.spin {
+  transform-box: view-box;
+  transform-origin: center;
+  animation: turn 60s ease-in-out infinite alternate;
+
+  @include ambient-animation;
+}
+
+.water {
+  position: relative;
+  height: 0.75rem;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.wave {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 200%;
+  height: 100%;
+  fill: var(--wl-color-accent);
+  animation: flow 24s linear infinite;
+
+  @include ambient-animation;
+}
+
+.back {
+  opacity: 0.12;
+  animation-duration: 36s;
+  animation-direction: reverse;
+}
+
+.front {
+  opacity: 0.2;
+}
+
+@keyframes turn {
+  from {
+    transform: scaleX(1);
+  }
+
+  to {
+    transform: scaleX(0.35);
+  }
+}
+
+@keyframes flow {
+  to {
+    transform: translateX(-50%);
+  }
+}

@@ -1,0 +1,37 @@
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wl-space-2);
+}
+
+.mark {
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: none;
+}
+
+.ring {
+  fill: none;
+  stroke: var(--wl-color-accent);
+  stroke-width: 2.5;
+  stroke-dasharray: 80 27;
+  stroke-linecap: round;
+}
+
+.drop {
+  fill: var(--wl-color-accent);
+}
+
+.glint {
+  fill: none;
+  stroke: var(--wl-color-on-accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.wordmark {
+  font-size: var(--wl-text-xl);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--wl-color-text);
+}

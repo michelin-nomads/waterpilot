@@ -1,0 +1,38 @@
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--wl-space-3);
+  margin-bottom: var(--wl-space-5);
+}
+
+.text {
+  display: grid;
+  gap: var(--wl-space-1);
+}
+
+.eyebrow {
+  font-size: var(--wl-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--wl-color-accent);
+}
+
+.title {
+  font-size: var(--wl-text-3xl);
+  font-weight: 800;
+  letter-spacing: -0.015em;
+}
+
+.subtitle {
+  font-size: var(--wl-text-lg);
+  color: var(--wl-color-text-muted);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wl-space-2);
+}
