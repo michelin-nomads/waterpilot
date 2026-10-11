@@ -1,0 +1,55 @@
+{
+  "$comment": "Hand-calculated expected outputs for synthetic-sample.input.json. SYNTHETIC. These values are the golden reference the Phase 09 engine must reproduce. Derivations in README.md.",
+  "fixtureId": "synthetic-sample-v1",
+  "status": "synthetic",
+  "metricsRef": "docs/domain/metrics.registry.json",
+  "windowDays": 10,
+  "expected": {
+    "demand": { "value": 10.0, "unit": "MLD", "status": "available" },
+    "delivered_supply": { "value": 10.1, "unit": "MLD", "status": "available" },
+    "reliable_supply": { "value": 8.0, "unit": "MLD", "exceedanceP": 0.9, "status": "available" },
+    "deficit": { "value": 2.0, "unit": "MLD", "basis": "reliable_supply", "status": "available" },
+    "daily_deficit_total": { "value": 6.0, "unit": "ML", "status": "available" },
+    "shortage_days": { "value": 3, "unit": "days", "status": "available" },
+    "days_until_shortage": {
+      "value": 7,
+      "unit": "days",
+      "referenceDate": "2026-01-01",
+      "firstShortageDate": "2026-01-08",
+      "status": "available"
+    },
+    "volume_reliability": { "ratio": 0.94, "display": "94%", "status": "available" },
+    "time_reliability": { "ratio": 0.7, "display": "70%", "status": "available" },
+    "tanker_dependence": {
+      "ratio": 0.267,
+      "display": "27%",
+      "exactRatio": "27/101",
+      "status": "available"
+    },
+    "project_cost": { "paise": 80000000, "inr": 800000, "status": "available" },
+    "avoided_cost_per_year": { "paise": 30000000, "inr": 300000, "status": "available" },
+    "avoided_cost_horizon": {
+      "paise": 90000000,
+      "inr": 900000,
+      "horizonYears": 3,
+      "status": "available"
+    },
+    "net_benefit": {
+      "paise": 4000000,
+      "inr": 40000,
+      "horizonYears": 3,
+      "discounting": "none",
+      "status": "available"
+    },
+    "payback_period": { "months": 34, "years": 2.857142857, "status": "available" }
+  },
+  "expectedUnavailable": {
+    "groundwater_level": { "status": "unavailable", "reason": "requires local measurement" },
+    "water_quality": { "status": "unavailable", "reason": "requires local lab samples" },
+    "flood_risk": { "status": "unavailable", "reason": "requires reviewed model" },
+    "neighbour_effect": {
+      "status": "unavailable",
+      "reason": "requires coupled model + boundary evidence"
+    }
+  }
+}

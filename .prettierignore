@@ -1,0 +1,18 @@
+node_modules
+dist
+build
+coverage
+playwright-report
+test-results
+.venv
+services/backend
+uv.lock
+package-lock.json
+packages/contracts/src/openapi.ts
+packages/contracts/openapi.json
+docs/design/reference
+
+# Provided source-of-truth documents — preserve verbatim, never reformat.
+docs/WaterLens-HLD.md
+docs/WaterLens-Cursor-Build-Guide.md
+docs/product/WaterLens-work-flow.txt

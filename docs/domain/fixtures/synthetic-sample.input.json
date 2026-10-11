@@ -1,0 +1,160 @@
+{
+  "$comment": "SYNTHETIC fixture — NOT live data. Must never be presented as evidence for any real area. Internally consistent; hand-calculated expected outputs in synthetic-sample.expected.json and README.md.",
+  "fixtureId": "synthetic-sample-v1",
+  "status": "synthetic",
+  "conventionsRef": "docs/domain/conventions.md",
+  "area": {
+    "id": "SYNTH-01",
+    "name": "Synthville (SYNTHETIC — not a real place)",
+    "timezone": "Asia/Kolkata",
+    "crs": "EPSG:4326"
+  },
+  "reportingWindow": {
+    "start": "2026-01-01",
+    "endExclusive": "2026-01-11",
+    "boundary": "half_open_start_inclusive_end_exclusive",
+    "days": 10
+  },
+  "referenceDate": "2026-01-01",
+  "reliableSupplyExceedanceP": 0.9,
+  "units": {
+    "demand": "MLD",
+    "supply": "MLD",
+    "money": "INR_paise"
+  },
+  "dailySeries": [
+    {
+      "date": "2026-01-01",
+      "demandMld": 10.0,
+      "supplyBySourceMld": {
+        "groundwater": 5.0,
+        "tanker": 3.0,
+        "surface_water": 2.0,
+        "recycled": 1.0
+      }
+    },
+    {
+      "date": "2026-01-02",
+      "demandMld": 10.0,
+      "supplyBySourceMld": {
+        "groundwater": 5.0,
+        "tanker": 3.0,
+        "surface_water": 2.0,
+        "recycled": 1.0
+      }
+    },
+    {
+      "date": "2026-01-03",
+      "demandMld": 10.0,
+      "supplyBySourceMld": {
+        "groundwater": 5.0,
+        "tanker": 3.0,
+        "surface_water": 2.0,
+        "recycled": 1.0
+      }
+    },
+    {
+      "date": "2026-01-04",
+      "demandMld": 10.0,
+      "supplyBySourceMld": {
+        "groundwater": 5.0,
+        "tanker": 3.0,
+        "surface_water": 2.0,
+        "recycled": 1.0
+      }
+    },
+    {
+      "date": "2026-01-05",
+      "demandMld": 10.0,
+      "supplyBySourceMld": {
+        "groundwater": 5.0,
+        "tanker": 3.0,
+        "surface_water": 2.0,
+        "recycled": 1.0
+      }
+    },
+    {
+      "date": "2026-01-06",
+      "demandMld": 10.0,
+      "supplyBySourceMld": {
+        "groundwater": 5.0,
+        "tanker": 3.0,
+        "surface_water": 2.0,
+        "recycled": 1.0
+      }
+    },
+    {
+      "date": "2026-01-07",
+      "demandMld": 10.0,
+      "supplyBySourceMld": {
+        "groundwater": 5.0,
+        "tanker": 3.0,
+        "surface_water": 2.0,
+        "recycled": 1.0
+      }
+    },
+    {
+      "date": "2026-01-08",
+      "demandMld": 10.0,
+      "supplyBySourceMld": {
+        "groundwater": 4.0,
+        "tanker": 2.0,
+        "surface_water": 1.5,
+        "recycled": 0.5
+      }
+    },
+    {
+      "date": "2026-01-09",
+      "demandMld": 10.0,
+      "supplyBySourceMld": {
+        "groundwater": 4.0,
+        "tanker": 2.0,
+        "surface_water": 1.5,
+        "recycled": 0.5
+      }
+    },
+    {
+      "date": "2026-01-10",
+      "demandMld": 10.0,
+      "supplyBySourceMld": {
+        "groundwater": 4.0,
+        "tanker": 2.0,
+        "surface_water": 1.5,
+        "recycled": 0.5
+      }
+    }
+  ],
+  "economics": {
+    "projectCostPaise": 80000000,
+    "costBasisDate": "2026-01-01",
+    "tankerUnitPricePaisePerLitre": 100,
+    "avoidedVolumeLitresPerYear": 300000,
+    "omCostPaisePerYear": 2000000,
+    "horizonYears": 3,
+    "discounting": "none"
+  },
+  "sourceStatuses": [
+    { "capability": "utility_supply", "qualityStatus": "synthetic" },
+    { "capability": "surface_water", "qualityStatus": "synthetic" },
+    {
+      "capability": "groundwater",
+      "qualityStatus": "unavailable",
+      "reason": "requires local measurement; not provided in fixture"
+    },
+    {
+      "capability": "water_quality",
+      "qualityStatus": "unavailable",
+      "reason": "requires local lab samples"
+    },
+    {
+      "capability": "flood_risk",
+      "qualityStatus": "unavailable",
+      "reason": "requires reviewed drainage model"
+    },
+    {
+      "capability": "shared_aquifer_neighbour",
+      "qualityStatus": "unavailable",
+      "reason": "requires coupled model + boundary evidence"
+    }
+  ]
+}

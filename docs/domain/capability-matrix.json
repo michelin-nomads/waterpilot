@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WaterLens Supported-Capability Matrix",
+  "description": "Which data capabilities WaterLens supports, their candidate source families, and whether they need local measurement or can be inferred from imagery. PROPOSED pending domain review. 'supported: false' capabilities render as 'unavailable', never 0.",
+  "version": "0.1",
+  "status": "proposed",
+  "legend": {
+    "supportLevel": {
+      "supported": "A deterministic method + validated source can produce this now.",
+      "provisional": "Partially derivable; needs caveats and/or a reviewed model.",
+      "unavailable": "Not derivable from current evidence; needs local data / reviewed model."
+    }
+  },
+  "capabilities": [
+    {
+      "capability": "rainfall",
+      "supportLevel": "provisional",
+      "candidateSourceFamilies": ["earth_engine_precipitation_collections", "official_imd_gauges"],
+      "inferableFromImageryAlone": true,
+      "requiresLocalMeasurement": false,
+      "requiresReviewedModel": true,
+      "notes": "Gridded precipitation is available from EE, but converting rainfall to usable supply (runoff/harvesting) needs a reviewed response model (see metrics.md). Rainfall depth itself is observable; supply impact is not a flat percentage."
+    },
+    {
+      "capability": "groundwater",
+      "supportLevel": "unavailable",
+      "candidateSourceFamilies": ["official_groundwater_board_levels", "local_borewell_logs"],
+      "inferableFromImageryAlone": false,
+      "requiresLocalMeasurement": true,
+      "requiresReviewedModel": true,
+      "notes": "Groundwater levels/trends require in-situ well measurements. Satellite proxies (e.g. GRACE) are coarse and not a substitute at community scale. Unavailable until local data onboarded."
+    },
+    {
+      "capability": "surface_water",
+      "supportLevel": "provisional",
+      "candidateSourceFamilies": ["earth_engine_surface_water_collections", "lake_inflow_records"],
+      "inferableFromImageryAlone": true,
+      "requiresLocalMeasurement": false,
+      "requiresReviewedModel": true,
+      "notes": "Surface-water extent/occurrence is observable from imagery; converting extent to usable volume/yield needs bathymetry/assumptions and review."
+    },
+    {
+      "capability": "water_quality",
+      "supportLevel": "unavailable",
+      "candidateSourceFamilies": ["local_lab_samples", "utility_quality_reports"],
+      "inferableFromImageryAlone": false,
+      "requiresLocalMeasurement": true,
+      "requiresReviewedModel": false,
+      "notes": "Drinking-water quality (chemical/biological) cannot be inferred from imagery. Requires sampled measurements. Unavailable until local data onboarded."
+    },
+    {
+      "capability": "flood_risk",
+      "supportLevel": "unavailable",
+      "candidateSourceFamilies": ["dem_terrain", "historical_flood_extents", "drainage_models"],
+      "inferableFromImageryAlone": false,
+      "requiresLocalMeasurement": false,
+      "requiresReviewedModel": true,
+      "notes": "Terrain/DEM and past flood extents help, but calibrated flood risk needs hydrological/drainage modelling and review. Not inferable from a single imagery layer."
+    },
+    {
+      "capability": "land_cover",
+      "supportLevel": "supported",
+      "candidateSourceFamilies": ["earth_engine_land_cover_collections"],
+      "inferableFromImageryAlone": true,
+      "requiresLocalMeasurement": false,
+      "requiresReviewedModel": false,
+      "notes": "Land cover / built-up fraction is a standard imagery-derived product with documented classes; most directly supportable, subject to licence and class mapping."
+    },
+    {
+      "capability": "utility_supply",
+      "supportLevel": "unavailable",
+      "candidateSourceFamilies": ["utility_board_supply_records", "tanker_delivery_logs"],
+      "inferableFromImageryAlone": false,
+      "requiresLocalMeasurement": true,
+      "requiresReviewedModel": false,
+      "notes": "Piped/tanker supply volumes and reliability come from utility/operator records, not imagery. Required for demand/supply/deficit metrics. Unavailable until onboarded."
+    },
+    {
+      "capability": "shared_aquifer_neighbour",
+      "supportLevel": "unavailable",
+      "candidateSourceFamilies": ["coupled_groundwater_model", "aquifer_boundary_studies"],
+      "inferableFromImageryAlone": false,
+      "requiresLocalMeasurement": true,
+      "requiresReviewedModel": true,
+      "notes": "Neighbour/shared-aquifer hydraulic effects need a coupled groundwater model + boundary evidence. Distance alone never becomes a validated impact score. Unavailable until adequate coupled evidence exists."
+    }
+  ]
+}

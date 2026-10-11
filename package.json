@@ -1,0 +1,49 @@
+{
+  "name": "waterlens",
+  "version": "0.1.0",
+  "private": true,
+  "description": "WaterLens monorepo — React frontend, FastAPI modular-monolith backend, shared contracts.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=24 <25",
+    "npm": ">=11"
+  },
+  "packageManager": "npm@11.5.1",
+  "type": "module",
+  "scripts": {
+    "install:all": "npm install && npm run backend:sync",
+    "backend:sync": "cd services/backend && uv sync",
+    "dev:web": "npm -w apps/web run dev",
+    "dev:api": "cd services/backend && uv run uvicorn waterlens.api.main:app --reload --host 127.0.0.1 --port 8000",
+    "dev:worker": "cd services/backend && uv run python -m waterlens.worker.main",
+    "emulators": "npx -y firebase-tools@15 emulators:start --project demo-waterlens",
+    "seed": "cd services/backend && uv run python -m waterlens.cli.seed",
+    "contracts": "npm run contracts:export && npm run contracts:gen",
+    "contracts:export": "cd services/backend && uv run python -m waterlens.api.export_openapi ../../packages/contracts/openapi.json",
+    "contracts:gen": "npm -w packages/contracts run generate",
+    "lint": "eslint .",
+    "lint:py": "cd services/backend && uv run ruff check .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "npm -w packages/contracts run typecheck && npm -w apps/web run typecheck",
+    "typecheck:py": "cd services/backend && uv run mypy src",
+    "test:web": "npm -w apps/web run test",
+    "test:py": "cd services/backend && uv run pytest",
+    "test": "npm run test:web && npm run test:py",
+    "test:e2e": "npm -w apps/web run test:e2e",
+    "build": "npm -w packages/contracts run build && npm -w apps/web run build"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.12.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.9",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.71.1"
+  }
+}

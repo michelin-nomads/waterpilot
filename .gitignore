@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+.venv/
+services/backend/.venv/
+
+# Build output
+dist/
+build/
+apps/web/dist/
+packages/contracts/dist/
+
+# Test / tooling caches
+coverage/
+.vitest/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+playwright-report/
+test-results/
+apps/web/playwright/.cache/
+
+# Local runtime state (never commit)
+.local-object-store/
+.local-jobs/
+services/backend/.local-object-store/
+services/backend/.local-jobs/
+
+# Environment — commit only *.example
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Firebase emulator artifacts
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+auth-debug.log
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# OS / editor
+.DS_Store
+*.local
