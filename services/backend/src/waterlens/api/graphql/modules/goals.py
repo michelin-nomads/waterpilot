@@ -70,6 +70,9 @@ class EffectEstimate:
 class MeasureEstimate:
     intervention_id: str
     cost: MoneyRange | None
+    recurring: MoneyRange | None = strawberry.field(
+        description="Your yearly operating and maintenance estimate for this measure."
+    )
     build_days: DayRange | None
     effects: list[EffectEstimate] = strawberry.field(
         description="Your ranges for what the measure's water effect depends on "
@@ -82,6 +85,7 @@ class MeasureEstimate:
         return MeasureEstimate(
             intervention_id=e.intervention_id,
             cost=MoneyRange.of(e.cost) if e.cost else None,
+            recurring=MoneyRange.of(e.recurring) if e.recurring else None,
             build_days=DayRange.of(e.build_days),
             effects=[
                 EffectEstimate(key=x.key, low=DecimalString(x.low), high=DecimalString(x.high))
@@ -125,8 +129,24 @@ class EffectEstimateInput:
 class MeasureEstimateInput:
     intervention_id: str
     cost: MoneyRangeInput | None = None
+    recurring: MoneyRangeInput | None = None
     build_days: DayRangeInput | None = None
     effects: list[EffectEstimateInput] = strawberry.field(default_factory=list)
+    note: str = ""
+
+
+@strawberry.input(description="The tanker-water price you pay now; your estimate, never converted.")
+class WaterTariffInput:
+    price: MoneyInput
+    volume: QuantityInput
+    note: str = ""
+
+
+@strawberry.input(description="A declared source of money; only approved funding counts.")
+class FundingSourceInput:
+    label: str
+    amount: MoneyInput
+    status: dv.FundingStatus
     note: str = ""
 
 

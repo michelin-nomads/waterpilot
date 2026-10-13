@@ -210,6 +210,62 @@ class MoneyRange(Frozen):
         return self.model_copy(update={"low": self.low.canonical(), "high": self.high.canonical()})
 
 
+class WaterTariff(Frozen):
+    """The price the person currently pays for tanker water, as they declare it: never a
+    sourced tariff and never converted between currencies (conventions §4a). Used only to
+    value tanker-cost avoidance, never to invent a market price or future change."""
+
+    price: Money
+    volume: Quantity
+    """The volume ``price`` buys, in litres (a tanker load, or a per-litre basis)."""
+    note: str = Field(default="", max_length=300)
+
+    @model_validator(mode="after")
+    def _positive_litres(self) -> Self:
+        if self.volume.unit is not Unit.LITRE or Decimal(self.volume.value) <= 0:
+            raise ValueError("a tariff volume is a positive number of litres")
+        if int(self.price.minor_units) < 0:
+            raise ValueError("a tariff price cannot be negative")
+        return self
+
+    def canonical(self) -> WaterTariff:
+        return self.model_copy(
+            update={"price": self.price.canonical(), "volume": self.volume.canonical()}
+        )
+
+
+class FundingStatus(StrEnum):
+    """How settled a declared source of money is. Only ``APPROVED`` counts towards
+    guaranteed affordability; the rest are shown but never reduce the funding gap."""
+
+    APPROVED = "approved"
+    """Committed and available: counts towards affordability."""
+    EXPECTED = "expected"
+    """Likely but not yet committed."""
+    PROPOSED = "proposed"
+    """Applied for or hoped for; no approval invented from it."""
+
+
+class FundingSource(Frozen):
+    """A declared source of money for a plan, as the person states it. Its status decides
+    whether it counts towards affordability; amounts are never converted between
+    currencies."""
+
+    label: str = Field(min_length=1, max_length=200)
+    amount: Money
+    status: FundingStatus
+    note: str = Field(default="", max_length=300)
+
+    @model_validator(mode="after")
+    def _non_negative(self) -> Self:
+        if int(self.amount.minor_units) < 0:
+            raise ValueError("a funding amount cannot be negative")
+        return self
+
+    def canonical(self) -> FundingSource:
+        return self.model_copy(update={"amount": self.amount.canonical()})
+
+
 class Provenance(Frozen):
     """Where a value came from. ``source_ids`` reference source-manifest records."""
 

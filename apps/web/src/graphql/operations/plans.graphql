@@ -134,6 +134,136 @@ fragment ImpactContextFields on ImpactContext {
   }
 }
 
+fragment EconomicsFields on OptionEconomics {
+  engineVersion
+  currency
+  capex {
+    low {
+      ...MoneyFields
+    }
+    high {
+      ...MoneyFields
+    }
+  }
+  contingency {
+    ratio
+    amount {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+  }
+  upfrontTotal {
+    low {
+      ...MoneyFields
+    }
+    high {
+      ...MoneyFields
+    }
+  }
+  recurringAnnual {
+    low {
+      ...MoneyFields
+    }
+    high {
+      ...MoneyFields
+    }
+  }
+  recurringReason
+  avoidedTankerAnnual {
+    low {
+      ...MoneyFields
+    }
+    high {
+      ...MoneyFields
+    }
+  }
+  avoidedReason
+  netAnnual {
+    low {
+      ...MoneyFields
+    }
+    high {
+      ...MoneyFields
+    }
+  }
+  payback {
+    outcome
+    optimisticDays
+    pessimisticDays
+    note
+  }
+  horizon {
+    days
+    netPositive
+    reason
+    net {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    avoided {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    recurring {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+  }
+  funding {
+    totalCost {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    approved {
+      ...MoneyFields
+    }
+    candidate {
+      ...MoneyFields
+    }
+    fullyFunded
+    gap {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    lines {
+      label
+      status
+      counts
+      applicable
+      amount {
+        ...MoneyFields
+      }
+    }
+    note
+  }
+  assumptions
+  notes
+}
+
 fragment ComparedOptionFields on ComparedOption {
   id
   rank
@@ -203,6 +333,14 @@ fragment ComparedOptionFields on ComparedOption {
         ...MoneyFields
       }
     }
+    recurring {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
     buildDays {
       low
       high
@@ -227,6 +365,9 @@ fragment ComparedOptionFields on ComparedOption {
   impact {
     ...WiderImpactFields
   }
+  economics {
+    ...EconomicsFields
+  }
 }
 
 query PlanComparison($id: ID!) {
@@ -234,6 +375,7 @@ query PlanComparison($id: ID!) {
     id
     inputsRevision
     selectedPlanOptionId
+    selectedPlanStatus
     planComparison {
       id
       engineVersion

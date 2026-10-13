@@ -2480,3 +2480,780 @@ passed.
 
 Stopped after Prompt 12. Prompt 13 waits for an explicit instruction. Nothing was
 deployed or provisioned, and no billing or live cloud operation was run.
+
+### Close-out verification (2026-10-12)
+
+Re-ran Prompt 12 end to end against the six owner points. One real gap was found and
+fixed; everything else verified. Prompt 13 was not started, and no live or cloud
+operation was run.
+
+#### Gap found and fixed
+
+- **The GraphQL schema could not build**, so every API test failed. `PlanningSession
+.selected_plan_status` (`api/graphql/modules/planning.py`) is annotated
+  `-> SelectionStatus`, but that name was never imported into the module. Under
+  `from __future__ import annotations` Strawberry resolves the annotation lazily from the
+  module globals, could not find it, and raised `UnresolvedFieldTypeError: Could not
+resolve the type of 'selected_plan_status'`. The whole schema failed, taking out ~125
+  errored and ~63 failed backend tests (all of `tests/api`, plus the schema-contract and
+  smoke tests). Fix: import `SelectionStatus` from `application/services/options`, the
+  same pattern used for the domain enums already in that module.
+- **The committed contracts were stale.** `packages/contracts/schema.graphql` and
+  `apps/web/src/graphql/generated/schema.ts` never contained `selectedPlanStatus` or the
+  `SelectedPlanStatus` enum (they were last generated before the broken field was added,
+  since an export against the broken schema would have crashed). Regenerated with
+  `npm run contracts`; only those two files changed, and `openapi.json` was untouched.
+- **The field had zero test coverage**, which is why the regression went unnoticed. Added
+  `test_selected_plan_status_tracks_the_chosen_option_and_guards_finalize`
+  (`tests/api/test_impact_graphql.py`): it queries `selectedPlanStatus` (the only reader
+  of the enum over GraphQL), asserts `NONE` before a choice and `CURRENT` after, finalizes
+  the current selection, and confirms a later goal change clears the stored choice. With
+  the import missing this test (and the whole API suite) fails to build the schema.
+
+The prior "835 passed" line below was therefore not reproducible from the committed tree;
+the suite is now green at **836 passed** with the fix and the added test.
+
+#### Point-by-point result
+
+| Owner point                                                                       | Result  | Evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| --------------------------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Geographic proximity alone never establishes aquifer/catchment connectivity       | ✅ pass | `ConnectivityEvidence` rejects `basis=proximity` (`domain/impact.py`); `area_linkage`/`pair_linkage` use records only; `SystemLink`/`Boundary` require connectivity citations for a known linkage; narrative `_NEARNESS` guard. Tests: `test_absent_connectivity_evidence_stays_unknown_even_next_door`, `test_connectivity_records_need_real_evidence`, `test_evidence_links_only_the_areas_and_system_it_names`, `test_a_lone_unit_or_conflicting_records_prove_nothing`; API `test_nearby_places_are_geography_only_without_evidence`, `test_reviewed_evidence_links_only_what_it_names`                                           |
+| Missing evidence stays unknown; guards/summaries can't make it "safe"/"no impact" | ✅ pass | `POTABILITY_TERMS`/`REASSURANCE_TERMS` reject reassurance in `Finding`, `Unavailable._still_unknown`, and `check_narrative`; absent records give `UNKNOWN` + an `Unavailable` entry. Tests: `test_unsupported_claims_are_rejected`, `test_a_summary_cannot_go_beyond_the_assessment`; API `test_agent_tools_return_the_same_assessment_and_guard_summaries` ("negligible" rejected)                                                                                                                                                                                                                                                   |
+| Groundwater answer is labeled user-provided, not verified hydrological evidence   | ✅ pass | `_SITE_FACT_LABEL["groundwater_use"]` = "user-provided, not verified hydrological evidence", cited as `CitationKind.USER_INPUT`; the declared false-resilience statement repeats "your answer, not verified hydrological evidence". Tests: `test_a_declared_borewell_is_flagged_as_possible_with_its_uncertainty`; API `test_a_declared_borewell_is_flagged_with_its_uncertainty`                                                                                                                                                                                                                                                     |
+| Required reviews visible before plan selection and in reports/proposals           | ✅ pass | `OptionImpact.reviews` is shown on every option before selection (`WiderImpactView.tsx`); `Report.required_reviews()`; proposals always carry `requiredReviews` and force `ProposalSection.WIDER_IMPACT` when a required review exists (`services/reports.py` `_sections`). Tests: `test_reviews_follow_the_measures`, `test_the_catalogue_cannot_drop_recharge_or_greywater_reviews`; web + e2e review rows; API provenance test asserts `wider_impact` in proposal sections                                                                                                                                                         |
+| Changing relevant inputs or evidence invalidates stale assessments                | ✅ pass | `impact_key` hashes engine/catalogue/comparison/site/evidence/nearby/sourced values; `selection_status` returns `IMPACT_CHANGED`/`NOT_CURRENT` and `finalize` refuses anything not in `FINALIZABLE`. Tests: `test_the_same_inputs_give_the_same_assessment_and_any_change_a_new_one`, `test_changing_the_goal_clears_the_selected_plan`, `test_a_plan_from_earlier_inputs_cannot_be_selected`, `test_a_goal_change_and_a_stale_selection_in_one_patch_is_refused`, and the new `test_selected_plan_status_tracks_the_chosen_option_and_guards_finalize`                                                                               |
+| `interventions-3` and `inputs-v2.json` have explicit compatibility handling       | ✅ pass | `proposals.py` docstring + code: v1 files are never rewritten or deleted (create-only name), any new delivery writes v2 from the immutable report, and reports finalized before impact existed give `impact: null` with `impactStatus` (`not_assessed`/`not_recorded`). `interventions-3`: options compared under `interventions-2` resolve to `SelectionStatus.NOT_CURRENT`, pre-engine options to `LEGACY`. Tests: `test_the_chosen_option_keeps_its_assessment_and_provenance` (asserts `waterlens.proposal-inputs/2`), emulator `test_a_selected_engine_option_round_trips_with_its_comparison` (legacy + engine options coexist) |
+
+#### Commands and results (this run)
+
+| Command                                                                   | Result                                                                                                                                                                                                           |
+| ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run test:py`                                                         | ✅ 836 passed, 132 deselected (emulator/live markers); 1 third-party deprecation warning                                                                                                                         |
+| `npm run validate:domain`                                                 | ✅ 343 passed                                                                                                                                                                                                    |
+| `npm run test:web`                                                        | ✅ 359 passed, 18 files                                                                                                                                                                                          |
+| `npm run test:emulator`                                                   | ✅ Python 98 passed (869 deselected); web 6 passed                                                                                                                                                               |
+| `npm run test:e2e:emulator`                                               | ✅ 42 passed, 1 skipped (opt-in screenshot capture), 0 failed                                                                                                                                                    |
+| `npm run lint`, `npm run typecheck`, `npm run format:check`               | ✅ clean (regenerated contracts included)                                                                                                                                                                        |
+| `npm run lint:py`, `npm run typecheck:py`, `uv run ruff format --check .` | ✅ clean (mypy: 119 files; 176 files formatted)                                                                                                                                                                  |
+| `npm run contracts`                                                       | ⚠ drift fixed: regenerated `schema.graphql` + web `generated/schema.ts` to add `selectedPlanStatus`/`SelectedPlanStatus`; `openapi.json` unchanged; catalogue (`npm run intervention-catalogue`) showed no drift |
+| `npm run build` + `npm run budget`                                        | ✅ built; bundle within budget                                                                                                                                                                                   |
+| `pytest -m live`                                                          | ⏭ skip (instructed not to run live or cloud operations)                                                                                                                                                          |
+
+Environment note: this run used Node 24.6.0 (repo pins 24.21.0 in `.nvmrc`; no version
+manager was available), so `npm ci` ran with `engine-strict` relaxed. All JS/TS checks
+and the web/e2e suites passed on it.
+
+#### Remaining limitations (unchanged, still open)
+
+- No reviewed connectivity record exists, so every aquifer, catchment and supply-network
+  connection is unknown; neighbour effects stay "not assessed" and the illustrative
+  neighbourhood map is not built.
+- Externalities are mechanisms without a size (no reviewed model); the groundwater-level
+  trend is not computed; `LOWEST_NEIGHBOUR_EFFECT` uses the default order.
+- No language model is connected, so the narrative checker is exercised only by tests and
+  the agent tool.
+- Reports/proposals store the assessment, but no screen renders it until Prompt 20.
+- The wider effects, reviews and false-resilience rule are proposed until domain review.
+- Live data, live Maps/Places and GCP behaviour remain **unverified**.
+- The `selectedPlanStatus` field is now contract-covered and unit-tested, but the web app
+  does not yet query it; surfacing the stale-selection prompt in the UI is still open.
+
+### Release-gap close-out (2026-10-12)
+
+Closed the remaining Prompt 12 release gaps before Prompt 13. No live or cloud operation
+was run; Prompt 13 was not started.
+
+#### What changed
+
+1. **Stale selection surfaced in the web app and prevented from continuing.** The Plans
+   query now selects `selectedPlanStatus`. The Plans page shows an actionable caution
+   notice when the chosen plan is stale and withholds "Continue to funding":
+   - `IMPACT_CHANGED` — still an option but reassessed (new nearby places, evidence or
+     sourced values): the notice offers "Review and choose again", which re-affirms the
+     choice so the server re-stores the current assessment;
+   - `NOT_CURRENT` — no longer among the current options (e.g. a new catalogue or engine):
+     the notice asks the person to pick one of the plans shown.
+     Re-affirming an unchanged choice needed a new `SessionCoordinator.reselectPlanOption`
+     (a `force` option on `edit`), because the coordinator normally drops an edit whose value
+     equals the server's; the server re-stores the assessment on any `selectedPlanOptionId`
+     write.
+2. **Server-side enforcement confirmed.** `finalizeReport` already refuses a selection that
+   is not `CURRENT`/`LEGACY` (`PRECONDITION_FAILED`). A proposal can only be generated from
+   a finalized report, so dependent proposal generation inherits the guarantee — verified
+   by a test that a stale selection is blocked at finalize, then finalizes and generates a
+   proposal only after re-choosing (the required review also forces `WIDER_IMPACT`).
+3. **Regression tests added:**
+   - API: `test_a_reassessed_selection_is_stale_until_chosen_again_and_gates_reports`
+     (nearby place → `IMPACT_CHANGED` → finalize blocked → re-choose → finalize + proposal);
+     the earlier `test_selected_plan_status_tracks_the_chosen_option_and_guards_finalize`.
+   - Web: three Plans-page cases (continue allowed when `CURRENT`; blocked + re-choose on
+     `IMPACT_CHANGED`; blocked + pick-again on `NOT_CURRENT`) and a coordinator unit test
+     that `reselectPlanOption` re-sends an unchanged choice while `selectPlanOption` is a
+     no-op.
+4. **Supported toolchain.** Installed the repository-pinned Node 24.21.0 (official build,
+   bundled npm 11.19.0 — matching `.nvmrc` and `packageManager`). `.npmrc`
+   `engine-strict=true` was left intact; `npm ci` ran clean with no bypass and no pin
+   change.
+5. **Contracts.** Regenerated; `schema.graphql` and the web generated types gained
+   `selectedPlanStatus`. A second regeneration (and the catalogue regeneration) produced no
+   further diff — no remaining drift. `openapi.json` unchanged.
+
+#### Commands and results (Node 24.21.0 / npm 11.19.0, engine-strict on)
+
+| Command                                                                   | Result                                                          |
+| ------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| `npm ci`                                                                  | ✅ clean install, engine-strict enforced (no bypass)            |
+| `npm run contracts` + `npm run intervention-catalogue`                    | ✅ regenerated; re-run shows no drift; `openapi.json` unchanged |
+| `npm run typecheck`                                                       | ✅ clean (contracts + web)                                      |
+| `npm run lint`                                                            | ✅ clean                                                        |
+| `npm run format:check`                                                    | ✅ clean                                                        |
+| `npm run test:web`                                                        | ✅ 363 passed, 18 files                                         |
+| `npm run build` + `npm run budget`                                        | ✅ built; bundle within budget                                  |
+| `npm run test:emulator`                                                   | ✅ Python 98 passed (871 deselected); web 6 passed              |
+| `npm run test:e2e:emulator`                                               | ✅ 42 passed, 1 skipped (opt-in screenshot)                     |
+| `npm run test:py`                                                         | ✅ 837 passed, 132 deselected                                   |
+| `npm run validate:domain`                                                 | ✅ (included in `test:py`)                                      |
+| `npm run lint:py`, `npm run typecheck:py`, `uv run ruff format --check .` | ✅ clean (mypy 119 files; 176 files formatted)                  |
+| `pytest -m live`                                                          | ⏭ skip (instructed not to run live or cloud operations)         |
+
+#### Scientific rules unchanged
+
+Connectivity stays `UNKNOWN` wherever reviewed evidence is absent; proximity is still
+rejected as a basis. The wider-effects, review and false-resilience rules remain
+**proposed pending domain review** — the passing tests exercise the guards and plumbing,
+they do not validate the underlying hydrological assumptions.
+
+#### Still open
+
+- The web app still does not render the stored impact in reports/proposals (Prompt 20).
+- No reviewed connectivity records, externality sizes, groundwater trend or connected
+  language model, as listed above.
+- Live data, live Maps/Places and GCP behaviour remain **unverified**.
+
+---
+
+## Prompt 13 — Costs, timelines and returns · guide Prompt 13
+
+**Status:** Complete (local + emulator) · **Date:** 2026-10-12 · **ADR:** 0014
+
+Deterministic economics for every option, from the person's own cost, tariff and funding
+figures. Nothing is invented and nothing is converted between currencies. Stopped after
+Prompt 13: Prompt 14 was not started, and nothing was deployed, provisioned, billed or run
+against live/cloud services.
+
+### Files changed / created
+
+- `services/backend/src/waterlens/domain/values.py` — added `WaterTariff` (price `Money`,
+  volume in litres > 0), `FundingStatus` (`APPROVED`/`EXPECTED`/`PROPOSED`) and
+  `FundingSource` (label, amount ≥ 0, status), each canonicalised and validated.
+- `services/backend/src/waterlens/domain/economics.py` **(new, `economics-1`)** — the pure
+  engine: `assess_economics(...)` and the serializable result records (`OptionEconomics`,
+  `Contingency`, `Payback`/`PaybackOutcome`, `HorizonTotals`, `Funding`/`FundingLine`).
+  Imports only from `values.py`, so no cycle. Exact `Fraction` arithmetic, integer minor
+  units, half-to-even rounding, `DAYS_PER_YEAR = 365`.
+- `services/backend/src/waterlens/domain/planning.py` — `MeasureEstimate` gains an optional
+  `recurring`; `GoalFields` gains `water_tariff`, `contingency_ratio` (bounded `[0, 1]`) and
+  up to ten `funding` sources; `PlanOption` gains `economics`.
+- `services/backend/src/waterlens/domain/options.py` — sums per-measure recurring (only if
+  every measure has it and in one currency), caps counted water at baseline tanker
+  deliveries, and calls `assess_economics` to attach `Option.economics`.
+- `services/backend/src/waterlens/application/services/options.py` — stores
+  `PlanOption.economics`.
+- `services/backend/src/waterlens/domain/reports.py` +
+  `application/services/reports.py` — `Report` carries `economics`; `finalizeReport` copies
+  the chosen option's economics and refuses a **LEGACY** selection whose measures require an
+  unassessed professional review (`_unassessed_review`, `PRECONDITION_FAILED`).
+- `services/backend/src/waterlens/api/graphql/modules/{goals,planning,options,reports}.py` —
+  GraphQL inputs (`WaterTariffInput`, `FundingSourceInput`, `recurring`, `contingencyRatio`,
+  `funding`) and output types (`OptionEconomics` and its parts, `WaterTariff`,
+  `FundingSource`) with `.of` mappers.
+- `services/backend/src/waterlens/application/tools/options.py` — agent-tool JSON carries
+  `recurring` and `economics`.
+- `packages/contracts/schema.graphql` + `apps/web/src/graphql/generated/*` — regenerated
+  (`npm run contracts`), adding the economics types, `PaybackOutcome` and `FundingStatus`.
+- `apps/web/src/graphql/operations/plans.graphql` — `EconomicsFields` fragment and
+  `recurring` on measures.
+- `apps/web/src/features/plans/plansFormat.ts` — `PAYBACK_LABEL`, `FUNDING_STATUS_LABEL`,
+  `formatPayback`, `formatPaybackRange`, `formatPercentFromDecimal`.
+- `apps/web/src/features/plans/EconomicsCard.tsx` **(new)** — read-only cost/benefit and a
+  **separate** funding card per option (upfront incl. a person-set contingency, recurring,
+  avoided tanker spending, net benefit, payback badge, horizon totals, funding gap, per-
+  source lines and an assumptions accordion).
+- `apps/web/src/features/plans/PlanComparisonView.tsx` — renders `EconomicsCard` on every
+  option; measure lines show recurring cost.
+- Tests: `services/backend/tests/domain/test_economics.py` (14),
+  `tests/api/test_economics_graphql.py` (5), `apps/web/src/features/plans/plans.test.tsx`
+  (+2); `tests/graphql_harness.py` gained an `intervention_ids` seed parameter.
+- Docs: ADR `docs/decisions/0014-economics-and-returns.md`, `docs/domain/economics.md`,
+  `docs/build/implementation-status.md`, `docs/product/traceability.md`, this entry.
+
+### Behaviour implemented
+
+- **Costs:** capex (sum of per-measure estimates), optional recurring (summed only if every
+  measure provides it in the plan's currency), and a contingency added **only** when the
+  person sets `contingencyRatio` — never an invented margin.
+- **Avoided tanker spending** = counted water (capped at baseline tanker deliveries) × 365 ×
+  the declared per-litre tariff; unknown with a typed reason when there is no tariff, no
+  tanker deliveries, or a different currency.
+- **Net benefit** can be zero or negative (reported as such). **Payback** is
+  `WITHIN_HORIZON`, `BEYOND_HORIZON`, `UNCERTAIN` or `NEVER` — never negative or infinite,
+  and the end that never pays back carries no number.
+- **Horizon totals** over `horizonDays`, net positive only when positive at the pessimistic
+  end.
+- **Funding gap is separate from total cost:** only approved funding in the plan's currency
+  counts; `gap = max(0, upfront − approved)`, never reduced by expected/proposed money;
+  `fully_funded` only when approved covers the highest estimate; other-currency funding is
+  shown, not applied.
+- **No conversion, nothing invented:** no FX, no inflation, no future price change, no
+  subsidy approval. Construction completion (`buildDays`) stays distinct from first realized
+  benefit (`benefitTiming`).
+- **Surfaces:** economics is shown on every option before selection (Plans page + agent
+  tools), stored on the chosen `PlanOption`, copied into the immutable `Report`, and carried
+  into proposal inputs — comparison, report and export values match exactly.
+
+### Acceptance — point by point
+
+| Owner point                                                              | Result  | Evidence                                                                                                                                                                                                             |
+| ------------------------------------------------------------------------ | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Financial boundary cases (zero/negative savings, payback beyond horizon) | ✅ pass | domain `test_economics.py`: NEVER (savings ≤ recurring), zero-net NEVER, UNCERTAIN (covers only at optimistic end), BEYOND_HORIZON (short horizon), half-even paise rounding (182/548)                               |
+| Seasonal / timing kept honest (construction completion ≠ first benefit)  | ✅ pass | engine values money only; `buildDays` vs `benefitTiming` stay separate on the option and card (`EconomicsCard`, option engine); documented in ADR 0014 §6 and `economics.md`                                         |
+| Recurring costs handled                                                  | ✅ pass | per-measure `recurring` summed; missing or mismatched-currency recurring → typed reason, net/payback withheld (`test_recurring_*`, `_sum_recurring`)                                                                 |
+| Currency validation; multi-currency without conversion                   | ✅ pass | USD tariff reported, not converted (domain + API `test_*usd*`); other-currency funding/recurring reported not applied; INR stays the only reviewed cost currency                                                     |
+| Option comparison and exported values match exactly                      | ✅ pass | API `test_economics_graphql.py`: comparison == stored option == finalized report == agent-tool JSON (field-by-field); domain JSON round-trip equality                                                                |
+| Funding gap separate from cost; unapproved funding not counted           | ✅ pass | `_funding`: gap = `max(0, upfront − approved)`, approved = approved-and-matching-currency only; `test_unapproved_never_reduces_gap`, `test_fully_funded`                                                             |
+| Stale-selection enforcement preserved                                    | ✅ pass | reused `finalize` guard (`PRECONDITION_FAILED` unless `CURRENT`/`LEGACY`); API `test_a_reassessed_selection_is_stale...` still passes (full suite green)                                                             |
+| LEGACY selections cannot bypass required impact validation               | ✅ pass | `_unassessed_review`: a LEGACY greywater/recharge option (`impact.wider is None`) is refused at finalize; API `test_*legacy*`: greywater LEGACY blocked ("professional review"), efficient-fixtures LEGACY finalizes |
+| Returns deterministic from evidence-backed or user-estimated costs       | ✅ pass | pure `Fraction` engine, no catalogue prices; every figure labelled the person's estimate; `test_exact_happy_path` asserts exact minor-unit figures                                                                   |
+
+### Checks run (Node 24.21.0 / npm 11.19.0, engine-strict on)
+
+| Command                                                                   | Result                                                                       |
+| ------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `npm run test:py`                                                         | ✅ 856 passed, 132 deselected (was 837; +19 economics)                       |
+| economics subset (`tests/domain/test_economics.py` + API)                 | ✅ 19 passed (14 domain + 5 API)                                             |
+| `npm run validate:domain`                                                 | ✅ 357 passed                                                                |
+| `npm run lint:py`, `npm run typecheck:py`, `uv run ruff format --check .` | ✅ clean (mypy 120 source files; 179 files formatted)                        |
+| `npm run test:web`                                                        | ✅ 365 passed, 18 files (was 363; +2 economics)                              |
+| `npm run typecheck`, `npm run lint`, `npm run format:check`               | ✅ clean (contracts + web)                                                   |
+| `npm run contracts`                                                       | ✅ regenerated; a second run shows no further diff; `openapi.json` unchanged |
+| `npm run build` + `npm run budget`                                        | ✅ built; bundle within budget                                               |
+| `pytest -m live`, emulator/cloud                                          | ⏭ not run (instructed not to run live or cloud operations)                   |
+
+### How to preview locally
+
+Set a goal with per-measure costs (and optionally recurring), a `waterTariff`, a
+`contingencyRatio` and `funding` sources, then open the Plans page: each feasible plan shows
+its cost/benefit and a separate funding card. The same figures appear in the `compare_plans`
+and `explain_option` agent tools and in a finalized report.
+
+### Live vs. fixture-backed
+
+All figures are the person's own inputs; no external price, FX or funding source is called.
+No live or cloud dependency is involved.
+
+### Scientific / economic method — proposed
+
+The economic method (what counts as a saving, the contingency and funding treatment, and the
+flat, undiscounted 365-day spread) is **proposed until domain review**. The passing tests
+exercise the arithmetic and the boundary rules; they do not validate the economic
+assumptions. INR stays the only reviewed cost currency.
+
+### Remaining limitations
+
+- An option shows economics only once its measures carry cost estimates; recurring, tariff
+  and funding are optional, so net benefit, payback and the funding gap stay unknown (with
+  typed reasons) until the person supplies them.
+- No inflation, discounting or future price change is modelled; no FX conversion exists; INR
+  is the only reviewed cost currency.
+- Fine-grained construction milestones are not modelled — the card shows build time and
+  first-benefit timing only (the catalogue has no durations).
+- Avoided spending is zero wherever the baseline records no tanker deliveries.
+- The economics is stored in reports and proposal inputs, but no report or proposal screen
+  renders it until Prompt 20; the funding catalogue and the Make It Happen screen are
+  Prompts 18–20.
+
+### Next
+
+Prompt 14 (Vertex AI and usage controls) awaits an explicit instruction. Nothing was
+deployed, provisioned, billed or run against live/cloud services.
+
+## Prompt 14 — Server-only Vertex AI and usage controls · guide Prompt 14
+
+**Status:** Implemented and tested locally (fake provider) and on the Firestore emulator ·
+**Date:** 2026-10-12 (closed out 2026-10-12 with the pinned Node 24.21.0 / npm 11.19.0
+toolchain) · **ADR:** 0015
+
+A server-only model gateway for Gemini on Vertex AI with atomic Firestore usage
+reservations, bounded retries and agent calls, cancellation, reservation recovery, a global
+kill switch and invite controls, and a graceful UI fallback. **No live Vertex call,
+provisioning, deployment or billing was done**, and the gated live smoke was **not** run.
+Stopped after Prompt 14; Prompt 15 (ADK sessions) was not started.
+
+### Files changed / created
+
+- `services/backend/src/waterlens/domain/ai.py` **(new)** — pure AI policy, recorded model
+  metadata and **list prices** (`gemini-2.5-flash` default, `gemini-3.8-flash` latest;
+  `price_date` 2026-10-12), each with an official `source_url` and a `pricing_mode`
+  (pay-as-you-go, no PTU, no free tier); exact micro-USD cost (half to even), `AiLimits`
+  (proposed defaults), `UsageEstimate`/`UsageActual`, the `UsageReservation` (with an
+  `estimated` flag for conservatively settled holds) / `UsageDay` records with
+  reconcile-expiry and derived ids, and `AiStatus`/`AiUnavailableReason`.
+- `services/backend/src/waterlens/domain/ids.py` — `USAGE_RESERVATION`, `USAGE_DAY` id kinds.
+- `services/backend/src/waterlens/domain/jobs.py` — `AgentRun` gains
+  `calls_since_checkpoint`/`max_calls_before_checkpoint` and a `needs_continue` rule; the
+  tool-call cap default raised for the bounded run.
+- `services/backend/src/waterlens/application/ports.py` — `ModelRequest`/`ModelResponse`/
+  `ModelResponseUsage`, `ModelCallError(transient=…)`, `ModelCancelled`, the `ModelProvider`
+  port and `NoModelProvider`.
+- `services/backend/src/waterlens/application/repositories.py` — `Store` gains
+  `usage_reservations` (a `DueRepository`) and `usage_days`.
+- `services/backend/src/waterlens/adapters/store_memory.py`,
+  `store_firestore.py` — the two new collections (Firestore writes `_dueMs`/`_expiresAt`
+  from `reservation_expires_at`; automatic single-field index only, no new composite index).
+- `services/backend/src/waterlens/adapters/model_fake.py` **(new)** — deterministic
+  `FakeModelProvider` with scripted responses/errors and helpers.
+- `services/backend/src/waterlens/adapters/model_vertex.py` **(new)** — the live Vertex
+  adapter (lazy `google-genai`, ADC, refuses `demo-*`, transient/terminal error mapping,
+  thinking counted into output). The **only** place a live model is called.
+- `services/backend/src/waterlens/application/services/ai.py` **(new, `ai-gateway-1`)** — the
+  gateway: availability, run bounds + Continue checkpoint, atomic idempotent reserve, bounded
+  retry, cancellation, structured-output validation, settle/reconcile, and a **dispatch-aware
+  failure resolver** (`release` only when not dispatched; `settle_estimated` at worst-case
+  for dispatched-but-ambiguous failures, never replayed). A persisted `dispatched` marker
+  lets `reconcile_expired` release only crash-orphans proven never dispatched and settle the
+  rest conservatively; `reconcile_usage` resolves an estimate against evidenced actuals
+  (raising or lowering it). Reservations are sized to cover every permitted attempt.
+- `services/backend/src/waterlens/application/services/common.py` + `__init__.py` — `AiConfig`
+  on `Deps`; `AiGateway` built into `Services`.
+- `services/backend/src/waterlens/config.py` — fail-closed `WL_AI_*` settings (all off by
+  default; no budget → AI off), `ai_limits`, and `_ai_problems()` guard.
+- `services/backend/src/waterlens/adapters/factory.py` — builds `VertexModelProvider` **only**
+  in a pilot runtime with AI enabled, kill switch off and a budget; otherwise `NoModelProvider`.
+- `services/backend/src/waterlens/api/graphql/modules/ai.py` **(new)** + `schema.py` — the
+  read-only `aiStatus` query and `AiUnavailableReason`.
+- `packages/contracts/schema.graphql` + `apps/web/src/graphql/generated/*` — regenerated
+  (`npm run contracts`), adding `AiStatus` and `AiUnavailableReason`.
+- `apps/web/src/graphql/operations/ai.graphql` **(new)**, `queryKeys.ts` — the `AiStatus`
+  operation and query key.
+- `apps/web/src/features/planning/AgentPanel.tsx` — reads `aiStatus` and shows the matching
+  disabled / invite-only / no-budget / allowance-used / available state, always keeping "Use
+  Traditional mode"; planning is never blocked.
+- Tests: `tests/domain/test_ai.py` (11), `tests/test_ai_gateway.py` (20),
+  `tests/api/test_ai_graphql.py` (5), `tests/emulator/test_firestore_ai.py` (6, `-m emulator`),
+  `tests/live/test_vertex_ai_live.py` (1 gated, skipped);
+  `tests/graphql_harness.py` gained an `ai` config parameter;
+  `apps/web/src/features/planning/agentPanel.test.tsx` (new, 5) and an `AiStatus` handler in
+  `goals.test.tsx`.
+- Docs: ADR `docs/decisions/0015-ai-model-gateway.md`, `docs/domain/ai-gateway.md`,
+  `docs/build/implementation-status.md`, `docs/product/traceability.md`, this entry.
+
+### Behaviour implemented
+
+- **Availability (fail-closed):** AI is off unless enabled, with a provider available, kill
+  switch off, the caller invited (or open to all) and a budget configured; the daily request
+  and spend ceilings are enforced. Typed reasons: `DISABLED`, `NOT_INVITED`,
+  `NO_BUDGET_CONFIGURED`, `BUDGET_EXHAUSTED`.
+- **Atomic, idempotent reservations:** the reservation id derives from the caller's
+  `call_key`, so a replayed reserve returns the same hold and **never double-counts**; a
+  replay of an already-settled key is refused before the model is called. Settle and release
+  are idempotent on the status transition; the per-run call counter advances exactly once.
+- **Reservation covers every permitted attempt:** the hold is `max_attempts × (input +
+  max_output)` cost, where `max_attempts = transient retries + 1`, so a retried call can
+  never exceed its hold or overspend the budget.
+- **Reconciliation (conservative):** on success, settle charges the provider's **actual**
+  usage. On failure the gateway splits by whether the request was **dispatched**: a failure
+  **before dispatch** (pre-attempt cancellation) **releases** the hold (no billable usage
+  possible); a **dispatched but ambiguous** failure (timeout, cancellation raised after
+  dispatch, or transient errors that exhausted the retry budget) is **settled conservatively
+  at the reserved worst-case** with `estimated=True` — **never blindly released, never
+  replayed** — and left for later reconciliation.
+- **Crash recovery and reconciliation:** a `dispatched` flag is persisted **before** the
+  provider call, so `reconcile_expired` **releases only crash-orphans proven never
+  dispatched** and settles dispatched/uncertain ones conservatively. `reconcile_usage`
+  resolves an estimate against evidenced actuals and may **raise or lower** it — the design
+  never assumes actual usage can only be lower. Retention keeps an unresolved estimate (and
+  its idempotency guard) with no TTL until it is reconciled.
+- **Bounded retries and runs:** two transient retries; one active run per session; five calls
+  per run before a user Continue checkpoint, then an absolute cap that stops the run.
+- **Costs are estimates, not an invoice:** exact micro-USD, half to even; output price
+  includes thinking tokens; cached input and embeddings counted at recorded rates.
+- **Server-only safety:** the live adapter is built only in a pilot runtime with AI enabled
+  and a budget; local/test mode always use `NoModelProvider`/`FakeModelProvider`, so **no
+  local run can make a billable call**; the existing environment guards are untouched.
+- **Graceful fallback:** `aiStatus` + the Agent pane explain any unavailable state while the
+  workspace keeps working. Ordinary planning never touches the gateway.
+
+### Acceptance — point by point
+
+| Owner point                                             | Result    | Evidence                                                                                                                                                                                       |
+| ------------------------------------------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| No duplicate spending reservation                       | ✅ pass   | `test_a_replayed_call_key_never_reserves_or_spends_twice`, `test_reserving_the_same_key_twice_yields_one_hold` (one hold, request_count 1, provider called once)                               |
+| Budget rejection                                        | ✅ pass   | `test_budget_rejection_when_the_estimate_exceeds_the_ceiling` (model never called), `test_daily_request_limit_rejects_further_calls`                                                           |
+| Graceful UI fallback                                    | ✅ pass   | `agentPanel.test.tsx` (disabled/invite/budget/no-budget/available) + `test_ai_graphql.py::test_ordinary_planning_works_with_ai_disabled`                                                       |
+| Bounded transient retries                               | ✅ pass   | `test_two_transient_errors_are_retried_then_the_call_succeeds` (retries=2), `test_a_persistent_transient_error_settles_conservatively_not_released`, `test_a_terminal_error_is_not_retried_and_settles_conservatively` |
+| Cancellation before dispatch releases the hold          | ✅ pass   | `test_cancellation_before_dispatch_releases_the_hold_and_makes_no_charge` (RELEASED, no charge, provider not called)                                                                           |
+| Ambiguous dispatched failure stays conservative         | ✅ pass   | `test_cancellation_after_dispatch_settles_conservatively`, `test_a_persistent_transient_error_settles_conservatively_not_released` (SETTLED `estimated=True` at worst-case, never released, not replayed) |
+| Structured-output validation                            | ✅ pass   | `test_invalid_structured_output_is_rejected_but_billed` (VALIDATION_FAILED, hold still settled)                                                                                                |
+| Reservation recovery (dispatch-aware)                   | ✅ pass   | `test_crash_recovery_releases_only_a_hold_proven_never_dispatched`, `test_crash_recovery_conservatively_settles_a_dispatched_orphan`; emulator `test_reconcile_expired_releases_a_hold_proven_never_dispatched` / `..._conservatively_settles_a_dispatched_orphan` |
+| Reservation covers all permitted attempts               | ✅ pass   | `test_the_reservation_covers_every_permitted_dispatched_attempt`, `test_retries_cannot_overspend_the_budget`, domain `test_reservation_covers_every_permitted_dispatched_attempt`             |
+| Reconciliation may raise or lower an estimate           | ✅ pass   | `test_reconciliation_can_lower_an_overestimated_charge`, `test_reconciliation_can_raise_an_underestimated_charge`, emulator `test_reconcile_usage_resolves_an_estimate_and_then_applies_the_ttl` |
+| Retention preserves unresolved reconciliation records   | ✅ pass   | domain `test_retention_keeps_unresolved_records_and_ttls_resolved_ones`; emulator asserts no `_expiresAt` on an unresolved estimate                                                            |
+| Bounded agent calls / Continue checkpoint / kill switch | ✅ pass   | `test_a_run_pauses_at_the_continue_checkpoint_then_resumes`, `test_the_hard_cap_stops_a_run`, `test_only_one_run_is_active_per_session`, `test_kill_switch_disables_ai_everywhere`             |
+| Planning works when AI is unavailable                   | ✅ pass   | `test_ordinary_planning_works_with_ai_disabled`; the gateway is never on the planning path                                                                                                     |
+| One explicitly gated live smoke records model usage     | ⏭ not run | `tests/live/test_vertex_ai_live.py` (`-m live`, skipped unless `WL_LIVE_VERTEX_PROJECT`); not run per instruction                                                                              |
+
+### Checks run
+
+**Toolchain (close-out):** the pinned **Node 24.21.0 / npm 11.19.0** was used for every web
+check. No system Node change was made: `scripts/use-pinned-node.sh` downloads the official,
+checksum-verified 24.21.0 build (which ships npm 11.19.0 exactly) into a local cache and
+prints the `PATH` export; `eval "$(scripts/use-pinned-node.sh)"` selects it reproducibly.
+`engine-strict=true` stays on. (The phase-1 note about Homebrew Node 24.6.0 no longer
+applies.)
+
+| Command                                                           | Result                                                                                                                   |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `npm run test:py`                                                 | ✅ 893 passed, 139 deselected (adds 36 non-emulator AI tests: 11 domain + 20 gateway + 5 API; live smoke + 6 emulator deselected) |
+| AI subset                                                         | ✅ 36 passed (`tests/domain/test_ai.py` 11, `tests/test_ai_gateway.py` 20, `tests/api/test_ai_graphql.py` 5)             |
+| `npm run validate:domain`                                         | ✅ 368 passed (+1 AI domain source/pricing-mode test)                                                                   |
+| `uv run mypy src`, `uv run ruff check .`, `ruff format --check .` | ✅ clean (mypy 125 source files)                                                                                         |
+| `npm run test:web`                                                | ✅ 370 passed, 19 files                                                                                                  |
+| `npm run typecheck`, `npm run lint`                               | ✅ clean (contracts + web, pinned toolchain)                                                                             |
+| `npm run build`                                                   | ✅ built; bundle within budget                                                                                           |
+| `npm run test:emulator:py` (`-m emulator`)                        | ✅ 104 passed, incl. `tests/emulator/test_firestore_ai.py` (6): concurrent reservations never overspend, duplicate `call_key`s charge once, settlement + TTL, crash recovery, and Prompt 13 economics round-trip |
+| `pytest -m live`, cloud/provision/deploy/billing                  | ⏭ not run (instructed not to call live Vertex, provision, deploy or enable billing)                                      |
+
+### Close-out (2026-10-12) — point by point
+
+1. **Pinned toolchain, reproducible.** All web checks ran on **Node 24.21.0 / npm 11.19.0**
+   with `engine-strict=true`. `scripts/use-pinned-node.sh` downloads the official,
+   checksum-verified build into a local cache (no system change) and prints the `PATH`
+   export; `eval "$(scripts/use-pinned-node.sh)"` selects it. `npm ci`, typecheck, lint and
+   build all passed.
+2. **Firestore emulator tests.** `tests/emulator/test_firestore_ai.py` (8) exercises
+   `usageReservations`/`usageDays`: concurrent reservations never exceed the budget;
+   replayed and concurrent duplicate `call_key`s reserve and charge once; budget exhaustion;
+   settlement records actual usage and sets the retention TTL; `reconcile_expired` releases
+   an undispatched crash-orphan and conservatively settles a dispatched one; `reconcile_usage`
+   resolves an estimate and then the TTL applies. It also round-trips **Prompt 13 economics**
+   through Firestore. The full `-m emulator` suite is **106 passed**.
+3. **Ambiguous provider failures are conservative.** The gateway distinguishes
+   *not dispatched* (release — proven zero usage) from *dispatched but ambiguous*
+   (timeout / cancellation after dispatch / exhausted transient retries), which is
+   **settled at the reserved worst-case** with `estimated=True`, **never released and never
+   replayed**, pending reconciliation. Covered by
+   `test_cancellation_after_dispatch_settles_conservatively` and
+   `test_a_persistent_transient_error_settles_conservatively_not_released`. See the dedicated
+   verification below for the reservation sizing, crash-recovery and reconciliation invariants.
+4. **Official sources documented, access not claimed.** Each price in `domain/ai.py` records
+   a `source_url` (Vertex AI generative-AI pricing; model reference) and a `pricing_mode`
+   (pay-as-you-go per token, no PTU, no free tier), plus the token categories (input, output
+   incl. thinking, cached input, embedding). Every note states project access is
+   **UNVERIFIED**; no page or field claims this project has access.
+5. **AI stays disabled without an allowance.** No budget ⇒ `NO_BUDGET_CONFIGURED` ⇒ disabled;
+   the $5 is a *suggested* owner setting only. `test_no_spend_without_a_configured_budget`
+   now also asserts `start_run` is refused (`SERVICE_UNAVAILABLE`), so no run or call can be
+   dispatched without an explicit allowance.
+
+**Stopped after the close-out:** Prompt 15 was not started; no live Vertex call, provision,
+deploy or billing was done.
+
+### Conservative-accounting verification (2026-10-12)
+
+Verified the four accounting invariants and fixed the gaps found; no live/cloud work.
+
+1. **A hold covers all permitted dispatched attempts.** The reservation was one attempt's
+   worst case, so retries could overspend. Fixed: `UsageEstimate` gained `max_attempts`
+   (`= transient retries + 1`) and `reserved_micro_usd = max_attempts × per-attempt`.
+   `generate` sizes the hold with it, so a retried call can never exceed its hold. Tests:
+   domain `test_reservation_covers_every_permitted_dispatched_attempt`, gateway
+   `test_the_reservation_covers_every_permitted_dispatched_attempt`,
+   `test_retries_cannot_overspend_the_budget`.
+2. **Crash recovery releases only proven-never-dispatched holds.** The sweep released every
+   expired `RESERVED` hold, which could wrongly discard a dispatched (billed) call. Fixed: a
+   `dispatched` flag is persisted on the reservation **before** the provider call;
+   `release_expired` became `reconcile_expired`, which **releases only `dispatched=false`**
+   orphans and **conservatively settles** dispatched/uncertain ones (and `generate` never
+   replays an already-dispatched hold). Tests:
+   `test_crash_recovery_releases_only_a_hold_proven_never_dispatched`,
+   `test_crash_recovery_conservatively_settles_a_dispatched_orphan`,
+   `test_a_dispatched_hold_is_never_replayed_by_a_later_call`, and the two emulator
+   `reconcile_expired` tests.
+3. **Retention preserves unresolved reconciliation records.** An `estimated` settle was given
+   the 7-day TTL, risking deletion of a record still awaiting reconciliation. Fixed:
+   `reservation_expires_at` returns `None` (no TTL) for a `RESERVED` hold **and** an
+   unresolved `estimated` settle, so the record and its idempotency guard survive until
+   reconciled. Tests: domain `test_retention_keeps_unresolved_records_and_ttls_resolved_ones`;
+   emulator asserts no `_expiresAt` on an unresolved estimate, then present after reconcile.
+4. **Reconciliation may raise or lower an estimate.** Added `reconcile_usage(reservation_id,
+   evidence)`: it resolves an `estimated` hold against evidenced actuals, moving the day's
+   settled total by the **signed** delta (up or down) and clearing `estimated`. Docs that
+   claimed an estimate "can only lower" were corrected. Tests:
+   `test_reconciliation_can_lower_an_overestimated_charge`,
+   `test_reconciliation_can_raise_an_underestimated_charge`,
+   `test_reconciliation_is_a_no_op_on_a_clean_or_already_resolved_settle`, and emulator
+   `test_reconcile_usage_resolves_an_estimate_and_then_applies_the_ttl`.
+
+Results: backend `pytest` **902 passed, 141 deselected**; `-m emulator` **106 passed** (AI
+file 8); `mypy`, `ruff check`, `ruff format --check` clean. `reconcile_usage` is an offline
+mechanism (evidence passed in); wiring it to a real billing export is a later prompt.
+
+### Live-smoke prerequisites (for a later, explicitly authorized run)
+
+Documented in ADR 0015. In short: a real GCP project with the Vertex AI API enabled and
+billing attached; ADC for a **dedicated runtime service account** with `roles/aiplatform.user`
+(no user credential, no API key); the chosen model enabled for the project
+(`gemini-2.5-flash` is restricted for new projects, else set `WL_LIVE_VERTEX_MODEL`); the
+`google-genai` SDK installed; and `WL_LIVE_VERTEX_PROJECT` set. Nothing here provisions,
+deploys, enables billing or spends.
+
+### Scientific / configuration method — proposed
+
+The limits (100 requests/day, one run/session, 5 calls/run before Continue, 2 transient
+retries, per-task output caps) and the $5 daily allowance are **proposed defaults requiring
+the owner's setup choice**, not permission to spend. Passing tests exercise the control logic
+and the cost arithmetic, not the choice of limits.
+
+### Remaining limitations
+
+- No live Vertex call, provisioning, deployment or billing was done; **project access, quota
+  and model enablement are unverified** against a real project. The recorded prices are
+  published **list prices** read from the official Vertex AI pricing and model-reference
+  pages on 2026-10-12 (`source_url`/`pricing_mode` in `domain/ai.py`).
+- The agent conversation and tools that drive model calls are Prompts 15–17; `aiStatus` and
+  the gateway are the only AI surface today.
+- Conservatively settled holds (`estimated=True`, from dispatched-but-ambiguous failures)
+  **overestimate on purpose** and remain unresolved until reconciled. `reconcile_usage` can
+  resolve them against evidenced actuals (**raising or lowering** the charge), but it is an
+  offline mechanism today — **wiring it to a real provider billing export is a later prompt**,
+  so until then such holds stay at the worst case. Nothing releases or replays them.
+- The `UsageDay` daily counter is a single document; heavy concurrent AI usage would need
+  sharding (the emulator concurrency test runs at the proposed scale, not sharded scale).
+- Non-INR economics support remains outstanding (recorded for Prompt 13): other currencies are
+  only reported-as-not-applied.
+
+### Next
+
+Prompt 15 (ADK agent sessions on Firestore) is implemented below. Nothing was deployed,
+provisioned, billed or run against live/cloud services.
+
+---
+
+## Prompt 15 — ADK conversation session persistence · guide Prompt 15
+
+**Status:** Complete (local/emulator, fake inference) · **Date:** 2026-10-12 · **ADR 0016**
+
+### Files changed / created
+
+- `services/backend/pyproject.toml` — declared **`google-adk==2.11.0`** and
+  **`google-genai>=2.29,<3`** as **runtime** dependencies (`[project].dependencies`), since the
+  deployed agent runtime constructs the adapters that import them; ADK pulls
+  `google-genai==2.29.0`. (Close-out item 1 moved these out of the dev group.)
+- `src/waterlens/domain/conversations.py` — conversation records: `ConversationSession`
+  (session-scoped state, monotonic `next_seq` cursor, `retained_from_seq`, idle `expires_at`;
+  `version` is the ADK state-revision/stale-writer marker), `ConversationEvent` (keyed by ADK
+  event id, dumped payload), `ScopedState` (app/user shared), `ToolInvocation` (replay guard),
+  `ConversationLease`; id helpers and `conversation_doc_id` (tenant-scoped doc id).
+- `src/waterlens/application/conversations.py` — the `ConversationStore` port, `AppendRequest`/
+  `AppendOutcome`, `StaleConversation`/`ConversationNotFound`, and the shared pure
+  `advance_session`.
+- `src/waterlens/adapters/conversation_memory.py`, `conversation_firestore.py` — the two store
+  adapters with identical atomic semantics (Firestore: `agentSessions/{docId}`, bounded
+  `events` subcollection, `agentScopedState`, `agentSessionLeases`, `agentToolGuards`).
+- `src/waterlens/adapters/adk_session.py` — `AdkSessionService(BaseSessionService)` over the
+  port, mirroring the verified ADK semantics.
+- `src/waterlens/adapters/adk_gateway_llm.py` — `GatewayLlm(BaseLlm)` routing every model call
+  through `AiGateway.complete_text`.
+- `src/waterlens/application/services/ai.py` — extracted `_dispatch`; added `complete_text`
+  (free-text, same policy) and `TextResult`; structured `generate` unchanged in behaviour.
+- `src/waterlens/adapters/model_vertex.py` — removed a now-unused `import-untyped` ignore
+  (google-genai 2.29.0 ships types).
+- `src/waterlens/domain/ids.py` — `AGENT_SESSION`, `SCOPED_STATE`, `USAGE_CALL_KEY` id kinds.
+- `src/waterlens/domain/ai.py` + `application/services/ai.py` + the store adapters — a durable
+  **`UsageCallKey` tombstone** (`usageCallKeys` collection, 30-day TTL) written on settle/
+  release so paid-call dedup survives reservation cleanup, independent of conversation events
+  (close-out item 2).
+- `infra/firebase/firestore.indexes.json` — one composite index for `list_sessions`
+  (`app_name`[, `user_id`], `_lastEventMs`); `agentSessions._expiresAt`/`state` indexing-exempt.
+- Docs: `docs/decisions/0016-adk-conversation-sessions.md`, `docs/domain/adk-sessions.md`
+  (verified interface), this entry, `docs/build/implementation-status.md`,
+  `docs/product/traceability.md`.
+- Tests: `tests/adk/test_session_contract.py` (15, +1 trimmed-event revision rule),
+  `tests/adk/test_gateway_llm.py` (9, +3 crash/replay-after-cleanup/trimming),
+  `tests/adk/test_tool_replay.py` (9), `tests/adk/test_runner_local.py` (3, **actual ADK
+  `Runner`**), `tests/emulator/test_firestore_adk_sessions.py` (11),
+  `tests/emulator/test_firestore_ai.py` (+2 tombstone persistence + replay-after-deletion).
+
+### Behaviour implemented
+
+- **Verified ADK interface** read from the installed `google-adk==2.11.0`:
+  `BaseSessionService` is abstract with keyword-only session methods; `DatabaseSessionService`
+  is **SQL-only** and cannot back Firestore (confirmed). We subclass `BaseSessionService` and
+  mirror its semantics (state-scope split via ADK's `extract_json_safe_state_delta`, temp not
+  persisted, `(timestamp desc, id desc)` ordering + `num_recent_events`/`after_timestamp`,
+  `_storage_update_marker` staleness; `Event` JSON round-trips).
+- **Persistence**: bounded event subcollection (one doc per event), durable monotonic `seq`
+  cursor surviving trimming, session-`version` state revision, idle-TTL expiry, per-session
+  leases serializing concurrent runs across instances.
+- **Authoritative planning state** stays separate (a `planning_session_id` reference, never a
+  copy); the engine never reads conversation state.
+- **No replay of completed side-effecting tools** via a durable `ToolInvocation` guard.
+- **Gateway routing**: `GatewayLlm` has no model client; it cannot bypass reservations, the
+  retry limit or the kill switch. Verified end to end with the **actual ADK `Runner`** over
+  fake inference (`tests/adk/test_runner_local.py`): events and `output_key` state persist
+  through the session service, a restart recovers and continues the conversation, and the kill
+  switch stops the agent from reaching a model with no spend (close-out item 5).
+- **Replay window / dedup** (close-out items 2 & 4): **event** dedup is by id only within the
+  bounded retained window — trimmed ids are not kept, so beyond the window the enforceable rule
+  is the monotonic session revision (a replay from an earlier state is `StaleSessionError`); we
+  no longer claim "forever" id dedup. **Paid-call** dedup is on the gateway `call_key` through
+  the `usageReservations` doc (7-day retention; unresolved estimates kept with no TTL) **and** a
+  durable `usageCallKeys` tombstone (30-day retention), so a replay is refused even after the
+  reservation is cleaned up — independent of conversation events.
+
+### Checks run and results
+
+- `uv run mypy src` — **clean** (131 source files).
+- `uv run ruff check src tests` and `ruff format --check src tests` — **clean**.
+- Deployment-style install (close-out item 1): a fresh venv with **runtime deps only** (no dev
+  group) imports and initializes `AdkSessionService` and `GatewayLlm`; `google.adk` and
+  `google.genai` resolve, while `pytest`/`ruff` are absent.
+- `uv run pytest` (non-emulator) — **938 passed, 154 deselected** (was 931; +7 close-out:
+  3 crash/replay gateway tests, 1 trimmed-event revision test, 3 actual-`Runner` tests).
+- `npm run test:emulator:py` under the pinned Node 24.21.0 / npm 11.19.0 and the Firebase
+  Firestore+Auth emulators (`demo-waterlens`) — **119 passed** (was 117; +2 tombstone
+  persistence + replay-after-deletion), including the Firestore index-coverage test.
+
+### Remaining limitations / rollout block
+
+- **Rollout blocked (documented, ADR 0016 §limitation):** verified in-memory, on the Firestore
+  emulator, and with the **actual ADK `Runner` run locally** — all with **fake inference**. **No
+  live model has ever been called** and nothing has run against a real Google Cloud project. The
+  conversation feature stays disabled until a later authorized prompt runs against a real
+  project and authorizes the gateway's live Vertex smoke (ADR 0015), and the Firestore TTL
+  policies for `usageCallKeys._expiresAt` (30-day dedup window) and `agentSessions._expiresAt`
+  are provisioned.
+- **Residual dedup window:** a replay of an identical paid `call_key` more than 30 days later
+  (after both the reservation and the tombstone are deleted) is not deduped; a bounded agent
+  run never survives that long, so this is a documented window, not an operational path.
+- Scientific/economic/limit rules remain **proposed**; INR is still the only reviewed cost
+  currency.
+
+### Next
+
+Prompt 16 (ADK agent tools) is implemented below. Nothing was deployed, provisioned, billed or
+run against live/cloud services; no live Vertex call was made.
+
+---
+
+## Prompt 16 — ADK agent tools over the authorized services · guide Prompt 16
+
+Implemented the typed tool layer the planning agent uses, over the **same application services
+as GraphQL**, with identity taken only from the verified run context, bounded execution, and
+meaningful/irreversible actions **prepared** for an explicit UI confirmation rather than
+performed. See ADR 0017 and `docs/domain/agent-tools.md`. **Fake inference only** — the agent
+loop is not wired to a model, no live Vertex call, no provisioning, deployment or billing.
+
+### What was built
+
+- **Run lifecycle (`domain/jobs.py`, `application/services/ai.py`, `config.py`):** `AgentRun`
+  gained a wall-clock `expires_at`, a durable monotonic `step_seq` (committed tool steps) and
+  `max_tool_steps`, plus `AgentStopReason.STEP_BUDGET`/`EXPIRED`. `start_run` sets `expires_at`;
+  the gateway `_dispatch` refuses an expired run (defence in depth). New `AiLimits`/`WL_AI_*`
+  knobs: `run_ttl_seconds`, `max_tool_steps_per_run`, `max_tool_fanout`, `max_tool_repeats`.
+- **Agent package (`application/agent/`):** `context.RunContext` (identity from the verified
+  `ctx` + the run's `session_id`); `registry` (30 typed tools — read / reversible-edit /
+  prepare-only — reusing the services and the GraphQL tools' formatters); `actions`
+  (`PreparedAction`, `AgentActionKind`, `ConfirmActionInput`, version/parameter-bound
+  `confirmation_token`); `runtime.AgentToolRuntime` (refuse identity args, authorize + claim a
+  monotonic step, bound counts/fan-out/loops, dispatch) and `runtime.AgentActionService.confirm`
+  (token-integrity + version-freshness checks, then the authorized service).
+- **ADK adapter (`adapters/adk_tools.py`):** each tool is a real `google-adk` `BaseTool` with a
+  typed declaration and a server-bound identity; refusals are returned to the model as data.
+
+### Acceptance (adversarial, fake inference)
+
+`tests/agent/test_agent_tools.py` (23) + `tests/agent/test_adk_tools.py` (3): identity-override
+arguments (incl. nested) refused before any step; a run driven only by its owner; forged
+report/project/community ids → `NOT_FOUND`; ambiguous location clarified and nothing chosen;
+prompt-injection text treated as data; unknown/malformed/extra arguments rejected; replayed/old
+steps refused from the durable cursor; identical calls bounded as a loop; expired runs refused
+and **stopped without a TTL sweep**; tool-step budget and fan-out bounded; PREPARE tools
+non-mutating and confirmation-required; an explicit confirmation executes through the authorized
+service; **stale and tampered confirmations refused**; confirmation still subject to the
+service's own permission (permanent account, coordinator) and compare-and-set; ADK adapter
+exposes every tool with a typed declaration and surfaces refusals as data. The gateway, session
+isolation and durable replay protections of Prompts 14–15 are preserved.
+
+### Quality gate
+
+- `uv run mypy src` — **clean, 137 source files**.
+- `uv run ruff check src tests` and `uv run ruff format --check src tests` — **clean**.
+- `uv run pytest` (non-emulator) — **964 passed, 156 deselected** (was 938; +26 agent tests;
+  the regenerated GraphQL schema contract — two new `AgentStopReason` values — passes).
+- `npm run contracts` regenerated `packages/contracts/schema.graphql` and the web generated
+  types (two added enum members); `npm -w apps/web run typecheck` — **clean**.
+- Emulator (pinned Node 24.21.0 / npm 11.19.0, Firestore+Auth, `demo-waterlens`) — **120 passed**
+  (119 before + one new lease-recovery test, see the close-out below). The lease-concurrency
+  flake observed during the Prompt 16 run has been root-caused and fixed in the close-out.
+
+### Close-out — lease-concurrency flake root cause and fix (2026-10-13)
+
+During the Prompt 16 run, `tests/emulator/test_firestore_adk_sessions.py::test_concurrent_runs_
+are_serialized_by_a_lease` flaked under full-suite contention. Reproduced reliably by hammering
+the 5-way `acquire_lease` contention against the emulator; the exact failure was
+`google.api_core.exceptions.Aborted: 409 Transaction lock timeout` repeated until the raw
+Firestore client raised `ValueError: Failed to commit transaction in 5 attempts.`
+
+- **Root cause — transaction handling, not shared state or lease logic.** The lease logic
+  yields exactly one winner, and each test resets the database (no shared state). The problem
+  was that `FirestoreConversationStore` ran every method on a raw `self._client.transaction()`
+  with the client's **default 5-attempt** budget and **no outer backoff**. The main
+  `FirestoreStore.transaction()` already handles exactly this (deliberate contention on one hot
+  document) with `TRANSACTION_ROUNDS` rounds of jittered backoff that "spread out instead of
+  exhausting every contender's retries together", catching client-level retry exhaustion and the
+  retryable gRPC statuses and converting a persistent conflict into a clean `SERVICE_UNAVAILABLE`
+  (`_busy()`). The conversation store simply bypassed that policy, so under the emulator's
+  pessimistic lock-timeout contention the losing contenders exhausted their 5 attempts and leaked
+  a raw `ValueError`.
+- **Fix.** Added `FirestoreConversationStore._run(...)` that runs every one of its transactions
+  (session create, event append, **lease acquire/release**, tool begin/complete) under the same
+  `TRANSACTION_ROUNDS` × `MAX_TRANSACTION_ATTEMPTS` policy with jittered backoff as
+  `FirestoreStore`, reusing the same constants and `_busy()`. No assertion was weakened, no test
+  skipped or removed, and no timeout was increased — the fix applies the project's established
+  contention policy consistently. A domain error the transaction function raises still propagates
+  unchanged (so stale-writer / already-exists semantics are untouched).
+- **Verification (fake inference, emulator):**
+  - the 5-way contention repro ran **120 iterations with 0 failures** (it failed reliably before
+    the fix);
+  - `test_firestore_adk_sessions.py` ran **15× in a row, all passed**;
+  - the full emulator suite ran **3×, 120 passed each time**;
+  - the three required properties are covered: concurrent runs cannot both hold an active lease
+    (`test_concurrent_runs_are_serialized_by_a_lease`, exactly one winner); an expired lease is
+    recovered and an **old holder cannot release the new holder's lease** (new emulator test
+    `test_an_expired_lease_recovers_and_an_old_holder_cannot_release_the_new_one`); a repeated
+    confirmation cannot execute a prepared action twice (new agent tests
+    `test_repeating_a_compare_and_set_confirmation_cannot_execute_twice` — the second submission
+    is stale/refused — and `test_repeating_an_idempotent_confirmation_does_not_create_twice` —
+    the idempotency key returns the first result).
+- **Count change 119 → 118 → 120.** The Prompt 16 report recorded 118 passed because the single
+  flaky lease test failed on that run (119 collected − 1 flaky failure = 118 passed, 1 failed; no
+  skips, no removals). After the fix the flake is gone and one new lease-recovery test was added,
+  so the emulator suite is now **120 passed** (119 + 1). Non-emulator is **966 passed, 157
+  deselected** (964 + 2 new agent tests; the new emulator test is deselected outside the emulator
+  marker).
+
+### Remaining limitations / rollout block
+
+- **Rollout blocked (ADR 0017 / ADR 0016):** verified in-memory with the actual ADK tool
+  interface and **fake inference only**. The agent loop is not wired to a model, no live Vertex
+  call is made, nothing runs against a real project. Exposing start/continue/confirm via GraphQL
+  and letting the ADK `Runner` drive these tools is a later authorized prompt.
+- **No GraphQL surface yet** for agent runs/confirmations (server-side only), by design for this
+  prompt.
+- Scientific/economic/limit rules remain **proposed**; INR is still the only reviewed currency.
+
+### Next
+
+Prompt 17 awaits an explicit instruction. Nothing was deployed, provisioned, billed or run
+against live/cloud services; no live Vertex call was made.

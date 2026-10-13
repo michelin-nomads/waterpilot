@@ -192,15 +192,78 @@ const CONTEXT: ImpactContextFieldsFragment = {
   ],
 };
 
+type Economics = NonNullable<ComparedOptionFieldsFragment['economics']>;
+
+const m = (minor: string, currency = 'INR') => ({ minorUnits: minor, currency, exponent: 2 });
+const mr = (low: string, high: string) => ({ low: m(low), high: m(high) });
+
+function econ(over: Partial<Economics> = {}): Economics {
+  return {
+    engineVersion: 'economics-1',
+    currency: 'INR',
+    capex: mr('10000000', '12000000'),
+    contingency: { ratio: '0.1', amount: mr('1000000', '1200000') },
+    upfrontTotal: mr('11000000', '13200000'),
+    recurringAnnual: mr('500000', '600000'),
+    recurringReason: null,
+    avoidedTankerAnnual: mr('1576800000', '1752000000'),
+    avoidedReason: null,
+    netAnnual: mr('1576200000', '1751500000'),
+    payback: {
+      outcome: 'WITHIN_HORIZON',
+      optimisticDays: 2,
+      pessimisticDays: 3,
+      note: 'Costs are recovered within the planning horizon even at your pessimistic estimates.',
+    },
+    horizon: {
+      days: 3650,
+      netPositive: true,
+      reason: null,
+      net: mr('29466670', '81333330'),
+      avoided: mr('15768000000', '17520000000'),
+      recurring: mr('5000000', '6000000'),
+    },
+    funding: {
+      totalCost: mr('11000000', '13200000'),
+      approved: m('4000000'),
+      candidate: m('9000000'),
+      fullyFunded: false,
+      gap: mr('7000000', '9200000'),
+      lines: [
+        {
+          label: 'District grant',
+          amount: m('4000000'),
+          status: 'APPROVED',
+          counts: true,
+          applicable: true,
+        },
+        {
+          label: 'Hoped CSR',
+          amount: m('9000000'),
+          status: 'PROPOSED',
+          counts: false,
+          applicable: true,
+        },
+      ],
+      note: 'Approved funding does not yet cover the highest cost estimate; the gap is the cost still to find. Unapproved funding is not counted towards it.',
+    },
+    assumptions: ['No future inflation or price change is assumed; annual figures are flat.'],
+    notes: [],
+    ...over,
+  };
+}
+
 function option(
   id: string,
   rank: number,
   name: string,
   ids: string[],
   flags: ImpactFindingFieldsFragment[] = [],
+  economics: Economics | null = null,
 ): ComparedOptionFieldsFragment {
   return {
     impact: impact(id, ids, flags),
+    economics,
     id,
     rank,
     name,
@@ -227,6 +290,7 @@ function option(
       waterLow: n('324000'),
       waterHigh: n('405000'),
       cost: null,
+      recurring: null,
       buildDays: null,
       effects: [
         {
@@ -349,13 +413,18 @@ const stub: AxiosAdapter = async (config: InternalAxiosRequestConfig) => {
   return { data, status: 200, statusText: 'OK', headers: {}, config };
 };
 
-function reply(c: Comparison, scenario = NO_SCENARIO) {
+function reply(
+  c: Comparison,
+  scenario = NO_SCENARIO,
+  selectedPlanStatus: 'NONE' | 'CURRENT' | 'IMPACT_CHANGED' | 'NOT_CURRENT' | 'LEGACY' = 'NONE',
+) {
   return {
     data: {
       planningSession: {
         id: 'ses_1',
         inputsRevision: 1,
-        selectedPlanOptionId: null,
+        selectedPlanOptionId: selectedPlanStatus === 'NONE' ? null : 'opt_a',
+        selectedPlanStatus,
         planComparison: c,
         scenarioComparison: scenario,
       },
@@ -612,6 +681,108 @@ describe('PlansPage', () => {
       expect(sessions.applied.at(-1)?.patch).toEqual({ selectedPlanOptionId: 'opt_b' }),
     );
     expect(await screen.findByRole('button', { name: 'Chosen plan' })).toBeDisabled();
+  });
+
+  it('lets the user continue once a plan is chosen and still current', async () => {
+    handlers.PlanComparison = () => reply(comparison(), NO_SCENARIO, 'CURRENT');
+    renderPlans({ goal: GOAL, inputsRevision: 1, selectedPlanOptionId: 'opt_a' });
+    expect(await screen.findByRole('link', { name: /continue to funding/i })).toHaveAttribute(
+      'href',
+      '/funding',
+    );
+    expect(screen.queryByRole('button', { name: /choose again/i })).not.toBeInTheDocument();
+  });
+
+  it('blocks continuing and asks to re-choose when the chosen plan was reassessed', async () => {
+    handlers.PlanComparison = () => reply(comparison(), NO_SCENARIO, 'IMPACT_CHANGED');
+    const sessions = renderPlans({ goal: GOAL, inputsRevision: 1, selectedPlanOptionId: 'opt_a' });
+    sessions.options.set('opt_a', 1); // the plan is still a current option, just reassessed
+    const notice = (await screen.findByText(/needs a fresh look before you continue/i)).closest(
+      '[data-notice]',
+    )!;
+    expect(notice).toHaveAttribute('data-notice', 'caution');
+    expect(notice).toHaveTextContent(/changed its wider-system impact/i);
+    // Cannot continue with a stale selection.
+    expect(screen.queryByRole('link', { name: /continue to funding/i })).not.toBeInTheDocument();
+    // Re-choosing stores the current assessment through the session.
+    fireEvent.click(within(notice as HTMLElement).getByRole('button', { name: /choose again/i }));
+    await waitFor(() =>
+      expect(sessions.applied.at(-1)?.patch).toEqual({ selectedPlanOptionId: 'opt_a' }),
+    );
+  });
+
+  it('blocks continuing and asks to pick again when the chosen plan is no longer an option', async () => {
+    handlers.PlanComparison = () => reply(comparison(), NO_SCENARIO, 'NOT_CURRENT');
+    renderPlans({ goal: GOAL, inputsRevision: 1, selectedPlanOptionId: 'opt_a' });
+    const notice = (await screen.findByText(/no longer one of the current options/i)).closest(
+      '[data-notice]',
+    )!;
+    expect(notice).toHaveAttribute('data-notice', 'caution');
+    expect(screen.queryByRole('link', { name: /continue to funding/i })).not.toBeInTheDocument();
+    // There is no stored option to re-choose; the person must pick from the list.
+    expect(screen.queryByRole('button', { name: /choose again/i })).not.toBeInTheDocument();
+  });
+
+  it('shows costs, payback and a funding gap kept separate from cost', async () => {
+    handlers.PlanComparison = () =>
+      reply(
+        comparison({
+          options: [
+            option('opt_a', 1, 'Water-efficient fixtures', ['efficient_fixtures'], [], econ()),
+          ],
+        }),
+      );
+    renderPlans();
+    const list = await screen.findByRole('list', { name: 'Feasible plans' });
+    const card = within(list)
+      .getAllByRole('listitem')
+      .filter((li) => li.dataset.optionId)[0]!;
+    const economics = within(card).getByTestId('economics');
+    // Upfront cost includes the person's contingency; nothing invented.
+    expect(within(economics).getByTestId('econ-upfront')).toHaveTextContent(
+      '₹1,10,000 to ₹1,32,000',
+    );
+    expect(within(economics).getByText(/includes 10% contingency you set/)).toBeInTheDocument();
+    // Payback is explicit; the funding gap is separate and not covered by unapproved money.
+    expect(within(economics).getByText('Pays back within the horizon')).toBeInTheDocument();
+    const gap = within(economics).getByTestId('econ-gap');
+    expect(gap).toHaveTextContent('₹70,000 to ₹92,000');
+    expect(within(gap).getByText('Not fully funded')).toBeInTheDocument();
+    const sources = within(economics).getByRole('list', { name: 'Declared funding sources' });
+    const lines = within(sources).getAllByRole('listitem');
+    expect(lines[0]).toHaveAttribute('data-funding-counts', 'true');
+    expect(lines[1]).toHaveAttribute('data-funding-counts', 'false');
+    expect(lines[1]).toHaveTextContent(/Proposed/);
+  });
+
+  it('reports a tariff in another currency without converting it', async () => {
+    handlers.PlanComparison = () =>
+      reply(
+        comparison({
+          options: [
+            option(
+              'opt_a',
+              1,
+              'Water-efficient fixtures',
+              ['efficient_fixtures'],
+              [],
+              econ({
+                avoidedTankerAnnual: null,
+                avoidedReason:
+                  'The tariff is in USD but the plan’s costs are in INR; it is not applied and never converted.',
+                netAnnual: null,
+                payback: null,
+              }),
+            ),
+          ],
+        }),
+      );
+    renderPlans();
+    const list = await screen.findByRole('list', { name: 'Feasible plans' });
+    const economics = within(within(list).getAllByRole('listitem')[0]!).getByTestId('economics');
+    expect(within(economics).getByText(/never converted/)).toBeInTheDocument();
+    // Costs are still shown even when the tariff cannot be applied.
+    expect(within(economics).getByTestId('econ-upfront')).toHaveTextContent('₹1,10,000');
   });
 
   it('explains why no plan is shown instead of inventing one', async () => {

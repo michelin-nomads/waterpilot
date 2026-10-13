@@ -21,6 +21,7 @@ from strawberry.tools import merge_types
 
 from waterlens.api.graphql.modules import (
     accounts,
+    ai,
     communities,
     funding,
     goals,
@@ -53,6 +54,7 @@ _MODULES = (
     tracking,
     jobs,
     accounts,
+    ai,
 )
 
 Query = merge_types("Query", tuple(m.Query for m in _MODULES if hasattr(m, "Query")))

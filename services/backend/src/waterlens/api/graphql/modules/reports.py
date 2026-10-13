@@ -6,6 +6,7 @@ import strawberry
 
 from waterlens.api.graphql.context import Info, attempt, call
 from waterlens.api.graphql.modules.jobs import Job
+from waterlens.api.graphql.modules.options import OptionEconomics
 from waterlens.api.graphql.modules.planning import Area, Goal, ImpactAssessment
 from waterlens.api.graphql.scalars import UtcDateTime
 from waterlens.api.graphql.types_common import (
@@ -72,6 +73,10 @@ class Report:
         description="The chosen option's impact assessment, copied at finalization with its "
         "provenance; null for reports finalized before it existed."
     )
+    economics: OptionEconomics | None = strawberry.field(
+        description="The chosen option's economics, copied at finalization (ADR 0014); null "
+        "for reports finalized before it existed."
+    )
     finalized_at: UtcDateTime
     archived_at: UtcDateTime | None
     created_at: UtcDateTime
@@ -91,6 +96,7 @@ class Report:
             plan_option_id=strawberry.ID(r.plan_option_id),
             plan_name=r.plan_name,
             impact=ImpactAssessment.of(r.impact) if r.impact else None,
+            economics=OptionEconomics.of(r.economics) if r.economics else None,
             finalized_at=UtcDateTime(r.finalized_at),
             archived_at=UtcDateTime(r.archived_at) if r.archived_at else None,
             created_at=UtcDateTime(r.created_at),

@@ -16,6 +16,7 @@ import {
   STATUS,
   TIMING_LABEL,
 } from './plansFormat';
+import { EconomicsCard } from './EconomicsCard';
 import styles from './Plans.module.scss';
 import { ImpactContextPanel, OptionImpact } from './WiderImpactView';
 
@@ -92,6 +93,7 @@ function OptionCard({
                 ? formatRange(m.waterLow, m.waterHigh, 'LITRES_PER_DAY')
                 : 'effect not known'}
               {m.cost ? `, ${formatMoneyRange(m.cost)}` : ''}
+              {m.recurring ? `, ${formatMoneyRange(m.recurring)}/yr to run` : ''}
               {m.buildDays ? `, ${formatDays(m.buildDays)}` : ''}
               {m.effects.length > 0 && (
                 <ul className={styles.list} aria-label={`What ${m.name} is computed from`}>
@@ -111,6 +113,7 @@ function OptionCard({
           supplies none.
         </p>
       </div>
+      {option.economics && <EconomicsCard economics={option.economics} />}
       <OptionImpact impact={option.impact} />
       <Accordion
         items={[

@@ -96,8 +96,27 @@ export type AgentStopReason =
   | 'COMPLETED'
   | 'DAILY_BUDGET'
   | 'ERROR'
+  | 'EXPIRED'
+  | 'STEP_BUDGET'
   | 'TOKEN_BUDGET'
   | 'TOOL_BUDGET';
+
+export type AiStatus = {
+  /** Whether AI help can be offered right now. Planning works regardless. */
+  available: Scalars['Boolean']['output'];
+  budgetConfigured: Scalars['Boolean']['output'];
+  dailyRequestLimit: Scalars['Int']['output'];
+  modelId: Scalars['String']['output'];
+  reason?: Maybe<AiUnavailableReason>;
+  requestsRemaining: Scalars['Int']['output'];
+  suggestedDailyBudgetUsd: Scalars['String']['output'];
+};
+
+export type AiUnavailableReason =
+  | 'BUDGET_EXHAUSTED'
+  | 'DISABLED'
+  | 'NOT_INVITED'
+  | 'NO_BUDGET_CONFIGURED';
 
 export type ArchiveCommunityInput = {
   expectedVersion: Scalars['Int']['input'];
@@ -415,6 +434,8 @@ export type CommunityStatus =
 export type ComparedOption = {
   buildDays?: Maybe<DayRange>;
   cost?: Maybe<MoneyRange>;
+  /** Costs, avoided tanker spending, net benefit, payback and funding (ADR 0014); null when the option has no cost estimate. */
+  economics?: Maybe<OptionEconomics>;
   firstBenefit: BenefitTiming;
   id: Scalars['ID']['output'];
   /** Wider-system impact, shown before you choose (ADR 0013). */
@@ -729,6 +750,27 @@ export type FundingSchemeConnection = {
   pageInfo: PageInfo;
 };
 
+/** A declared source of money; only approved funding counts. */
+export type FundingSource = {
+  amount: Money;
+  label: Scalars['String']['output'];
+  note: Scalars['String']['output'];
+  status: FundingStatus;
+};
+
+/** A declared source of money; only approved funding counts. */
+export type FundingSourceInput = {
+  amount: MoneyInput;
+  label: Scalars['String']['input'];
+  note?: Scalars['String']['input'];
+  status: FundingStatus;
+};
+
+export type FundingStatus =
+  | 'APPROVED'
+  | 'EXPECTED'
+  | 'PROPOSED';
+
 export type GenerateProposalInput = {
   idempotencyKey: Scalars['String']['input'];
   reportId: Scalars['ID']['input'];
@@ -751,8 +793,12 @@ export type Goal = {
   budget?: Maybe<Money>;
   /** A custom goal's wording was confirmed. */
   confirmed: Scalars['Boolean']['output'];
+  /** A contingency share you add to cost estimates; applied only when set. */
+  contingencyRatio?: Maybe<Scalars['DecimalString']['output']>;
   description: Scalars['String']['output'];
   estimates: Array<MeasureEstimate>;
+  /** Declared sources of money; only approved funding counts towards affordability. */
+  funding: Array<FundingSource>;
   /** Planning horizon over which benefits count (separate from build time). */
   horizonDays?: Maybe<Scalars['Int']['output']>;
   id: Scalars['ID']['output'];
@@ -765,6 +811,8 @@ export type Goal = {
   targetParameter?: Maybe<Scalars['String']['output']>;
   /** Maximum implementation time. */
   timelineDays?: Maybe<Scalars['Int']['output']>;
+  /** The tanker-water price used to value avoided tanker spending (ADR 0014). */
+  waterTariff?: Maybe<WaterTariff>;
 };
 
 /** Screens a goal: FEASIBLE means consistent and plannable, never that a plan will reach it. No confidence score is given. */
@@ -797,8 +845,10 @@ export type GoalInput = {
   also?: Array<GoalKind>;
   budget?: InputMaybe<MoneyInput>;
   confirmed?: Scalars['Boolean']['input'];
+  contingencyRatio?: InputMaybe<Scalars['DecimalString']['input']>;
   description?: Scalars['String']['input'];
   estimates?: Array<MeasureEstimateInput>;
+  funding?: Array<FundingSourceInput>;
   horizonDays?: InputMaybe<Scalars['Int']['input']>;
   kind: GoalKind;
   preferredInterventions?: Array<Scalars['String']['input']>;
@@ -807,6 +857,7 @@ export type GoalInput = {
   target?: InputMaybe<GoalTargetInput>;
   targetParameter?: InputMaybe<Scalars['String']['input']>;
   timelineDays?: InputMaybe<Scalars['Int']['input']>;
+  waterTariff?: InputMaybe<WaterTariffInput>;
 };
 
 export type GoalKind =
@@ -1138,6 +1189,8 @@ export type MeasureEstimate = {
   effects: Array<EffectEstimate>;
   interventionId: Scalars['String']['output'];
   note: Scalars['String']['output'];
+  /** Your yearly operating and maintenance estimate for this measure. */
+  recurring?: Maybe<MoneyRange>;
 };
 
 export type MeasureEstimateInput = {
@@ -1146,6 +1199,7 @@ export type MeasureEstimateInput = {
   effects?: Array<EffectEstimateInput>;
   interventionId: Scalars['String']['input'];
   note?: Scalars['String']['input'];
+  recurring?: InputMaybe<MoneyRangeInput>;
 };
 
 /** A value whose absence is explicit: quantity is null when unavailable, and reason explains unavailable or provisional values. Never rendered as zero. */
@@ -1443,6 +1497,31 @@ export type ObservationPayload = {
   observation?: Maybe<Observation>;
 };
 
+/** A contingency share you added to the cost estimates. */
+export type OptionContingency = {
+  amount: MoneyRange;
+  ratio: Scalars['DecimalString']['output'];
+};
+
+/** Costs, avoided tanker spending, net benefit, payback and funding (ADR 0014), from your own estimates and declared tariff; nothing is converted or invented. */
+export type OptionEconomics = {
+  assumptions: Array<Scalars['String']['output']>;
+  avoidedReason?: Maybe<Scalars['String']['output']>;
+  avoidedTankerAnnual?: Maybe<MoneyRange>;
+  capex: MoneyRange;
+  contingency?: Maybe<OptionContingency>;
+  currency: Scalars['String']['output'];
+  engineVersion: Scalars['String']['output'];
+  funding: OptionFunding;
+  horizon?: Maybe<OptionHorizonTotals>;
+  netAnnual?: Maybe<MoneyRange>;
+  notes: Array<Scalars['String']['output']>;
+  payback?: Maybe<OptionPayback>;
+  recurringAnnual?: Maybe<MoneyRange>;
+  recurringReason?: Maybe<Scalars['String']['output']>;
+  upfrontTotal: MoneyRange;
+};
+
 /** One effect value a measure line was computed from. */
 export type OptionEffect = {
   high: ExactNumber;
@@ -1453,6 +1532,42 @@ export type OptionEffect = {
   unit: Unit;
 };
 
+/** Funding kept separate from cost: only approved funding counts towards affordability, and the gap is never reduced by unapproved money. */
+export type OptionFunding = {
+  approved: Money;
+  /** Expected or proposed funding; shown, never counted as secured. */
+  candidate: Money;
+  fullyFunded: Scalars['Boolean']['output'];
+  /** Total cost minus approved funding, never below zero. */
+  gap: MoneyRange;
+  lines: Array<OptionFundingLine>;
+  note: Scalars['String']['output'];
+  totalCost: MoneyRange;
+};
+
+/** One declared source of money for the plan. */
+export type OptionFundingLine = {
+  amount: Money;
+  /** True when in the plan's currency; otherwise shown but never converted. */
+  applicable: Scalars['Boolean']['output'];
+  /** True only when approved and in the plan's currency: reduces the gap. */
+  counts: Scalars['Boolean']['output'];
+  label: Scalars['String']['output'];
+  status: FundingStatus;
+};
+
+/** Costs and benefits totalled over the planning horizon. */
+export type OptionHorizonTotals = {
+  avoided?: Maybe<MoneyRange>;
+  days: Scalars['Int']['output'];
+  /** Avoided spending minus recurring cost minus upfront cost. */
+  net?: Maybe<MoneyRange>;
+  /** True only when the net is positive even at the pessimistic estimate. */
+  netPositive: Scalars['Boolean']['output'];
+  reason?: Maybe<Scalars['String']['output']>;
+  recurring?: Maybe<MoneyRange>;
+};
+
 export type OptionMeasure = {
   benefitTiming: BenefitTiming;
   buildDays?: Maybe<DayRange>;
@@ -1461,9 +1576,21 @@ export type OptionMeasure = {
   effects: Array<OptionEffect>;
   interventionId: Scalars['String']['output'];
   name: Scalars['String']['output'];
+  /** Your yearly operating and maintenance estimate for this measure, if given. */
+  recurring?: Maybe<MoneyRange>;
   waterHigh?: Maybe<ExactNumber>;
   /** L/day this measure saves or adds at your low estimates, after the measures before it, so lines add up without double counting. */
   waterLow?: Maybe<ExactNumber>;
+};
+
+/** When costs are recovered. Explicit about zero or negative savings and a payback beyond the planning horizon; never a negative or infinite number. */
+export type OptionPayback = {
+  note: Scalars['String']['output'];
+  /** Fewest days to recover costs; null when even the best case never does. */
+  optimisticDays?: Maybe<Scalars['Int']['output']>;
+  outcome: PaybackOutcome;
+  /** Most days to recover costs; null when the worst case never does. */
+  pessimisticDays?: Maybe<Scalars['Int']['output']>;
 };
 
 /** Why combinations were not shown. Counts, never options. */
@@ -1505,6 +1632,12 @@ export type PageInfo = {
   endCursor?: Maybe<Scalars['String']['output']>;
   hasNextPage: Scalars['Boolean']['output'];
 };
+
+export type PaybackOutcome =
+  | 'BEYOND_HORIZON'
+  | 'NEVER'
+  | 'UNCERTAIN'
+  | 'WITHIN_HORIZON';
 
 export type PlaceCandidate = {
   admin: AdminContext;
@@ -1569,6 +1702,8 @@ export type PlanOption = {
   cost?: Maybe<MoneyRange>;
   costBasisDate?: Maybe<Scalars['LocalDate']['output']>;
   costUnavailableReason?: Maybe<Scalars['String']['output']>;
+  /** Economics copied when this option was selected (ADR 0014); null for options stored before it existed. */
+  economics?: Maybe<OptionEconomics>;
   engineVersion?: Maybe<Scalars['String']['output']>;
   feasibility: Feasibility;
   firstBenefitDays?: Maybe<DayRange>;
@@ -1609,6 +1744,8 @@ export type PlanningSession = {
   /** The saved scenario against the same baseline. */
   scenarioComparison: ScenarioComparison;
   selectedPlanOptionId?: Maybe<Scalars['ID']['output']>;
+  /** Whether the chosen plan's stored assessment still matches a fresh one. IMPACT_CHANGED or NOT_CURRENT: choose again before finalizing. */
+  selectedPlanStatus: SelectedPlanStatus;
   stage: PlanningStage;
   status: SessionStatus;
   updatedAt: Scalars['UtcDateTime']['output'];
@@ -1722,6 +1859,7 @@ export type QuantityInput = {
 export type Query = {
   agentRun?: Maybe<AgentRun>;
   agentRuns: AgentRunConnection;
+  aiStatus: AiStatus;
   area?: Maybe<Area>;
   /** Validate and screen a draft goal for a session without saving it. Uses the same rules as updatePlanningSession. */
   checkGoal: GoalCheck;
@@ -1965,6 +2103,8 @@ export type Report = {
   areaId: Scalars['ID']['output'];
   communityId?: Maybe<Scalars['ID']['output']>;
   createdAt: Scalars['UtcDateTime']['output'];
+  /** The chosen option's economics, copied at finalization (ADR 0014); null for reports finalized before it existed. */
+  economics?: Maybe<OptionEconomics>;
   finalizedAt: Scalars['UtcDateTime']['output'];
   goal: Goal;
   id: Scalars['ID']['output'];
@@ -2073,6 +2213,14 @@ export type ScenarioRow = {
   scenario?: Maybe<ExactNumber>;
   unit: Unit;
 };
+
+/** Whether the chosen plan still matches a fresh assessment; only CURRENT or LEGACY can be finalized. */
+export type SelectedPlanStatus =
+  | 'CURRENT'
+  | 'IMPACT_CHANGED'
+  | 'LEGACY'
+  | 'NONE'
+  | 'NOT_CURRENT';
 
 export type SessionStatus =
   | 'ACTIVE'
@@ -2219,6 +2367,21 @@ export type ValueOrigin =
 export type Viewer = {
   kind: AccountKind;
   uid: Scalars['ID']['output'];
+};
+
+/** The tanker-water price you pay now; your estimate, never converted. */
+export type WaterTariff = {
+  note: Scalars['String']['output'];
+  price: Money;
+  /** The volume the price buys, in litres. */
+  volume: Quantity;
+};
+
+/** The tanker-water price you pay now; your estimate, never converted. */
+export type WaterTariffInput = {
+  note?: Scalars['String']['input'];
+  price: MoneyInput;
+  volume: QuantityInput;
 };
 
 /** Wider-system impact of one option: local benefits, possible effects beyond the site, false-resilience warnings, trade-offs, reviews and what is not assessed. Its id derives from everything it used. */

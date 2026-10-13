@@ -1,0 +1,11 @@
+query AiStatus {
+  aiStatus {
+    available
+    reason
+    modelId
+    requestsRemaining
+    dailyRequestLimit
+    budgetConfigured
+    suggestedDailyBudgetUsd
+  }
+}

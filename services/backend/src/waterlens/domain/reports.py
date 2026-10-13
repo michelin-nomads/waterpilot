@@ -7,6 +7,7 @@ from enum import StrEnum
 
 from pydantic import Field
 
+from waterlens.domain.economics import OptionEconomics
 from waterlens.domain.impact_records import ReviewNeed
 from waterlens.domain.planning import Goal, ImpactAssessment
 from waterlens.domain.records import Record
@@ -33,6 +34,9 @@ class Report(Record):
     impact: ImpactAssessment | None = None
     """The chosen option's impact assessment, copied at finalization with its provenance
     (ADR 0013); None for reports finalized before it existed."""
+    economics: OptionEconomics | None = None
+    """The chosen option's economics, copied at finalization (ADR 0014) so costs, payback
+    and the funding gap export exactly as compared; None for older reports."""
 
     def required_reviews(self) -> tuple[ReviewNeed, ...]:
         wider = self.impact.wider if self.impact else None

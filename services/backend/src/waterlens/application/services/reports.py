@@ -29,7 +29,9 @@ from waterlens.application.services.options import FINALIZABLE, OptionService, S
 from waterlens.domain.communities import CommunityStatus
 from waterlens.domain.errors import DomainError, ErrorCode, not_found
 from waterlens.domain.ids import IdKind, new_id, require_id
+from waterlens.domain.interventions import CATALOGUE
 from waterlens.domain.jobs import JobKind, JobRecord, job_id_for
+from waterlens.domain.planning import PlanOption
 from waterlens.domain.reports import Proposal, ProposalSection, Report, ReportStatus
 from waterlens.domain.values import Frozen
 
@@ -52,6 +54,25 @@ STALE_SELECTION = {
     "inputs (for example it was compared under an earlier catalogue or engine version); "
     "compare plans and choose again before finalizing",
 }
+
+
+LEGACY_NEEDS_IMPACT = (
+    "this plan was saved before wider-system impact was assessed and it includes a measure "
+    "that needs a professional review; compare plans and choose it again so its wider impact "
+    "is assessed before finalizing"
+)
+
+
+def _unassessed_review(option: PlanOption | None) -> bool:
+    """True when an option carries no wider-impact assessment yet its measures need a
+    required professional review (a legacy selection must not skip that review, ADR 0013)."""
+    if option is None or option.impact.wider is not None:
+        return False
+    return any(
+        any(r.required for r in i.reviews)
+        for id_ in option.intervention_ids
+        if (i := CATALOGUE.get(id_)) is not None
+    )
 
 
 def _sections(
@@ -137,6 +158,12 @@ class ReportService:
             # The chosen option, with its impact assessment and provenance, as stored
             # when it was selected; the report keeps that copy even if inputs change later.
             option = store.plan_options.get(option_id)
+            if _unassessed_review(option):
+                raise DomainError(
+                    ErrorCode.PRECONDITION_FAILED,
+                    LEGACY_NEEDS_IMPACT,
+                    field="selectedPlanOptionId",
+                )
             report = Report(
                 id=new_id(IdKind.REPORT),
                 owner_uid=principal.uid,
@@ -148,6 +175,7 @@ class ReportService:
                 plan_option_id=option_id,
                 plan_name=option.name if option else None,
                 impact=option.impact if option else None,
+                economics=option.economics if option else None,
                 finalized_at=now,
                 created_at=now,
                 updated_at=now,

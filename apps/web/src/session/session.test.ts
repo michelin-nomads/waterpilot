@@ -207,6 +207,28 @@ describe('SessionCoordinator saving', () => {
     expect(coordinator.getState().message).toMatch(/plan choice was cleared/i);
   });
 
+  it('re-affirms an unchanged plan choice only when forced, to refresh a stale assessment', async () => {
+    const env = setup();
+    const option = 'pln_chosen';
+    const { session, coordinator } = await ready(env, {
+      goal: GOAL_A,
+      selectedPlanOptionId: option,
+      inputsRevision: 0,
+    });
+    env.server.options.set(option, 0); // still one of the current options, just reassessed
+    // Choosing the same, already-selected plan is a no-op: nothing is sent.
+    coordinator.selectPlanOption(option);
+    await vi.waitFor(() => expect(coordinator.getState().save).not.toBe('saving'));
+    expect(env.server.applied).toHaveLength(0);
+    // Forcing it re-sends the choice so the server re-stores the current assessment.
+    coordinator.reselectPlanOption(option);
+    await vi.waitFor(() => expect(env.server.applied).toHaveLength(1));
+    expect(env.server.applied[0]).toEqual({
+      id: session.id,
+      patch: { selectedPlanOptionId: option },
+    });
+  });
+
   it('stops saving into a session replaced elsewhere and offers the current one', async () => {
     const env = setup();
     const { coordinator } = await ready(env);

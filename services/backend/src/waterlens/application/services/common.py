@@ -10,10 +10,17 @@ from typing import Any, Protocol
 from pydantic import BaseModel, ValidationError
 
 from waterlens.application.pagination import Page, PageArgs, PageQuery
-from waterlens.application.ports import JobRunner, NoPlaceSearch, PlaceSearch
+from waterlens.application.ports import (
+    JobRunner,
+    ModelProvider,
+    NoModelProvider,
+    NoPlaceSearch,
+    PlaceSearch,
+)
 from waterlens.application.repositories import Store, Where
 from waterlens.application.series import SeriesReader
 from waterlens.domain.accounts import ClaimPolicy
+from waterlens.domain.ai import DEFAULT_MODEL_ID, AiLimits
 from waterlens.domain.errors import DomainError, ErrorCode, FieldError
 from waterlens.domain.impact import REVIEWED_CONNECTIVITY, ConnectivityEvidence
 from waterlens.domain.jobs import JobPolicy
@@ -23,6 +30,21 @@ type Clock = Callable[[], datetime]
 
 class _Pageable[T](Protocol):
     def page(self, where: Where, query: PageQuery) -> Page[T]: ...
+
+
+@dataclass(frozen=True, slots=True)
+class AiConfig:
+    """Everything the AI gateway needs, built from settings (ADR 0015). The default is a
+    fully disabled configuration with no provider, so AI is off unless deliberately set up.
+    Local and test mode never carry a live provider here."""
+
+    provider: ModelProvider = field(default_factory=NoModelProvider)
+    enabled: bool = False
+    kill_switch: bool = False
+    open_to_all: bool = False
+    invited: frozenset[str] = field(default_factory=frozenset)
+    model: str = DEFAULT_MODEL_ID
+    limits: AiLimits = field(default_factory=AiLimits)
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,6 +64,9 @@ class Deps:
     series: SeriesReader | None = None
     """Reads imported snapshots' daily series. Without it the baseline uses typed-in
     values only and says that sourced series could not be read."""
+    ai: AiConfig = field(default_factory=AiConfig)
+    """Model provider and AI usage policy (ADR 0015). Disabled by default; local and test
+    mode never hold a live provider, so ordinary planning never depends on it."""
 
 
 def page_of[T](repo: _Pageable[T], where: Where, page: PageArgs) -> Page[T]:

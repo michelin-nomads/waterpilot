@@ -30,6 +30,7 @@ from waterlens.application.identity import AccountKind, IdentityVerifier, Princi
 from waterlens.application.repositories import Store
 from waterlens.application.series import ArtifactSeriesReader
 from waterlens.application.services import Deps, Services
+from waterlens.application.services.common import AiConfig
 from waterlens.config import Settings
 from waterlens.domain.accounts import ClaimPolicy
 from waterlens.domain.errors import DomainError, ErrorCode
@@ -89,6 +90,7 @@ def make_harness(
     claim_policy: ClaimPolicy | None = None,
     store: Store | None = None,
     connectivity: tuple[ConnectivityEvidence, ...] = (),
+    ai: AiConfig | None = None,
 ) -> Harness:
     store = store or MemoryStore(
         areas=synthetic_area_catalogue(), funding_schemes=synthetic_funding_catalogue()
@@ -105,6 +107,7 @@ def make_harness(
             places=build_place_search(settings),
             series=ArtifactSeriesReader(artifacts),
             connectivity=connectivity,
+            ai=ai or AiConfig(),
         )
     )
     runtime = ApiRuntime(
@@ -116,7 +119,12 @@ def make_harness(
     return Harness(TestClient(app), store, jobs, storage, services)
 
 
-def seed_plan_option(store: Any, session_id: str, cost_high_paise: int) -> str:
+def seed_plan_option(
+    store: Any,
+    session_id: str,
+    cost_high_paise: int,
+    intervention_ids: tuple[str, ...] = (),
+) -> str:
     """Insert a stored option without a comparison id, as options were stored before the
     option engine (ADR 0012); it is selectable under the inputs-revision rule."""
     session = store.sessions.get(session_id)
@@ -133,6 +141,7 @@ def seed_plan_option(store: Any, session_id: str, cost_high_paise: int) -> str:
         build_days=DayRange(low=30, high=60),
         feasibility=Feasibility.FEASIBLE,
         cost_basis_date=date(2026, 1, 1),
+        intervention_ids=intervention_ids,
         impact=ImpactAssessment(
             id=new_id(IdKind.IMPACT),
             metrics=(),

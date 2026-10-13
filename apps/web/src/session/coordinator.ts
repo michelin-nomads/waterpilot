@@ -238,13 +238,18 @@ export class SessionCoordinator {
 
   // --- edits ---------------------------------------------------------------------------
 
-  /** Apply a structured edit locally and save it. Fields not in `patch` are untouched. */
-  edit(patch: SessionPatch): void {
+  /**
+   * Apply a structured edit locally and save it. Fields not in `patch` are untouched.
+   * `force` re-sends a field even when its value equals the server's: used to re-affirm a
+   * plan choice so the server re-stores the current wider-impact assessment (ADR 0013),
+   * which is the only way to clear a stale (reassessed) selection.
+   */
+  edit(patch: SessionPatch, options: { force?: boolean } = {}): void {
     const { server, status } = this.state;
     if (!server || status !== 'ready' || isEmptyPatch(patch)) return;
     const pending = { ...this.state.pending };
     for (const field of patchFields(patch)) {
-      if (sameValue(field, server[field], patch[field]) && !this.inflight) {
+      if (!options.force && sameValue(field, server[field], patch[field]) && !this.inflight) {
         delete pending[field];
       } else {
         Object.assign(pending, { [field]: patch[field] ?? null });
@@ -262,6 +267,9 @@ export class SessionCoordinator {
   setGoal = (goal: SessionState['goal']) => this.edit({ goal });
   setScenario = (scenario: SessionState['scenario']) => this.edit({ scenario });
   selectPlanOption = (selectedPlanOptionId: string | null) => this.edit({ selectedPlanOptionId });
+  /** Re-affirm the already-chosen plan to refresh a stale wider-impact assessment. */
+  reselectPlanOption = (selectedPlanOptionId: string) =>
+    this.edit({ selectedPlanOptionId }, { force: true });
 
   // --- saving --------------------------------------------------------------------------
 

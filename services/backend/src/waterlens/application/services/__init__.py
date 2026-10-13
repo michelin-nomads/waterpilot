@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from waterlens.application.services.accounts import AccountService
+from waterlens.application.services.ai import AiGateway
 from waterlens.application.services.areas import AreaService
 from waterlens.application.services.baseline import BaselineService
 from waterlens.application.services.common import Deps
@@ -37,6 +38,7 @@ class Services:
     tracking: TrackingService
     jobs: JobService
     accounts: AccountService
+    ai: AiGateway
 
     @classmethod
     def build(cls, deps: Deps) -> Services:
@@ -60,6 +62,7 @@ class Services:
             communities=CommunityService(deps),
             tracking=TrackingService(deps),
             jobs=JobService(deps),
+            ai=AiGateway(deps),
         )
 
 

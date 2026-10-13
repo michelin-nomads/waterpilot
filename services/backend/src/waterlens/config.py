@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import ipaddress
 from datetime import timedelta
+from decimal import Decimal, InvalidOperation
 from enum import StrEnum
 from functools import lru_cache
 from typing import Literal
@@ -23,6 +24,7 @@ from pydantic import AliasChoices, Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from waterlens.domain.accounts import ClaimPolicy
+from waterlens.domain.ai import DEFAULT_MODEL_ID, MODEL_CATALOGUE, AiLimits
 
 LOCAL_DEMO_PROJECT = "demo-waterlens"
 
@@ -105,6 +107,37 @@ class Settings(BaseSettings):
     # Local worker loop (`npm run dev:worker`).
     local_worker_poll_seconds: float = Field(default=1.0, gt=0, le=60)
     local_worker_reconcile_seconds: float = Field(default=30.0, gt=0, le=3600)
+    # Server-only Vertex AI (ADR 0015). AI is OFF by default and never runs in local mode:
+    # the model provider is only ever the disabled/fake one locally, so no billable call
+    # can happen here. In a pilot the gateway builds the Vertex provider through ADC and a
+    # dedicated runtime service account. Every field below is a proposed, overridable bound.
+    ai_enabled: bool = False
+    """Owner opt-in. Even when true, local mode has no live provider, and a budget must be
+    set before any spend is permitted."""
+    ai_kill_switch: bool = False
+    """Global server kill switch: when true, AI is unavailable to everyone regardless of
+    every other setting. Flip this to stop all model use at once."""
+    ai_open_to_all: bool = False
+    """Hackathon access control. When false, only invited testers may use AI."""
+    ai_invited_testers: list[str] = Field(default_factory=list, max_length=200)
+    """Verified uids (or token emails) allowed to use AI while access is invite-only."""
+    ai_model: str = DEFAULT_MODEL_ID
+    ai_location: str = "global"
+    ai_daily_budget_usd: str | None = None
+    """Daily spend ceiling in USD. Unset means no spending is permitted (AI reports
+    disabled). The suggested internal allowance ($5) is a configuration suggestion the
+    owner must set here deliberately, never a default."""
+    ai_daily_request_limit: int = Field(default=100, ge=0, le=100_000)
+    ai_max_calls_per_run: int = Field(default=5, ge=1, le=100)
+    ai_transient_retries: int = Field(default=2, ge=0, le=5)
+    ai_request_timeout_seconds: float = Field(default=30.0, gt=0, le=300)
+    ai_reservation_ttl_seconds: int = Field(default=300, ge=10, le=3600)
+    ai_run_ttl_seconds: int = Field(default=3600, ge=60, le=86_400)
+    ai_max_tool_steps_per_run: int = Field(default=40, ge=1, le=500)
+    ai_max_tool_fanout: int = Field(default=8, ge=1, le=50)
+    ai_max_tool_repeats: int = Field(default=3, ge=1, le=50)
+    ai_max_output_tokens: int = Field(default=1024, ge=1, le=32_768)
+    ai_max_input_tokens: int = Field(default=48_000, ge=1, le=1_000_000)
 
     @property
     def is_pilot(self) -> bool:
@@ -116,6 +149,38 @@ class Settings(BaseSettings):
             ttl=timedelta(seconds=self.account_claim_ttl_seconds),
             fresh_sign_in=timedelta(seconds=self.account_claim_fresh_sign_in_seconds),
         )
+
+    @property
+    def ai_limits(self) -> AiLimits:
+        return AiLimits(
+            daily_request_limit=self.ai_daily_request_limit,
+            max_calls_per_run=self.ai_max_calls_per_run,
+            transient_retries=self.ai_transient_retries,
+            max_input_tokens=self.ai_max_input_tokens,
+            default_max_output_tokens=self.ai_max_output_tokens,
+            request_timeout_seconds=self.ai_request_timeout_seconds,
+            reservation_ttl_seconds=self.ai_reservation_ttl_seconds,
+            run_ttl_seconds=self.ai_run_ttl_seconds,
+            max_tool_steps_per_run=self.ai_max_tool_steps_per_run,
+            max_tool_fanout=self.ai_max_tool_fanout,
+            max_tool_repeats=self.ai_max_tool_repeats,
+            daily_budget_micro_usd=AiLimits.budget_micro_from_usd(self.ai_daily_budget_usd),
+        )
+
+    def _ai_problems(self) -> list[str]:
+        problems: list[str] = []
+        if self.ai_model not in MODEL_CATALOGUE:
+            problems.append(
+                f"WL_AI_MODEL {self.ai_model!r} is not a verified model; one of "
+                + ", ".join(sorted(MODEL_CATALOGUE))
+            )
+        if self.ai_daily_budget_usd is not None:
+            try:
+                if Decimal(self.ai_daily_budget_usd) <= 0:
+                    problems.append("WL_AI_DAILY_BUDGET_USD must be a positive amount")
+            except InvalidOperation:
+                problems.append("WL_AI_DAILY_BUDGET_USD must be a decimal USD amount")
+        return problems
 
     @property
     def firestore_emulator(self) -> str | None:
@@ -204,6 +269,7 @@ class Settings(BaseSettings):
     def _fail_closed(self) -> Settings:
         problems = self._alias_conflicts()
         problems += self._pilot_problems() if self.is_pilot else self._local_problems()
+        problems += self._ai_problems()
         try:
             _ = self.claim_policy
         except ValueError as error:

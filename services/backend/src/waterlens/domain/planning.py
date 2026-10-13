@@ -13,6 +13,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import Field, field_validator, model_validator
 
+from waterlens.domain.economics import OptionEconomics
 from waterlens.domain.impact_records import OptionImpact
 from waterlens.domain.location import (
     MAX_RADIUS_M,
@@ -33,6 +34,7 @@ from waterlens.domain.values import (
     DecimalString,
     EvidenceQuality,
     Frozen,
+    FundingSource,
     MeasuredValue,
     Money,
     MoneyRange,
@@ -40,6 +42,7 @@ from waterlens.domain.values import (
     Quantity,
     Unit,
     UtcDateTime,
+    WaterTariff,
     canonical_decimal,
 )
 
@@ -290,19 +293,29 @@ class MeasureEstimate(Frozen):
 
     intervention_id: str = Field(pattern=INTERVENTION_ID)
     cost: MoneyRange | None = None
+    recurring: MoneyRange | None = None
+    """The person's own yearly operating and maintenance cost for this measure, used by
+    the economics engine; never sourced, never converted between currencies."""
     build_days: DayRange | None = None
     effects: tuple[EffectEstimate, ...] = Field(default=(), max_length=5)
     note: str = Field(default="", max_length=500)
 
-    @field_validator("cost")
+    @field_validator("cost", "recurring")
     @classmethod
     def _canonical(cls, value: MoneyRange | None) -> MoneyRange | None:
         return None if value is None else value.canonical()
 
     @model_validator(mode="after")
     def _something(self) -> Self:
-        if self.cost is None and self.build_days is None and not self.effects:
-            raise ValueError("an estimate gives a cost range, a build time or an effect")
+        if (
+            self.cost is None
+            and self.recurring is None
+            and self.build_days is None
+            and not self.effects
+        ):
+            raise ValueError(
+                "an estimate gives a cost range, a recurring cost, a build time or an effect"
+            )
         if len({e.key for e in self.effects}) != len(self.effects):
             raise ValueError("each effect is estimated once")
         if self.cost is not None and int(self.cost.low.minor_units) < 0:
@@ -321,6 +334,14 @@ class GoalFields(Frozen):
     """Maximum implementation (build) time."""
     horizon_days: int | None = Field(default=None, ge=1, le=36_500)
     """Planning horizon over which benefits count; separate from build time."""
+    water_tariff: WaterTariff | None = None
+    """The price the person currently pays for tanker water, used by the economics engine
+    to value tanker-cost avoidance; always their estimate, never converted."""
+    contingency_ratio: DecimalString | None = None
+    """A contingency share in [0, 1] the person adds to cost estimates; applied only when
+    set, so no margin is ever invented."""
+    funding: tuple[FundingSource, ...] = Field(default=(), max_length=10)
+    """Declared sources of money; only approved funding counts towards affordability."""
     priority: Priority | None = None
     also: tuple[GoalKind, ...] = Field(default=(), max_length=3)
     """Further objectives checked for conflicts with the main goal."""
@@ -339,6 +360,25 @@ class GoalFields(Frozen):
     @classmethod
     def _canonical_budget(cls, value: Money | None) -> Money | None:
         return None if value is None else value.canonical()
+
+    @field_validator("water_tariff")
+    @classmethod
+    def _canonical_tariff(cls, value: WaterTariff | None) -> WaterTariff | None:
+        return None if value is None else value.canonical()
+
+    @field_validator("funding")
+    @classmethod
+    def _canonical_funding(cls, value: tuple[FundingSource, ...]) -> tuple[FundingSource, ...]:
+        return tuple(f.canonical() for f in value)
+
+    @field_validator("contingency_ratio")
+    @classmethod
+    def _bounded_ratio(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        if not Decimal(0) <= Decimal(value) <= Decimal(1):
+            raise ValueError("a contingency share must be within [0, 1]")
+        return canonical_decimal(value)
 
     @field_validator("preferred_interventions")
     @classmethod
@@ -438,6 +478,9 @@ class PlanOption(Frozen):
     that produced this option; None for options imported before the option engine."""
     engine_version: str | None = None
     intervention_ids: tuple[str, ...] = Field(default=(), max_length=10)
+    economics: OptionEconomics | None = None
+    """The economics engine's figures for this option, copied when it was selected (ADR
+    0014); None for options stored before it existed."""
 
     @model_validator(mode="after")
     def _cost_explained(self) -> Self:

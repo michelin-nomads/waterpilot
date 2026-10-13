@@ -400,6 +400,7 @@ class OptionService:
             comparison_id=c.id,
             engine_version=OPTION_ENGINE_VERSION,
             intervention_ids=o.intervention_ids,
+            economics=o.economics,
         )
 
     # -- helpers

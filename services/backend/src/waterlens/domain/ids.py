@@ -43,6 +43,11 @@ class IdKind(StrEnum):
     CONNECTIVITY_CHECK = "cnx"
     MANUAL_INPUT = "min"
     BASELINE = "bsl"
+    USAGE_RESERVATION = "usr"
+    USAGE_DAY = "usd"
+    USAGE_CALL_KEY = "uck"
+    AGENT_SESSION = "ags"
+    SCOPED_STATE = "sst"
 
 
 _ID_RE = re.compile(rf"^([a-z]{{3}})_[{_ALPHABET}]{{{_BODY_LEN}}}$")

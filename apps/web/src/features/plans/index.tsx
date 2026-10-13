@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 
-import { ButtonLink, ErrorState, LoadingRegion, Notice, Skeleton } from '../../components';
+import { Button, ButtonLink, ErrorState, LoadingRegion, Notice, Skeleton } from '../../components';
 import { PlanComparisonDocument } from '../../graphql/generated/graphql';
+import type { SelectedPlanStatus } from '../../graphql/generated/graphql';
 import { useGraphQLQuery } from '../../graphql/hooks';
 import { queryKeys } from '../../graphql/queryKeys';
 import { usePlanningSession } from '../../session/sessionContext';
@@ -11,6 +12,48 @@ import { StagePage } from '../planning/StagePage';
 import { PlanComparisonView } from './PlanComparisonView';
 import styles from './Plans.module.scss';
 import { ScenarioResult } from './ScenarioResult';
+
+/**
+ * The chosen plan's stored wider-impact assessment no longer matches a fresh one, so the
+ * person must look again before continuing (same rule the server enforces at finalize).
+ * IMPACT_CHANGED: still an option, but its wider-impact changed (new evidence, nearby
+ * places or sourced values) — re-choosing stores the current assessment. NOT_CURRENT: not
+ * among the current options (e.g. a new catalogue or engine) — pick one of the plans shown.
+ */
+function StaleSelectionNotice({
+  status,
+  busy,
+  onRechoose,
+}: {
+  status: 'IMPACT_CHANGED' | 'NOT_CURRENT';
+  busy: boolean;
+  onRechoose: () => void;
+}) {
+  if (status === 'IMPACT_CHANGED') {
+    return (
+      <Notice
+        kind="caution"
+        title="Your chosen plan needs a fresh look before you continue"
+        action={
+          <Button variant="primary" disabled={busy} onClick={onRechoose}>
+            {busy ? 'Saving your choice…' : 'Review and choose again'}
+          </Button>
+        }
+      >
+        Since you chose it, new information for this area — nearby places, connectivity evidence or
+        sourced values — changed its wider-system impact. Review the updated impact above and choose
+        the plan again. Nothing is lost; it is still one of your options.
+      </Notice>
+    );
+  }
+  return (
+    <Notice kind="caution" title="Your chosen plan is no longer one of the current options">
+      Your inputs changed — for example the plan catalogue or engine was updated — so the plan you
+      chose is not among the options for your current inputs. Choose one of the plans above to
+      continue.
+    </Notice>
+  );
+}
 
 function PlansWorkspace({ session }: { session: SessionState }) {
   const { coordinator, state } = usePlanningSession();
@@ -27,6 +70,9 @@ function PlansWorkspace({ session }: { session: SessionState }) {
     { enabled: !upstreamPending && session.goal !== null },
   );
   const found = query.data?.planningSession ?? null;
+  const selectionStatus: SelectedPlanStatus | null = found?.selectedPlanStatus ?? null;
+  const staleSelection = selectionStatus === 'IMPACT_CHANGED' || selectionStatus === 'NOT_CURRENT';
+  const selectedId = session.selectedPlanOptionId;
 
   if (!session.goal) {
     return (
@@ -45,12 +91,21 @@ function PlansWorkspace({ session }: { session: SessionState }) {
         {upstreamPending ? (
           <Notice kind="stale">Saving your change; plans will be recalculated.</Notice>
         ) : found ? (
-          <PlanComparisonView
-            comparison={found.planComparison}
-            selectedId={session.selectedPlanOptionId}
-            busy={choosing || !coordinator}
-            onChoose={(optionId) => coordinator?.selectPlanOption(optionId)}
-          />
+          <>
+            <PlanComparisonView
+              comparison={found.planComparison}
+              selectedId={selectedId}
+              busy={choosing || !coordinator}
+              onChoose={(optionId) => coordinator?.selectPlanOption(optionId)}
+            />
+            {selectedId && staleSelection && (
+              <StaleSelectionNotice
+                status={selectionStatus as 'IMPACT_CHANGED' | 'NOT_CURRENT'}
+                busy={choosing || !coordinator}
+                onRechoose={() => coordinator?.reselectPlanOption(selectedId)}
+              />
+            )}
+          </>
         ) : query.isError ? (
           <ErrorState
             title="Plans could not be compared"
@@ -74,7 +129,7 @@ function PlansWorkspace({ session }: { session: SessionState }) {
           onOpenAgent={() => setMode('agent')}
         />
       )}
-      {session.selectedPlanOptionId && !upstreamPending && (
+      {selectedId && !upstreamPending && !staleSelection && (
         <div className={styles.actions}>
           <ButtonLink to="/funding" endIcon="arrow-right">
             Continue to funding

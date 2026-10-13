@@ -33,6 +33,8 @@ from waterlens.application.identity import IdentityVerifier
 from waterlens.application.jobs import JobExecutor, OutboxDispatcher, job_handlers
 from waterlens.application.ports import (
     JobRunner,
+    ModelProvider,
+    NoModelProvider,
     NoPlaceSearch,
     ObjectStorage,
     PlaceSearch,
@@ -41,6 +43,7 @@ from waterlens.application.ports import (
 from waterlens.application.repositories import Store
 from waterlens.application.series import ArtifactSeriesReader
 from waterlens.application.services import Deps, Services
+from waterlens.application.services.common import AiConfig
 from waterlens.config import ConfigError, Settings
 from waterlens.domain.jobs import JobPolicy
 
@@ -173,6 +176,38 @@ def build_identity_verifier(
     )
 
 
+def build_model_provider(settings: Settings) -> ModelProvider:
+    """Local mode has NO live model: the provider is always the disabled one, so no local
+    run can make a billable call. In a pilot with AI explicitly enabled, a budget set and
+    the kill switch off, build the Vertex adapter through Application Default Credentials
+    for the dedicated runtime service account."""
+    if not settings.is_pilot:
+        return NoModelProvider(settings.ai_model)
+    if settings.ai_kill_switch or not settings.ai_enabled:
+        return NoModelProvider(settings.ai_model)
+    if settings.ai_limits.daily_budget_micro_usd is None:
+        return NoModelProvider(settings.ai_model)
+    from waterlens.adapters.model_vertex import VertexModelProvider
+
+    return VertexModelProvider(
+        project=settings.gcp_project,
+        location=settings.ai_location,
+        model_id=settings.ai_model,
+    )
+
+
+def build_ai_config(settings: Settings) -> AiConfig:
+    return AiConfig(
+        provider=build_model_provider(settings),
+        enabled=settings.ai_enabled,
+        kill_switch=settings.ai_kill_switch,
+        open_to_all=settings.ai_open_to_all,
+        invited=frozenset(settings.ai_invited_testers),
+        model=settings.ai_model,
+        limits=settings.ai_limits,
+    )
+
+
 def build_place_search(settings: Settings) -> PlaceSearch:
     """Local: the fixture gazetteer, always (no network). Pilot: Google Places Text Search
     with the server key, or no server-side search. Either way the pilot accepts only Google
@@ -227,6 +262,7 @@ def build_api_runtime(settings: Settings, clock: Callable[[], datetime] = _utc_n
         demo_evidence=not settings.is_pilot,
         places=build_place_search(settings),
         series=ArtifactSeriesReader(artifacts),
+        ai=build_ai_config(settings),
     )
     return ApiRuntime(
         services=Services.build(deps),

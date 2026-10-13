@@ -306,6 +306,88 @@ def test_the_chosen_option_keeps_its_assessment_and_provenance(h: Harness) -> No
     assert impact["wider"]["false_resilience"][0]["id"] == "false_resilience.groundwater"
 
 
+STATUS = "query($id: ID!) { planningSession(id: $id) { selectedPlanStatus } }"
+GENERATE = """mutation($input: GenerateProposalInput!) {
+  generateProposal(input: $input) {
+    proposal { id status sections } error { code } } }"""
+
+
+def _status(h: Harness, sid: str) -> str:
+    return ok(h.gql(STATUS, {"id": sid}, TOKEN))["planningSession"]["selectedPlanStatus"]  # type: ignore[no-any-return]
+
+
+def _finalize(h: Harness, sid: str, key: str) -> dict[str, Any]:
+    body = h.gql(
+        FINALIZE,
+        {"input": {"sessionId": sid, "title": "Ward plan", "idempotencyKey": key}},
+        TOKEN,
+    )
+    return ok(body)["finalizeReport"]  # type: ignore[no-any-return]
+
+
+def test_selected_plan_status_tracks_the_chosen_option_and_guards_finalize(h: Harness) -> None:
+    # Regression guard: the selectedPlanStatus field must resolve (it is the only reader
+    # of the SelectionStatus enum over GraphQL). It reports NONE before a choice and
+    # CURRENT once a current option is chosen; a later goal change clears the choice.
+    s = update(h, session(h), {"goal": goal(groundwaterUse=True)})
+    assert _status(h, s["id"]) == "NONE"
+
+    option = s["planComparison"]["options"][0]
+    chosen = update(h, s, {"selectedPlanOptionId": option["id"]})
+    assert _status(h, chosen["id"]) == "CURRENT"
+
+    # A current selection finalizes; the report keeps the chosen plan.
+    report = _finalize(h, chosen["id"], "key-impact-status-1")
+    assert report["error"] is None and report["report"]["planOptionId"] == option["id"]
+
+    # Changing the goal clears the stored choice, so there is nothing stale to finalize.
+    reselect = update(h, chosen, {"goal": goal(groundwaterUse=False)})
+    assert reselect["selectedPlanOptionId"] is None
+    assert _status(h, reselect["id"]) == "NONE"
+
+
+def test_a_reassessed_selection_is_stale_until_chosen_again_and_gates_reports(h: Harness) -> None:
+    # Choose the greywater plan (it carries a required water-quality review).
+    s = update(h, session(h), {"goal": goal(groundwaterUse=True)})
+    option = s["planComparison"]["options"][1]
+    chosen = update(h, s, {"selectedPlanOptionId": option["id"]})
+    assert _status(h, chosen["id"]) == "CURRENT"
+
+    # New nearby information re-assesses the wider-system impact (its id covers nearby
+    # places) without clearing the choice, so the stored assessment is now stale.
+    place(h, "New neighbour", "0.001", OTHER_AREA)  # about 111 m away, outside the area
+    assert _status(h, chosen["id"]) == "IMPACT_CHANGED"
+
+    # The server refuses to finalize a stale selection, so no report — and no proposal
+    # built from one — can rest on it.
+    blocked = _finalize(h, chosen["id"], "key-impact-stale-blocked")
+    assert blocked["report"] is None and blocked["error"]["code"] == "PRECONDITION_FAILED"
+
+    # Reviewing and choosing the same plan again stores the current assessment.
+    rechosen = update(h, chosen, {"selectedPlanOptionId": option["id"]})
+    assert _status(h, rechosen["id"]) == "CURRENT"
+
+    # Now it finalizes, and a proposal can be generated from the report. The required
+    # review forces the wider-impact section into every proposal (ADR 0013).
+    final = _finalize(h, rechosen["id"], "key-impact-stale-ok")
+    assert final["error"] is None
+    gen = ok(
+        h.gql(
+            GENERATE,
+            {
+                "input": {
+                    "reportId": final["report"]["id"],
+                    "sections": ["PLAN"],
+                    "idempotencyKey": "key-impact-stale-prop",
+                }
+            },
+            TOKEN,
+        )
+    )["generateProposal"]
+    assert gen["error"] is None
+    assert gen["proposal"]["sections"] == ["PLAN", "WIDER_IMPACT"]
+
+
 def test_agent_tools_return_the_same_assessment_and_guard_summaries(h: Harness) -> None:
     s = update(h, session(h), {"goal": goal(groundwaterUse=True)})
     services = h.services

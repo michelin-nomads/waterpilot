@@ -190,6 +190,10 @@ class AgentStopReason(StrEnum):
     TOOL_BUDGET = "tool_budget"
     TOKEN_BUDGET = "token_budget"
     DAILY_BUDGET = "daily_budget"
+    STEP_BUDGET = "step_budget"
+    """The run reached its absolute cap on committed tool steps (``max_tool_steps``)."""
+    EXPIRED = "expired"
+    """The run's wall-clock lifetime (``expires_at``) passed; no further step may run."""
     CANCELLED = "cancelled"
     ERROR = "error"
 
@@ -199,7 +203,40 @@ class AgentRun(Record):
     session_id: str
     status: AgentRunStatus = AgentRunStatus.RUNNING
     tool_calls: int = Field(default=0, ge=0)
-    max_tool_calls: int = Field(default=8, ge=1, le=50)
+    """Model calls made in this run so far; ``max_tool_calls`` is the absolute cap."""
+    max_tool_calls: int = Field(default=20, ge=1, le=100)
+    calls_since_checkpoint: int = Field(default=0, ge=0)
+    """Model calls since the last user Continue; at ``max_calls_before_checkpoint`` the run
+    pauses and needs an explicit Continue before any further model call (ADR 0015)."""
+    max_calls_before_checkpoint: int = Field(default=5, ge=1, le=100)
     max_output_tokens: int = Field(default=2048, ge=1, le=32_768)
+    step_seq: int = Field(default=0, ge=0)
+    """Durable, monotonic count of committed **tool** steps (not model calls). It only ever
+    increases; a tool call that claims a step at or below it is a replay of an old step and
+    is refused. This ordering lives on the run itself, so replayed/stale steps are rejected
+    independently of any TTL cleanup of reservations, tombstones or conversation events
+    (Prompt 16)."""
+    max_tool_steps: int = Field(default=40, ge=1, le=500)
+    """Absolute cap on committed tool steps in one run, bounding tool counts and loops."""
+    expires_at: UtcDateTime | None = None
+    """Wall-clock deadline for the whole run. Once reached, no further tool step or model
+    call may run, enforced from this field alone (not from any TTL sweep)."""
     stop_reason: AgentStopReason | None = None
     ended_at: UtcDateTime | None = None
+
+    @property
+    def needs_continue(self) -> bool:
+        """True when the run paused at a Continue checkpoint and must be resumed first."""
+        return (
+            self.status is AgentRunStatus.RUNNING
+            and self.calls_since_checkpoint >= self.max_calls_before_checkpoint
+        )
+
+    def is_expired(self, now: datetime) -> bool:
+        """True once the run's wall-clock lifetime has passed. Judged from ``expires_at``
+        alone, so expiry does not depend on any background TTL cleanup running."""
+        return self.expires_at is not None and now >= self.expires_at
+
+    @property
+    def tool_budget_reached(self) -> bool:
+        return self.step_seq >= self.max_tool_steps

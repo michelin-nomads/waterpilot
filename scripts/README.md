@@ -20,6 +20,22 @@ Developer helper scripts.
 - `check-bundle-budget.mjs` (`npm run budget`, after `npm run build`) — gzips every JS/CSS
   asset in `apps/web/dist/assets` and fails if the entry or any lazy chunk exceeds its
   budget. Budgets and the baseline are recorded in `docs/dependencies.md`.
+- `use-pinned-node.sh` — selects the repository-pinned Node.js toolchain (version from
+  `.nvmrc`, currently 24.21.0) **without** a version manager and without any system change.
+  It downloads the official Node.js distribution for this OS/arch into a checksum-verified
+  local cache (`$HOME/.cache/waterpilot-node`, reused on later runs) and prints the PATH
+  export. The Node pin ships the exact npm the repo expects (24.21.0 → npm 11.19.0), so no
+  separate npm install is needed; `engine-strict=true` (root `.npmrc`) then enforces the
+  engines range on every install. Usage:
+
+  ```sh
+  eval "$(scripts/use-pinned-node.sh)"   # add pinned node/npm to PATH for this shell
+  node --version && npm --version        # -> v24.21.0 / 11.19.0
+  npm ci && npm run typecheck && npm run lint && npm run build
+  ```
+
+  macOS/Linux (bash). On Windows use nvm-windows with `.nvmrc`, or the official 24.21.0 MSI.
+  If you already use nvm/fnm/asdf, `nvm use` / `fnm use` reads the same `.nvmrc`.
 
 All other tasks are plain `npm run <script>` / `uv run` commands documented in the
 root `README.md`; this folder intentionally stays thin.

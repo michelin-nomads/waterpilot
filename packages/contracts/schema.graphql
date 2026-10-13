@@ -86,8 +86,28 @@ enum AgentStopReason {
   TOOL_BUDGET
   TOKEN_BUDGET
   DAILY_BUDGET
+  STEP_BUDGET
+  EXPIRED
   CANCELLED
   ERROR
+}
+
+type AiStatus {
+  """Whether AI help can be offered right now. Planning works regardless."""
+  available: Boolean!
+  reason: AiUnavailableReason
+  modelId: String!
+  requestsRemaining: Int!
+  dailyRequestLimit: Int!
+  budgetConfigured: Boolean!
+  suggestedDailyBudgetUsd: String!
+}
+
+enum AiUnavailableReason {
+  DISABLED
+  NOT_INVITED
+  BUDGET_EXHAUSTED
+  NO_BUDGET_CONFIGURED
 }
 
 input ArchiveCommunityInput {
@@ -468,6 +488,11 @@ type ComparedOption {
 
   """Wider-system impact, shown before you choose (ADR 0013)."""
   impact: WiderImpact!
+
+  """
+  Costs, avoided tanker spending, net benefit, payback and funding (ADR 0014); null when the option has no cost estimate.
+  """
+  economics: OptionEconomics
 }
 
 input CompleteAccountClaimInput {
@@ -791,6 +816,28 @@ type FundingSchemeConnection {
   pageInfo: PageInfo!
 }
 
+"""A declared source of money; only approved funding counts."""
+type FundingSource {
+  label: String!
+  amount: Money!
+  status: FundingStatus!
+  note: String!
+}
+
+"""A declared source of money; only approved funding counts."""
+input FundingSourceInput {
+  label: String!
+  amount: MoneyInput!
+  status: FundingStatus!
+  note: String! = ""
+}
+
+enum FundingStatus {
+  APPROVED
+  EXPECTED
+  PROPOSED
+}
+
 input GenerateProposalInput {
   reportId: ID!
   sections: [ProposalSection!]!
@@ -823,6 +870,19 @@ type Goal {
 
   """Planning horizon over which benefits count (separate from build time)."""
   horizonDays: Int
+
+  """
+  The tanker-water price used to value avoided tanker spending (ADR 0014).
+  """
+  waterTariff: WaterTariff
+
+  """A contingency share you add to cost estimates; applied only when set."""
+  contingencyRatio: DecimalString
+
+  """
+  Declared sources of money; only approved funding counts towards affordability.
+  """
+  funding: [FundingSource!]!
   priority: Priority
 
   """Further objectives checked for conflicts with the main goal."""
@@ -872,6 +932,9 @@ input GoalInput {
   budget: MoneyInput = null
   timelineDays: Int = null
   horizonDays: Int = null
+  waterTariff: WaterTariffInput = null
+  contingencyRatio: DecimalString = null
+  funding: [FundingSourceInput!]! = []
   priority: Priority = null
   also: [GoalKind!]! = []
   site: SiteConstraintsInput = null
@@ -1239,6 +1302,9 @@ type MatchFundingPayload {
 type MeasureEstimate {
   interventionId: String!
   cost: MoneyRange
+
+  """Your yearly operating and maintenance estimate for this measure."""
+  recurring: MoneyRange
   buildDays: DayRange
 
   """
@@ -1251,6 +1317,7 @@ type MeasureEstimate {
 input MeasureEstimateInput {
   interventionId: String!
   cost: MoneyRangeInput = null
+  recurring: MoneyRangeInput = null
   buildDays: DayRangeInput = null
   effects: [EffectEstimateInput!]! = []
   note: String! = ""
@@ -1506,6 +1573,33 @@ type ObservationPayload {
   error: MutationError
 }
 
+"""A contingency share you added to the cost estimates."""
+type OptionContingency {
+  ratio: DecimalString!
+  amount: MoneyRange!
+}
+
+"""
+Costs, avoided tanker spending, net benefit, payback and funding (ADR 0014), from your own estimates and declared tariff; nothing is converted or invented.
+"""
+type OptionEconomics {
+  engineVersion: String!
+  currency: String!
+  capex: MoneyRange!
+  contingency: OptionContingency
+  upfrontTotal: MoneyRange!
+  recurringAnnual: MoneyRange
+  recurringReason: String
+  avoidedTankerAnnual: MoneyRange
+  avoidedReason: String
+  netAnnual: MoneyRange
+  payback: OptionPayback
+  horizon: OptionHorizonTotals
+  funding: OptionFunding!
+  assumptions: [String!]!
+  notes: [String!]!
+}
+
 """One effect value a measure line was computed from."""
 type OptionEffect {
   key: String!
@@ -1514,6 +1608,50 @@ type OptionEffect {
   low: ExactNumber!
   high: ExactNumber!
   origin: EffectOrigin!
+}
+
+"""
+Funding kept separate from cost: only approved funding counts towards affordability, and the gap is never reduced by unapproved money.
+"""
+type OptionFunding {
+  totalCost: MoneyRange!
+  approved: Money!
+
+  """Total cost minus approved funding, never below zero."""
+  gap: MoneyRange!
+
+  """Expected or proposed funding; shown, never counted as secured."""
+  candidate: Money!
+  fullyFunded: Boolean!
+  lines: [OptionFundingLine!]!
+  note: String!
+}
+
+"""One declared source of money for the plan."""
+type OptionFundingLine {
+  label: String!
+  amount: Money!
+  status: FundingStatus!
+
+  """True only when approved and in the plan's currency: reduces the gap."""
+  counts: Boolean!
+
+  """True when in the plan's currency; otherwise shown but never converted."""
+  applicable: Boolean!
+}
+
+"""Costs and benefits totalled over the planning horizon."""
+type OptionHorizonTotals {
+  days: Int!
+  avoided: MoneyRange
+  recurring: MoneyRange
+
+  """Avoided spending minus recurring cost minus upfront cost."""
+  net: MoneyRange
+
+  """True only when the net is positive even at the pessimistic estimate."""
+  netPositive: Boolean!
+  reason: String
 }
 
 type OptionMeasure {
@@ -1526,11 +1664,30 @@ type OptionMeasure {
   waterLow: ExactNumber
   waterHigh: ExactNumber
   cost: MoneyRange
+
+  """
+  Your yearly operating and maintenance estimate for this measure, if given.
+  """
+  recurring: MoneyRange
   buildDays: DayRange
   benefitTiming: BenefitTiming!
 
   """Every effect value behind this line, with where it came from."""
   effects: [OptionEffect!]!
+}
+
+"""
+When costs are recovered. Explicit about zero or negative savings and a payback beyond the planning horizon; never a negative or infinite number.
+"""
+type OptionPayback {
+  outcome: PaybackOutcome!
+
+  """Fewest days to recover costs; null when even the best case never does."""
+  optimisticDays: Int
+
+  """Most days to recover costs; null when the worst case never does."""
+  pessimisticDays: Int
+  note: String!
 }
 
 """Why combinations were not shown. Counts, never options."""
@@ -1577,6 +1734,13 @@ type OptionStress {
 type PageInfo {
   hasNextPage: Boolean!
   endCursor: String
+}
+
+enum PaybackOutcome {
+  WITHIN_HORIZON
+  BEYOND_HORIZON
+  UNCERTAIN
+  NEVER
 }
 
 type PlaceCandidate {
@@ -1673,6 +1837,11 @@ type PlanOption {
   comparisonId: String
   engineVersion: String
   interventionIds: [String!]!
+
+  """
+  Economics copied when this option was selected (ADR 0014); null for options stored before it existed.
+  """
+  economics: OptionEconomics
 }
 
 type PlanOptionConnection {
@@ -1713,6 +1882,11 @@ type PlanningSession {
   Up to three genuinely feasible options for the saved goal under the confirmed scenario, computed deterministically from current inputs. Select one with updatePlanningSession(selectedPlanOptionId).
   """
   planComparison: PlanComparison!
+
+  """
+  Whether the chosen plan's stored assessment still matches a fresh one. IMPACT_CHANGED or NOT_CURRENT: choose again before finalizing.
+  """
+  selectedPlanStatus: SelectedPlanStatus!
 
   """The saved scenario against the same baseline."""
   scenarioComparison: ScenarioComparison!
@@ -1885,6 +2059,7 @@ type Query {
   job(id: ID!): Job
   agentRun(id: ID!): AgentRun
   agentRuns(sessionId: ID!, first: Int = null, after: String = null): AgentRunConnection!
+  aiStatus: AiStatus!
 }
 
 enum ReadinessInput {
@@ -1962,6 +2137,11 @@ type Report {
   The chosen option's impact assessment, copied at finalization with its provenance; null for reports finalized before it existed.
   """
   impact: ImpactAssessment
+
+  """
+  The chosen option's economics, copied at finalization (ADR 0014); null for reports finalized before it existed.
+  """
+  economics: OptionEconomics
   finalizedAt: UtcDateTime!
   archivedAt: UtcDateTime
   createdAt: UtcDateTime!
@@ -2064,6 +2244,17 @@ type ScenarioRow {
 
   """Why a value is unavailable."""
   reason: String
+}
+
+"""
+Whether the chosen plan still matches a fresh assessment; only CURRENT or LEGACY can be finalized.
+"""
+enum SelectedPlanStatus {
+  NONE
+  CURRENT
+  IMPACT_CHANGED
+  NOT_CURRENT
+  LEGACY
 }
 
 enum SessionStatus {
@@ -2234,6 +2425,22 @@ enum ValueOrigin {
 type Viewer {
   uid: ID!
   kind: AccountKind!
+}
+
+"""The tanker-water price you pay now; your estimate, never converted."""
+type WaterTariff {
+  price: Money!
+
+  """The volume the price buys, in litres."""
+  volume: Quantity!
+  note: String!
+}
+
+"""The tanker-water price you pay now; your estimate, never converted."""
+input WaterTariffInput {
+  price: MoneyInput!
+  volume: QuantityInput!
+  note: String! = ""
 }
 
 """

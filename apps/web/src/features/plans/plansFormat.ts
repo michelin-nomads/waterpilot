@@ -3,8 +3,10 @@ import type {
   BenefitTiming,
   EffectDirection,
   EffectOrigin,
+  FundingStatus,
   GroundwaterReliance,
   Linkage,
+  PaybackOutcome,
   PlanComparisonStatus,
   SharedSystem,
   ScenarioPreviewInput,
@@ -85,6 +87,49 @@ export const TIMING_LABEL: Record<BenefitTiming, string> = {
   AFTER_RAINFALL: 'After the next rain',
   AFTER_WET_SEASONS: 'After one or more wet seasons',
 };
+
+// --------------------------------------------------------------------------- economics
+
+export const PAYBACK_LABEL: Record<PaybackOutcome, { label: string; tone: StatusTone }> = {
+  WITHIN_HORIZON: { label: 'Pays back within the horizon', tone: 'success' },
+  BEYOND_HORIZON: { label: 'Pays back after the horizon', tone: 'warning' },
+  UNCERTAIN: { label: 'Payback not assured', tone: 'warning' },
+  NEVER: { label: 'No payback', tone: 'neutral' },
+};
+
+export const FUNDING_STATUS_LABEL: Record<FundingStatus, string> = {
+  APPROVED: 'Approved',
+  EXPECTED: 'Expected',
+  PROPOSED: 'Proposed',
+};
+
+/** A payback period in days as whole years and days; display only, never recalculated. */
+export function formatPayback(days: number | null | undefined): string {
+  if (days === null || days === undefined) return 'No payback';
+  if (days < 365) return `${days} day${days === 1 ? '' : 's'}`;
+  const years = Math.floor(days / 365);
+  const rest = days % 365;
+  const y = `${years} year${years === 1 ? '' : 's'}`;
+  return rest === 0 ? y : `${y}, ${rest} day${rest === 1 ? '' : 's'}`;
+}
+
+export function formatPaybackRange(
+  optimisticDays: number | null | undefined,
+  pessimisticDays: number | null | undefined,
+): string {
+  const best = formatPayback(optimisticDays);
+  if (pessimisticDays === null || pessimisticDays === undefined) {
+    return optimisticDays === null || optimisticDays === undefined
+      ? 'No payback'
+      : `${best} at best`;
+  }
+  const worst = formatPayback(pessimisticDays);
+  return best === worst ? best : `${best} to ${worst}`;
+}
+
+export function formatPercentFromDecimal(ratio: string): string {
+  return `${formatDecimal(shiftDecimalRight(ratio, 2), 0)}%`;
+}
 
 export const STATUS: Record<PlanComparisonStatus, { label: string; tone: StatusTone }> = {
   OPTIONS: { label: 'Feasible plans found', tone: 'success' },

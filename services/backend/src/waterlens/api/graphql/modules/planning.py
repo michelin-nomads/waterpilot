@@ -9,15 +9,21 @@ from waterlens.api.graphql.loaders import load_existing
 from waterlens.api.graphql.modules.baseline import Baseline
 from waterlens.api.graphql.modules.goals import (
     DayRange,
+    FundingSourceInput,
     GoalAssessment,
     GoalCheck,
     MeasureEstimate,
     MeasureEstimateInput,
     SiteConstraints,
     SiteConstraintsInput,
+    WaterTariffInput,
 )
 from waterlens.api.graphql.modules.impact import WiderImpact
-from waterlens.api.graphql.modules.options import PlanComparison, ScenarioComparison
+from waterlens.api.graphql.modules.options import (
+    OptionEconomics,
+    PlanComparison,
+    ScenarioComparison,
+)
 from waterlens.api.graphql.modules.readiness import AreaReadiness
 from waterlens.api.graphql.scalars import DecimalString, LocalDate, UtcDateTime
 from waterlens.api.graphql.types_common import (
@@ -37,6 +43,7 @@ from waterlens.api.graphql.types_common import (
 )
 from waterlens.application.identity import AccountKind
 from waterlens.application.services.areas import viewer_uid
+from waterlens.application.services.options import SelectionStatus
 from waterlens.domain import location as dl
 from waterlens.domain import planning as dp
 from waterlens.domain import values as dv
@@ -210,6 +217,29 @@ class GoalTarget:
     quantity: Quantity
 
 
+@strawberry.type(description="The tanker-water price you pay now; your estimate, never converted.")
+class WaterTariff:
+    price: Money
+    volume: Quantity = strawberry.field(description="The volume the price buys, in litres.")
+    note: str
+
+    @staticmethod
+    def of(t: dv.WaterTariff) -> WaterTariff:
+        return WaterTariff(price=Money.of(t.price), volume=Quantity.of(t.volume), note=t.note)
+
+
+@strawberry.type(description="A declared source of money; only approved funding counts.")
+class FundingSource:
+    label: str
+    amount: Money
+    status: dv.FundingStatus
+    note: str
+
+    @staticmethod
+    def of(f: dv.FundingSource) -> FundingSource:
+        return FundingSource(label=f.label, amount=Money.of(f.amount), status=f.status, note=f.note)
+
+
 @strawberry.type
 class Goal:
     id: strawberry.ID
@@ -223,6 +253,15 @@ class Goal:
     timeline_days: int | None = strawberry.field(description="Maximum implementation time.")
     horizon_days: int | None = strawberry.field(
         description="Planning horizon over which benefits count (separate from build time)."
+    )
+    water_tariff: WaterTariff | None = strawberry.field(
+        description="The tanker-water price used to value avoided tanker spending (ADR 0014)."
+    )
+    contingency_ratio: DecimalString | None = strawberry.field(
+        description="A contingency share you add to cost estimates; applied only when set."
+    )
+    funding: list[FundingSource] = strawberry.field(
+        description="Declared sources of money; only approved funding counts towards affordability."
     )
     priority: dp.Priority | None
     also: list[dp.GoalKind] = strawberry.field(
@@ -246,6 +285,11 @@ class Goal:
             budget=Money.of(g.budget) if g.budget else None,
             timeline_days=g.timeline_days,
             horizon_days=g.horizon_days,
+            water_tariff=WaterTariff.of(g.water_tariff) if g.water_tariff else None,
+            contingency_ratio=DecimalString(g.contingency_ratio)
+            if g.contingency_ratio is not None
+            else None,
+            funding=[FundingSource.of(f) for f in g.funding],
             priority=g.priority,
             also=list(g.also),
             site=SiteConstraints.of(g.site),
@@ -351,6 +395,10 @@ class PlanOption:
     )
     engine_version: str | None
     intervention_ids: list[str]
+    economics: OptionEconomics | None = strawberry.field(
+        description="Economics copied when this option was selected (ADR 0014); null for "
+        "options stored before it existed."
+    )
 
     @staticmethod
     def of(o: dp.PlanOption) -> PlanOption:
@@ -371,6 +419,7 @@ class PlanOption:
             comparison_id=o.comparison_id,
             engine_version=o.engine_version,
             intervention_ids=list(o.intervention_ids),
+            economics=OptionEconomics.of(o.economics) if o.economics else None,
         )
 
 
@@ -469,6 +518,9 @@ class GoalInput:
     budget: MoneyInput | None = None
     timeline_days: int | None = None
     horizon_days: int | None = None
+    water_tariff: WaterTariffInput | None = None
+    contingency_ratio: DecimalString | None = None
+    funding: list[FundingSourceInput] = strawberry.field(default_factory=list)
     priority: dp.Priority | None = None
     also: list[dp.GoalKind] = strawberry.field(default_factory=list)
     site: SiteConstraintsInput | None = None

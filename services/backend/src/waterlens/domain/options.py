@@ -33,6 +33,7 @@ from fractions import Fraction
 from itertools import combinations
 from typing import Any
 
+from waterlens.domain.economics import OptionEconomics, assess_economics
 from waterlens.domain.goals import GOAL_LABEL, GoalOutcome, site_fit
 from waterlens.domain.ids import IdKind, derived_id
 from waterlens.domain.interventions import (
@@ -193,6 +194,8 @@ class MeasureLine:
     before it in the option (so the lines add up without double counting)."""
     water_high: Fraction | None
     cost: MoneyRange | None
+    recurring: MoneyRange | None
+    """The person's yearly operating and maintenance estimate for this measure, if given."""
     build_days: DayRange | None
     benefit_timing: BenefitTiming
     effects: tuple[EffectUsed, ...] = ()
@@ -240,6 +243,8 @@ class Option:
     uncertainty: tuple[str, ...]
     sensitivity: tuple[Sensitivity, ...]
     stress: tuple[StressResult, ...]
+    economics: OptionEconomics | None
+    """Costs, avoided tanker spending, net benefit, payback and funding (ADR 0014)."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -307,6 +312,7 @@ class _Measure:
     intervention: Intervention
     params: Mapping[str, tuple[Fraction, Fraction]]
     cost: MoneyRange | None
+    recurring: MoneyRange | None
     build: DayRange | None
 
     @property
@@ -455,6 +461,23 @@ def _sum_cost(measures: Sequence[_Measure]) -> MoneyRange | None:
     low = sum((int(m.cost.low.minor_units) for m in measures if m.cost), 0)
     high = sum((int(m.cost.high.minor_units) for m in measures if m.cost), 0)
     currency = next(m.cost.low.currency for m in measures if m.cost)
+    return MoneyRange(
+        low=Money(minor_units=str(low), currency=currency),
+        high=Money(minor_units=str(high), currency=currency),
+    )
+
+
+def _sum_recurring(measures: Sequence[_Measure]) -> MoneyRange | None:
+    """Yearly recurring cost only when every measure has one, in a single currency; a
+    missing estimate stays unknown (never counted as zero)."""
+    if any(m.recurring is None for m in measures):
+        return None
+    low = sum((int(m.recurring.low.minor_units) for m in measures if m.recurring), 0)
+    high = sum((int(m.recurring.high.minor_units) for m in measures if m.recurring), 0)
+    currencies = {m.recurring.low.currency for m in measures if m.recurring}
+    if len(currencies) != 1:
+        return None
+    currency = currencies.pop()
     return MoneyRange(
         low=Money(minor_units=str(low), currency=currency),
         high=Money(minor_units=str(high), currency=currency),
@@ -710,7 +733,9 @@ def _candidates(
                 f"{i.name}: it could still be under construction when your horizon ends."
             )
             continue
-        out.append(_Measure(i, params, est.cost if est else None, build))
+        out.append(
+            _Measure(i, params, est.cost if est else None, est.recurring if est else None, build)
+        )
     return out, needs, excluded
 
 
@@ -842,6 +867,7 @@ def _option(
             e.water_low.lines[i],
             e.water_high.lines[i],
             m.cost,
+            m.recurring,
             m.build,
             m.intervention.benefit_timing,
             _effects_used(ctx, m),
@@ -851,6 +877,10 @@ def _option(
     total_low = sum(e.water_low.lines, Fraction(0))
     total_high = sum(e.water_high.lines, Fraction(0))
     uncounted: Fraction | None = None
+    counted_low = counted_high = None
+    if ctx.balance.tanker is not None:
+        counted_low = min(total_low, ctx.balance.tanker)
+        counted_high = min(total_high, ctx.balance.tanker)
     if ctx.metric is Metric.TANKER_DEPENDENCE and ctx.balance.tanker is not None:
         uncounted = max(Fraction(0), total_high - ctx.balance.tanker)
     tradeoffs: list[str] = []
@@ -900,6 +930,16 @@ def _option(
         uncertainty=tuple(uncertainty),
         sensitivity=_sensitivity(ctx, e),
         stress=_stress_results(ctx, goal, e, target, adjustments, base),
+        economics=assess_economics(
+            capex=e.cost,
+            recurring_annual=_sum_recurring(e.measures),
+            contingency_ratio=goal.contingency_ratio,
+            counted_water_low=counted_low,
+            counted_water_high=counted_high,
+            tariff=goal.water_tariff,
+            horizon_days=goal.horizon_days,
+            funding=goal.funding,
+        ),
     )
 
 

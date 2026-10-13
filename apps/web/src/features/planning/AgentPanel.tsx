@@ -4,27 +4,105 @@ import { Badge } from '../../components/Badge/Badge';
 import { Button } from '../../components/Button/Button';
 import { Icon } from '../../components/Icon/Icon';
 import { EmptyState } from '../../components/StatePanel/StatePanel';
+import { AiStatusDocument, type AiStatusQuery } from '../../graphql/generated/graphql';
+import { useGraphQLQuery } from '../../graphql/hooks';
+import { queryKeys } from '../../graphql/queryKeys';
 import styles from './AgentPanel.module.scss';
 
 const AgentGoalCheck = lazy(() => import('../goals/AgentGoalCheck'));
 const AgentScenario = lazy(() => import('../plans/AgentScenario'));
 
+type AiStatusValue = AiStatusQuery['aiStatus'];
+
+type PanelContent = {
+  /** A short, stable key for the panel's state, also used as a test hook. */
+  state: string;
+  badge: string;
+  badgeTone: 'neutral' | 'success';
+  title: string;
+  body: string;
+};
+
 /**
- * Agent pane. The agent is not connected in this build, and the pane says so instead of
- * imitating a conversation. When connected it will act on the same planning session as
- * the workspace through the same application services.
+ * Turn the advisory `aiStatus` into what the pane should say. While the query is loading
+ * or failed, `status` is undefined and the pane treats AI as unavailable: it never blocks
+ * the workspace, which works whether or not AI is available.
+ */
+function panelContent(status: AiStatusValue | undefined): PanelContent {
+  if (status?.available) {
+    return {
+      state: 'available',
+      badge: 'Available',
+      badgeTone: 'success',
+      title: 'AI help is available',
+      body:
+        `The assistant works on the same planning session as the workspace, and every number ` +
+        `it shows comes from the deterministic calculations, not the language model. It uses ` +
+        `${status.modelId}; ${status.requestsRemaining} of ${status.dailyRequestLimit} requests ` +
+        `remain today. The conversation itself arrives in a later build.`,
+    };
+  }
+  const reason = status?.reason ?? null;
+  switch (reason) {
+    case 'NOT_INVITED':
+      return {
+        state: 'NOT_INVITED',
+        badge: 'Invite only',
+        badgeTone: 'neutral',
+        title: 'AI help is limited to invited testers',
+        body: 'Ask the project owner for access. The workspace works without it.',
+      };
+    case 'BUDGET_EXHAUSTED':
+      return {
+        state: 'BUDGET_EXHAUSTED',
+        badge: 'Paused',
+        badgeTone: 'neutral',
+        title: "Today's AI allowance is used up",
+        body: 'AI help will be offered again tomorrow. The workspace is unaffected.',
+      };
+    case 'NO_BUDGET_CONFIGURED':
+      return {
+        state: 'NO_BUDGET_CONFIGURED',
+        badge: 'Not configured',
+        badgeTone: 'neutral',
+        title: 'AI help has no budget set',
+        body:
+          `AI help stays off until the owner sets a daily budget (suggested ` +
+          `$${status?.suggestedDailyBudgetUsd ?? '5'}). The workspace works without it.`,
+      };
+    default:
+      return {
+        state: 'DISABLED',
+        badge: 'Not connected',
+        badgeTone: 'neutral',
+        title: 'AI help is turned off in this build',
+        body:
+          'When enabled, the assistant works on the same planning session as the workspace and ' +
+          'runs the same deterministic calculations. Until then, use the workspace.',
+      };
+  }
+}
+
+/**
+ * Agent pane. The assistant conversation is not connected in this build; the pane reads the
+ * advisory `aiStatus` and explains whether AI help could be offered and, if not, why
+ * (disabled, invite-only, no budget, or the daily allowance used up). It never blocks the
+ * workspace. The deterministic goal and scenario checks below are the same results the
+ * agent's tools return, so Agent mode never shows a different number.
  */
 export function AgentPanel({ onUseTraditional }: { onUseTraditional: () => void }) {
+  const query = useGraphQLQuery(queryKeys.ai.status(), AiStatusDocument, {});
+  const content = panelContent(query.data?.aiStatus);
   return (
-    <div className={styles.agent}>
+    <div className={styles.agent} data-ai-status={content.state}>
       <div className={styles.header}>
         <Icon name="sparkle" />
         <h2 className={styles.title}>Conversation</h2>
-        <Badge tone="neutral">Not connected</Badge>
+        <Badge tone={content.badgeTone}>{content.badge}</Badge>
       </div>
       <EmptyState
         icon="sparkle"
-        title="The agent is not available in this build"
+        title={content.title}
         headingLevel={3}
         actions={
           <Button variant="secondary" startIcon="list" onClick={onUseTraditional}>
@@ -32,15 +110,7 @@ export function AgentPanel({ onUseTraditional }: { onUseTraditional: () => void 
           </Button>
         }
       >
-        <p>
-          In Agent mode the assistant works on the same planning session as the workspace. It can
-          suggest the next step and run the same calculations, and every number it shows comes from
-          those deterministic calculations, not from the language model.
-        </p>
-        <p>
-          It needs server-side Gemini on Vertex AI (Phase 10) and the bounded ADK planning tools
-          (Phase 13). Until then, use the workspace.
-        </p>
+        <p>{content.body}</p>
       </EmptyState>
       <Suspense fallback={null}>
         <AgentGoalCheck />

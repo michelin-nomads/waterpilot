@@ -24,6 +24,7 @@ from typing import Protocol
 
 from waterlens.application.pagination import FilterValue, Page, PageQuery
 from waterlens.domain.accounts import AccountClaim
+from waterlens.domain.ai import UsageCallKey, UsageDay, UsageReservation
 from waterlens.domain.communities import Community, Membership
 from waterlens.domain.funding import FundingMatch, FundingScheme
 from waterlens.domain.jobs import AgentRun, JobRecord, OutboxRecord
@@ -151,6 +152,17 @@ class Store(Protocol):
     def outbox(self) -> DueRepository[OutboxRecord]: ...
     @property
     def agent_runs(self) -> RecordRepository[AgentRun]: ...
+    @property
+    def usage_reservations(self) -> DueRepository[UsageReservation]: ...
+    @property
+    def usage_days(self) -> RecordRepository[UsageDay]: ...
+    @property
+    def usage_call_keys(self) -> RecordRepository[UsageCallKey]:
+        """Durable, minimal paid-call tombstones (ADR 0016). Deduplication of a replayed
+        ``call_key`` survives here after the detailed reservation is cleaned up, so it does
+        not depend on retained conversation events."""
+        ...
+
     @property
     def account_claims(self) -> RecordRepository[AccountClaim]: ...
     @property

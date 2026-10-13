@@ -109,6 +109,19 @@ beforeEach(() => {
         planningSession: { id: 'ses_1', inputsRevision: 1, goalAssessment: assessment() },
       },
     }),
+    AiStatus: () => ({
+      data: {
+        aiStatus: {
+          available: false,
+          reason: 'DISABLED',
+          modelId: 'gemini-2.5-flash',
+          requestsRemaining: 100,
+          dailyRequestLimit: 100,
+          budgetConfigured: false,
+          suggestedDailyBudgetUsd: '5',
+        },
+      },
+    }),
   };
   apiClient.defaults.adapter = stub;
 });

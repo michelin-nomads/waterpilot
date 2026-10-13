@@ -19,6 +19,7 @@ from pydantic import BaseModel
 from waterlens.application.pagination import Page, PageQuery, Position, paginate
 from waterlens.application.repositories import IdempotencyRecord, Where
 from waterlens.domain.accounts import AccountClaim
+from waterlens.domain.ai import UsageCallKey, UsageDay, UsageReservation
 from waterlens.domain.communities import Community, CommunityStatus, Membership
 from waterlens.domain.errors import DomainError, ErrorCode
 from waterlens.domain.funding import FundingMatch, FundingScheme
@@ -220,6 +221,9 @@ class MemoryStore:
         self.jobs: MemoryDueRepository[JobRecord] = MemoryDueRepository()
         self.outbox: MemoryDueRepository[OutboxRecord] = MemoryDueRepository()
         self.agent_runs: MemoryRecordRepository[AgentRun] = MemoryRecordRepository()
+        self.usage_reservations: MemoryDueRepository[UsageReservation] = MemoryDueRepository()
+        self.usage_days: MemoryRecordRepository[UsageDay] = MemoryRecordRepository()
+        self.usage_call_keys: MemoryRecordRepository[UsageCallKey] = MemoryRecordRepository()
         self.account_claims: MemoryRecordRepository[AccountClaim] = MemoryRecordRepository()
         self.idempotency = MemoryIdempotencyStore()
         self.source_registrations: MemoryRecordRepository[SourceRegistration] = (

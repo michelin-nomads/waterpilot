@@ -128,4 +128,9 @@ export const queryKeys = {
   jobs: {
     detail: (jobId: string) => ['jobs', jobId] as const,
   },
+
+  /** Whether AI help can be offered right now; advisory, planning works regardless. */
+  ai: {
+    status: () => ['ai', 'status'] as const,
+  },
 } as const;

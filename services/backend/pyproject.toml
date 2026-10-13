@@ -16,6 +16,16 @@ dependencies = [
     "httpx>=0.28.1,<0.29",
     "babel>=2.18,<3",
     "tzfpy>=2.1,<3",
+    # Agent runtime (ADR 0016, Prompt 15). The deployed agent runtime constructs the
+    # Firestore ADK session service and the gateway LLM bridge, so ADK and the SDKs they
+    # import directly are declared runtime dependencies — not dev-only. google-adk is pinned
+    # exactly because both adapters are written against the verified interface of this
+    # release (see docs/domain/adk-sessions.md); google-genai is imported directly by the
+    # gateway LLM bridge and the Vertex adapter, so it is pinned to the ADK-compatible range.
+    # Ordinary planning never touches these; local/pilot runtimes never construct the agent
+    # adapters and never make a model call.
+    "google-adk==2.11.0",
+    "google-genai>=2.29,<3",
 ]
 
 [dependency-groups]

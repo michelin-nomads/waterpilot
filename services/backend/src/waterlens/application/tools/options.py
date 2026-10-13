@@ -47,6 +47,7 @@ def option_json(o: Option) -> Json:
                 "waterLow": _exact(m.water_low),
                 "waterHigh": _exact(m.water_high),
                 "cost": m.cost.model_dump(mode="json") if m.cost else None,
+                "recurring": m.recurring.model_dump(mode="json") if m.recurring else None,
                 "buildDays": m.build_days.model_dump(mode="json") if m.build_days else None,
                 "benefitTiming": m.benefit_timing,
             }
@@ -61,6 +62,7 @@ def option_json(o: Option) -> Json:
         "cost": o.cost.model_dump(mode="json") if o.cost else None,
         "buildDays": o.build_days.model_dump(mode="json") if o.build_days else None,
         "firstBenefit": o.first_benefit,
+        "economics": _camel(o.economics.model_dump(mode="json")) if o.economics else None,
         "why": o.why,
         "tradeoffs": list(o.tradeoffs),
         "uncertainty": list(o.uncertainty),

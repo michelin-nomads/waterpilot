@@ -21,6 +21,8 @@ docs/                HLD, build guide, domain specs, traceability, progress
 
 - **Node.js 24.21.0** (`.nvmrc`; supported range `>=24.15.0 <25`, enforced by
   `engine-strict` in `.npmrc` — older Node 24 releases fail `npm ci`). `nvm use` reads `.nvmrc`.
+  Without a version manager, `eval "$(scripts/use-pinned-node.sh)"` downloads the official,
+  checksum-verified 24.21.0 build into a local cache and puts it on PATH (no system change).
 - **npm 11+** (11.19.0 ships with Node 24.21.0).
 - **uv 0.8+** (uses or downloads a Python 3.12 interpreter — no system Python needed).
 - **JDK 21+** for the Firebase emulators (firebase-tools 15.33.0 enforces Java 21 as its minimum).

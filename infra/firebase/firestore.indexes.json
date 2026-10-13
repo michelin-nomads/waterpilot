@@ -467,6 +467,38 @@
           "order": "DESCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "agentSessions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "app_name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "_lastEventMs",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "agentSessions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "app_name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "user_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "_lastEventMs",
+          "order": "ASCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": [
@@ -573,6 +605,16 @@
     {
       "collectionGroup": "jobOutbox",
       "fieldPath": "_expiresAt",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "agentSessions",
+      "fieldPath": "_expiresAt",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "agentSessions",
+      "fieldPath": "state",
       "indexes": []
     },
     {

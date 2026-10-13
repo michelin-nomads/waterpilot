@@ -15,14 +15,17 @@ import strawberry
 from waterlens.api.graphql.context import Info, call
 from waterlens.api.graphql.modules.goals import DayRange
 from waterlens.api.graphql.modules.impact import ImpactContext, WiderImpact
+from waterlens.api.graphql.scalars import DecimalString
 from waterlens.api.graphql.types_common import (
     ExactNumber,
     FieldError,
+    Money,
     MoneyRange,
     QuantityInput,
     input_data,
 )
 from waterlens.application.services import options as so
+from waterlens.domain import economics as de
 from waterlens.domain import interventions as di
 from waterlens.domain import options as do
 from waterlens.domain import planning as dp
@@ -125,6 +128,9 @@ class OptionMeasure:
     )
     water_high: ExactNumber | None
     cost: MoneyRange | None
+    recurring: MoneyRange | None = strawberry.field(
+        description="Your yearly operating and maintenance estimate for this measure, if given."
+    )
     build_days: DayRange | None
     benefit_timing: di.BenefitTiming
     effects: list[OptionEffect] = strawberry.field(
@@ -148,6 +154,162 @@ class OptionStress:
     meets_target: bool | None = strawberry.field(
         description="Null when the stress does not apply to this option."
     )
+
+
+@strawberry.type(description="A contingency share you added to the cost estimates.")
+class OptionContingency:
+    ratio: DecimalString
+    amount: MoneyRange
+
+    @staticmethod
+    def of(c: de.Contingency) -> OptionContingency:
+        return OptionContingency(ratio=DecimalString(c.ratio), amount=MoneyRange.of(c.amount))
+
+
+@strawberry.type(
+    description="When costs are recovered. Explicit about zero or negative savings and a "
+    "payback beyond the planning horizon; never a negative or infinite number."
+)
+class OptionPayback:
+    outcome: de.PaybackOutcome
+    optimistic_days: int | None = strawberry.field(
+        description="Fewest days to recover costs; null when even the best case never does."
+    )
+    pessimistic_days: int | None = strawberry.field(
+        description="Most days to recover costs; null when the worst case never does."
+    )
+    note: str
+
+    @staticmethod
+    def of(p: de.Payback) -> OptionPayback:
+        return OptionPayback(
+            outcome=p.outcome,
+            optimistic_days=p.optimistic_days,
+            pessimistic_days=p.pessimistic_days,
+            note=p.note,
+        )
+
+
+@strawberry.type(description="Costs and benefits totalled over the planning horizon.")
+class OptionHorizonTotals:
+    days: int
+    avoided: MoneyRange | None
+    recurring: MoneyRange | None
+    net: MoneyRange | None = strawberry.field(
+        description="Avoided spending minus recurring cost minus upfront cost."
+    )
+    net_positive: bool = strawberry.field(
+        description="True only when the net is positive even at the pessimistic estimate."
+    )
+    reason: str | None
+
+    @staticmethod
+    def of(h: de.HorizonTotals) -> OptionHorizonTotals:
+        return OptionHorizonTotals(
+            days=h.days,
+            avoided=MoneyRange.of(h.avoided) if h.avoided else None,
+            recurring=MoneyRange.of(h.recurring) if h.recurring else None,
+            net=MoneyRange.of(h.net) if h.net else None,
+            net_positive=h.net_positive,
+            reason=h.reason,
+        )
+
+
+@strawberry.type(description="One declared source of money for the plan.")
+class OptionFundingLine:
+    label: str
+    amount: Money
+    status: dv.FundingStatus
+    counts: bool = strawberry.field(
+        description="True only when approved and in the plan's currency: reduces the gap."
+    )
+    applicable: bool = strawberry.field(
+        description="True when in the plan's currency; otherwise shown but never converted."
+    )
+
+    @staticmethod
+    def of(line: de.FundingLine) -> OptionFundingLine:
+        return OptionFundingLine(
+            label=line.label,
+            amount=Money.of(line.amount),
+            status=line.status,
+            counts=line.counts,
+            applicable=line.applicable,
+        )
+
+
+@strawberry.type(
+    description="Funding kept separate from cost: only approved funding counts towards "
+    "affordability, and the gap is never reduced by unapproved money."
+)
+class OptionFunding:
+    total_cost: MoneyRange
+    approved: Money
+    gap: MoneyRange = strawberry.field(
+        description="Total cost minus approved funding, never below zero."
+    )
+    candidate: Money = strawberry.field(
+        description="Expected or proposed funding; shown, never counted as secured."
+    )
+    fully_funded: bool
+    lines: list[OptionFundingLine]
+    note: str
+
+    @staticmethod
+    def of(f: de.Funding) -> OptionFunding:
+        return OptionFunding(
+            total_cost=MoneyRange.of(f.total_cost),
+            approved=Money.of(f.approved),
+            gap=MoneyRange.of(f.gap),
+            candidate=Money.of(f.candidate),
+            fully_funded=f.fully_funded,
+            lines=[OptionFundingLine.of(line) for line in f.lines],
+            note=f.note,
+        )
+
+
+@strawberry.type(
+    description="Costs, avoided tanker spending, net benefit, payback and funding (ADR "
+    "0014), from your own estimates and declared tariff; nothing is converted or invented."
+)
+class OptionEconomics:
+    engine_version: str
+    currency: str
+    capex: MoneyRange
+    contingency: OptionContingency | None
+    upfront_total: MoneyRange
+    recurring_annual: MoneyRange | None
+    recurring_reason: str | None
+    avoided_tanker_annual: MoneyRange | None
+    avoided_reason: str | None
+    net_annual: MoneyRange | None
+    payback: OptionPayback | None
+    horizon: OptionHorizonTotals | None
+    funding: OptionFunding
+    assumptions: list[str]
+    notes: list[str]
+
+    @staticmethod
+    def of(e: de.OptionEconomics) -> OptionEconomics:
+        return OptionEconomics(
+            engine_version=e.engine_version,
+            currency=e.currency,
+            capex=MoneyRange.of(e.capex),
+            contingency=OptionContingency.of(e.contingency) if e.contingency else None,
+            upfront_total=MoneyRange.of(e.upfront_total),
+            recurring_annual=MoneyRange.of(e.recurring_annual) if e.recurring_annual else None,
+            recurring_reason=e.recurring_reason,
+            avoided_tanker_annual=(
+                MoneyRange.of(e.avoided_tanker_annual) if e.avoided_tanker_annual else None
+            ),
+            avoided_reason=e.avoided_reason,
+            net_annual=MoneyRange.of(e.net_annual) if e.net_annual else None,
+            payback=OptionPayback.of(e.payback) if e.payback else None,
+            horizon=OptionHorizonTotals.of(e.horizon) if e.horizon else None,
+            funding=OptionFunding.of(e.funding),
+            assumptions=list(e.assumptions),
+            notes=list(e.notes),
+        )
 
 
 @strawberry.type(description="A genuinely feasible plan: passes at your low estimates.")
@@ -178,6 +340,10 @@ class ComparedOption:
     impact: WiderImpact = strawberry.field(
         description="Wider-system impact, shown before you choose (ADR 0013)."
     )
+    economics: OptionEconomics | None = strawberry.field(
+        description="Costs, avoided tanker spending, net benefit, payback and funding (ADR "
+        "0014); null when the option has no cost estimate."
+    )
 
     @staticmethod
     def of(o: do.Option, impact: WiderImpact) -> ComparedOption:
@@ -193,6 +359,7 @@ class ComparedOption:
                     water_low=_n(m.water_low),
                     water_high=_n(m.water_high),
                     cost=MoneyRange.of(m.cost) if m.cost else None,
+                    recurring=MoneyRange.of(m.recurring) if m.recurring else None,
                     build_days=DayRange.of(m.build_days),
                     benefit_timing=m.benefit_timing,
                     effects=[OptionEffect.of(e) for e in m.effects],
@@ -227,6 +394,7 @@ class ComparedOption:
                 for s in o.stress
             ],
             impact=impact,
+            economics=OptionEconomics.of(o.economics) if o.economics else None,
         )
 
 

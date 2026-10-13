@@ -7,6 +7,7 @@ the adapter does (ADR 0007).
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol
@@ -118,6 +119,79 @@ class SourceFetcher(Protocol):
         """HTTP status for ``url`` without reading the body. Raises ``FetchError`` if
         nothing answered."""
         ...
+
+
+@dataclass(frozen=True, slots=True)
+class ModelRequest:
+    """One structured-output model call. ``response_schema`` is a JSON Schema the model
+    must satisfy (Gemini ``responseSchema``); ``temperature`` is 0 for determinism."""
+
+    model_id: str
+    task: str
+    prompt: str
+    max_output_tokens: int
+    response_schema: dict[str, JsonValue] | None = None
+    temperature: float = 0.0
+    timeout_seconds: float = 30.0
+
+
+@dataclass(frozen=True, slots=True)
+class ModelResponseUsage:
+    """Usage as the provider reported it. ``output_tokens`` includes reasoning/thinking;
+    ``thinking_tokens`` is the informational subset."""
+
+    input_tokens: int
+    output_tokens: int
+    thinking_tokens: int = 0
+    cached_input_tokens: int = 0
+
+
+@dataclass(frozen=True, slots=True)
+class ModelResponse:
+    text: str
+    usage: ModelResponseUsage
+
+
+class ModelCallError(Exception):
+    """A model call failed. ``transient`` errors (timeout, 429, 5xx) may be retried within
+    the gateway's bounded budget; others are terminal."""
+
+    def __init__(self, message: str, *, transient: bool = False) -> None:
+        super().__init__(message)
+        self.transient = transient
+
+
+class ModelCancelled(Exception):
+    """The caller cancelled before or between attempts; no further attempt is made."""
+
+
+class ModelProvider(Protocol):
+    """Server-only text generation. The live adapter targets Gemini on Vertex AI through
+    Application Default Credentials; local and test mode use a deterministic fake or the
+    disabled provider. ``available`` is False when no model backend is configured."""
+
+    available: bool
+    model_id: str
+
+    def generate(
+        self, request: ModelRequest, *, is_cancelled: Callable[[], bool] | None = None
+    ) -> ModelResponse: ...
+
+
+class NoModelProvider:
+    """No model backend. ``generate`` always refuses, so the gateway reports AI disabled
+    and ordinary planning is unaffected. This is the only provider in local and test mode
+    unless a test injects a fake."""
+
+    available = False
+
+    def __init__(self, model_id: str = "none") -> None:
+        self.model_id = model_id
+
+    def generate(
+        self, request: ModelRequest, *, is_cancelled: Callable[[], bool] | None = None
+    ) -> ModelResponse:
+        raise ModelCallError("no model provider is configured", transient=False)
 
 
 class PlaceSearchUnavailable(Exception):

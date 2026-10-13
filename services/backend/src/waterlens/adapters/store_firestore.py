@@ -39,6 +39,13 @@ from pydantic import BaseModel
 from waterlens.application.pagination import Page, PageQuery, Position, encode_cursor
 from waterlens.application.repositories import AreaCatalogue, IdempotencyRecord, Where
 from waterlens.domain.accounts import AccountClaim
+from waterlens.domain.ai import (
+    UsageCallKey,
+    UsageDay,
+    UsageReservation,
+    call_key_expires_at,
+    reservation_expires_at,
+)
 from waterlens.domain.communities import Community, CommunityStatus, Membership
 from waterlens.domain.errors import DomainError, ErrorCode
 from waterlens.domain.funding import FundingMatch, FundingScheme
@@ -508,6 +515,13 @@ class FirestoreStore:
         self.jobs = FirestoreDueRepository(self, "jobs", JobRecord)
         self.outbox = FirestoreDueRepository(self, "jobOutbox", OutboxRecord, outbox_expires_at)
         self.agent_runs = rec(self, "agentRuns", AgentRun)
+        self.usage_reservations = FirestoreDueRepository(
+            self, "usageReservations", UsageReservation, reservation_expires_at
+        )
+        self.usage_days = rec(self, "usageDays", UsageDay)
+        self.usage_call_keys = FirestoreDueRepository(
+            self, "usageCallKeys", UsageCallKey, call_key_expires_at
+        )
         self.account_claims = rec(self, "accountClaims", AccountClaim)
         self.plan_options: FirestoreCatalogue[PlanOption] = FirestoreCatalogue(
             self, "planOptions", PlanOption, _name_position
