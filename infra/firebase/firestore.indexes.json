@@ -257,6 +257,20 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "uid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "_sort",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "memberships",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
           "fieldPath": "status",
           "order": "ASCENDING"
         },
@@ -316,6 +330,20 @@
       "fields": [
         {
           "fieldPath": "owner_uid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "_sort",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "implementationProjects",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "community_id",
           "order": "ASCENDING"
         },
         {
@@ -499,6 +527,49 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "agentRuns",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "owner_uid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "session_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "_sort",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "fundingEmbeddings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "model_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "embedding_version",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "_embeddingVector",
+          "vectorConfig": {
+            "dimension": 768,
+            "flat": {}
+          }
+        }
+      ]
     }
   ],
   "fieldOverrides": [
@@ -609,6 +680,16 @@
     },
     {
       "collectionGroup": "agentSessions",
+      "fieldPath": "_expiresAt",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "usageReservations",
+      "fieldPath": "_expiresAt",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "usageCallKeys",
       "fieldPath": "_expiresAt",
       "indexes": []
     },

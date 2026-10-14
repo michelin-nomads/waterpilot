@@ -46,6 +46,8 @@ export const invalidations: Record<MutationName, (input: Input) => QueryKey[]> =
   ],
   startImplementationProject: () => [queryKeys.projects.all()],
   updateMilestone: () => [queryKeys.projects.all()],
+  addProjectExpense: () => [queryKeys.projects.all()],
+  updateProjectStatus: () => [queryKeys.projects.all()],
   recordObservation: (i) => [['projects', str(i, 'projectId'), 'observations']],
   // A typed-in value changes the baseline, and with it the goal checks that use it.
   recordManualInput: (i) => [
@@ -75,4 +77,11 @@ export async function invalidateAfter(
       await client.invalidateQueries({ queryKey });
     }),
   );
+  if (mutation === 'recordManualInput') {
+    window.dispatchEvent(
+      new CustomEvent('waterlens:workspace-edit', {
+        detail: { sessionId: str(input, 'sessionId') },
+      }),
+    );
+  }
 }

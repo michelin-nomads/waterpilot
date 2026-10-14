@@ -13,9 +13,9 @@ const OPTIONS: readonly ChoiceOption<PlanningMode>[] = [
     value: 'agent',
     title: 'With the assistant',
     description:
-      'Describe what you need and the assistant works through the steps with you, on the same plan. The assistant is not connected in this build yet, so the steps stay available beside it.',
+      'Describe what you need and the assistant works through the steps with you, on the same plan. Availability is shown in the conversation pane; the steps stay available beside it.',
     icon: 'sparkle',
-    badge: <Badge tone="neutral">Not connected yet</Badge>,
+    badge: <Badge tone="neutral">Optional help</Badge>,
   },
 ];
 

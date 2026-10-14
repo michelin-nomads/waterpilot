@@ -48,6 +48,156 @@
         }
       }
     },
+    "/v1/admin/funding-catalogue": {
+      "get": {
+        "tags": [
+          "funding-admin"
+        ],
+        "summary": "Catalogue",
+        "operationId": "catalogue_v1_admin_funding_catalogue_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FundingScheme"
+                  },
+                  "title": "Response Catalogue V1 Admin Funding Catalogue Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "funding-admin"
+        ],
+        "summary": "Import Scheme",
+        "operationId": "import_scheme_v1_admin_funding_catalogue_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FundingScheme"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "scheme": {
+                    "additionalProperties": true,
+                    "title": "Scheme",
+                    "type": "object"
+                  },
+                  "expected_revision": {
+                    "minimum": 0,
+                    "title": "Expected Revision",
+                    "type": "integer"
+                  },
+                  "human_reviewed": {
+                    "default": false,
+                    "title": "Human Reviewed",
+                    "type": "boolean"
+                  },
+                  "source_document_base64": {
+                    "anyOf": [
+                      {
+                        "maxLength": 7340032,
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Source Document Base64"
+                  },
+                  "source_content_type": {
+                    "default": "application/json",
+                    "title": "Source Content Type",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "scheme",
+                  "expected_revision"
+                ],
+                "title": "CatalogueImport",
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/jobs/{job_id}/events": {
       "get": {
         "tags": [
@@ -367,10 +517,645 @@
           }
         }
       }
+    },
+    "/v1/proposals/{proposal_id}/preview": {
+      "get": {
+        "tags": [
+          "downloads"
+        ],
+        "summary": "Open the owner's private reviewable HTML proposal.",
+        "operationId": "preview_proposal_v1_proposals__proposal_id__preview_get",
+        "parameters": [
+          {
+            "name": "proposal_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Proposal Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {}
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/agent-conversations/session/{sid}": {
+      "get": {
+        "tags": [
+          "agent"
+        ],
+        "summary": "Latest",
+        "operationId": "latest_v1_agent_conversations_session__sid__get",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sid"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "additionalProperties": true
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Latest V1 Agent Conversations Session  Sid  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/agent-conversations": {
+      "post": {
+        "tags": [
+          "agent"
+        ],
+        "summary": "Start",
+        "operationId": "start_v1_agent_conversations_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Start"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Start V1 Agent Conversations Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/agent-conversations/{rid}": {
+      "get": {
+        "tags": [
+          "agent"
+        ],
+        "summary": "Get",
+        "operationId": "get_v1_agent_conversations__rid__get",
+        "parameters": [
+          {
+            "name": "rid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rid"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get V1 Agent Conversations  Rid  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/agent-conversations/{rid}/cancel": {
+      "post": {
+        "tags": [
+          "agent"
+        ],
+        "summary": "Cancel",
+        "operationId": "cancel_v1_agent_conversations__rid__cancel_post",
+        "parameters": [
+          {
+            "name": "rid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rid"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Cancel V1 Agent Conversations  Rid  Cancel Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/agent-conversations/{rid}/continue": {
+      "post": {
+        "tags": [
+          "agent"
+        ],
+        "summary": "Resume",
+        "operationId": "resume_v1_agent_conversations__rid__continue_post",
+        "parameters": [
+          {
+            "name": "rid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rid"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Continue"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Resume V1 Agent Conversations  Rid  Continue Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/agent-conversations/{rid}/workspace": {
+      "post": {
+        "tags": [
+          "agent"
+        ],
+        "summary": "Reconcile",
+        "operationId": "reconcile_v1_agent_conversations__rid__workspace_post",
+        "parameters": [
+          {
+            "name": "rid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rid"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Reconcile V1 Agent Conversations  Rid  Workspace Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/agent-conversations/{rid}/confirm": {
+      "post": {
+        "tags": [
+          "agent"
+        ],
+        "summary": "Confirm",
+        "operationId": "confirm_v1_agent_conversations__rid__confirm_post",
+        "parameters": [
+          {
+            "name": "rid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rid"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmActionInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Confirm V1 Agent Conversations  Rid  Confirm Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/agent-conversations/{rid}/events": {
+      "get": {
+        "tags": [
+          "agent"
+        ],
+        "summary": "Events",
+        "operationId": "events_v1_agent_conversations__rid__events_get",
+        "parameters": [
+          {
+            "name": "rid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rid"
+            }
+          },
+          {
+            "name": "last-event-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Last-Event-Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "AgentActionKind": {
+        "type": "string",
+        "enum": [
+          "finalize_report",
+          "archive_report",
+          "create_community",
+          "join_community",
+          "leave_community",
+          "archive_community",
+          "start_tracking_project",
+          "update_milestone",
+          "record_observation"
+        ],
+        "title": "AgentActionKind",
+        "description": "The meaningful actions a tool may prepare. Each maps to one authorized service call\nperformed only on explicit UI confirmation (never by the agent)."
+      },
       "ApiError": {
         "properties": {
           "code": {
@@ -399,6 +1184,253 @@
         ],
         "title": "ApiError"
       },
+      "CatalogueStatus": {
+        "type": "string",
+        "enum": [
+          "draft",
+          "active",
+          "withdrawn",
+          "expired",
+          "demo"
+        ],
+        "title": "CatalogueStatus"
+      },
+      "ConfirmActionInput": {
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/AgentActionKind"
+          },
+          "resource_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource Id"
+          },
+          "expected_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Version"
+          },
+          "parameters": {
+            "$ref": "#/components/schemas/Json"
+          },
+          "confirmation_token": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Confirmation Token"
+          },
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "kind",
+          "confirmation_token"
+        ],
+        "title": "ConfirmActionInput",
+        "description": "What the product UI submits when the user confirms a :class:`PreparedAction`. The\ntoken and version are echoed from the prepared action; the service re-derives the token\nfrom the resource's current state and refuses the call if it no longer matches."
+      },
+      "Continue": {
+        "properties": {
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "version"
+        ],
+        "title": "Continue"
+      },
+      "Criterion": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9_-]{1,64}$",
+            "title": "Id"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Text"
+          },
+          "rule": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CriterionRule"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "text"
+        ],
+        "title": "Criterion"
+      },
+      "CriterionRule": {
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/CriterionRuleKind"
+          },
+          "country_codes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 250,
+            "title": "Country Codes",
+            "default": []
+          },
+          "max_cost": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "title": "CriterionRule"
+      },
+      "CriterionRuleKind": {
+        "type": "string",
+        "enum": [
+          "country_in",
+          "max_plan_cost",
+          "community_required"
+        ],
+        "title": "CriterionRuleKind"
+      },
+      "EligibilityRules": {
+        "properties": {
+          "country_codes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 250,
+            "title": "Country Codes",
+            "default": []
+          },
+          "worldwide": {
+            "type": "boolean",
+            "title": "Worldwide",
+            "default": false
+          },
+          "applicant_types": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "title": "Applicant Types",
+            "default": []
+          },
+          "any_applicant": {
+            "type": "boolean",
+            "title": "Any Applicant",
+            "default": false
+          },
+          "intervention_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "title": "Intervention Ids",
+            "default": []
+          },
+          "any_intervention": {
+            "type": "boolean",
+            "title": "Any Intervention",
+            "default": false
+          },
+          "min_project_cost": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "max_project_cost": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "no_amount_restriction": {
+            "type": "boolean",
+            "title": "No Amount Restriction",
+            "default": false
+          },
+          "rolling_open": {
+            "type": "boolean",
+            "title": "Rolling Open",
+            "default": false
+          },
+          "required_information": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 20,
+            "title": "Required Information",
+            "default": []
+          },
+          "geography_requires_review": {
+            "type": "boolean",
+            "title": "Geography Requires Review",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "EligibilityRules"
+      },
       "ErrorCode": {
         "type": "string",
         "enum": [
@@ -419,6 +1451,282 @@
           "INTERNAL"
         ],
         "title": "ErrorCode"
+      },
+      "EvidenceQuality": {
+        "type": "string",
+        "enum": [
+          "unreviewed",
+          "validated",
+          "provisional",
+          "quarantined",
+          "synthetic"
+        ],
+        "title": "EvidenceQuality"
+      },
+      "FundingScheme": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "funder": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Funder"
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Summary"
+          },
+          "currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$",
+            "title": "Currency"
+          },
+          "max_amount": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "opens_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opens On"
+          },
+          "closes_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closes On",
+            "description": "Exclusive end (half-open window)."
+          },
+          "criteria": {
+            "items": {
+              "$ref": "#/components/schemas/Criterion"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "title": "Criteria"
+          },
+          "required_documents": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "title": "Required Documents",
+            "default": []
+          },
+          "source_url": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 1,
+            "title": "Source Url"
+          },
+          "last_verified_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Verified At"
+          },
+          "evidence": {
+            "$ref": "#/components/schemas/EvidenceQuality"
+          },
+          "eligibility_rules": {
+            "$ref": "#/components/schemas/EligibilityRules",
+            "default": {
+              "country_codes": [],
+              "worldwide": false,
+              "applicant_types": [],
+              "any_applicant": false,
+              "intervention_ids": [],
+              "any_intervention": false,
+              "no_amount_restriction": false,
+              "rolling_open": false,
+              "required_information": [],
+              "geography_requires_review": false
+            }
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Revision",
+            "default": 1
+          },
+          "status": {
+            "$ref": "#/components/schemas/CatalogueStatus",
+            "default": "draft"
+          },
+          "geography": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "title": "Geography",
+            "default": []
+          },
+          "applicant_categories": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "title": "Applicant Categories",
+            "default": []
+          },
+          "interventions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "title": "Interventions",
+            "default": []
+          },
+          "amount_rules": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 4000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount Rules"
+          },
+          "deadline_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deadline At"
+          },
+          "deadline_timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deadline Timezone"
+          },
+          "source_hash": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Hash"
+          },
+          "source_document_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Document Key"
+          },
+          "permission_note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Permission Note"
+          },
+          "official_source": {
+            "type": "boolean",
+            "title": "Official Source",
+            "default": false
+          },
+          "reviewed_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed By"
+          },
+          "unknown_fields": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "title": "Unknown Fields",
+            "default": []
+          },
+          "unknown_metadata": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "type": "object",
+            "title": "Unknown Metadata"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "funder",
+          "summary",
+          "currency",
+          "criteria",
+          "source_url",
+          "last_verified_at",
+          "evidence"
+        ],
+        "title": "FundingScheme"
       },
       "HTTPValidationError": {
         "properties": {
@@ -456,6 +1764,32 @@
         ],
         "title": "HealthStatus"
       },
+      "Json": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "JsonValue": {},
+      "Money": {
+        "properties": {
+          "minor_units": {
+            "type": "string",
+            "title": "Minor Units"
+          },
+          "currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$",
+            "title": "Currency"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "minor_units",
+          "currency"
+        ],
+        "title": "Money",
+        "description": "Integer minor units of an explicit ISO 4217 currency. No float, no implicit\nconversion, no arithmetic across currencies."
+      },
       "ReadyStatus": {
         "properties": {
           "ready": {
@@ -485,6 +1819,34 @@
           "using_emulators"
         ],
         "title": "ReadyStatus"
+      },
+      "Start": {
+        "properties": {
+          "sessionId": {
+            "type": "string",
+            "title": "Sessionid"
+          },
+          "prompt": {
+            "type": "string",
+            "maxLength": 12000,
+            "minLength": 1,
+            "title": "Prompt"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Idempotencykey"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "sessionId",
+          "prompt",
+          "idempotencyKey"
+        ],
+        "title": "Start"
       },
       "ValidationError": {
         "properties": {

@@ -11,6 +11,7 @@ from waterlens.application.services.baseline import BaselineService
 from waterlens.application.services.common import Deps
 from waterlens.application.services.communities import CommunityService
 from waterlens.application.services.funding import FundingService
+from waterlens.application.services.funding_catalogue import FundingCatalogueAdmin
 from waterlens.application.services.goals import GoalService
 from waterlens.application.services.jobs import JobService
 from waterlens.application.services.locations import LocationService
@@ -32,6 +33,7 @@ class Services:
     goals: GoalService
     options: OptionService
     funding: FundingService
+    funding_catalogue: FundingCatalogueAdmin
     reports: ReportService
     proposals: ProposalService
     communities: CommunityService
@@ -57,6 +59,7 @@ class Services:
             goals=GoalService(deps, baseline),
             options=options,
             funding=FundingService(deps),
+            funding_catalogue=FundingCatalogueAdmin(deps),
             reports=ReportService(deps, options),
             proposals=ProposalService(deps),
             communities=CommunityService(deps),

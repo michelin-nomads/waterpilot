@@ -14,7 +14,9 @@ construct this; ordinary planning never calls a model.
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
+import json
 from collections.abc import AsyncGenerator, Callable
 
 from google.adk.models.base_llm import BaseLlm
@@ -42,6 +44,8 @@ class GatewayLlm(BaseLlm):
     _task: ModelTask = PrivateAttr()
     _is_cancelled: Callable[[], bool] | None = PrivateAttr(default=None)
     _step: int = PrivateAttr(default=0)
+    _fake_tools: bool = PrivateAttr(default=False)
+    _context: Callable[[], str] | None = PrivateAttr(default=None)
 
     def __init__(
         self,
@@ -53,6 +57,9 @@ class GatewayLlm(BaseLlm):
         session_id: str,
         task: ModelTask = ModelTask.PROPOSAL_NARRATIVE,
         is_cancelled: Callable[[], bool] | None = None,
+        step: int = 0,
+        fake_tools: bool = False,
+        context: Callable[[], str] | None = None,
     ) -> None:
         super().__init__(model=model)
         self._gateway = gateway
@@ -61,15 +68,21 @@ class GatewayLlm(BaseLlm):
         self._session_id = session_id
         self._task = task
         self._is_cancelled = is_cancelled
+        self._step = step
+        self._fake_tools = fake_tools
+        self._context = context
 
     async def generate_content_async(
         self, llm_request: LlmRequest, stream: bool = False
     ) -> AsyncGenerator[LlmResponse, None]:
         prompt = _prompt_text(llm_request)
+        if self._context:
+            prompt += "\nAuthoritative workspace: " + await asyncio.to_thread(self._context)
         call_key = self._call_key(prompt)
         self._step += 1
         try:
-            result = self._gateway.complete_text(
+            result = await asyncio.to_thread(
+                self._gateway.complete_text,
                 self._ctx,
                 run_id=self._run_id,
                 task=self._task,
@@ -83,6 +96,25 @@ class GatewayLlm(BaseLlm):
             # nothing bypassed the budget.
             yield LlmResponse(error_code=err.code.value, error_message=err.message)
             return
+        if self._fake_tools:
+            try:
+                payload = json.loads(result.text)
+            except ValueError:
+                payload = None
+            if isinstance(payload, dict) and "tool" in payload:
+                yield LlmResponse(
+                    content=types.Content(
+                        role="model",
+                        parts=[
+                            types.Part(
+                                function_call=types.FunctionCall(
+                                    id=call_key, name=payload["tool"], args=payload.get("args", {})
+                                )
+                            )
+                        ],
+                    )
+                )
+                return
         yield LlmResponse(
             content=types.Content(role="model", parts=[types.Part.from_text(text=result.text)])
         )
@@ -107,4 +139,6 @@ def _prompt_text(llm_request: LlmRequest) -> str:
             if text:
                 role = content.role or "user"
                 parts.append(f"{role}: {text}")
+            if part.function_response:
+                parts.append("function_response: " + part.function_response.model_dump_json())
     return "\n".join(parts)

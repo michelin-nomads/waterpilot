@@ -1,0 +1,14 @@
+{
+  "title": "Mock Community Water Resilience Grant \u2014 SYNTHETIC",
+  "publisher": "Mock Public Water Agency \u2014 not an official publisher",
+  "notice": "SYNTHETIC hackathon document. No real scheme, award or application window.",
+  "geography": ["IN \u2014 fictional demonstration only"],
+  "applicants": ["Registered community groups (mock)"],
+  "interventions": ["Rainwater harvesting (mock)", "Water efficiency (mock)"],
+  "amount_rules": "Up to INR 1,000,000 (100,000,000 paise); hypothetical cap, not an award.",
+  "deadline": "2027-03-31T23:59:59+05:30",
+  "timezone": "Asia/Kolkata",
+  "required_documents": ["Mock registration certificate", "Mock project budget"],
+  "permission": "Created for WaterLens local hackathon testing; permitted to reuse.",
+  "unknown_fields": ["co_funding_ratio", "contact", "payment_schedule"]
+}

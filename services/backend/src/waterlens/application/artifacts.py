@@ -22,16 +22,24 @@ from waterlens.domain.errors import DomainError, ErrorCode
 
 PDF = "application/pdf"
 JSON = "application/json"
+HTML = "text/html"
 CSV = "text/csv"
 NDJSON = "application/x-ndjson"
 
 MAX_BYTES: dict[str, int] = {
     PDF: 5 * 1024 * 1024,
+    HTML: 256 * 1024,
     JSON: 256 * 1024,
     CSV: 10 * 1024 * 1024,
     NDJSON: 10 * 1024 * 1024,
 }
-_MAGIC: dict[str, bytes] = {PDF: b"%PDF-", JSON: b"{", CSV: b"", NDJSON: b"{"}
+_MAGIC: dict[str, bytes] = {
+    PDF: b"%PDF-",
+    JSON: b"{",
+    HTML: b"<",
+    CSV: b"",
+    NDJSON: b"{",
+}
 
 SYSTEM_OWNER = "system"
 """Owner segment for operator imports (source raw evidence and normalized series). No

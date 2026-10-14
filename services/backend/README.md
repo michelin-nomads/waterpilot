@@ -71,11 +71,12 @@ account record. Pilot verification uses the Firebase Admin SDK with revocation c
 - Local mode keeps application data in the Firestore **emulator** by default
   (`WL_LOCAL_STORE=firestore`; `memory` is an in-process alternative). The emulator client
   uses anonymous credentials and only accepts `demo-*` projects.
-- In pilot mode the in-memory store and emulator token verifier are refused. The Firestore
-  adapter and the Admin SDK verifier exist (ADR 0005, ADR 0004), but the pilot runtime
-  still refuses to start until the location catalogue (Prompt 08), the verified funding
-  catalogue (Prompt 18) and the proposal renderer (Prompt 20) exist, so
-  `/graphql` and `/v1/*` return **503** while `/healthz` and `/readyz` keep working.
+- In pilot mode the API uses the default Firestore database, Firebase Admin ID-token
+  verification, Cloud Tasks and private Cloud Storage; the worker shares Firestore and
+  Storage and uses the deterministic proposal renderer. The curated funding collection
+  is read from Firestore; active publication requires reviewed official source evidence,
+  while synthetic records remain explicitly `demo`. Cloud resource access and the
+  private-bucket policy check still require valid deployment credentials and resources.
   Introspection and GraphiQL are disabled in pilot.
 - Browser access to Firestore is denied by rules (`infra/firebase/firestore.rules`); all
   authorization happens in the application services (ADR 0005).

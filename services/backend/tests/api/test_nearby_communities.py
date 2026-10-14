@@ -10,7 +10,7 @@ from typing import Any
 import pytest
 
 from conftest import LOCAL_OK, LoadSettings
-from graphql_harness import AREA_ID, NOW, Harness, make_harness
+from graphql_harness import NOW, Harness, make_harness
 from waterlens.application.services.communities import NEARBY_CANDIDATES_PER_CELL
 from waterlens.domain import geo
 from waterlens.domain.communities import Community, CommunityStatus
@@ -105,14 +105,9 @@ def test_the_antimeridian_is_not_a_wall(h: Harness) -> None:
 
 
 def test_a_created_community_is_discoverable_at_its_location(h: Harness) -> None:
-    body = h.gql(
-        """mutation($input: CreateCommunityInput!) {
-          createCommunity(input: $input) { community { id } error { code } }
-        }""",
-        {"input": {"name": "Synth lake", "areaId": AREA_ID, "idempotencyKey": "k" * 20}},
-        "t-alice",
-    )
-    created = body["data"]["createCommunity"]["community"]["id"]
+    from api.test_graphql_behaviour import create_community
+
+    created = create_community(h, "t-alice", "Synth lake")["id"]
     out = nearby(h, "0", "0", 100)
     assert [(n["community"]["id"], n["distanceMeters"]) for n in out["nodes"]] == [(created, 0)]
 

@@ -25,12 +25,13 @@ whether or not AI is available.
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timedelta
 from typing import Any
 
 from pydantic import BaseModel, ValidationError
 
+from waterlens.application.deadline import deadline, remaining
 from waterlens.application.idempotency import run_once
 from waterlens.application.identity import RequestContext
 from waterlens.application.pagination import PageArgs
@@ -58,6 +59,7 @@ from waterlens.domain.ai import (
     reservation_id_for,
     usage_day_id,
 )
+from waterlens.domain.embeddings import EMBEDDING_INFO
 from waterlens.domain.errors import DomainError, ErrorCode, not_found
 from waterlens.domain.ids import IdKind, new_id, require_id
 from waterlens.domain.jobs import AgentRun, AgentRunStatus, AgentStopReason
@@ -130,11 +132,77 @@ class _CallState:
 
 class _StartRunInput(Frozen):
     session_id: str
+    prompt: str = ""
 
 
 class AiGateway:
     def __init__(self, deps: Deps) -> None:
         self._d = deps
+
+    def embedding_policy(self, ctx: RequestContext) -> AiGateway:
+        cfg = self._d.ai
+        child = AiGateway(replace(self._d, ai=replace(cfg, provider=cfg.embedding_provider)))
+        child._require_available(ctx.require_principal().uid)
+        return child
+
+    def embed(self, ctx: RequestContext, text: str, call_key: str, *, query: bool) -> str:
+        """Shared durable budget ledger; no conversation run, no retry after dispatch.
+
+        Concurrent embedding duplicates must win a single atomic dispatch claim. Unknown
+        outcomes settle conservatively and never repeat a provider request.
+        """
+        child = self.embedding_policy(ctx)
+        tokens = len(text.encode())  # conservative UTF-8-byte bound, not an invoice
+        if tokens > self._d.ai.limits.max_input_tokens:
+            raise DomainError(
+                ErrorCode.VALIDATION_FAILED, "embedding input exceeds the token ceiling"
+            )
+        task = ModelTask.EMBEDDING_QUERY if query else ModelTask.EMBEDDING_DOCUMENT
+        info = EMBEDDING_INFO
+        reservation = child._reserve(
+            ctx.require_principal().uid,
+            info,
+            task,
+            UsageEstimate(
+                model_id=info.model_id,
+                task=task,
+                input_tokens=tokens,
+                max_output_tokens=0,
+                max_attempts=1,
+            ),
+            call_key,
+            None,
+            self._d.clock(),
+        )
+        if reservation.status is not ReservationStatus.RESERVED or not child._mark_dispatched(
+            reservation
+        ):
+            raise DomainError(
+                ErrorCode.PRECONDITION_FAILED, "embedding request was already processed"
+            )
+        try:
+            timeout = min(self._d.ai.limits.request_timeout_seconds, remaining(), 10)
+            response = child._d.ai.provider.generate(
+                ModelRequest(
+                    model_id=info.model_id,
+                    task=task.value,
+                    prompt=text,
+                    max_output_tokens=0,
+                    timeout_seconds=timeout,
+                )
+            )
+        except Exception as err:
+            child._settle_estimated(reservation, None, 0)
+            raise DomainError(
+                ErrorCode.SERVICE_UNAVAILABLE, "embedding ranking unavailable"
+            ) from err
+        if self._d.embedding_version.startswith("fake-"):
+            child._commit(reservation, UsageActual(input_tokens=tokens), info, None)
+        else:
+            # No verified provider token meter yet: retain a conservative estimate for
+            # reconciliation, never label our byte ceiling as an actual cloud invoice.
+            child._settle_estimated(reservation, None, 0)
+        return response.text
 
     # ---------------------------------------------------------------- status
 
@@ -185,7 +253,9 @@ class AiGateway:
 
     # ---------------------------------------------------------------- runs
 
-    def start_run(self, ctx: RequestContext, session_id: str, idempotency_key: str) -> AgentRun:
+    def start_run(
+        self, ctx: RequestContext, session_id: str, idempotency_key: str, prompt: str = ""
+    ) -> AgentRun:
         principal = ctx.require_principal()
         self._require_available(principal.uid)
         store, limits, now = self._d.store, self._d.ai.limits, self._d.clock()
@@ -199,6 +269,7 @@ class AiGateway:
                     "a run is already in progress for this session; finish or stop it first",
                 )
             run = AgentRun(
+                prompt=prompt,
                 id=new_id(IdKind.AGENT_RUN),
                 owner_uid=principal.uid,
                 session_id=session.id,
@@ -219,7 +290,7 @@ class AiGateway:
                 uid=principal.uid,
                 operation="startAgentRun",
                 key=idempotency_key,
-                payload=_StartRunInput(session_id=sid),
+                payload=_StartRunInput(session_id=sid, prompt=prompt),
                 now=now,
                 create=create,
             )
@@ -521,33 +592,43 @@ class AiGateway:
                     # Record the dispatch intent durably *before* the provider is reached, so
                     # a crash from here on leaves a hold that is provably dispatched (settled
                     # conservatively) rather than looking never-dispatched (wrongly released).
+                    if not self._mark_dispatched(reservation):
+                        raise DomainError(
+                            ErrorCode.PRECONDITION_FAILED, "model request already dispatched"
+                        )
                     state.dispatched = True
-                    self._mark_dispatched(reservation)
-                return self._d.ai.provider.generate(request, is_cancelled=is_cancelled)
+                attempt_request = (
+                    replace(request, timeout_seconds=min(request.timeout_seconds, remaining()))
+                    if deadline.get() is not None
+                    else request
+                )
+                return self._d.ai.provider.generate(attempt_request, is_cancelled=is_cancelled)
             except ModelCallError as err:
                 if not err.transient or state.retries >= self._d.ai.limits.transient_retries:
                     raise
                 state.retries += 1
 
-    def _mark_dispatched(self, reservation: UsageReservation) -> None:
+    def _mark_dispatched(self, reservation: UsageReservation) -> bool:
         """Persist that a request for this hold has been handed to the provider. Idempotent:
         it writes only while the hold is still ``RESERVED`` and not yet marked."""
         store, now = self._d.store, self._d.clock()
 
-        def tx() -> None:
+        def tx() -> bool:
             current = store.usage_reservations.get(reservation.id)
             if (
                 current is None
                 or current.status is not ReservationStatus.RESERVED
                 or current.dispatched
             ):
-                return
+                return False
             store.usage_reservations.replace(
                 current.model_copy(update={"dispatched": True, "updated_at": now}),
                 current.version,
             )
 
-        store.transaction(tx)
+            return True
+
+        return store.transaction(tx)
 
     def _resolve_failure(
         self, reservation: UsageReservation, run_id: str, state: _CallState
@@ -624,7 +705,7 @@ class AiGateway:
         task: ModelTask,
         estimate: UsageEstimate,
         call_key: str,
-        run_id: str,
+        run_id: str | None,
         now: datetime,
     ) -> UsageReservation:
         store, limits = self._d.store, self._d.ai.limits
@@ -680,7 +761,11 @@ class AiGateway:
         return store.transaction(tx)
 
     def _commit(
-        self, reservation: UsageReservation, actual: UsageActual, info: ModelInfo, run_id: str
+        self,
+        reservation: UsageReservation,
+        actual: UsageActual,
+        info: ModelInfo,
+        run_id: str | None,
     ) -> UsageReservation:
         store, now = self._d.store, self._d.clock()
         micro = actual.settled_micro_usd(info)

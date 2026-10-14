@@ -27,6 +27,15 @@ enum AccountKind {
   PERMANENT
 }
 
+input AddProjectExpenseInput {
+  projectId: ID!
+  expectedVersion: Int!
+  description: String!
+  spentOn: LocalDate!
+  amount: MoneyInput!
+  source: String!
+}
+
 enum AdjustmentChange {
   INCREASE_BY
   DECREASE_BY
@@ -108,6 +117,13 @@ enum AiUnavailableReason {
   NOT_INVITED
   BUDGET_EXHAUSTED
   NO_BUDGET_CONFIGURED
+}
+
+input ApplicantInformationInput {
+  applicantType: String = null
+  requestedAmount: MoneyInput = null
+  availableDocuments: [String!] = null
+  providedInformation: [String!]! = []
 }
 
 input ArchiveCommunityInput {
@@ -391,6 +407,14 @@ type CapabilityReadiness {
   requiresReviewedModel: Boolean!
 }
 
+enum CatalogueStatus {
+  DRAFT
+  ACTIVE
+  WITHDRAWN
+  EXPIRED
+  DEMO
+}
+
 type ChartSeries {
   """delivered_supply, demand or tanker_supply."""
   key: String!
@@ -425,15 +449,24 @@ type Community {
   status: CommunityStatus!
   memberCount: Int!
   archivedAt: UtcDateTime
+  contactName: String
+  contactEmail: String
+  sharedReport: SharedReportSummary
   createdAt: UtcDateTime!
   updatedAt: UtcDateTime!
-  area: Area
+  area: CommunityArea
 
   """The caller's active membership, or null."""
   viewerMembership: Membership
 
   """Members only."""
   members(first: Int = null, after: String = null): MembershipConnection!
+}
+
+type CommunityArea {
+  id: ID!
+  name: String!
+  countryCode: String!
 }
 
 type CommunityConnection {
@@ -444,6 +477,7 @@ type CommunityConnection {
 input CommunityFilter {
   areaId: ID = null
   includeArchived: Boolean! = false
+  archivedOnly: Boolean! = false
 }
 
 type CommunityPayload {
@@ -493,6 +527,11 @@ type ComparedOption {
   Costs, avoided tanker spending, net benefit, payback and funding (ADR 0014); null when the option has no cost estimate.
   """
   economics: OptionEconomics
+}
+
+enum ComparisonStatus {
+  COMPARABLE
+  UNKNOWN
 }
 
 input CompleteAccountClaimInput {
@@ -564,6 +603,11 @@ input CreateCommunityInput {
   name: String!
   description: String! = ""
   areaId: ID = null
+  reportId: ID!
+  contactName: String!
+  contactEmail: String = null
+  shareContactName: Boolean! = false
+  shareContactEmail: Boolean! = false
   idempotencyKey: String!
 }
 
@@ -657,6 +701,12 @@ enum EffectOrigin {
   USER_ESTIMATE
   BASELINE
   SCENARIO
+}
+
+enum EligibilityStatus {
+  ELIGIBLE
+  INELIGIBLE
+  NEEDS_INFORMATION
 }
 
 enum ErrorCode {
@@ -775,6 +825,11 @@ type FundingMatch {
   window: WindowStatus!
   status: FundingMatchStatus!
   rulesVersion: String!
+  eligibility: EligibilityStatus!
+  eligibilityEvidence: [CriterionResult!]!
+  relevanceOrder: Int
+  rankingStatus: String!
+  rankingReason: String!
   createdAt: UtcDateTime!
   updatedAt: UtcDateTime!
   scheme: FundingScheme!
@@ -809,6 +864,20 @@ type FundingScheme {
   sourceUrl: String!
   lastVerifiedAt: UtcDateTime!
   evidence: EvidenceQuality!
+  revision: Int!
+  status: CatalogueStatus!
+  geography: [String!]!
+  applicantCategories: [String!]!
+  interventions: [String!]!
+  amountRules: String
+  deadlineAt: UtcDateTime
+  deadlineTimezone: String
+  sourceHash: String
+  permissionNote: String
+  officialSource: Boolean!
+  unknownFields: [String!]!
+  unknownMetadata: JSON!
+  eligibilityRules: JSON!
 }
 
 type FundingSchemeConnection {
@@ -840,6 +909,8 @@ enum FundingStatus {
 
 input GenerateProposalInput {
   reportId: ID!
+  schemeId: ID = null
+  applicant: ProposalApplicantInput = null
   sections: [ProposalSection!]!
   idempotencyKey: String!
 }
@@ -1073,8 +1144,12 @@ type ImplementationProject {
   id: ID!
   version: Int!
   reportId: ID!
+  reportVersion: Int!
+  areaId: ID!
   communityId: ID
+  sharedWithCommunity: Boolean!
   title: String!
+  expenses: [ProjectExpense!]!
   status: ProjectStatus!
   startedAt: UtcDateTime!
   createdAt: UtcDateTime!
@@ -1202,6 +1277,11 @@ type InterventionFit {
   preferred: Boolean!
 }
 
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf).
+"""
+scalar JSON @specifiedBy(url: "https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf")
+
 type Job {
   id: ID!
   version: Int!
@@ -1291,6 +1371,8 @@ input MatchFundingInput {
   sessionId: ID!
   planOptionId: ID!
   idempotencyKey: String!
+  information: ApplicantInformationInput = null
+  semanticQuery: String = null
 }
 
 type MatchFundingPayload {
@@ -1374,7 +1456,10 @@ type Milestone {
   projectId: ID!
   title: String!
   plannedOn: LocalDate!
+  responsibleIdentity: String
+  tasks: [String!]!
   status: MilestoneStatus!
+  completedOn: LocalDate
   completedAt: UtcDateTime
 }
 
@@ -1386,6 +1471,8 @@ type MilestoneConnection {
 input MilestoneInput {
   title: String!
   plannedOn: LocalDate!
+  responsibleIdentity: String = null
+  tasks: [String!]! = []
 }
 
 type MilestonePayload {
@@ -1464,6 +1551,8 @@ type Mutation {
   startImplementationProject(input: StartImplementationProjectInput!): ImplementationProjectPayload!
   updateMilestone(input: UpdateMilestoneInput!): MilestonePayload!
   recordObservation(input: RecordObservationInput!): ObservationPayload!
+  addProjectExpense(input: AddProjectExpenseInput!): ImplementationProjectPayload!
+  updateProjectStatus(input: UpdateProjectStatusInput!): ImplementationProjectPayload!
 
   """
   Guests only. Starts a 10-minute, one-use claim on this guest's work and returns its secret once. A retry issues a new claim and cancels the previous one.
@@ -1543,10 +1632,27 @@ type Observation {
   observedOn: LocalDate!
   quantity: Quantity!
   method: String!
+  sourceType: ObservationSourceType!
+  source: String!
+  permittedSourceConfirmed: Boolean!
+  areaId: ID!
+  windowStart: LocalDate
+  windowEnd: LocalDate
+  coverageObservedDays: Int!
+  coverageExpectedDays: Int!
   note: String!
   evidence: ObservationEvidence!
   recordedByViewer: Boolean!
   createdAt: UtcDateTime!
+  comparison: ObservationComparison!
+}
+
+type ObservationComparison {
+  status: ComparisonStatus!
+  reason: String!
+  forecastLow: Quantity
+  forecastHigh: Quantity
+  relation: String
 }
 
 type ObservationConnection {
@@ -1571,6 +1677,11 @@ enum ObservationMethod {
 type ObservationPayload {
   observation: Observation
   error: MutationError
+}
+
+enum ObservationSourceType {
+  USER_RECORDED
+  PERMITTED_DOCUMENT
 }
 
 """A contingency share you added to the cost estimates."""
@@ -1923,6 +2034,13 @@ enum Priority {
   LOWEST_NEIGHBOUR_EFFECT
 }
 
+type ProjectExpense {
+  description: String!
+  spentOn: LocalDate!
+  amount: Money!
+  source: String!
+}
+
 enum ProjectStatus {
   ACTIVE
   COMPLETED
@@ -1938,11 +2056,22 @@ type Proposal {
   flaggedCount: Int!
   jobId: ID!
 
-  """Authorized HTTP download; only set once the proposal is approved."""
+  """Private owner-authorized download for review."""
   downloadPath: String
+
+  """Private owner-authorized HTML preview for review."""
+  previewPath: String
   createdAt: UtcDateTime!
   updatedAt: UtcDateTime!
   job: Job
+}
+
+input ProposalApplicantInput {
+  name: String!
+  organization: String!
+  category: String!
+  contactEmail: String = null
+  assumptions: [String!]! = []
 }
 
 type ProposalConnection {
@@ -2102,6 +2231,14 @@ input RecordObservationInput {
   observedOn: LocalDate!
   quantity: QuantityInput!
   method: String!
+  sourceType: ObservationSourceType! = USER_RECORDED
+  source: String!
+  permittedSourceConfirmed: Boolean! = false
+  areaId: ID = null
+  windowStart: LocalDate!
+  windowEnd: LocalDate!
+  coverageObservedDays: Int!
+  coverageExpectedDays: Int!
   note: String! = ""
   idempotencyKey: String!
 }
@@ -2262,6 +2399,11 @@ enum SessionStatus {
   CLOSED
 }
 
+type SharedReportSummary {
+  goal: String!
+  finalizedAt: UtcDateTime!
+}
+
 """A system that can carry a measure's effect beyond the site."""
 enum SharedSystem {
   AQUIFER
@@ -2322,6 +2464,7 @@ input StartImplementationProjectInput {
   reportId: ID!
   title: String!
   milestones: [MilestoneInput!]! = []
+  shareWithCommunity: Boolean! = false
   idempotencyKey: String!
 }
 
@@ -2400,12 +2543,19 @@ input UpdateMilestoneInput {
   id: ID!
   expectedVersion: Int!
   status: MilestoneStatus!
+  completedOn: LocalDate = null
 }
 
 input UpdatePlanningSessionInput {
   id: ID!
   expectedVersion: Int!
   patch: PlanningSessionPatch!
+}
+
+input UpdateProjectStatusInput {
+  projectId: ID!
+  expectedVersion: Int!
+  status: ProjectStatus!
 }
 
 """

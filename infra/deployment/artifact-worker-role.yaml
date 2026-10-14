@@ -1,0 +1,7 @@
+title: WaterLens Private Artifact Worker
+description: Read and create private WaterLens artifacts in one dedicated bucket.
+stage: GA
+includedPermissions:
+  - storage.buckets.get
+  - storage.objects.create
+  - storage.objects.get

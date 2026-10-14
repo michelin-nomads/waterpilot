@@ -28,6 +28,7 @@ class IdKind(StrEnum):
     IMPACT = "imp"
     FUNDING_SCHEME = "fsc"
     FUNDING_MATCH = "fmt"
+    FUNDING_EMBEDDING = "emb"
     REPORT = "rep"
     PROPOSAL = "prp"
     COMMUNITY = "com"

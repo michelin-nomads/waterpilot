@@ -1,0 +1,5 @@
+title: WaterLens Firebase Token Revocation Check
+description: Read a Firebase Authentication user record to verify token revocation.
+stage: GA
+includedPermissions:
+  - firebaseauth.users.get

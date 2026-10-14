@@ -11,6 +11,7 @@ const scalars = {
   LocalDate: 'string',
   DecimalString: 'string',
   MinorUnits: 'string',
+  JSON: 'unknown',
 };
 
 const shared = {

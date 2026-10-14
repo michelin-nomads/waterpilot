@@ -2,10 +2,21 @@ fragment ProjectFields on ImplementationProject {
   id
   version
   reportId
+  reportVersion
+  areaId
   communityId
+  sharedWithCommunity
   title
   status
   startedAt
+  expenses {
+    description
+    spentOn
+    source
+    amount {
+      ...MoneyFields
+    }
+  }
 }
 
 fragment MilestoneFields on Milestone {
@@ -14,7 +25,10 @@ fragment MilestoneFields on Milestone {
   projectId
   title
   plannedOn
+  responsibleIdentity
+  tasks
   status
+  completedOn
   completedAt
 }
 
@@ -25,9 +39,30 @@ fragment ObservationFields on Observation {
   metricId
   observedOn
   method
+  sourceType
+  source
+  permittedSourceConfirmed
+  areaId
+  windowStart
+  windowEnd
+  coverageObservedDays
+  coverageExpectedDays
   note
   evidence
   recordedByViewer
+  comparison {
+    status
+    reason
+    relation
+    forecastLow {
+      value
+      unit
+    }
+    forecastHigh {
+      value
+      unit
+    }
+  }
   quantity {
     ...QuantityFields
   }
@@ -53,6 +88,75 @@ query ImplementationProject($id: ID!) {
       }
       pageInfo {
         ...PageInfoFields
+      }
+    }
+  }
+}
+
+query TrackingReports($first: Int, $after: String) {
+  reports(filter: { status: FINALIZED }, first: $first, after: $after) {
+    nodes {
+      id
+      version
+      title
+      status
+      communityId
+      areaId
+      finalizedAt
+      goal {
+        horizonDays
+      }
+      impact {
+        metrics {
+          metricId
+          projectedLow {
+            quantity {
+              value
+              unit
+            }
+          }
+          projectedHigh {
+            quantity {
+              value
+              unit
+            }
+          }
+        }
+      }
+    }
+    pageInfo {
+      ...PageInfoFields
+    }
+  }
+}
+
+query TrackingReport($id: ID!) {
+  report(id: $id) {
+    id
+    version
+    title
+    status
+    communityId
+    areaId
+    finalizedAt
+    goal {
+      horizonDays
+    }
+    impact {
+      metrics {
+        metricId
+        projectedLow {
+          quantity {
+            value
+            unit
+          }
+        }
+        projectedHigh {
+          quantity {
+            value
+            unit
+          }
+        }
       }
     }
   }
@@ -98,6 +202,28 @@ mutation RecordObservation($input: RecordObservationInput!) {
   recordObservation(input: $input) {
     observation {
       ...ObservationFields
+    }
+    error {
+      ...MutationErrorFields
+    }
+  }
+}
+
+mutation AddProjectExpense($input: AddProjectExpenseInput!) {
+  addProjectExpense(input: $input) {
+    project {
+      ...ProjectFields
+    }
+    error {
+      ...MutationErrorFields
+    }
+  }
+}
+
+mutation UpdateProjectStatus($input: UpdateProjectStatusInput!) {
+  updateProjectStatus(input: $input) {
+    project {
+      ...ProjectFields
     }
     error {
       ...MutationErrorFields

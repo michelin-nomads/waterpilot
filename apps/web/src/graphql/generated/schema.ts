@@ -9,6 +9,8 @@ export type Scalars = {
   Float: { input: number; output: number; }
   /** An exact decimal number as a string (e.g. '1250000.5'). Parse with a decimal library, never as a binary float. */
   DecimalString: { input: string; output: string; }
+  /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf). */
+  JSON: { input: unknown; output: unknown; }
   /** A calendar date (YYYY-MM-DD) in the relevant area's IANA timezone. */
   LocalDate: { input: string; output: string; }
   /** An integer amount of a currency's minor unit (e.g. paise for INR) as a string, to avoid 32-bit/53-bit integer limits. */
@@ -41,6 +43,15 @@ export type AccountClaimStatus =
 export type AccountKind =
   | 'GUEST'
   | 'PERMANENT';
+
+export type AddProjectExpenseInput = {
+  amount: MoneyInput;
+  description: Scalars['String']['input'];
+  expectedVersion: Scalars['Int']['input'];
+  projectId: Scalars['ID']['input'];
+  source: Scalars['String']['input'];
+  spentOn: Scalars['LocalDate']['input'];
+};
 
 export type AdjustmentChange =
   | 'DECREASE_BY'
@@ -117,6 +128,13 @@ export type AiUnavailableReason =
   | 'DISABLED'
   | 'NOT_INVITED'
   | 'NO_BUDGET_CONFIGURED';
+
+export type ApplicantInformationInput = {
+  applicantType?: InputMaybe<Scalars['String']['input']>;
+  availableDocuments?: InputMaybe<Array<Scalars['String']['input']>>;
+  providedInformation?: Array<Scalars['String']['input']>;
+  requestedAmount?: InputMaybe<MoneyInput>;
+};
 
 export type ArchiveCommunityInput = {
   expectedVersion: Scalars['Int']['input'];
@@ -368,6 +386,13 @@ export type CapabilityReadiness = {
   technicalSupport: TechnicalSupport;
 };
 
+export type CatalogueStatus =
+  | 'ACTIVE'
+  | 'DEMO'
+  | 'DRAFT'
+  | 'EXPIRED'
+  | 'WITHDRAWN';
+
 export type ChartSeries = {
   /** True when the series uses synthetic demo data. */
   demo: Scalars['Boolean']['output'];
@@ -389,8 +414,10 @@ export type CitationKind =
 
 export type Community = {
   archivedAt?: Maybe<Scalars['UtcDateTime']['output']>;
-  area?: Maybe<Area>;
+  area?: Maybe<CommunityArea>;
   areaId?: Maybe<Scalars['ID']['output']>;
+  contactEmail?: Maybe<Scalars['String']['output']>;
+  contactName?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['UtcDateTime']['output'];
   description: Scalars['String']['output'];
   id: Scalars['ID']['output'];
@@ -398,6 +425,7 @@ export type Community = {
   /** Members only. */
   members: MembershipConnection;
   name: Scalars['String']['output'];
+  sharedReport?: Maybe<SharedReportSummary>;
   status: CommunityStatus;
   updatedAt: Scalars['UtcDateTime']['output'];
   version: Scalars['Int']['output'];
@@ -411,12 +439,19 @@ export type CommunityMembersArgs = {
   first?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type CommunityArea = {
+  countryCode: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+};
+
 export type CommunityConnection = {
   nodes: Array<Community>;
   pageInfo: PageInfo;
 };
 
 export type CommunityFilter = {
+  archivedOnly?: Scalars['Boolean']['input'];
   areaId?: InputMaybe<Scalars['ID']['input']>;
   includeArchived?: Scalars['Boolean']['input'];
 };
@@ -460,6 +495,10 @@ export type ComparedOption = {
   waterLow?: Maybe<ExactNumber>;
   why: Scalars['String']['output'];
 };
+
+export type ComparisonStatus =
+  | 'COMPARABLE'
+  | 'UNKNOWN';
 
 export type CompleteAccountClaimInput = {
   claimId: Scalars['ID']['input'];
@@ -525,9 +564,14 @@ export type CoverageItem = {
 
 export type CreateCommunityInput = {
   areaId?: InputMaybe<Scalars['ID']['input']>;
+  contactEmail?: InputMaybe<Scalars['String']['input']>;
+  contactName: Scalars['String']['input'];
   description?: Scalars['String']['input'];
   idempotencyKey: Scalars['String']['input'];
   name: Scalars['String']['input'];
+  reportId: Scalars['ID']['input'];
+  shareContactEmail?: Scalars['Boolean']['input'];
+  shareContactName?: Scalars['Boolean']['input'];
 };
 
 export type CreatePlanningSessionInput = {
@@ -607,6 +651,11 @@ export type EffectOrigin =
   | 'BASELINE'
   | 'SCENARIO'
   | 'USER_ESTIMATE';
+
+export type EligibilityStatus =
+  | 'ELIGIBLE'
+  | 'INELIGIBLE'
+  | 'NEEDS_INFORMATION';
 
 export type ErrorCode =
   | 'ARCHIVED'
@@ -701,11 +750,16 @@ export type FitCheck = {
 /** Per-criterion results for one scheme. There is deliberately no match percentage or likelihood. */
 export type FundingMatch = {
   createdAt: Scalars['UtcDateTime']['output'];
+  eligibility: EligibilityStatus;
+  eligibilityEvidence: Array<CriterionResult>;
   id: Scalars['ID']['output'];
   metCount: Scalars['Int']['output'];
   needsCheckCount: Scalars['Int']['output'];
   notMetCount: Scalars['Int']['output'];
   planOptionId: Scalars['ID']['output'];
+  rankingReason: Scalars['String']['output'];
+  rankingStatus: Scalars['String']['output'];
+  relevanceOrder?: Maybe<Scalars['Int']['output']>;
   results: Array<CriterionResult>;
   rulesVersion: Scalars['String']['output'];
   scheme: FundingScheme;
@@ -728,21 +782,35 @@ export type FundingMatchStatus =
   | 'DISMISSED';
 
 export type FundingScheme = {
+  amountRules?: Maybe<Scalars['String']['output']>;
+  applicantCategories: Array<Scalars['String']['output']>;
   /** Exclusive end of the window. */
   closesOn?: Maybe<Scalars['LocalDate']['output']>;
   criteria: Array<Criterion>;
   currency: Scalars['String']['output'];
+  deadlineAt?: Maybe<Scalars['UtcDateTime']['output']>;
+  deadlineTimezone?: Maybe<Scalars['String']['output']>;
+  eligibilityRules: Scalars['JSON']['output'];
   evidence: EvidenceQuality;
   funder: Scalars['String']['output'];
+  geography: Array<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
+  interventions: Array<Scalars['String']['output']>;
   lastVerifiedAt: Scalars['UtcDateTime']['output'];
   maxAmount?: Maybe<Money>;
   name: Scalars['String']['output'];
+  officialSource: Scalars['Boolean']['output'];
   opensOn?: Maybe<Scalars['LocalDate']['output']>;
+  permissionNote?: Maybe<Scalars['String']['output']>;
   requiredDocuments: Array<Scalars['String']['output']>;
+  revision: Scalars['Int']['output'];
+  sourceHash?: Maybe<Scalars['String']['output']>;
   sourceUrl: Scalars['String']['output'];
+  status: CatalogueStatus;
   /** Catalogue text; untrusted, render as text. */
   summary: Scalars['String']['output'];
+  unknownFields: Array<Scalars['String']['output']>;
+  unknownMetadata: Scalars['JSON']['output'];
 };
 
 export type FundingSchemeConnection = {
@@ -772,8 +840,10 @@ export type FundingStatus =
   | 'PROPOSED';
 
 export type GenerateProposalInput = {
+  applicant?: InputMaybe<ProposalApplicantInput>;
   idempotencyKey: Scalars['String']['input'];
   reportId: Scalars['ID']['input'];
+  schemeId?: InputMaybe<Scalars['ID']['input']>;
   sections: Array<ProposalSection>;
 };
 
@@ -970,12 +1040,16 @@ export type ImpactReview = {
 };
 
 export type ImplementationProject = {
+  areaId: Scalars['ID']['output'];
   communityId?: Maybe<Scalars['ID']['output']>;
   createdAt: Scalars['UtcDateTime']['output'];
+  expenses: Array<ProjectExpense>;
   id: Scalars['ID']['output'];
   milestones: MilestoneConnection;
   observations: ObservationConnection;
   reportId: Scalars['ID']['output'];
+  reportVersion: Scalars['Int']['output'];
+  sharedWithCommunity: Scalars['Boolean']['output'];
   startedAt: Scalars['UtcDateTime']['output'];
   status: ProjectStatus;
   title: Scalars['String']['output'];
@@ -1172,7 +1246,9 @@ export type ManualInputPayload = {
 
 export type MatchFundingInput = {
   idempotencyKey: Scalars['String']['input'];
+  information?: InputMaybe<ApplicantInformationInput>;
   planOptionId: Scalars['ID']['input'];
+  semanticQuery?: InputMaybe<Scalars['String']['input']>;
   sessionId: Scalars['ID']['input'];
 };
 
@@ -1246,10 +1322,13 @@ export type MetricReadiness = {
 
 export type Milestone = {
   completedAt?: Maybe<Scalars['UtcDateTime']['output']>;
+  completedOn?: Maybe<Scalars['LocalDate']['output']>;
   id: Scalars['ID']['output'];
   plannedOn: Scalars['LocalDate']['output'];
   projectId: Scalars['ID']['output'];
+  responsibleIdentity?: Maybe<Scalars['String']['output']>;
   status: MilestoneStatus;
+  tasks: Array<Scalars['String']['output']>;
   title: Scalars['String']['output'];
   version: Scalars['Int']['output'];
 };
@@ -1261,6 +1340,8 @@ export type MilestoneConnection = {
 
 export type MilestoneInput = {
   plannedOn: Scalars['LocalDate']['input'];
+  responsibleIdentity?: InputMaybe<Scalars['String']['input']>;
+  tasks?: Array<Scalars['String']['input']>;
   title: Scalars['String']['input'];
 };
 
@@ -1301,6 +1382,7 @@ export type MoneyRangeInput = {
 };
 
 export type Mutation = {
+  addProjectExpense: ImplementationProjectPayload;
   /** Coordinators only; the community becomes read-only. */
   archiveCommunity: CommunityPayload;
   archiveReport: ReportPayload;
@@ -1329,6 +1411,12 @@ export type Mutation = {
   startImplementationProject: ImplementationProjectPayload;
   updateMilestone: MilestonePayload;
   updatePlanningSession: PlanningSessionPayload;
+  updateProjectStatus: ImplementationProjectPayload;
+};
+
+
+export type MutationAddProjectExpenseArgs = {
+  input: AddProjectExpenseInput;
 };
 
 
@@ -1416,6 +1504,11 @@ export type MutationUpdatePlanningSessionArgs = {
   input: UpdatePlanningSessionInput;
 };
 
+
+export type MutationUpdateProjectStatusArgs = {
+  input: UpdateProjectStatusInput;
+};
+
 /** An expected failure of a mutation. Safe to show. */
 export type MutationError = {
   code: ErrorCode;
@@ -1462,6 +1555,10 @@ export type NearbyPlaces = {
 };
 
 export type Observation = {
+  areaId: Scalars['ID']['output'];
+  comparison: ObservationComparison;
+  coverageExpectedDays: Scalars['Int']['output'];
+  coverageObservedDays: Scalars['Int']['output'];
   createdAt: Scalars['UtcDateTime']['output'];
   evidence: ObservationEvidence;
   id: Scalars['ID']['output'];
@@ -1469,10 +1566,23 @@ export type Observation = {
   metricId: Scalars['String']['output'];
   note: Scalars['String']['output'];
   observedOn: Scalars['LocalDate']['output'];
+  permittedSourceConfirmed: Scalars['Boolean']['output'];
   projectId: Scalars['ID']['output'];
   quantity: Quantity;
   recordedByViewer: Scalars['Boolean']['output'];
+  source: Scalars['String']['output'];
+  sourceType: ObservationSourceType;
   version: Scalars['Int']['output'];
+  windowEnd?: Maybe<Scalars['LocalDate']['output']>;
+  windowStart?: Maybe<Scalars['LocalDate']['output']>;
+};
+
+export type ObservationComparison = {
+  forecastHigh?: Maybe<Quantity>;
+  forecastLow?: Maybe<Quantity>;
+  reason: Scalars['String']['output'];
+  relation?: Maybe<Scalars['String']['output']>;
+  status: ComparisonStatus;
 };
 
 export type ObservationConnection = {
@@ -1496,6 +1606,10 @@ export type ObservationPayload = {
   error?: Maybe<MutationError>;
   observation?: Maybe<Observation>;
 };
+
+export type ObservationSourceType =
+  | 'PERMITTED_DOCUMENT'
+  | 'USER_RECORDED';
 
 /** A contingency share you added to the cost estimates. */
 export type OptionContingency = {
@@ -1780,6 +1894,13 @@ export type Priority =
   | 'LOWEST_COST'
   | 'LOWEST_NEIGHBOUR_EFFECT';
 
+export type ProjectExpense = {
+  amount: Money;
+  description: Scalars['String']['output'];
+  source: Scalars['String']['output'];
+  spentOn: Scalars['LocalDate']['output'];
+};
+
 export type ProjectStatus =
   | 'ACTIVE'
   | 'ARCHIVED'
@@ -1787,17 +1908,27 @@ export type ProjectStatus =
 
 export type Proposal = {
   createdAt: Scalars['UtcDateTime']['output'];
-  /** Authorized HTTP download; only set once the proposal is approved. */
+  /** Private owner-authorized download for review. */
   downloadPath?: Maybe<Scalars['String']['output']>;
   flaggedCount: Scalars['Int']['output'];
   id: Scalars['ID']['output'];
   job?: Maybe<Job>;
   jobId: Scalars['ID']['output'];
+  /** Private owner-authorized HTML preview for review. */
+  previewPath?: Maybe<Scalars['String']['output']>;
   reportId: Scalars['ID']['output'];
   sections: Array<ProposalSection>;
   status: ProposalStatus;
   updatedAt: Scalars['UtcDateTime']['output'];
   version: Scalars['Int']['output'];
+};
+
+export type ProposalApplicantInput = {
+  assumptions?: Array<Scalars['String']['input']>;
+  category: Scalars['String']['input'];
+  contactEmail?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  organization: Scalars['String']['input'];
 };
 
 export type ProposalConnection = {
@@ -2074,13 +2205,21 @@ export type RecordManualInputInput = {
 };
 
 export type RecordObservationInput = {
+  areaId?: InputMaybe<Scalars['ID']['input']>;
+  coverageExpectedDays: Scalars['Int']['input'];
+  coverageObservedDays: Scalars['Int']['input'];
   idempotencyKey: Scalars['String']['input'];
   method: Scalars['String']['input'];
   metricId: Scalars['String']['input'];
   note?: Scalars['String']['input'];
   observedOn: Scalars['LocalDate']['input'];
+  permittedSourceConfirmed?: Scalars['Boolean']['input'];
   projectId: Scalars['ID']['input'];
   quantity: QuantityInput;
+  source: Scalars['String']['input'];
+  sourceType?: ObservationSourceType;
+  windowEnd: Scalars['LocalDate']['input'];
+  windowStart: Scalars['LocalDate']['input'];
 };
 
 export type RegionSettings = {
@@ -2226,6 +2365,11 @@ export type SessionStatus =
   | 'ACTIVE'
   | 'CLOSED';
 
+export type SharedReportSummary = {
+  finalizedAt: Scalars['UtcDateTime']['output'];
+  goal: Scalars['String']['output'];
+};
+
 /** A system that can carry a measure's effect beyond the site. */
 export type SharedSystem =
   | 'AQUIFER'
@@ -2279,6 +2423,7 @@ export type StartImplementationProjectInput = {
   idempotencyKey: Scalars['String']['input'];
   milestones?: Array<MilestoneInput>;
   reportId: Scalars['ID']['input'];
+  shareWithCommunity?: Scalars['Boolean']['input'];
   title: Scalars['String']['input'];
 };
 
@@ -2347,6 +2492,7 @@ export type UnitSystem =
   | 'US_CUSTOMARY';
 
 export type UpdateMilestoneInput = {
+  completedOn?: InputMaybe<Scalars['LocalDate']['input']>;
   expectedVersion: Scalars['Int']['input'];
   id: Scalars['ID']['input'];
   status: MilestoneStatus;
@@ -2356,6 +2502,12 @@ export type UpdatePlanningSessionInput = {
   expectedVersion: Scalars['Int']['input'];
   id: Scalars['ID']['input'];
   patch: PlanningSessionPatch;
+};
+
+export type UpdateProjectStatusInput = {
+  expectedVersion: Scalars['Int']['input'];
+  projectId: Scalars['ID']['input'];
+  status: ProjectStatus;
 };
 
 /** Measured, your estimate or modelled; shown distinctly wherever a value is. */

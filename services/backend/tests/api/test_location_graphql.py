@@ -218,6 +218,8 @@ def test_a_private_location_stays_hidden_in_shared_community_reports(h: Harness)
             "input": {
                 "name": "Secret club",
                 "areaId": area["id"],
+            "reportId": report["id"],
+            "contactName": "Owner",
                 "idempotencyKey": "key-comm-p-0001",
             }
         },

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import strawberry
+from strawberry.scalars import JSON
 
 from waterlens.api.graphql.context import Info, attempt, call
 from waterlens.api.graphql.loaders import load_existing
@@ -10,10 +11,12 @@ from waterlens.api.graphql.scalars import LocalDate, UtcDateTime
 from waterlens.api.graphql.types_common import (
     Connection,
     Money,
+    MoneyInput,
     MutationError,
     connection,
     page_args,
 )
+from waterlens.application.services.common import build
 from waterlens.domain import funding as df
 from waterlens.domain import values as dv
 
@@ -42,6 +45,20 @@ class FundingScheme:
     source_url: str
     last_verified_at: UtcDateTime
     evidence: dv.EvidenceQuality
+    revision: int
+    status: df.CatalogueStatus
+    geography: list[str]
+    applicant_categories: list[str]
+    interventions: list[str]
+    amount_rules: str | None
+    deadline_at: UtcDateTime | None
+    deadline_timezone: str | None
+    source_hash: str | None
+    permission_note: str | None
+    official_source: bool
+    unknown_fields: list[str]
+    unknown_metadata: JSON
+    eligibility_rules: JSON
 
     @staticmethod
     def of(s: df.FundingScheme) -> FundingScheme:
@@ -62,6 +79,20 @@ class FundingScheme:
             source_url=s.source_url,
             last_verified_at=UtcDateTime(s.last_verified_at),
             evidence=s.evidence,
+            revision=s.revision,
+            status=s.status,
+            geography=list(s.geography),
+            applicant_categories=list(s.applicant_categories),
+            interventions=list(s.interventions),
+            amount_rules=s.amount_rules,
+            deadline_at=UtcDateTime(s.deadline_at) if s.deadline_at else None,
+            deadline_timezone=s.deadline_timezone,
+            source_hash=s.source_hash,
+            permission_note=s.permission_note,
+            official_source=s.official_source,
+            unknown_fields=list(s.unknown_fields),
+            unknown_metadata=JSON(s.unknown_metadata),
+            eligibility_rules=JSON(s.eligibility_rules.model_dump(mode="json")),
         )
 
 
@@ -89,6 +120,11 @@ class FundingMatch:
     window: df.WindowStatus
     status: df.MatchStatus
     rules_version: str
+    eligibility: df.EligibilityStatus
+    eligibility_evidence: list[CriterionResult]
+    relevance_order: int | None
+    ranking_status: str
+    ranking_reason: str
     created_at: UtcDateTime
     updated_at: UtcDateTime
 
@@ -113,6 +149,14 @@ class FundingMatch:
             window=m.window,
             status=m.status,
             rules_version=m.rules_version,
+            eligibility=m.eligibility,
+            eligibility_evidence=[
+                CriterionResult(criterion_id=e.criterion_id, status=e.status, reason=e.reason)
+                for e in m.eligibility_evidence
+            ],
+            relevance_order=m.relevance_order,
+            ranking_status=m.ranking_status,
+            ranking_reason=m.ranking_reason,
             created_at=UtcDateTime(m.created_at),
             updated_at=UtcDateTime(m.updated_at),
         )
@@ -127,10 +171,20 @@ class FundingMatch:
 
 
 @strawberry.input
+class ApplicantInformationInput:
+    applicant_type: str | None = None
+    requested_amount: MoneyInput | None = None
+    available_documents: list[str] | None = None
+    provided_information: list[str] = strawberry.field(default_factory=list)
+
+
+@strawberry.input
 class MatchFundingInput:
     session_id: strawberry.ID
     plan_option_id: strawberry.ID
     idempotency_key: str
+    information: ApplicantInformationInput | None = None
+    semantic_query: str | None = None
 
 
 @strawberry.type
@@ -183,7 +237,14 @@ class Mutation:
                 matches=[
                     FundingMatch.of(m)
                     for m in f.match(
-                        ctx, str(input.session_id), str(input.plan_option_id), input.idempotency_key
+                        ctx,
+                        str(input.session_id),
+                        str(input.plan_option_id),
+                        input.idempotency_key,
+                        build(df.ApplicantInformation, strawberry.asdict(input.information))
+                        if input.information
+                        else df.ApplicantInformation(),
+                        input.semantic_query or "",
                     )
                 ]
             ),

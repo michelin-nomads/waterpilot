@@ -1,0 +1,7 @@
+title: WaterLens API Private Artifact Access
+description: Read generated artifacts and create permitted source documents in one bucket.
+stage: GA
+includedPermissions:
+  - storage.buckets.get
+  - storage.objects.get
+  - storage.objects.create

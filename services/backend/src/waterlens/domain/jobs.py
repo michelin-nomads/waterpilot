@@ -11,6 +11,7 @@ import hashlib
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import StrEnum
+from typing import Any
 
 from pydantic import Field, model_validator
 
@@ -199,6 +200,14 @@ class AgentStopReason(StrEnum):
 
 
 class AgentRun(Record):
+    prompt: str = Field(default="", max_length=12000)
+    events: list[dict[str, Any]] = Field(default_factory=list, max_length=200)
+    event_seq: int = 0
+    checkpoint: bool = False
+    execution_started: bool = False
+    lease_holder: str | None = None
+    lease_until: UtcDateTime | None = None
+    tool_repeats: dict[str, int] = Field(default_factory=dict)
     owner_uid: str
     session_id: str
     status: AgentRunStatus = AgentRunStatus.RUNNING

@@ -1,0 +1,140 @@
+.page {
+  display: grid;
+  gap: 1.25rem;
+  width: min(100%, 78rem);
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.actions,
+.sectionHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.actions {
+  justify-content: flex-start;
+}
+.actions a,
+.open {
+  color: var(--wl-color-accent);
+  font-weight: 650;
+}
+.section,
+.form,
+.permission {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 1px solid var(--wl-color-border);
+  border-radius: 1rem;
+  background: var(--wl-color-surface-raised);
+}
+.section h2,
+.form h3,
+.projectCard h2,
+.item h3 {
+  margin: 0;
+}
+.section p,
+.meta {
+  margin: 0;
+  color: var(--wl-color-text-muted);
+}
+.projectList,
+.list {
+  display: grid;
+  gap: 0.8rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.projectCard,
+.item,
+.expense {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--wl-color-border);
+  border-radius: 0.8rem;
+  background: var(--wl-color-surface);
+}
+.projectCard p,
+.item p {
+  margin: 0.4rem 0 0;
+  color: var(--wl-color-text-muted);
+}
+.meta {
+  margin-bottom: 0.35rem !important;
+  font-size: 0.9rem;
+  text-transform: capitalize;
+}
+.form {
+  background: var(--wl-color-surface);
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.sectionHeading span,
+.statusField {
+  color: var(--wl-color-text-muted);
+  font-size: 0.9rem;
+}
+.statusField {
+  display: grid;
+  gap: 0.4rem;
+}
+.statusField select {
+  min-width: 10rem;
+}
+.permission ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+.checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+.checkbox input {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-top: 0.12rem;
+}
+.details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+  margin: 0;
+}
+.details div {
+  min-width: 0;
+}
+.details dt {
+  color: var(--wl-color-text-muted);
+  font-size: 0.9rem;
+}
+.details dd {
+  margin: 0.25rem 0 0;
+  overflow-wrap: anywhere;
+}
+.expense {
+  grid-template-columns: 1fr auto;
+}
+.expense small {
+  grid-column: 1 / -1;
+  color: var(--wl-color-text-muted);
+}
+.error {
+  padding: 0.8rem;
+  color: var(--wl-color-danger);
+  background: var(--wl-color-danger-subtle);
+  border-radius: 0.5rem;
+}

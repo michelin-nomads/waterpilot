@@ -26,6 +26,7 @@ from waterlens.application.pagination import FilterValue, Page, PageQuery
 from waterlens.domain.accounts import AccountClaim
 from waterlens.domain.ai import UsageCallKey, UsageDay, UsageReservation
 from waterlens.domain.communities import Community, Membership
+from waterlens.domain.embeddings import FundingEmbedding
 from waterlens.domain.funding import FundingMatch, FundingScheme
 from waterlens.domain.jobs import AgentRun, JobRecord, OutboxRecord
 from waterlens.domain.planning import Area, PlanningSession, PlanOption
@@ -86,6 +87,8 @@ class PlanOptionCatalogue(CatalogueRepository[PlanOption], Protocol):
 
 
 class FundingCatalogue(CatalogueRepository[FundingScheme], Protocol):
+    def save(self, item: FundingScheme, expected_revision: int) -> None: ...
+
     def all_active(self, limit: int) -> tuple[FundingScheme, ...]: ...
 
 
@@ -126,6 +129,9 @@ class Store(Protocol):
     def areas(self) -> AreaCatalogue: ...
     @property
     def funding_schemes(self) -> FundingCatalogue: ...
+
+    @property
+    def funding_embeddings(self) -> RecordRepository[FundingEmbedding]: ...
     @property
     def sessions(self) -> RecordRepository[PlanningSession]: ...
     @property

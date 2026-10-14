@@ -16,6 +16,17 @@ fragment CommunityFields on Community {
   status
   memberCount
   archivedAt
+  contactName
+  contactEmail
+  area {
+    id
+    name
+    countryCode
+  }
+  sharedReport {
+    goal
+    finalizedAt
+  }
   viewerMembership {
     ...MembershipFields
   }
@@ -73,6 +84,28 @@ query MyMemberships($first: Int, $after: String) {
       ...MembershipFields
       community {
         ...CommunityFields
+      }
+    }
+    pageInfo {
+      ...PageInfoFields
+    }
+  }
+}
+
+query CommunitySourceReports($filter: ReportFilter, $first: Int, $after: String) {
+  reports(filter: $filter, first: $first, after: $after) {
+    nodes {
+      id
+      title
+      status
+      finalizedAt
+      goal {
+        kind
+      }
+      area {
+        id
+        name
+        private
       }
     }
     pageInfo {

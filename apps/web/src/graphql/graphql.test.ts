@@ -160,6 +160,7 @@ describe('invalidation map', () => {
   it('covers every mutation in the schema', () => {
     expect(Object.keys(invalidations).sort()).toEqual(
       [
+        'addProjectExpense',
         'archiveCommunity',
         'archiveReport',
         'beginAccountClaim',
@@ -178,6 +179,7 @@ describe('invalidation map', () => {
         'startImplementationProject',
         'updateMilestone',
         'updatePlanningSession',
+        'updateProjectStatus',
       ].sort(),
     );
   });

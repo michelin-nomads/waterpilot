@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from datetime import timedelta
 from decimal import Decimal, InvalidOperation
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import Field
 
@@ -202,12 +202,15 @@ class LocationService:
         inferred = region_settings(lat, lon, p.country_code)
         timezone = p.timezone or inferred.timezone
         currency = p.currency or inferred.currency
+        overrides: tuple[
+            tuple[Literal["currency", "timezone"], str | None, str | None], ...
+        ] = (
+            ("currency", p.currency, inferred.currency),
+            ("timezone", p.timezone, inferred.timezone),
+        )
         set_by_user = tuple(
             field
-            for field, chosen, guess in (
-                ("currency", p.currency, inferred.currency),
-                ("timezone", p.timezone, inferred.timezone),
-            )
+            for field, chosen, guess in overrides
             if chosen is not None and chosen != guess
         )
         try:

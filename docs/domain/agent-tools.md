@@ -3,10 +3,10 @@
 The planning agent reaches the product only through a typed tool layer. Tools run under an
 identity taken **only** from the verified run context, route through the same authorized
 application services as the GraphQL API, are bounded, and never perform a meaningful or
-irreversible action — they *prepare* it for an explicit UI confirmation.
+irreversible action — they _prepare_ it for an explicit UI confirmation.
 
 No language model is wired here. Tools are tested by calling them directly with the arguments a
-model *would* produce (including hostile ones), which is exactly how a hallucinated or injected
+model _would_ produce (including hostile ones), which is exactly how a hallucinated or injected
 call reaches the runtime.
 
 ## Where it lives
@@ -26,38 +26,38 @@ call reaches the runtime.
 
 ## The catalogue
 
-| Tool | Kind | Service it reuses |
-|------|------|-------------------|
-| `resolve_location` | read | `LocationService.resolve` (candidates; chooses none) |
-| `inspect_coverage` | read | `ReadinessService.coverage` + `assess` |
-| `inspect_baseline` | read | `BaselineService.baseline` |
-| `check_goal` | read | `GoalService.check` |
-| `explain_goal_fit` | read | `GoalService.assessment` |
-| `list_interventions` | read | `GoalService.catalogue` |
-| `preview_scenario` | read | `OptionService.preview_scenario` |
-| `compare_options` | read | `OptionService.assessed` |
-| `explain_option` | read | `OptionService.assessed` |
-| `inspect_returns` | read | `OptionService.assessed` (economics) |
-| `check_impact_summary` | read | `OptionService.assessed` + `check_narrative` |
-| `find_funding` | read | `FundingService.schemes` + `matches` (never submits) |
-| `proposal_preview` | read | `ReportService.get` (assembles facts; drafts nothing) |
-| `view_report` | read | `ReportService.get` |
-| `view_community` | read | `CommunityService.get`/`viewer_membership`/`members` |
-| `inspect_progress` | read | `TrackingService.project`/`milestones`/`observations` |
-| `confirm_location` | edit | `LocationService.confirm` (idempotent; private area) |
-| `set_area` | edit | `SessionService.update` (current version) |
-| `set_goal` | edit | `SessionService.update` (current version) |
-| `update_constraints` | edit | `SessionService.update` (current version) |
-| `select_option` | edit | `SessionService.update` (current version) |
-| `prepare_finalize_report` | prepare | → `ReportService.finalize` on confirm |
-| `prepare_archive_report` | prepare | → `ReportService.archive` on confirm |
-| `prepare_create_community` | prepare | → `CommunityService.create` on confirm |
-| `prepare_join_community` | prepare | → `CommunityService.join` on confirm |
-| `prepare_leave_community` | prepare | → `CommunityService.leave` on confirm |
-| `prepare_archive_community` | prepare | → `CommunityService.archive` on confirm |
-| `prepare_start_project` | prepare | → `TrackingService.start` on confirm |
-| `prepare_update_milestone` | prepare | → `TrackingService.update_milestone` on confirm |
-| `prepare_record_observation` | prepare | → `TrackingService.record_observation` on confirm |
+| Tool                         | Kind    | Service it reuses                                     |
+| ---------------------------- | ------- | ----------------------------------------------------- |
+| `resolve_location`           | read    | `LocationService.resolve` (candidates; chooses none)  |
+| `inspect_coverage`           | read    | `ReadinessService.coverage` + `assess`                |
+| `inspect_baseline`           | read    | `BaselineService.baseline`                            |
+| `check_goal`                 | read    | `GoalService.check`                                   |
+| `explain_goal_fit`           | read    | `GoalService.assessment`                              |
+| `list_interventions`         | read    | `GoalService.catalogue`                               |
+| `preview_scenario`           | read    | `OptionService.preview_scenario`                      |
+| `compare_options`            | read    | `OptionService.assessed`                              |
+| `explain_option`             | read    | `OptionService.assessed`                              |
+| `inspect_returns`            | read    | `OptionService.assessed` (economics)                  |
+| `check_impact_summary`       | read    | `OptionService.assessed` + `check_narrative`          |
+| `find_funding`               | read    | `FundingService.schemes` + `matches` (never submits)  |
+| `proposal_preview`           | read    | `ReportService.get` (assembles facts; drafts nothing) |
+| `view_report`                | read    | `ReportService.get`                                   |
+| `view_community`             | read    | `CommunityService.get`/`viewer_membership`/`members`  |
+| `inspect_progress`           | read    | `TrackingService.project`/`milestones`/`observations` |
+| `confirm_location`           | edit    | `LocationService.confirm` (idempotent; private area)  |
+| `set_area`                   | edit    | `SessionService.update` (current version)             |
+| `set_goal`                   | edit    | `SessionService.update` (current version)             |
+| `update_constraints`         | edit    | `SessionService.update` (current version)             |
+| `select_option`              | edit    | `SessionService.update` (current version)             |
+| `prepare_finalize_report`    | prepare | → `ReportService.finalize` on confirm                 |
+| `prepare_archive_report`     | prepare | → `ReportService.archive` on confirm                  |
+| `prepare_create_community`   | prepare | → `CommunityService.create` on confirm                |
+| `prepare_join_community`     | prepare | → `CommunityService.join` on confirm                  |
+| `prepare_leave_community`    | prepare | → `CommunityService.leave` on confirm                 |
+| `prepare_archive_community`  | prepare | → `CommunityService.archive` on confirm               |
+| `prepare_start_project`      | prepare | → `TrackingService.start` on confirm                  |
+| `prepare_update_milestone`   | prepare | → `TrackingService.update_milestone` on confirm       |
+| `prepare_record_observation` | prepare | → `TrackingService.record_observation` on confirm     |
 
 ## Safety model
 
@@ -79,13 +79,13 @@ call reaches the runtime.
 
 ## The Koramangala example
 
-For *“I stay in Koramangala; help improve water in my region,”* `resolve_location` returns the
+For _“I stay in Koramangala; help improve water in my region,”_ `resolve_location` returns the
 candidate places (Koramangala, Koramangala 1st Block, …) and **chooses nothing**; the person
 picks one, which `confirm_location`/`set_area` then save (reversible). `inspect_coverage` and
 `inspect_baseline` report real coverage/baseline for that area; the agent asks only for a
 missing goal/constraints and sets them with `set_goal`/`update_constraints`; then it drives the
 workspace from real `compare_options`/`inspect_returns`/`find_funding` results. Finalizing a
-report or joining a community is only ever *prepared* for the person to confirm.
+report or joining a community is only ever _prepared_ for the person to confirm.
 
 ## Acceptance evidence
 

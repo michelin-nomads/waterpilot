@@ -1,0 +1,143 @@
+.page {
+  display: grid;
+  gap: 1.25rem;
+  width: min(100%, 76rem);
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.actions,
+.filters,
+.cardActions,
+.toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.toolbar {
+  justify-content: space-between;
+}
+
+.section {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1.25rem;
+  border: 1px solid var(--wl-color-border);
+  border-radius: 1rem;
+  background: var(--wl-color-surface-raised);
+}
+
+.section h2,
+.card h3 {
+  margin: 0;
+}
+
+.list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--wl-color-border);
+  border-radius: 0.8rem;
+  background: var(--wl-color-surface);
+}
+
+.card p,
+.hint,
+.meta {
+  margin: 0.35rem 0 0;
+  color: var(--wl-color-text-muted);
+}
+
+.meta {
+  font-size: 0.9rem;
+}
+
+.cardActions {
+  justify-content: flex-end;
+}
+
+.label {
+  display: grid;
+  gap: 0.4rem;
+  color: var(--wl-color-text);
+  font-weight: 600;
+}
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--wl-color-border);
+  border-radius: 0.55rem;
+  color: var(--wl-color-text);
+  background: var(--wl-color-surface);
+  font: inherit;
+}
+
+.textarea {
+  min-height: 7rem;
+  resize: vertical;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.wide {
+  grid-column: 1 / -1;
+}
+
+.checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  color: var(--wl-color-text);
+}
+
+.checkbox input {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-top: 0.12rem;
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.detailGrid div {
+  min-width: 0;
+}
+
+.detailGrid dt {
+  color: var(--wl-color-text-muted);
+  font-size: 0.9rem;
+}
+
+.detailGrid dd {
+  margin: 0.25rem 0 0;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+
+.error {
+  margin: 0;
+  color: var(--wl-color-danger);
+}

@@ -7,6 +7,7 @@ from enum import StrEnum
 from pydantic import Field
 
 from waterlens.domain.ids import IdKind, derived_id
+from waterlens.domain.planning import GoalKind
 from waterlens.domain.records import Record
 from waterlens.domain.values import DecimalString, UtcDateTime
 
@@ -28,6 +29,14 @@ class Community(Record):
     or anyone's address."""
     longitude: DecimalString | None = None
     geohash: str | None = Field(default=None, pattern=r"^[0-9b-hjkmnp-z]{9}$")
+    linked_report_id: str | None = None
+    """Private reference used for history/authorization; never exposed by GraphQL."""
+    shared_report_goal: GoalKind | None = None
+    shared_report_finalized_at: UtcDateTime | None = None
+    contact_name: str | None = Field(default=None, max_length=120)
+    contact_email: str | None = Field(default=None, max_length=254)
+    share_contact_name: bool = False
+    share_contact_email: bool = False
 
 
 class MembershipRole(StrEnum):

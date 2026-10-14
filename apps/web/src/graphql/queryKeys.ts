@@ -105,8 +105,14 @@ export const queryKeys = {
 
   communities: {
     all: () => ['communities'] as const,
-    list: (filter: { areaId?: string | null; includeArchived?: boolean } = {}, page: Page = {}) =>
-      ['communities', 'list', filter, page] as const,
+    list: (
+      filter: {
+        areaId?: string | null;
+        includeArchived?: boolean;
+        archivedOnly?: boolean;
+      } = {},
+      page: Page = {},
+    ) => ['communities', 'list', filter, page] as const,
     nearby: (
       near: { latitude: string; longitude: string; radiusMeters: number },
       page: Page = {},

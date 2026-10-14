@@ -1,0 +1,43 @@
+{
+  "id": "fsc_SYNTH02SYNTH02SYNTH02SYNTH",
+  "name": "Mock Community Water Resilience Grant \u2014 SYNTHETIC",
+  "funder": "Mock Public Water Agency \u2014 not an official publisher",
+  "summary": "SYNTHETIC hackathon document. No real scheme, award or application window.",
+  "currency": "INR",
+  "max_amount": {
+    "minor_units": "100000000",
+    "currency": "INR"
+  },
+  "opens_on": "2026-04-01",
+  "closes_on": "2027-04-01",
+  "criteria": [],
+  "required_documents": ["Mock registration certificate", "Mock project budget"],
+  "source_url": "https://example.invalid/mock-water-grant",
+  "last_verified_at": "2026-10-01T00:00:00Z",
+  "evidence": "synthetic",
+  "revision": 1,
+  "status": "demo",
+  "geography": ["IN \u2014 fictional demonstration only"],
+  "applicant_categories": ["Registered community groups (mock)"],
+  "interventions": ["Rainwater harvesting (mock)", "Water efficiency (mock)"],
+  "amount_rules": "Up to INR 1,000,000 (100,000,000 paise); hypothetical cap, not an award.",
+  "deadline_at": "2027-03-31T23:59:59+05:30",
+  "deadline_timezone": "Asia/Kolkata",
+  "source_hash": null,
+  "source_document_key": null,
+  "permission_note": "Created for WaterLens local hackathon testing; permitted to reuse.",
+  "official_source": false,
+  "reviewed_by": null,
+  "unknown_fields": ["co_funding_ratio", "contact", "payment_schedule"],
+  "unknown_metadata": {
+    "co_funding_ratio": null,
+    "contact": null,
+    "payment_schedule": null
+  },
+  "eligibility_rules": {
+    "country_codes": ["IN"],
+    "applicant_types": ["community"],
+    "intervention_ids": ["rooftop_rainwater_harvesting", "efficient_fixtures"],
+    "required_information": ["registration"]
+  }
+}

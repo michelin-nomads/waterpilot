@@ -1,0 +1,36 @@
+.workspace {
+  display: grid;
+  gap: var(--wl-space-5);
+}
+.form,
+.card {
+  display: grid;
+  gap: var(--wl-space-3);
+  padding: var(--wl-space-5);
+  border: 1px solid var(--wl-color-border);
+  border-radius: var(--wl-radius-lg);
+  background: var(--wl-color-surface);
+  overflow-wrap: anywhere;
+}
+.row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--wl-space-4);
+}
+.results {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--wl-space-4);
+  align-items: start;
+}
+.card dl {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  gap: var(--wl-space-2);
+}
+.card dd {
+  margin: 0;
+}
+.card summary {
+  cursor: pointer;
+}

@@ -14,6 +14,8 @@ from graphql_harness import AREA_ID, Harness, make_harness, seed_plan_option
 from waterlens.api.main import create_app
 from waterlens.application.services.sessions import SessionService
 from waterlens.domain.jobs import JobStatus, OutboxStatus, outbox_id_for
+from waterlens.domain.planning import ImpactMetric
+from waterlens.domain.values import Availability, MeasuredValue, Quantity, Unit
 
 KEY = "key-0000000000000001"
 
@@ -357,9 +359,22 @@ query($id: ID!) {
 
 
 def create_community(h: Harness, token: str, name: str, key: str = KEY) -> dict[str, Any]:
+    session = ready_session(h, token, key=f"{key}-report-session")
+    report_result = finalize(h, token, session["id"], key=f"{key}-report-finalize")
+    assert report_result["error"] is None, report_result
+    report = report_result["report"]
     body = h.gql(
         CREATE_COMMUNITY,
-        {"input": {"name": name, "areaId": AREA_ID, "idempotencyKey": key}},
+        {
+            "input": {
+                "name": name,
+                "areaId": AREA_ID,
+                "reportId": report["id"],
+                "contactName": "Community contact",
+                "contactEmail": "contact@example.org",
+                "idempotencyKey": key,
+            }
+        },
         token,
     )
     payload = body["data"]["createCommunity"]
@@ -380,6 +395,17 @@ def test_community_roles_join_leave_and_archive(h: Harness) -> None:
     assert join(h, "t-guest", cid)["error"]["code"] == "PERMANENT_ACCOUNT_REQUIRED"
     bob = join(h, "t-bob", cid)["membership"]
     assert bob["role"] == "MEMBER"
+    repeated_join = h.gql(
+        JOIN,
+        {
+            "input": {
+                "communityId": cid,
+                "idempotencyKey": "key-community-join-repeat",
+            }
+        },
+        "t-bob",
+    )["data"]["joinCommunity"]
+    assert repeated_join["error"] is None and repeated_join["membership"]["id"] == bob["id"]
 
     members = h.gql(MEMBERS, {"id": cid}, "t-bob")["data"]["community"]
     assert members["memberCount"] == 2
@@ -396,6 +422,14 @@ def test_community_roles_join_leave_and_archive(h: Harness) -> None:
     assert last_coordinator["error"]["code"] == "PRECONDITION_FAILED"
     left = h.gql(LEAVE, {"input": {"communityId": cid, "expectedVersion": bob["version"]}}, "t-bob")
     assert left["data"]["leaveCommunity"]["error"] is None
+    repeated_leave = h.gql(
+        LEAVE,
+        {"input": {"communityId": cid, "expectedVersion": bob["version"]}},
+        "t-bob",
+    )["data"]["leaveCommunity"]
+    assert repeated_leave["error"] is None and repeated_leave["membership"]["id"] == bob["id"]
+    after_leave = h.gql(MEMBERS, {"id": cid}, "t-alice")["data"]["community"]
+    assert after_leave["memberCount"] == 1
 
     version = h.gql("query($id: ID!) { community(id: $id) { version } }", {"id": cid})
     archived = h.gql(
@@ -407,6 +441,104 @@ def test_community_roles_join_leave_and_archive(h: Harness) -> None:
     assert join(h, "t-carol", cid)["error"]["code"] == "ARCHIVED"
     listed = h.gql("{ communities { nodes { id } } }")["data"]["communities"]["nodes"]
     assert listed == []
+    archived_list = h.gql(
+        """{ communities(filter: { includeArchived: true, archivedOnly: true }) {
+          nodes { id status sharedReport { goal finalizedAt } memberCount }
+        } }"""
+    )["data"]["communities"]["nodes"]
+    assert archived_list[0]["id"] == cid
+    assert archived_list[0]["memberCount"] == 1
+    assert archived_list[0]["sharedReport"] is not None
+    session_after_archive = h.gql(
+        CREATE_SESSION,
+        {
+            "input": {
+                "mode": "TRADITIONAL",
+                "communityId": cid,
+                "idempotencyKey": "key-archive-session-attempt",
+            }
+        },
+        "t-alice",
+    )["data"]["createPlanningSession"]
+    assert session_after_archive["error"]["code"] == "ARCHIVED"
+
+
+def test_community_creation_is_authorized_and_shares_only_consented_safe_fields(
+    h: Harness,
+) -> None:
+    session = ready_session(h, "t-alice", key="key-community-privacy-session")
+    report = finalize(h, "t-alice", session["id"], key="key-community-privacy-report")["report"]
+    secret_report_title = "Ward plan"
+    query = """query($id: ID!) {
+      community(id: $id) {
+        contactName contactEmail sharedReport { goal finalizedAt }
+      }
+    }"""
+    private = h.gql(
+        CREATE_COMMUNITY,
+        {
+            "input": {
+                "name": "Private contact group",
+                "reportId": report["id"],
+                "contactName": "A secret applicant name",
+                "contactEmail": "private@example.org",
+                "idempotencyKey": "key-community-private-create",
+            }
+        },
+        "t-alice",
+    )["data"]["createCommunity"]["community"]
+    public = h.gql(query, {"id": private["id"]})["data"]["community"]
+    assert public["contactName"] is None and public["contactEmail"] is None
+    assert public["sharedReport"]["goal"] == "reduce_shortage"
+    assert "A secret applicant name" not in str(public)
+    assert secret_report_title not in str(public)
+
+    consented = h.gql(
+        CREATE_COMMUNITY,
+        {
+            "input": {
+                "name": "Consent group",
+                "reportId": report["id"],
+                "contactName": "A secret applicant name",
+                "contactEmail": "private@example.org",
+                "shareContactEmail": True,
+                "idempotencyKey": "key-community-consent-create",
+            }
+        },
+        "t-alice",
+    )["data"]["createCommunity"]["community"]
+    visible = h.gql(query, {"id": consented["id"]})["data"]["community"]
+    assert visible["contactName"] is None
+    assert visible["contactEmail"] == "private@example.org"
+
+    foreign_report = h.gql(
+        CREATE_COMMUNITY,
+        {
+            "input": {
+                "name": "Unauthorized group",
+                "reportId": report["id"],
+                "contactName": "Contact",
+                "idempotencyKey": "key-community-foreign-create",
+            }
+        },
+        "t-bob",
+    )["data"]["createCommunity"]
+    assert foreign_report["community"] is None
+    assert foreign_report["error"]["code"] == "NOT_FOUND"
+    guest = h.gql(
+        CREATE_COMMUNITY,
+        {
+            "input": {
+                "name": "Guest community",
+                "reportId": report["id"],
+                "contactName": "Guest",
+                "idempotencyKey": "key-community-guest-create",
+            }
+        },
+        "t-guest",
+    )["data"]["createCommunity"]
+    assert guest["community"] is None
+    assert guest["error"]["code"] == "PERMANENT_ACCOUNT_REQUIRED"
 
 
 def test_community_reports_are_shared_with_members_only(h: Harness) -> None:
@@ -438,20 +570,26 @@ def test_non_members_cannot_start_community_sessions(h: Harness) -> None:
 START = """
 mutation($input: StartImplementationProjectInput!) {
   startImplementationProject(input: $input) {
-    project { id status milestones { nodes { id version status plannedOn } } }
+    project { id status communityId milestones { nodes { id version status plannedOn } } }
     error { code }
   }
 }"""
 RECORD = """
 mutation($input: RecordObservationInput!) {
   recordObservation(input: $input) {
-    observation { id quantity { value unit } evidence recordedByViewer observedOn }
+    observation {
+      id quantity { value unit } evidence recordedByViewer observedOn
+      comparison { status reason }
+    }
     error { code fieldErrors { field } }
   }
 }"""
 UPDATE_MILESTONE = """
 mutation($input: UpdateMilestoneInput!) {
-  updateMilestone(input: $input) { milestone { status version completedAt } error { code } }
+  updateMilestone(input: $input) {
+    milestone { status version completedOn completedAt }
+    error { code }
+  }
 }"""
 
 
@@ -479,6 +617,13 @@ def test_tracking_projects_milestones_and_observations(h: Harness) -> None:
         "t-alice",
     )["data"]["updateMilestone"]["milestone"]
     assert done["status"] == "DONE" and done["completedAt"] == "2026-10-10T06:00:00Z"
+    assert done["completedOn"] == "2026-10-10"
+    stale = h.gql(
+        UPDATE_MILESTONE,
+        {"input": {"id": milestone["id"], "expectedVersion": 1, "status": "IN_PROGRESS"}},
+        "t-alice",
+    )["data"]["updateMilestone"]
+    assert stale["error"]["code"] == "VERSION_CONFLICT"
 
     observation_input = {
         "projectId": project["id"],
@@ -486,12 +631,18 @@ def test_tracking_projects_milestones_and_observations(h: Harness) -> None:
         "observedOn": "2026-10-09",
         "quantity": {"value": "125000.5", "unit": "LITRES_PER_DAY"},
         "method": "Meter reading",
+        "source": "Manual test gauge",
+        "windowStart": "2026-10-01",
+        "windowEnd": "2026-10-09",
+        "coverageObservedDays": 9,
+        "coverageExpectedDays": 9,
         "idempotencyKey": KEY,
     }
     saved = h.gql(RECORD, {"input": observation_input}, "t-alice")["data"]["recordObservation"]
     assert saved["observation"]["quantity"] == {"value": "125000.5", "unit": "LITRES_PER_DAY"}
     assert saved["observation"]["evidence"] == "RECORDED"
     assert saved["observation"]["recordedByViewer"] is True
+    assert saved["observation"]["comparison"]["status"] == "UNKNOWN"
 
     outsider = h.gql(RECORD, {"input": observation_input}, "t-bob")["data"]["recordObservation"]
     assert outsider["error"]["code"] == "NOT_FOUND"
@@ -500,6 +651,119 @@ def test_tracking_projects_milestones_and_observations(h: Harness) -> None:
     invalid = h.gql(RECORD, {"input": bad_number}, "t-alice")["data"]["recordObservation"]
     assert invalid["error"]["code"] == "VALIDATION_FAILED"
     assert invalid["error"]["fieldErrors"][0]["field"].startswith("quantity")
+
+
+@pytest.mark.parametrize(
+    ("metric_id", "unit", "window_end", "coverage", "expected"),
+    [
+        ("supply_volume_rate", "LITRES_PER_DAY", "2026-10-12", 3, "COMPARABLE"),
+        ("unknown_metric", "LITRES_PER_DAY", "2026-10-12", 3, "UNKNOWN"),
+        ("supply_volume_rate", "LITRE", "2026-10-12", 3, "UNKNOWN"),
+        ("supply_volume_rate", "LITRES_PER_DAY", "2026-10-13", 4, "UNKNOWN"),
+        ("supply_volume_rate", "LITRES_PER_DAY", "2026-10-12", 2, "UNKNOWN"),
+    ],
+)
+def test_observation_comparison_requires_compatible_metric_period_and_coverage(
+    h: Harness, metric_id: str, unit: str, window_end: str, coverage: int, expected: str
+) -> None:
+    session = ready_session(h, "t-alice")
+    stored_session = h.store.sessions.get(session["id"])
+    assert stored_session is not None and stored_session.goal is not None
+    goal = stored_session.goal.model_copy(update={"horizon_days": 3})
+    h.store.sessions.replace(
+        stored_session.model_copy(update={"goal": goal}), stored_session.version
+    )
+    option = h.store.plan_options.get(session["optionId"])
+    assert option is not None and option.impact is not None
+
+    def measured(value: str) -> MeasuredValue:
+        return MeasuredValue(
+            availability=Availability.AVAILABLE,
+            quantity=Quantity(value=value, unit=Unit.LITRES_PER_DAY),
+        )
+
+    metric = ImpactMetric(
+        metric_id="supply_volume_rate",
+        baseline=measured("100"),
+        projected_low=measured("120"),
+        projected_high=measured("160"),
+    )
+    impact = option.impact.model_copy(update={"metrics": (metric,)})
+    h.store.plan_options.add(option.model_copy(update={"impact": impact}))
+    report = finalize(h, "t-alice", session["id"])["report"]
+    project = h.gql(
+        START,
+        {
+            "input": {
+                "reportId": report["id"],
+                "title": "Observation comparison",
+                "idempotencyKey": KEY,
+            }
+        },
+        "t-alice",
+    )["data"]["startImplementationProject"]["project"]
+    input_data = {
+        "projectId": project["id"],
+        "metricId": metric_id,
+        "observedOn": "2026-10-11",
+        "quantity": {"value": "125", "unit": unit},
+        "method": "Manual gauge reading",
+        "source": "Field notebook",
+        "windowStart": "2026-10-10",
+        "windowEnd": window_end,
+        "coverageObservedDays": coverage,
+        "coverageExpectedDays": 3 if window_end == "2026-10-12" else 4,
+        "idempotencyKey": KEY,
+    }
+    result = h.gql(RECORD, {"input": input_data}, "t-alice")["data"]["recordObservation"]
+    assert result["error"] is None, result
+    assert result["observation"]["comparison"]["status"] == expected
+
+
+def test_shared_project_visibility_and_coordinator_write_role(h: Harness) -> None:
+    community = create_community(h, "t-alice", "Shared project team", "key-0000000000000021")
+    join(h, "t-bob", community["id"])
+    session = ready_session(h, "t-alice", "key-0000000000000022")
+    report = finalize(h, "t-alice", session["id"], "key-0000000000000023")["report"]
+    stored = h.store.reports.get(report["id"])
+    assert stored is not None
+    linked_report = h.store.reports.replace(
+        stored.model_copy(update={"community_id": community["id"]}), stored.version
+    )
+    project = h.gql(
+        START,
+        {
+            "input": {
+                "reportId": linked_report.id,
+                "title": "Shared repair work",
+                "shareWithCommunity": True,
+                "milestones": [{"title": "Install gauge", "plannedOn": "2026-11-01"}],
+                "idempotencyKey": "key-0000000000000024",
+            }
+        },
+        "t-alice",
+    )["data"]["startImplementationProject"]["project"]
+    assert project["communityId"] == community["id"]
+
+    shared_read = h.gql(
+        "query($id: ID!) { implementationProject(id: $id) { id } }",
+        {"id": project["id"]},
+        "t-bob",
+    )
+    assert shared_read["data"]["implementationProject"]["id"] == project["id"]
+    milestone = project["milestones"]["nodes"][0]
+    member_write = h.gql(
+        UPDATE_MILESTONE,
+        {"input": {"id": milestone["id"], "expectedVersion": 1, "status": "DONE"}},
+        "t-bob",
+    )["data"]["updateMilestone"]
+    assert member_write["error"]["code"] == "FORBIDDEN"
+    coordinator_write = h.gql(
+        UPDATE_MILESTONE,
+        {"input": {"id": milestone["id"], "expectedVersion": 1, "status": "DONE"}},
+        "t-alice",
+    )["data"]["updateMilestone"]
+    assert coordinator_write["error"] is None
 
 
 # --- pagination and limits ------------------------------------------------------------

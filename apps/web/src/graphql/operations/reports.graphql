@@ -20,6 +20,84 @@ fragment ReportFields on Report {
   communityId
   areaId
   planOptionId
+  planName
+  goal {
+    id
+    kind
+    description
+  }
+  economics {
+    engineVersion
+    currency
+    capex {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    upfrontTotal {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    recurringAnnual {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    avoidedTankerAnnual {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    netAnnual {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    funding {
+      totalCost {
+        low {
+          ...MoneyFields
+        }
+        high {
+          ...MoneyFields
+        }
+      }
+      approved {
+        ...MoneyFields
+      }
+      gap {
+        low {
+          ...MoneyFields
+        }
+        high {
+          ...MoneyFields
+        }
+      }
+      candidate {
+        ...MoneyFields
+      }
+      fullyFunded
+      note
+    }
+    assumptions
+    notes
+  }
   finalizedAt
   archivedAt
 }
@@ -32,6 +110,7 @@ fragment ProposalFields on Proposal {
   status
   flaggedCount
   downloadPath
+  previewPath
   job {
     ...JobFields
   }
@@ -48,9 +127,46 @@ query Reports($filter: ReportFilter, $first: Int, $after: String) {
   }
 }
 
+query FundingSchemes($first: Int, $after: String) {
+  fundingSchemes(first: $first, after: $after) {
+    nodes {
+      id
+      name
+      funder
+      summary
+      status
+      evidence
+      officialSource
+      sourceUrl
+      sourceHash
+      lastVerifiedAt
+      currency
+      maxAmount {
+        ...MoneyFields
+      }
+      deadlineAt
+      deadlineTimezone
+      requiredDocuments
+    }
+    pageInfo {
+      ...PageInfoFields
+    }
+  }
+}
+
 query Report($id: ID!) {
   report(id: $id) {
     ...ReportFields
+    area {
+      id
+      name
+      countryCode
+    }
+    impact {
+      provenance {
+        evidence
+      }
+    }
     proposals(first: 10) {
       nodes {
         ...ProposalFields

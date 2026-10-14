@@ -22,6 +22,8 @@ from pydantic import BaseModel, Field
 
 from waterlens import __version__
 from waterlens.adapters.factory import ApiRuntime
+from waterlens.api.agent_routes import build_agent_router
+from waterlens.api.funding_catalogue_routes import build_funding_catalogue_router
 from waterlens.api.graphql.router import build_graphql_router
 from waterlens.api.http_routes import build_http_router
 from waterlens.api.runtime import runtime_provider
@@ -71,7 +73,7 @@ def create_app(
         allow_origins=settings.allowed_origins,
         allow_credentials=True,
         allow_methods=["GET", "POST"],
-        allow_headers=["authorization", "content-type", "x-request-id"],
+        allow_headers=["authorization", "content-type", "x-request-id", "last-event-id"],
         expose_headers=["x-request-id"],
     )
 
@@ -100,7 +102,11 @@ def create_app(
         )
 
     provide = runtime or runtime_provider(settings)
+    app.include_router(
+        build_funding_catalogue_router(provide, frozenset(settings.funding_admin_uids))
+    )
     app.include_router(build_http_router(provide, poll_seconds=stream_poll_seconds))
+    app.include_router(build_agent_router(provide, poll_seconds=min(stream_poll_seconds, 0.2)))
     app.include_router(
         build_graphql_router(provide, local=not settings.is_pilot),
         prefix="/graphql",

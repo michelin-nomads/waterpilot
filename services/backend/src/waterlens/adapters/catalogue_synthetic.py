@@ -10,7 +10,13 @@ from __future__ import annotations
 from datetime import UTC, date, datetime
 
 from waterlens.adapters.store_memory import MemoryAreaCatalogue, MemoryFundingCatalogue
-from waterlens.domain.funding import Criterion, CriterionRule, CriterionRuleKind, FundingScheme
+from waterlens.domain.funding import (
+    CatalogueStatus,
+    Criterion,
+    CriterionRule,
+    CriterionRuleKind,
+    FundingScheme,
+)
 from waterlens.domain.location import ExtentKind
 from waterlens.domain.planning import Area
 from waterlens.domain.values import EvidenceQuality, Money
@@ -43,6 +49,8 @@ def synthetic_funding_catalogue() -> MemoryFundingCatalogue:
         id=SYNTHETIC_SCHEME_ID,
         name="Synthetic Community Water Grant (SYNTHETIC test data)",
         funder="Synthetic Funder",
+        status=CatalogueStatus.DEMO,
+        deadline_timezone="Asia/Kolkata",
         summary="Hand-authored scheme used to exercise criteria matching locally.",
         currency="INR",
         max_amount=Money.from_inr_paise(100_000_000),

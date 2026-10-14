@@ -45,6 +45,7 @@ from waterlens.application.tools.options import (
 from waterlens.domain import baseline as bl
 from waterlens.domain.errors import DomainError, ErrorCode, not_found
 from waterlens.domain.planning import PlanningSession
+from waterlens.domain.reports import ReportStatus
 from waterlens.domain.tracking import MilestoneStatus
 from waterlens.domain.values import Frozen
 
@@ -172,6 +173,9 @@ class CreateCommunityArgs(Frozen):
     name: str = Field(min_length=3, max_length=120)
     description: str = Field(default="", max_length=2000)
     area_id: str | None = None
+    report_id: str
+    contact_name: str = Field(min_length=1, max_length=120)
+    contact_email: str | None = Field(default=None, max_length=254)
 
 
 class StartProjectArgs(Frozen):
@@ -437,13 +441,45 @@ def _prepare_archive_report(rc: RunContext, a: ReportArgs) -> Json:
 
 
 def _prepare_create_community(rc: RunContext, a: CreateCommunityArgs) -> Json:
+    report = rc.services.reports.get(rc.ctx, a.report_id)
+    if report.owner_uid != rc.ctx.require_principal().uid:
+        raise not_found("finalized report")
+    if report.status is ReportStatus.ARCHIVED:
+        raise DomainError(
+            ErrorCode.PRECONDITION_FAILED,
+            "choose one of your finalized, nonarchived reports",
+            field="report_id",
+        )
+    public_area = None
+    if a.area_id is not None:
+        area = rc.services.areas.get(a.area_id, rc.ctx.require_principal().uid)
+        if area.owner_uid is not None:
+            raise DomainError(
+                ErrorCode.VALIDATION_FAILED,
+                "a private location cannot be used for community discovery",
+                field="area_id",
+            )
+        public_area = area.name
     return PreparedAction.build(
         AgentActionKind.CREATE_COMMUNITY,
-        summary=f"Create a community named “{a.name}” (you become its coordinator).",
+        summary=(
+            f"Create “{a.name}” with description {a.description!r}; "
+            f"approximate area {public_area or 'not shared'}; publish no contact fields; "
+            f"share only the report goal category {report.goal.kind.value} and finalized date."
+        ),
         resource_kind="community",
         resource_id=None,
         expected_version=None,
-        parameters={"name": a.name, "description": a.description, "area_id": a.area_id},
+        parameters={
+            "name": a.name,
+            "description": a.description,
+            "area_id": a.area_id,
+            "report_id": a.report_id,
+            "contact_name": a.contact_name,
+            "contact_email": a.contact_email,
+            "share_contact_name": False,
+            "share_contact_email": False,
+        },
     ).to_json()
 
 

@@ -44,6 +44,7 @@ from waterlens.application.conversations import (
     StaleConversation,
     advance_session,
 )
+from waterlens.application.deadline import bound_client, deadline, remaining
 from waterlens.domain.conversations import (
     ConversationEvent,
     ConversationLease,
@@ -88,6 +89,7 @@ def _tool_doc_id(session_id: str, call_id: str) -> str:
 class FirestoreConversationStore:
     def __init__(self, client: firestore.Client) -> None:
         self._client = client
+        bound_client(client)
 
     # ---- transaction policy ---------------------------------------------------------
 
@@ -101,14 +103,24 @@ class FirestoreConversationStore:
         the function raises — propagates unchanged. A caller that still cannot commit gets a
         clean ``SERVICE_UNAVAILABLE`` rather than a leaked ``ValueError``."""
         for round_ in range(TRANSACTION_ROUNDS):
+            if deadline.get() is not None:
+                remaining()
             try:
-                return txn(self._client.transaction(max_attempts=MAX_TRANSACTION_ATTEMPTS))
+                return txn(
+                    self._client.transaction(
+                        max_attempts=1 if deadline.get() is not None else MAX_TRANSACTION_ATTEMPTS
+                    )
+                )
             except (gexc.Aborted, gexc.Conflict, gexc.DeadlineExceeded):
                 pass
             except ValueError as err:
                 if not str(err).startswith("Failed to commit transaction in"):
                     raise
-            time.sleep(random.uniform(0, BACKOFF_SECONDS * 2**round_))  # noqa: S311
+            time.sleep(
+                min(random.uniform(0, BACKOFF_SECONDS * 2**round_), remaining())
+                if deadline.get() is not None
+                else random.uniform(0, BACKOFF_SECONDS * 2**round_)
+            )  # noqa: S311
         raise _busy()
 
     # ---- refs -----------------------------------------------------------------------

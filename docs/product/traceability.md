@@ -1,5 +1,33 @@
 # WaterLens — Screenshot-to-Feature Traceability
 
+## Owner override — desktop hackathon scope (2026-10-13)
+
+From Prompt 18 onward, this is a **desktop-only hackathon build**. This owner
+instruction overrides conflicting mobile, tablet, responsive and expansive testing
+requirements in the earlier guide, master instruction and project documents.
+Existing responsive code and earlier tests remain; mobile acceptance is not required.
+Keep basic desktop keyboard operation and focus accessibility.
+
+Use minimal, high-value checks for authorization, paid-call controls, duplicate
+actions, immutable reports, financial accuracy and core feature logic. Reuse existing
+coverage and prefer manual desktop inspection for presentation. No coverage targets
+or exhaustive new suites are required.
+
+Keep every confirmed feature, including global locations, funding, proposals,
+communities and tracking. **Non-INR economics remains an outstanding functionality
+gap**, not a removed requirement.
+
+Prompt 17 is locally implemented; **core desktop browser acceptance remains pending**
+until stream ordering/reconnect, reload recovery, cancellation, Continue checkpoints,
+manual edits during a run, mode switching, confirmation actions, account isolation
+and desktop keyboard/focus behavior are actually checked. This may be completed in
+Prompt 24 without rebuilding Prompt 17.
+
+Implement only the numbered prompt explicitly supplied by the owner, then stop.
+Prompts 18–25 are local/emulator-only with fake inference: no live Vertex, embedding
+or Maps calls, resource provisioning, deployment or billing activation. Prompt 26
+requires separate explicit authorization and completed setup before live actions.
+
 Version 0.1 (proposed) · Created by Prompt 00 · 7 October 2026
 
 Maps every visible control/action in the eight reference screenshots
@@ -28,26 +56,26 @@ a build-guide phase.
 
 Legacy phase → guide prompt (00–26) lookup:
 
-| Legacy phase | Legacy title                                     | Guide prompt(s) now                                    |
-| ------------ | ------------------------------------------------ | ------------------------------------------------------ |
-| 00–02        | Rules, metric definitions, scaffold              | 00 (domain specs also feed 07, 09)                     |
-| 03           | Design system and shell                          | 01 (navigation replaced in 05)                         |
-| 04           | API foundation and Firestore repositories        | 02 (GraphQL), 04 (Firestore, authorization)            |
-| 05           | Authentication and isolation                     | 03 (identity), 04 (authorization), 21 (communities UI) |
-| 06           | Durable jobs                                     | 06                                                     |
-| 07           | Public data ingestion                            | 07                                                     |
-| 08           | Understand Your Area                             | 08 (location, map), 09 (baseline, charts)              |
-| 09           | What-if engine                                   | 11 (engines), 17 (workspace panel)                     |
+| Legacy phase | Legacy title                                     | Guide prompt(s) now                                                                                                   |
+| ------------ | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| 00–02        | Rules, metric definitions, scaffold              | 00 (domain specs also feed 07, 09)                                                                                    |
+| 03           | Design system and shell                          | 01 (navigation replaced in 05)                                                                                        |
+| 04           | API foundation and Firestore repositories        | 02 (GraphQL), 04 (Firestore, authorization)                                                                           |
+| 05           | Authentication and isolation                     | 03 (identity), 04 (authorization), 21 (communities UI)                                                                |
+| 06           | Durable jobs                                     | 06                                                                                                                    |
+| 07           | Public data ingestion                            | 07                                                                                                                    |
+| 08           | Understand Your Area                             | 08 (location, map), 09 (baseline, charts)                                                                             |
+| 09           | What-if engine                                   | 11 (engines), 17 (workspace panel)                                                                                    |
 | 10           | Vertex AI interpretation / agent runtime         | 14 (Vertex gateway), 15 (ADK session persistence, ADR 0016), 16 (agent tools, ADR 0017), 17 (agent loop/conversation) |
-| 11           | Goals                                            | 10                                                     |
-| 12           | Plans and economics                              | 11, 12, 13                                             |
-| 13           | Make It Happen, funding, ADK                     | 18, 19 (funding), 16 (agent tools, ADR 0017)           |
-| 14           | Proposal / PDF, finalized reports                | 20                                                     |
-| 15           | Execute and Track                                | 22                                                     |
-| 16           | Operator tools and data maintenance              | 07, 18 (catalogue upkeep), 23                          |
-| 17           | Security, accessibility and release verification | 23, 24                                                 |
-| 18           | GCP infrastructure and cost plan                 | 25                                                     |
-| 19–20        | Deploy, recovery rehearsal, handover             | 26                                                     |
+| 11           | Goals                                            | 10                                                                                                                    |
+| 12           | Plans and economics                              | 11, 12, 13                                                                                                            |
+| 13           | Make It Happen, funding, ADK                     | 18, 19 (funding), 16 (agent tools, ADR 0017)                                                                          |
+| 14           | Proposal / PDF, finalized reports                | 20                                                                                                                    |
+| 15           | Execute and Track                                | 22                                                                                                                    |
+| 16           | Operator tools and data maintenance              | 07, 18 (catalogue upkeep), 23                                                                                         |
+| 17           | Security, accessibility and release verification | 23, 24                                                                                                                |
+| 18           | GCP infrastructure and cost plan                 | 25                                                                                                                    |
+| 19–20        | Deploy, recovery rehearsal, handover             | 26                                                                                                                    |
 
 Built in guide Prompt 04 (no screenshot control; storage and authorization underneath
 every screen): Firestore repositories behind the `Store` port, ownership/role/archive
@@ -64,7 +92,7 @@ The screenshots' stepper controls now also record the stage on the session, so
 Built in guide Prompt 06 (behind 8.png's "Generate PDF" and the HLD's generation
 progress row): durable proposal jobs through a transactional outbox, Cloud Tasks and a
 private worker, with real job stages (no fake percentage) on `/jobs/:jobId`, which
-survives refresh. The PDF itself is not produced until the Prompt 20 renderer exists: the
+survives refresh. (The Prompt 20 renderer now produces deterministic review HTML and PDF.) The
 job fails visibly and no placeholder document is stored. Downloads are owner-checked and
 artifacts are private. See ADR 0007.
 
@@ -504,3 +532,257 @@ screenshot numbers.**
 - **Metric definitions** — created in Phase 01 (`docs/domain/metrics.md`, `metrics.registry.json`, corrected after review R3); all are still **proposed pending domain review**, and screenshot metrics remain illustrative.
 - **Source manifests and licences** — the manifest schema and readiness gate run in the backend since Prompt 07 (ADR 0008), but **no real source, licence or authorization has been onboarded**; only the labelled synthetic demo source exists (`docs/data-readiness.md`).
 - **Pilot area data readiness** — Koramangala, Bengaluru is the candidate shown; its gate status is **UNVERIFIED — NOT PASSED** (`docs/domain/data-readiness-gate.md`).
+
+## Prompt 18 — desktop admin catalogue evidence (2026-10-13)
+
+`/admin/funding` and `/v1/admin/funding-catalogue` provide server-authorized curator
+administration. The offline importer preserves publisher/URL, geography, applicants,
+interventions, exact amount rules, publisher deadline/timezone, required documents,
+SHA-256, verification date, status and unknown metadata. Human review controls real
+publication; updates use revision checks, and withdrawal/expiry invalidate matches.
+Existing public matching reads remain, with drafts unpublished and no automatic awards.
+
+The owner authorized a mock document: `docs/domain/examples/funding/mock-source.json`
+and its import examples are visibly synthetic, never real active funding. Real official
+schemes await permitted sources. Desktop catalogue, empty/error states, edit focus and
+Tab navigation were inspected; affected automated checks passed. Prompt 19 adds deterministic
+eligibility and optional semantic relevance. Prompt 17 core desktop browser acceptance remains
+pending. See `docs/domain/funding-catalogue.md` and
+`docs/build/implementation-status.md`. Non-INR economics remains a functionality gap.
+
+## Prompt 19 — eligibility and relevance evidence (2026-10-14)
+
+The Make It Happen desktop workspace reads the saved session and selected plan, accepts
+explicit applicant/funding/document declarations and returns eligible, ineligible or
+needs-information with recorded evidence. Country and intervention facts come from
+authorized planning state; unsupported subnational/free-text rules remain uncertain.
+Native minor-unit limits and publisher timezone deadlines are deterministic. Matching
+never claims an award, converts currencies or fabricates a percentage score.
+
+Optional relevance only orders non-ineligible candidates; it cannot change eligibility.
+Local embeddings are fake and labelled. The server cache records model, 768 dimensions,
+version, source/content hashes; budget/kill-switch/duplicate controls precede calls.
+Unavailable ranking exposes deterministic fallback. The Firestore vector index is
+specified but unprovisioned; real vector/model behavior remains unverified until separate
+live authorization/setup. Two compact new test functions cover four eligibility cases
+and fake ranking/cache/budget/fallback. Existing coverage and desktop inspection are reused.
+
+See `docs/domain/funding-eligibility-ranking.md`. Real official curation, non-INR economics,
+proposals, communities and tracking remain in scope. Prompt 17 core browser acceptance
+remains pending; Prompt 20 is complete locally. The real browser inspection skipped at
+Prompt 20 is recorded in its validation report.
+
+## Prompt 20 — immutable reports and proposal review (2026-10-14)
+
+The desktop Review flow shows the selected plan and impact provenance before saving. First
+finalization requires a permanent account; the service snapshots the current plan, goal,
+impact record and native-unit economics under an idempotency key, and rejects stale plan or
+impact versions. Report listing, detail and archive are version-aware and read-only.
+
+Proposal preparation starts only from a finalized report and an official source-verified
+scheme, with synthetic schemes visibly marked. Applicant data, corrections, assumptions,
+required-document checklist and source metadata accompany the immutable report economics.
+Durable jobs generate review HTML and a readable one-page PDF deterministically; model
+wording cannot write financial figures. Corrections create private versions. Downloads and
+HTML previews are owner-authorized; external submission remains the user's action.
+
+Focused verification: 73 backend tests passed; Ruff, mypy (149 files), affected web lint,
+web typecheck/build, and bundle budget passed. The end-to-end service case confirms
+finalization replay and proposal input number fidelity; existing cross-tenant artifact
+coverage also checks HTML preview authorization. One generated Letter PDF was opened and
+visually inspected for page fit, exact figures, source notes, synthetic label and required
+documents. Browser inspection of report/proposal screens was skipped because Firebase
+emulator startup requires JDK 21; the environment has JDK 17. This does not count as desktop
+screen acceptance. Real official funding curation, live/cloud workers, non-INR economics,
+and live services remain unverified or outstanding. See the Prompt 20 validation report.
+
+## Prompt 21 — communities (2026-10-14)
+
+The desktop community workspace lists active, archived and nearby results with bounded
+radius/search and pagination. Nearby distance is geographic proximity and never asserts
+hydrological connectivity. Creation is permanent-account only and requires an owned,
+finalized, non-archived report. Contact fields are private by default and publication consent
+is tracked per field. The only report summary exposed is its goal category and finalized date;
+private addresses, applicant data, report title, source documents and attachments remain
+private. A guest's sign-in flow retains the intended join, and authenticated membership changes
+are immediate, idempotent and counter-safe. The last coordinator cannot leave; this desktop
+flow archives instead of transferring the role.
+
+Archiving removes the community from active and nearby discovery; its sanitized public summary
+remains visible under the explicit archive filter. It blocks joins, new sessions and tracking
+writes, and keeps member-only linked history read-only for existing members. Focused verification
+passed: 107 local backend tests, 20 existing Firestore
+emulator/store and concurrency tests, Ruff, mypy (149 files), affected web ESLint, web
+typecheck/build and bundle budget. Manual browser inspection covered the empty listing and
+guest creation gate. Actual create/details/join/leave presentation remains unverified because
+the local desktop pass did not seed an authenticated owner with a finalized report. No
+responsive/mobile acceptance was attempted. No live services or cloud actions occurred.
+
+See the Prompt 21 validation report. Nearby distance does not constitute scientific evidence of
+shared groundwater, catchment or supply infrastructure; those relationships remain unknown
+without independently reviewed connectivity records.
+
+## Prompt 22 — implementation projects and observations (2026-10-14)
+
+The desktop tracker starts implementation work from an immutable finalized-report version,
+private by default or explicitly shared with the report's community. It records project status,
+milestones/tasks, responsible identity, target and completion dates, exact native-unit expenses,
+and milestone progress. The owner and community coordinators write; an active community member
+can read only explicitly shared work. Source report/community archive makes linked work read-only;
+project archive retains its record history.
+
+Manual observations preserve exact canonical value/unit, metric identifier, method, source and
+permitted-document attestation, observed date, time window and coverage. A comparison is only
+available when the metric identifier, unit, geography, forecast period and complete coverage
+match the saved report. Missing or incompatible information is `unknown`; milestone completion
+does not prove water improvement. No IoT, automatic model training or collaboration infrastructure
+is added.
+
+Focused verification covers five comparison cases (compatible, unknown metric, unit mismatch,
+period mismatch and incomplete coverage), shared-member read/coordinator write authorization,
+unauthorized writes and optimistic version conflict. The local in-app browser inspection passed
+for the empty report state, private project creation, milestone completion date, and manual
+observation entry with AI disabled. The observation correctly remained unknown because the
+synthetic report had no forecast period. Playwright's installed Chromium could not launch inside
+the macOS sandbox (`MachPortRendezvous` permission denied (1100)); the supported in-app browser
+completed the requested interaction check. No mobile acceptance was attempted.
+
+## Prompt 24 — desktop demo acceptance (2026-10-14)
+
+Scope is desktop-only. Automated checks ran with pinned Node 24.21.0, npm 11.19.0,
+Python 3.12.15/uv, and JDK 21.0.12.1. Focused frontend tests passed (2 files, 36
+tests); the frontend portion of the single full regression run passed (21 files, 376
+tests). The backend portion did not reach test execution: collection stopped because
+`tests/api/test_funding_catalogue.py` and `tests/test_funding_eligibility.py` import
+`tests.api.test_graphql_behaviour`, but Python resolved no `tests` package
+(`ModuleNotFoundError: No module named 'tests'`). This is a test collection blocker, not
+a passing backend regression result.
+
+ESLint, Ruff, TypeScript checks, mypy (149 source files), production build and bundle
+budget passed. Prettier initially identified four files; formatting-only changes were
+applied to `apps/web/src/features/reports/Reports.module.scss`,
+`apps/web/src/graphql/operations/reports.graphql`,
+`apps/web/src/shell/shell.test.tsx` and `infra/README.md`. Final global
+`npm run format:check` and `git diff --check` both passed after the documentation update.
+
+The pinned local Auth/Firestore emulators, API, local worker and Vite frontend started.
+The API and frontend returned HTTP 200 from their health/root checks; the worker process
+remained running. No cloud services were contacted. The existing desktop Playwright run
+selected 35 tests; **0 passed, 35 failed before assertions** because Chromium headless
+exited with SIGTRAP at
+`FATAL:base/apple/mach_port_rendezvous_mac.cc:159 Check failed: kr == KERN_SUCCESS. bootstrap_check_in org.chromium.Chromium.MachPortRendezvousServer.<pid>: Permission denied (1100)`.
+The Codex browser provider had no Chrome binding (`Browser is not available: chrome`), and
+its in-app browser had previously rejected localhost with
+`net::ERR_BLOCKED_BY_CLIENT`. Using the installed native Google Chrome window, the local
+page did render after opening DevTools and closing it. The reproducible Playwright command,
+after exporting the pinned Node/tooling paths, JDK 21, emulator cache/config paths and
+fake-inference variables, was:
+`npm exec -- firebase emulators:exec --only auth,firestore --project demo-waterlens "WL_REQUIRE_AUTH_EMULATOR=1 WL_E2E_API=1 npm -w apps/web run test:e2e -- --grep-invert 'mobile|responsive|320 px|320px'"`.
+Manual native-Chrome observations in this run: guest Start planning opened the persisted
+session; selecting the labelled synthetic area saved `Synthville (SYNTHETIC — not a real
+place)` and displayed the baseline's unavailable/partial-data explanations; the goal could
+be saved while its unsupported measure remained explicitly not assessable; Compare Plans
+showed the missing tanker-baseline evidence instead of fabricating plans. The Display menu
+switched to Light and the page visibly changed; Agent mode opened the two-pane workspace and
+conversation, reported fake-inference mode, and returned a structured `inspect coverage`
+result. Reload restored the same guest session, mode and completed conversation, and
+switching to Traditional preserved the workspace state. These are manual spot checks, not
+Playwright results. The Communities page showed its empty state and geographic-distance
+disclaimer; signed-out community creation showed the sign-in gate and retained guest planning.
+The owner additionally reported, “I checked manually things work well.”
+This is recorded as an **owner-reported manual acceptance pass for the core desktop demo**;
+the individual checklist items were not enumerated in that confirmation.
+
+Still not independently verified in this close-out: the exact 1440×900 and ~1024px viewports;
+guest sign-in/linking through finalized report and proposal PDF download; authenticated
+community creation/details/join/leave; tracking actions; stream interruption/reconnect,
+cancellation and Continue checkpoints; edits during a live run; stale-selection recovery;
+failed-job Retry/Continue states; agent-disabled errors; keyboard-only confirmation/focus
+return; and private download/account-isolation behavior. The observed browser window was
+2560×1440, so it does not substitute for the requested viewports. Prompt 24's core desktop
+demo has an **owner-reported manual acceptance pass**, alongside the independently observed
+spot checks above. The automated Playwright run remains blocked, and the detailed checklist
+items above remain unverified in this agent's run. No mobile or touch acceptance was attempted.
+
+Manual desktop checklist results: **checked in native Chrome** — partial-data explanation,
+dark theme (initial system appearance) and Light theme, available agent with fake inference,
+completed structured coverage result, reload recovery, and same-session switching to
+Traditional; the empty Communities state and sign-in gate for community creation.
+**Not checked in this close-out** — authenticated account creation/sign-in, agent-disabled
+state, failed durable job and
+Retry/Continue/Open-normal-mode actions, stale selection during an action, keyboard-only
+confirmation and focus return, interruption/reconnect or cancellation, guest planning through
+finalized report/proposal download, authenticated community create/details/join/leave,
+tracking milestone and observation, and the exact 1440×900/~1024px viewports. The owner
+reports a general manual pass, but those itemized results were not supplied. Prompt 17 core
+desktop acceptance therefore remains pending. No live service, provisioning, deployment or
+billing action occurred; local AI access was fake/inference-only.
+
+## Prompt 25 — deployment preparation (2026-10-14)
+
+Prepared one reviewable deployment path in `infra/README.md`, with Firebase Hosting
+for the static desktop app, direct browser-to-Cloud Run API routing for authenticated
+requests and SSE, and a separate IAM-private Cloud Run worker. Added Hosting security
+headers and SPA routing, a locked Python runtime Dockerfile, a non-secret pilot
+environment template, narrowly scoped custom artifact and Firebase Auth verifier roles,
+and an ignore rule for the filled local deployment file. The runbook records setup,
+least-privilege grants and worker OIDC, Firestore Standard and vector indexes, locations,
+AI-off/tester gates, bounded scaling and timeouts, smoke checks, rollback and cleanup.
+No infrastructure unit-test scaffolding was added.
+
+Local checks: pinned Node 24.21.0/npm 11.19.0 and uv 0.13.0; `uv lock --check --offline`
+passed; 84 focused backend tests passed across config, local-only guards, cloud adapters
+and worker app; runtime-only imports passed; Firebase CLI 15.33.0 was available; the
+pilot-configured frontend production build and typecheck passed. Final lint, bundle
+budget, formatting, config parsing and `git diff --check` results are recorded in the
+implementation status. No runtime image was built: Docker is unavailable locally
+(`zsh:1: command not found: docker`). Cloud configuration could not be validated because
+gcloud is unavailable (`zsh:1: command not found: gcloud`).
+
+The Prompt 25 blockers are now closed in code: pilot API and worker builders select the
+Firestore catalogue, Cloud Tasks, private Cloud Storage and deterministic proposal renderer.
+The worker renders from the immutable report and scheme records through the existing durable
+job handler; the renderer cannot alter authoritative figures, and outputs remain owner-scoped
+private artifacts. Active public schemes must have a curated official source, permission note,
+source hash/document, reviewer and deadline timezone; synthetic records remain `demo` and can
+never become active. Local construction seams verified runtime wiring without cloud calls.
+The deployment template keeps model access disabled, kill switch enabled, tester allow-list
+empty and AI budget unset. Real Vertex access, regional behavior and vector retrieval remain
+unverified. No resource was created, no deployment or live test ran, and billing was not
+enabled. Docker and gcloud remain unavailable locally, so image build and cloud configuration
+validation remain blocked. Prompt 26 requires the project/account and billing state, chosen
+regions and existing Firestore location, approved origins/domains, service identity
+ownership, Artifact Registry/repository names, private bucket and queue names, Secret
+Manager secret names, Firebase Auth providers/domains and API key/app IDs, the private
+egress plan for any future remote source fetching, reviewed IAM/organization-policy
+constraints, and explicitly approved AI budget/model/tester settings. Exact parameter
+names and setup steps are in `infra/README.md`.
+
+### Prompt 25 runtime-adapter follow-up
+
+Pilot runtime construction now uses the existing Firestore repository (without synthetic
+seeding), Cloud Tasks job runner, private Cloud Storage adapter, and deterministic
+proposal renderer in the private worker. Active schemes exposed to users or accepted by
+proposal jobs must have validated evidence, official publisher status, permission note,
+source hash and stored permitted source document, curator identity and deadline timezone.
+Synthetic schemes remain demo-only. Focused verification passed: 66 tests across pilot
+runtime wiring, local-only guards, identity verification, catalogue lifecycle and durable
+proposal jobs; mypy passed for 149 source files; Ruff passed for touched backend files;
+pilot API/worker ASGI initialization passed with non-secret dummy pilot settings; formatting
+and diff checks passed. Docker and gcloud remain unavailable, so image and cloud validation
+are still not run.
+
+Prompt 24 core desktop acceptance has an **owner-reported manual pass**, with only partial
+independent manual inspection in this run.
+In the later native-Chrome run, the synthetic guest area and partial baseline, goal save with
+an unknown assessment, deterministic no-plan explanation, Light theme, Agent mode and
+structured fake-inference result were observed; reload restored the same session/conversation
+and mode switching retained workspace state. The owner reported “I checked manually things
+work well,” without identifying the individual checks. The existing desktop Playwright run
+selected 35 cases and all 35 failed before assertions because Chromium exited with macOS
+`MachPortRendezvous` permission denied (1100). The exact 1440×900/~1024px viewports, guest
+finalization/sign-in/proposal download, authenticated community actions, tracking, live
+stream reconnect/cancellation/Continue/manual edits, stale-selection recovery, failed jobs,
+agent-disabled errors, keyboard confirmations/focus return, and private artifact/account
+isolation remain unverified by this run and have no itemized owner evidence in the record. No
+mobile acceptance was requested or attempted.

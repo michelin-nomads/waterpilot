@@ -29,14 +29,20 @@ class Proposal:
     flagged_count: int
     job_id: strawberry.ID
     download_path: str | None = strawberry.field(
-        description="Authorized HTTP download; only set once the proposal is approved."
+        description="Private owner-authorized download for review."
+    )
+    preview_path: str | None = strawberry.field(
+        description="Private owner-authorized HTML preview for review."
     )
     created_at: UtcDateTime
     updated_at: UtcDateTime
 
     @staticmethod
     def of(p: dr.Proposal) -> Proposal:
-        downloadable = p.status is dr.ProposalStatus.APPROVED and p.artifact_key is not None
+        downloadable = (
+            p.status in {dr.ProposalStatus.NEEDS_REVIEW, dr.ProposalStatus.APPROVED}
+            and p.artifact_key is not None
+        )
         return Proposal(
             id=strawberry.ID(p.id),
             version=p.version,
@@ -46,6 +52,9 @@ class Proposal:
             flagged_count=p.flagged_count,
             job_id=strawberry.ID(p.job_id),
             download_path=f"/v1/proposals/{p.id}/download" if downloadable else None,
+            preview_path=f"/v1/proposals/{p.id}/preview"
+            if downloadable and p.html_artifact_key is not None
+            else None,
             created_at=UtcDateTime(p.created_at),
             updated_at=UtcDateTime(p.updated_at),
         )
@@ -139,8 +148,19 @@ class ArchiveReportInput:
 
 
 @strawberry.input
+class ProposalApplicantInput:
+    name: str
+    organization: str
+    category: str
+    contact_email: str | None = None
+    assumptions: list[str] = strawberry.field(default_factory=list)
+
+
+@strawberry.input
 class GenerateProposalInput:
     report_id: strawberry.ID
+    scheme_id: strawberry.ID | None = None
+    applicant: ProposalApplicantInput | None = None
     sections: list[dr.ProposalSection]
     idempotency_key: str
 

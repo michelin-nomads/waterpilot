@@ -21,6 +21,7 @@ from waterlens.application.repositories import IdempotencyRecord, Where
 from waterlens.domain.accounts import AccountClaim
 from waterlens.domain.ai import UsageCallKey, UsageDay, UsageReservation
 from waterlens.domain.communities import Community, CommunityStatus, Membership
+from waterlens.domain.embeddings import FundingEmbedding
 from waterlens.domain.errors import DomainError, ErrorCode
 from waterlens.domain.funding import FundingMatch, FundingScheme
 from waterlens.domain.jobs import AgentRun, JobRecord, OutboxRecord
@@ -173,6 +174,12 @@ class MemoryFundingCatalogue(MemoryCatalogue[FundingScheme]):
     def __init__(self, schemes: Iterable[FundingScheme] = ()) -> None:
         super().__init__(lambda s: Position(utc_iso(s.last_verified_at), s.id), schemes)
 
+    def save(self, item: FundingScheme, expected_revision: int) -> None:
+        current = self.get(item.id)
+        if (current.revision if current else 0) != expected_revision:
+            raise DomainError(ErrorCode.VERSION_CONFLICT, "catalogue changed; reload before saving")
+        self.add(item)
+
     def all_active(self, limit: int) -> tuple[FundingScheme, ...]:
         return tuple(sorted(self._items.values(), key=lambda s: s.id)[:limit])
 
@@ -211,6 +218,7 @@ class MemoryStore:
         )
         self.sessions: MemoryRecordRepository[PlanningSession] = MemoryRecordRepository()
         self.funding_matches: MemoryRecordRepository[FundingMatch] = MemoryRecordRepository()
+        self.funding_embeddings: MemoryRecordRepository[FundingEmbedding] = MemoryRecordRepository()
         self.reports: MemoryRecordRepository[Report] = MemoryRecordRepository()
         self.proposals: MemoryRecordRepository[Proposal] = MemoryRecordRepository()
         self.communities = MemoryCommunityRepository()

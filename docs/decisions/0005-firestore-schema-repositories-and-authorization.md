@@ -175,10 +175,11 @@ the immutable version document, and nothing invents a version before then.
 
 - Local mode uses the Firestore emulator by default (`WL_LOCAL_STORE=firestore`), or
   `memory` for quick runs. Both are seeded with the synthetic area and funding catalogues.
-- The pilot runtime **stays refused**. The Firestore store and the Admin-SDK verifier are
-  ready, but Cloud Storage and Cloud Tasks (Prompt 06), the location catalogue
-  (Prompt 08) and the verified funding catalogue (Prompt 18) are not. The refusal names
-  them (`PILOT_MISSING_ADAPTERS`).
+- The pilot runtime now selects the Firestore default database, Firebase Admin verifier,
+  Cloud Storage and Cloud Tasks adapters; the location and curated funding catalogues use
+  the same Firestore store. The deterministic proposal renderer runs in the private worker
+  over immutable report/scheme inputs. Runtime construction was verified only through local
+  seams; cloud IAM, resources and connectivity remain unverified until Prompt 26.
 
 ## Alternatives considered
 

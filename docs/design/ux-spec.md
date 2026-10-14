@@ -1,5 +1,33 @@
 # WaterLens — Screen, State and Design-System Specification
 
+## Owner override — desktop hackathon scope (2026-10-13)
+
+From Prompt 18 onward, this is a **desktop-only hackathon build**. This owner
+instruction overrides conflicting mobile, tablet, responsive and expansive testing
+requirements in the earlier guide, master instruction and project documents.
+Existing responsive code and earlier tests remain; mobile acceptance is not required.
+Keep basic desktop keyboard operation and focus accessibility.
+
+Use minimal, high-value checks for authorization, paid-call controls, duplicate
+actions, immutable reports, financial accuracy and core feature logic. Reuse existing
+coverage and prefer manual desktop inspection for presentation. No coverage targets
+or exhaustive new suites are required.
+
+Keep every confirmed feature, including global locations, funding, proposals,
+communities and tracking. **Non-INR economics remains an outstanding functionality
+gap**, not a removed requirement.
+
+Prompt 17 is locally implemented; **core desktop browser acceptance remains pending**
+until stream ordering/reconnect, reload recovery, cancellation, Continue checkpoints,
+manual edits during a run, mode switching, confirmation actions, account isolation
+and desktop keyboard/focus behavior are actually checked. This may be completed in
+Prompt 24 without rebuilding Prompt 17.
+
+Implement only the numbered prompt explicitly supplied by the owner, then stop.
+Prompts 18–25 are local/emulator-only with fake inference: no live Vertex, embedding
+or Maps calls, resource provisioning, deployment or billing activation. Prompt 26
+requires separate explicit authorization and completed setup before live actions.
+
 Version 1.0 (reviewable) · 2026-10-10 · Owner scope: ADR 0002
 
 This is the contract that UI implementation must match. A feature PR that adds or
@@ -546,19 +574,21 @@ not layout knobs.
 
 ## 11. Verification
 
+From Prompt 18 onward, verify desktop presentation manually where practical and reuse
+existing coverage. Add only minimal, high-value tests for authorization, paid-call
+controls, duplicate actions, immutable reports, financial accuracy and core logic.
+
 A screen implementation matches this spec when:
 
-1. **Single primary action:** the primary action is the only `variant="primary"` button in the step and is rendered through `StepActions` (unit test per screen).
-2. **States covered:** each state listed for the screen has a test that renders it with the catalogue copy pattern and the correct role.
-3. **Playwright checks:**
-   - no horizontal overflow at 320, 390, 820 and 1280 px;
-   - keyboard path to the primary action;
-   - dialog focus return;
-   - contrast in all six theme/palette combinations;
-   - reduced motion.
-4. **Agent mode:** the screen renders unchanged inside the split and the narrow tabs; workspace state survives mode, pane and breakpoint switches.
+1. **Single primary action:** the primary action uses `StepActions` and remains clearly identifiable.
+2. **States:** relevant loading, empty, failure and recovery behavior is inspected on desktop.
+3. **Keyboard and focus:** core controls work by keyboard; dialogs return focus and failures offer an actionable recovery.
+4. **Agent mode:** the desktop split uses the same authoritative session; state survives mode switching and reload.
 5. **Content:** no banned pattern from [§8](#8-content-and-uncertainty-language) appears; numbers come from engine output or labelled fixtures.
-6. **Screenshots:** captured with `WL_CAPTURE_SCREENSHOTS=1` and compared with the matching reference in the PR.
+6. **Presentation:** inspect the desktop layout against the references. Screenshot automation, mobile acceptance, coverage targets and exhaustive theme/state suites are not required.
+
+The narrow/tablet layouts, breakpoint rules and existing tests elsewhere in this
+spec describe retained behavior; they do not create new acceptance obligations.
 
 ### Already enforced for the shell and shared components
 
@@ -572,3 +602,98 @@ A screen implementation matches this spec when:
   - pointer-drag resize that persists across a reload, with the workspace keeping the larger share;
   - real-browser choice cards and the validation summary;
   - contrast now also covers text on tinted notice, error and selected-card surfaces.
+
+## Prompt 18 — desktop funding administration
+
+The standalone `/admin/funding` screen uses the existing page header, notices, cards,
+fields, buttons and empty/error patterns. A desktop two-column layout places preserved
+scheme/source details beside a JSON metadata editor and permitted-document input.
+Edit focuses the labelled editor; Tab reaches revision and remaining native controls.
+Synthetic status is explicit on each demo card, independent of active/withdrawn/expired
+lifecycle status. Unknown fields remain unknown; money is displayed in exact minor units.
+
+The server denies non-admin accounts. Errors are inline with Retry; a truly empty
+catalogue explains how to import a permitted source. Publication requires explicit human
+review, and stale revisions require reload/review. This adds no mobile acceptance work.
+The Make It Happen matching UI belongs to Prompt 19; existing confirmed flows remain.
+
+## Prompt 19 — desktop funding matches
+
+The Make It Happen workspace uses the saved planning session and chosen plan. A labelled
+form collects declared applicant type, requested money in exact native minor units,
+available documents and required field names. An optional text query requests fake local
+relevance; eligibility remains separate. Saving manual planning edits invalidates matches.
+
+Result cards show eligibility, useful evidence and publisher/source/date/hash/timezone;
+demo cards explicitly say synthetic and not real funding. Unknowns remain needs-information.
+Excluded results have an expandable reason list, and no-match states explain the exclusion.
+Fallback is visible when ranking is disabled/unavailable. Results reflect the last submitted
+facts; editing the form does not silently repeat embedding calls. Retry reuses unchanged
+submission keys; read/reload performs no paid ranking. Existing native fields, buttons,
+details and focus behavior provide desktop keyboard access. No mobile acceptance is added.
+
+## Prompt 20 — reports and proposal review (desktop)
+
+The Reports page has a New report mode chooser and a Review current plan action. Welcome
+keeps optional sign-in and guest planning; saving a finalized report prompts for permanent
+authentication and links a guest account when needed. Review presents the selected plan,
+impact evidence and exact saved economics before finalization. Finalized reports appear in
+a desktop list and read-only detail; archive moves a report to the archived list without
+changing its snapshot.
+
+Proposal preparation starts from a finalized report. The applicant form shows the verified
+scheme publisher, source URL/hash/date, required documents, exact report costs and funding
+gap, and editable assumptions/corrections. Synthetic examples are visibly marked. Generated
+HTML and PDF are private review artifacts; the PDF stays one page and financial figures are
+derived from the immutable report. Users review before any external submission. Report and
+proposal desktop presentation inspection remains pending because the available Firebase
+emulator tool requires JDK 21 and only JDK 17 is installed. This prompt adds no mobile
+acceptance work.
+
+## Prompt 21 — communities (desktop)
+
+The community workspace supports bounded nearby search (maximum 50 results, radius capped at
+50 km), text search, active/archive filters, details, creation, join and leave. Nearby distance
+means geographic proximity only; it does not imply a shared catchment, aquifer or water network.
+Only an explicitly selected, non-private planning area may be shared for discovery. The user's
+location is used transiently to query nearby results and is not saved to the community.
+
+Creation requires a permanent account and one of that account's finalized, non-archived reports.
+Contact name and email stay private unless each field is separately selected for publication.
+The shared report card contains only goal category and finalization date; it never exposes the
+report title, private address, applicant data, source documents or attachments. A guest who
+tries to join signs in and the same intended join action continues after authentication.
+Authenticated joins are immediate. Membership mutations are idempotent and the member count is
+updated atomically. The last coordinator cannot leave; they must archive the community. This
+flow does not offer coordinator transfer.
+
+Archived communities disappear from active and nearby discovery and reject new joins, sessions
+and tracking writes. Their public safe summary remains available through the explicit archive
+filter. Member-only linked reports and projects remain visible only to existing members and are
+read-only; membership records remain retained. Existing desktop keyboard focus and controls are
+preserved; no mobile acceptance is added.
+
+## Prompt 22 — implementation projects and observations (desktop)
+
+The tracking workspace lists owned projects and explicitly shared community projects. A new
+project starts only from a finalized report and stores that report version and area. Sharing is
+off by default. Project detail shows active/completed/archived status, milestones and task lists,
+responsible person/team, target/completion dates, exact native-currency expenses and milestone
+completion progress. The progress count describes completed milestones only; it does not imply
+water improvement.
+
+Manual observations require an exact canonical quantity and unit, metric identifier, method,
+source type/reference, observation date, measurement window and observed coverage. A permitted
+document reference requires an explicit permission attestation; the screen does not upload files.
+The finalized report is immutable and its version is displayed. A comparison appears only when
+metric identifier, exact unit, area, forecast period and full coverage match. Missing or
+incompatible evidence stays `unknown`; a comparable range carries a no-causation statement.
+Owners and community coordinators can edit shared projects; other active members can read only
+when sharing was selected. Archived source reports/communities make project writes read-only;
+archiving a project retains its history. No IoT, automatic model training or collaboration
+infrastructure is included.
+
+Desktop keyboard access and basic focus remain required. Local desktop inspection checked the
+empty report state, private project creation, milestone completion and manual observation entry
+with AI disabled. The saved observation remained unknown because its synthetic source report had
+no forecast period. Mobile acceptance remains outside the hackathon scope.

@@ -30,6 +30,7 @@ services/backend/.local-jobs/
 .env
 .env.*
 !.env.example
+infra/deployment/pilot.env.yaml
 **/.env
 **/.env.*
 !**/.env.example

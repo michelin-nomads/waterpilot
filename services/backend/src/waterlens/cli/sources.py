@@ -2,7 +2,8 @@
 ``docs/data/ingestion-runbook.md``, ADR 0008).
 
 Local mode only (the Firestore emulator and local object storage); pilot mode is refused
-until the live adapters are verified. Nothing here touches the network unless
+until the live adapters and enforceable egress protections are verified. Remote fetching is
+therefore unavailable in deployment mode. In local mode nothing touches the network unless
 ``--allow-network`` is given, and then only https URLs on a registered source's host.
 
 Usage:  uv run python -m waterlens.cli.sources <command> ...
@@ -49,7 +50,9 @@ def _emit(data: dict[str, Any]) -> None:
 
 def _admin(settings: Settings, *, allow_network: bool) -> tuple[SourceAdmin, Store]:
     if settings.is_pilot:
-        raise SystemExit("source commands are local-only until live adapters are verified")
+        raise SystemExit(
+            "source commands are local-only until live adapters and egress protections are verified"
+        )
     if settings.local_store == "memory":
         raise SystemExit("use WL_LOCAL_STORE=firestore: in-memory data ends with this command")
     store = build_local_store(settings)

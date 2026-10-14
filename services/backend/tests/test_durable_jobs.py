@@ -579,7 +579,7 @@ def test_artifact_keys_types_and_sizes_are_validated(tmp_path: Path) -> None:
             ArtifactKey(ArtifactKind.PROPOSAL, owner, resource, name)
     key = ArtifactKey(ArtifactKind.PROPOSAL, "alice", "prp_1", "a.pdf")
     with pytest.raises(DomainError, match="not allowed"):
-        store.put(key, b"<html>", "text/html")
+        store.put(key, b"plain text", "text/plain")
     with pytest.raises(DomainError, match="too large"):
         store.put(key, b"%PDF-" + b"x" * (5 * 1024 * 1024), PDF)
     with pytest.raises(DomainError, match="does not match"):

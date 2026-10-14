@@ -206,6 +206,6 @@ Nothing in this prompt provisions, deploys, enables billing or spends.
   `needs_continue` rule; its tool-call cap default rose to support the bounded run.
 - The GraphQL schema gained `aiStatus` and `AiUnavailableReason` (`npm run contracts`).
 - The numeric limits and the $5 allowance are **proposed** until the owner reviews them; the
-  $5 is a *suggested* owner setting, **not authorization to spend**, and with no budget
+  $5 is a _suggested_ owner setting, **not authorization to spend**, and with no budget
   configured the gateway reports `NO_BUDGET_CONFIGURED` and stays disabled. The live
   integration remains unverified until the gated smoke is explicitly authorized and run.

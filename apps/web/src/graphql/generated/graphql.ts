@@ -13,6 +13,15 @@ export type AccountKind =
   | 'GUEST'
   | 'PERMANENT';
 
+export type AddProjectExpenseInput = {
+  amount: MoneyInput;
+  description: string;
+  expectedVersion: number;
+  projectId: string;
+  source: string;
+  spentOn: string;
+};
+
 export type AdjustmentChange =
   | 'DECREASE_BY'
   | 'INCREASE_BY'
@@ -31,6 +40,13 @@ export type AiUnavailableReason =
   | 'DISABLED'
   | 'NOT_INVITED'
   | 'NO_BUDGET_CONFIGURED';
+
+export type ApplicantInformationInput = {
+  applicantType?: string | null | undefined;
+  availableDocuments?: Array<string> | null | undefined;
+  providedInformation?: Array<string>;
+  requestedAmount?: MoneyInput | null | undefined;
+};
 
 export type ArchiveCommunityInput = {
   expectedVersion: number;
@@ -117,6 +133,13 @@ export type Capability =
   | 'UTILITY_SUPPLY'
   | 'WATER_QUALITY';
 
+export type CatalogueStatus =
+  | 'ACTIVE'
+  | 'DEMO'
+  | 'DRAFT'
+  | 'EXPIRED'
+  | 'WITHDRAWN';
+
 export type CitationKind =
   | 'CATALOGUE'
   | 'COMPARISON'
@@ -126,6 +149,7 @@ export type CitationKind =
   | 'USER_INPUT';
 
 export type CommunityFilter = {
+  archivedOnly?: boolean;
   areaId?: string | null | undefined;
   includeArchived?: boolean;
 };
@@ -133,6 +157,10 @@ export type CommunityFilter = {
 export type CommunityStatus =
   | 'ACTIVE'
   | 'ARCHIVED';
+
+export type ComparisonStatus =
+  | 'COMPARABLE'
+  | 'UNKNOWN';
 
 export type CompleteAccountClaimInput = {
   claimId: string;
@@ -164,9 +192,14 @@ export type ConfirmLocationInput = {
 
 export type CreateCommunityInput = {
   areaId?: string | null | undefined;
+  contactEmail?: string | null | undefined;
+  contactName: string;
   description?: string;
   idempotencyKey: string;
   name: string;
+  reportId: string;
+  shareContactEmail?: boolean;
+  shareContactName?: boolean;
 };
 
 export type CreatePlanningSessionInput = {
@@ -202,6 +235,11 @@ export type EffectOrigin =
   | 'BASELINE'
   | 'SCENARIO'
   | 'USER_ESTIMATE';
+
+export type EligibilityStatus =
+  | 'ELIGIBLE'
+  | 'INELIGIBLE'
+  | 'NEEDS_INFORMATION';
 
 export type ErrorCode =
   | 'ARCHIVED'
@@ -275,8 +313,10 @@ export type FundingStatus =
   | 'PROPOSED';
 
 export type GenerateProposalInput = {
+  applicant?: ProposalApplicantInput | null | undefined;
   idempotencyKey: string;
   reportId: string;
+  schemeId?: string | null | undefined;
   sections: Array<ProposalSection>;
 };
 
@@ -378,7 +418,9 @@ export type Linkage =
 
 export type MatchFundingInput = {
   idempotencyKey: string;
+  information?: ApplicantInformationInput | null | undefined;
   planOptionId: string;
+  semanticQuery?: string | null | undefined;
   sessionId: string;
 };
 
@@ -397,6 +439,8 @@ export type MembershipRole =
 
 export type MilestoneInput = {
   plannedOn: string;
+  responsibleIdentity?: string | null | undefined;
+  tasks?: Array<string>;
   title: string;
 };
 
@@ -436,6 +480,10 @@ export type ObservationMethod =
   | 'MODEL_OUTPUT'
   | 'REMOTE_SENSING'
   | 'SURVEY';
+
+export type ObservationSourceType =
+  | 'PERMITTED_DOCUMENT'
+  | 'USER_RECORDED';
 
 export type PaybackOutcome =
   | 'BEYOND_HORIZON'
@@ -486,6 +534,14 @@ export type ProjectStatus =
   | 'ACTIVE'
   | 'ARCHIVED'
   | 'COMPLETED';
+
+export type ProposalApplicantInput = {
+  assumptions?: Array<string>;
+  category: string;
+  contactEmail?: string | null | undefined;
+  name: string;
+  organization: string;
+};
 
 export type ProposalSection =
   | 'ASSUMPTIONS'
@@ -540,13 +596,21 @@ export type RecordManualInputInput = {
 };
 
 export type RecordObservationInput = {
+  areaId?: string | null | undefined;
+  coverageExpectedDays: number;
+  coverageObservedDays: number;
   idempotencyKey: string;
   method: string;
   metricId: string;
   note?: string;
   observedOn: string;
+  permittedSourceConfirmed?: boolean;
   projectId: string;
   quantity: QuantityInput;
+  source: string;
+  sourceType?: ObservationSourceType;
+  windowEnd: string;
+  windowStart: string;
 };
 
 export type ReportFilter = {
@@ -637,6 +701,7 @@ export type StartImplementationProjectInput = {
   idempotencyKey: string;
   milestones?: Array<MilestoneInput>;
   reportId: string;
+  shareWithCommunity?: boolean;
   title: string;
 };
 
@@ -670,6 +735,7 @@ export type UnitSystem =
   | 'US_CUSTOMARY';
 
 export type UpdateMilestoneInput = {
+  completedOn?: string | null | undefined;
   expectedVersion: number;
   id: string;
   status: MilestoneStatus;
@@ -679,6 +745,12 @@ export type UpdatePlanningSessionInput = {
   expectedVersion: number;
   id: string;
   patch: PlanningSessionPatch;
+};
+
+export type UpdateProjectStatusInput = {
+  expectedVersion: number;
+  projectId: string;
+  status: ProjectStatus;
 };
 
 /** Measured, your estimate or modelled; shown distinctly wherever a value is. */
@@ -748,7 +820,7 @@ export type PageInfoFieldsFragment = { hasNextPage: boolean, endCursor: string |
 
 export type MembershipFieldsFragment = { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string };
 
-export type CommunityFieldsFragment = { id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null };
+export type CommunityFieldsFragment = { id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, contactName: string | null, contactEmail: string | null, area: { id: string, name: string, countryCode: string } | null, sharedReport: { goal: string, finalizedAt: string } | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null };
 
 export type CommunitiesQueryVariables = Exact<{
   filter?: CommunityFilter | null | undefined;
@@ -757,7 +829,7 @@ export type CommunitiesQueryVariables = Exact<{
 }>;
 
 
-export type CommunitiesQuery = { communities: { nodes: Array<{ id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type CommunitiesQuery = { communities: { nodes: Array<{ id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, contactName: string | null, contactEmail: string | null, area: { id: string, name: string, countryCode: string } | null, sharedReport: { goal: string, finalizedAt: string } | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type NearbyCommunitiesQueryVariables = Exact<{
   near: NearbyCommunitiesInput;
@@ -766,14 +838,14 @@ export type NearbyCommunitiesQueryVariables = Exact<{
 }>;
 
 
-export type NearbyCommunitiesQuery = { nearbyCommunities: { candidatesTruncated: boolean, nodes: Array<{ distanceMeters: number, community: { id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type NearbyCommunitiesQuery = { nearbyCommunities: { candidatesTruncated: boolean, nodes: Array<{ distanceMeters: number, community: { id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, contactName: string | null, contactEmail: string | null, area: { id: string, name: string, countryCode: string } | null, sharedReport: { goal: string, finalizedAt: string } | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type CommunityQueryVariables = Exact<{
   id: string;
 }>;
 
 
-export type CommunityQuery = { community: { id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null } | null };
+export type CommunityQuery = { community: { id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, contactName: string | null, contactEmail: string | null, area: { id: string, name: string, countryCode: string } | null, sharedReport: { goal: string, finalizedAt: string } | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null } | null };
 
 export type CommunityMembersQueryVariables = Exact<{
   id: string;
@@ -790,14 +862,23 @@ export type MyMembershipsQueryVariables = Exact<{
 }>;
 
 
-export type MyMembershipsQuery = { myMemberships: { nodes: Array<{ id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string, community: { id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type MyMembershipsQuery = { myMemberships: { nodes: Array<{ id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string, community: { id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, contactName: string | null, contactEmail: string | null, area: { id: string, name: string, countryCode: string } | null, sharedReport: { goal: string, finalizedAt: string } | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type CommunitySourceReportsQueryVariables = Exact<{
+  filter?: ReportFilter | null | undefined;
+  first?: number | null | undefined;
+  after?: string | null | undefined;
+}>;
+
+
+export type CommunitySourceReportsQuery = { reports: { nodes: Array<{ id: string, title: string, status: ReportStatus, finalizedAt: string, goal: { kind: GoalKind }, area: { id: string, name: string, private: boolean } | null }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type CreateCommunityMutationVariables = Exact<{
   input: CreateCommunityInput;
 }>;
 
 
-export type CreateCommunityMutation = { createCommunity: { community: { id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
+export type CreateCommunityMutation = { createCommunity: { community: { id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, contactName: string | null, contactEmail: string | null, area: { id: string, name: string, countryCode: string } | null, sharedReport: { goal: string, finalizedAt: string } | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
 export type JoinCommunityMutationVariables = Exact<{
   input: JoinCommunityInput;
@@ -818,9 +899,9 @@ export type ArchiveCommunityMutationVariables = Exact<{
 }>;
 
 
-export type ArchiveCommunityMutation = { archiveCommunity: { community: { id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
+export type ArchiveCommunityMutation = { archiveCommunity: { community: { id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, contactName: string | null, contactEmail: string | null, area: { id: string, name: string, countryCode: string } | null, sharedReport: { goal: string, finalizedAt: string } | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
-export type FundingMatchFieldsFragment = { id: string, version: number, sessionId: string, planOptionId: string, metCount: number, notMetCount: number, needsCheckCount: number, window: WindowStatus, status: FundingMatchStatus, rulesVersion: string, results: Array<{ criterionId: string, status: CriterionStatus, reason: string }>, scheme: { id: string, name: string, funder: string, summary: string, currency: string, opensOn: string | null, closesOn: string | null, sourceUrl: string, lastVerifiedAt: string, evidence: EvidenceQuality, requiredDocuments: Array<string>, maxAmount: { minorUnits: string, currency: string, exponent: number } | null, criteria: Array<{ id: string, text: string, machineCheckable: boolean }> } };
+export type FundingMatchFieldsFragment = { id: string, version: number, sessionId: string, planOptionId: string, metCount: number, notMetCount: number, needsCheckCount: number, window: WindowStatus, status: FundingMatchStatus, rulesVersion: string, eligibility: EligibilityStatus, relevanceOrder: number | null, rankingStatus: string, rankingReason: string, eligibilityEvidence: Array<{ criterionId: string, status: CriterionStatus, reason: string }>, results: Array<{ criterionId: string, status: CriterionStatus, reason: string }>, scheme: { id: string, name: string, funder: string, summary: string, currency: string, opensOn: string | null, closesOn: string | null, sourceUrl: string, lastVerifiedAt: string, deadlineAt: string | null, deadlineTimezone: string | null, sourceHash: string | null, geography: Array<string>, applicantCategories: Array<string>, interventions: Array<string>, amountRules: string | null, evidence: EvidenceQuality, requiredDocuments: Array<string>, maxAmount: { minorUnits: string, currency: string, exponent: number } | null, criteria: Array<{ id: string, text: string, machineCheckable: boolean }> } };
 
 export type FundingMatchesQueryVariables = Exact<{
   sessionId: string;
@@ -830,14 +911,14 @@ export type FundingMatchesQueryVariables = Exact<{
 }>;
 
 
-export type FundingMatchesQuery = { fundingMatches: { nodes: Array<{ id: string, version: number, sessionId: string, planOptionId: string, metCount: number, notMetCount: number, needsCheckCount: number, window: WindowStatus, status: FundingMatchStatus, rulesVersion: string, results: Array<{ criterionId: string, status: CriterionStatus, reason: string }>, scheme: { id: string, name: string, funder: string, summary: string, currency: string, opensOn: string | null, closesOn: string | null, sourceUrl: string, lastVerifiedAt: string, evidence: EvidenceQuality, requiredDocuments: Array<string>, maxAmount: { minorUnits: string, currency: string, exponent: number } | null, criteria: Array<{ id: string, text: string, machineCheckable: boolean }> } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type FundingMatchesQuery = { fundingMatches: { nodes: Array<{ id: string, version: number, sessionId: string, planOptionId: string, metCount: number, notMetCount: number, needsCheckCount: number, window: WindowStatus, status: FundingMatchStatus, rulesVersion: string, eligibility: EligibilityStatus, relevanceOrder: number | null, rankingStatus: string, rankingReason: string, eligibilityEvidence: Array<{ criterionId: string, status: CriterionStatus, reason: string }>, results: Array<{ criterionId: string, status: CriterionStatus, reason: string }>, scheme: { id: string, name: string, funder: string, summary: string, currency: string, opensOn: string | null, closesOn: string | null, sourceUrl: string, lastVerifiedAt: string, deadlineAt: string | null, deadlineTimezone: string | null, sourceHash: string | null, geography: Array<string>, applicantCategories: Array<string>, interventions: Array<string>, amountRules: string | null, evidence: EvidenceQuality, requiredDocuments: Array<string>, maxAmount: { minorUnits: string, currency: string, exponent: number } | null, criteria: Array<{ id: string, text: string, machineCheckable: boolean }> } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type MatchFundingMutationVariables = Exact<{
   input: MatchFundingInput;
 }>;
 
 
-export type MatchFundingMutation = { matchFunding: { matches: Array<{ id: string, version: number, sessionId: string, planOptionId: string, metCount: number, notMetCount: number, needsCheckCount: number, window: WindowStatus, status: FundingMatchStatus, rulesVersion: string, results: Array<{ criterionId: string, status: CriterionStatus, reason: string }>, scheme: { id: string, name: string, funder: string, summary: string, currency: string, opensOn: string | null, closesOn: string | null, sourceUrl: string, lastVerifiedAt: string, evidence: EvidenceQuality, requiredDocuments: Array<string>, maxAmount: { minorUnits: string, currency: string, exponent: number } | null, criteria: Array<{ id: string, text: string, machineCheckable: boolean }> } }> | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
+export type MatchFundingMutation = { matchFunding: { matches: Array<{ id: string, version: number, sessionId: string, planOptionId: string, metCount: number, notMetCount: number, needsCheckCount: number, window: WindowStatus, status: FundingMatchStatus, rulesVersion: string, eligibility: EligibilityStatus, relevanceOrder: number | null, rankingStatus: string, rankingReason: string, eligibilityEvidence: Array<{ criterionId: string, status: CriterionStatus, reason: string }>, results: Array<{ criterionId: string, status: CriterionStatus, reason: string }>, scheme: { id: string, name: string, funder: string, summary: string, currency: string, opensOn: string | null, closesOn: string | null, sourceUrl: string, lastVerifiedAt: string, deadlineAt: string | null, deadlineTimezone: string | null, sourceHash: string | null, geography: Array<string>, applicantCategories: Array<string>, interventions: Array<string>, amountRules: string | null, evidence: EvidenceQuality, requiredDocuments: Array<string>, maxAmount: { minorUnits: string, currency: string, exponent: number } | null, criteria: Array<{ id: string, text: string, machineCheckable: boolean }> } }> | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
 export type GoalAssessmentFieldsFragment = { outcome: GoalOutcome, summary: string, nextSteps: Array<string>, catalogueVersion: string, baselineId: string | null, target: { outcome: GoalOutcome, message: string, metric: string | null, unit: Unit | null, baseline: string | null, targetLevel: string | null, caveats: Array<string> }, constraints: Array<{ code: string, message: string, outcome: GoalOutcome | null }>, conflicts: Array<{ code: string, message: string, outcome: GoalOutcome | null }>, interventions: Array<{ interventionId: string, name: string, family: InterventionFamily, relevant: boolean, outcome: GoalOutcome, benefit: string, preferred: boolean, site: { outcome: GoalOutcome, message: string }, cost: { outcome: GoalOutcome, message: string } | null, time: { outcome: GoalOutcome, message: string } | null }> };
 
@@ -870,7 +951,7 @@ export type GoalAreaQuery = { area: { id: string, name: string, currency: string
 
 export type PlaceCandidateFieldsFragment = { placeId: string, name: string, formattedAddress: string | null, latitude: string, longitude: string, countryCode: string | null, scope: GeographicScope, types: Array<string>, admin: { countryName: string | null, admin1: string | null, admin2: string | null, locality: string | null, sublocality: string | null } };
 
-export type AreaLocationFieldsFragment = { id: string, name: string, countryCode: string, timezone: string, currency: string | null, unitSystem: UnitSystem, regionSetByUser: Array<string>, evidence: EvidenceQuality, origin: AreaOrigin, scope: GeographicScope, extent: ExtentKind, radiusMeters: number | null, private: boolean, formattedAddress: string | null, accuracyMeters: number | null, hasBoundary: boolean, providerContentExpired: boolean, admin: { countryName: string | null, admin1: string | null, admin2: string | null, locality: string | null, sublocality: string | null } };
+export type AreaLocationFieldsFragment = { id: string, name: string, centroidLat: string, centroidLon: string, countryCode: string, timezone: string, currency: string | null, unitSystem: UnitSystem, regionSetByUser: Array<string>, evidence: EvidenceQuality, origin: AreaOrigin, scope: GeographicScope, extent: ExtentKind, radiusMeters: number | null, private: boolean, formattedAddress: string | null, accuracyMeters: number | null, hasBoundary: boolean, providerContentExpired: boolean, admin: { countryName: string | null, admin1: string | null, admin2: string | null, locality: string | null, sublocality: string | null } };
 
 export type ResolveLocationQueryVariables = Exact<{
   text: string;
@@ -906,14 +987,14 @@ export type AreaLocationQueryVariables = Exact<{
 }>;
 
 
-export type AreaLocationQuery = { area: { id: string, name: string, countryCode: string, timezone: string, currency: string | null, unitSystem: UnitSystem, regionSetByUser: Array<string>, evidence: EvidenceQuality, origin: AreaOrigin, scope: GeographicScope, extent: ExtentKind, radiusMeters: number | null, private: boolean, formattedAddress: string | null, accuracyMeters: number | null, hasBoundary: boolean, providerContentExpired: boolean, admin: { countryName: string | null, admin1: string | null, admin2: string | null, locality: string | null, sublocality: string | null } } | null };
+export type AreaLocationQuery = { area: { id: string, name: string, centroidLat: string, centroidLon: string, countryCode: string, timezone: string, currency: string | null, unitSystem: UnitSystem, regionSetByUser: Array<string>, evidence: EvidenceQuality, origin: AreaOrigin, scope: GeographicScope, extent: ExtentKind, radiusMeters: number | null, private: boolean, formattedAddress: string | null, accuracyMeters: number | null, hasBoundary: boolean, providerContentExpired: boolean, admin: { countryName: string | null, admin1: string | null, admin2: string | null, locality: string | null, sublocality: string | null } } | null };
 
 export type ConfirmLocationMutationVariables = Exact<{
   input: ConfirmLocationInput;
 }>;
 
 
-export type ConfirmLocationMutation = { confirmLocation: { area: { id: string, name: string, countryCode: string, timezone: string, currency: string | null, unitSystem: UnitSystem, regionSetByUser: Array<string>, evidence: EvidenceQuality, origin: AreaOrigin, scope: GeographicScope, extent: ExtentKind, radiusMeters: number | null, private: boolean, formattedAddress: string | null, accuracyMeters: number | null, hasBoundary: boolean, providerContentExpired: boolean, admin: { countryName: string | null, admin1: string | null, admin2: string | null, locality: string | null, sublocality: string | null } } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
+export type ConfirmLocationMutation = { confirmLocation: { area: { id: string, name: string, centroidLat: string, centroidLon: string, countryCode: string, timezone: string, currency: string | null, unitSystem: UnitSystem, regionSetByUser: Array<string>, evidence: EvidenceQuality, origin: AreaOrigin, scope: GeographicScope, extent: ExtentKind, radiusMeters: number | null, private: boolean, formattedAddress: string | null, accuracyMeters: number | null, hasBoundary: boolean, providerContentExpired: boolean, admin: { countryName: string | null, admin1: string | null, admin2: string | null, locality: string | null, sublocality: string | null } } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
 export type AreaFieldsFragment = { id: string, name: string, countryCode: string, timezone: string, evidence: EvidenceQuality };
 
@@ -1032,9 +1113,9 @@ export type RecordManualInputMutation = { recordManualInput: { manualInput: { id
 
 export type JobFieldsFragment = { id: string, version: number, kind: JobKind, status: JobStatus, stage: string | null, attempts: number, maxAttempts: number, errorCode: ErrorCode | null, eventsPath: string, updatedAt: string };
 
-export type ReportFieldsFragment = { id: string, version: number, title: string, status: ReportStatus, sessionId: string, communityId: string | null, areaId: string, planOptionId: string, finalizedAt: string, archivedAt: string | null };
+export type ReportFieldsFragment = { id: string, version: number, title: string, status: ReportStatus, sessionId: string, communityId: string | null, areaId: string, planOptionId: string, planName: string | null, finalizedAt: string, archivedAt: string | null, goal: { id: string, kind: GoalKind, description: string }, economics: { engineVersion: string, currency: string, assumptions: Array<string>, notes: Array<string>, capex: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, upfrontTotal: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, recurringAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, avoidedTankerAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, netAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, funding: { fullyFunded: boolean, note: string, totalCost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, approved: { minorUnits: string, currency: string, exponent: number }, gap: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, candidate: { minorUnits: string, currency: string, exponent: number } } } | null };
 
-export type ProposalFieldsFragment = { id: string, version: number, reportId: string, sections: Array<ProposalSection>, status: ProposalStatus, flaggedCount: number, downloadPath: string | null, job: { id: string, version: number, kind: JobKind, status: JobStatus, stage: string | null, attempts: number, maxAttempts: number, errorCode: ErrorCode | null, eventsPath: string, updatedAt: string } | null };
+export type ProposalFieldsFragment = { id: string, version: number, reportId: string, sections: Array<ProposalSection>, status: ProposalStatus, flaggedCount: number, downloadPath: string | null, previewPath: string | null, job: { id: string, version: number, kind: JobKind, status: JobStatus, stage: string | null, attempts: number, maxAttempts: number, errorCode: ErrorCode | null, eventsPath: string, updatedAt: string } | null };
 
 export type ReportsQueryVariables = Exact<{
   filter?: ReportFilter | null | undefined;
@@ -1043,21 +1124,29 @@ export type ReportsQueryVariables = Exact<{
 }>;
 
 
-export type ReportsQuery = { reports: { nodes: Array<{ id: string, version: number, title: string, status: ReportStatus, sessionId: string, communityId: string | null, areaId: string, planOptionId: string, finalizedAt: string, archivedAt: string | null }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type ReportsQuery = { reports: { nodes: Array<{ id: string, version: number, title: string, status: ReportStatus, sessionId: string, communityId: string | null, areaId: string, planOptionId: string, planName: string | null, finalizedAt: string, archivedAt: string | null, goal: { id: string, kind: GoalKind, description: string }, economics: { engineVersion: string, currency: string, assumptions: Array<string>, notes: Array<string>, capex: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, upfrontTotal: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, recurringAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, avoidedTankerAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, netAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, funding: { fullyFunded: boolean, note: string, totalCost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, approved: { minorUnits: string, currency: string, exponent: number }, gap: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, candidate: { minorUnits: string, currency: string, exponent: number } } } | null }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type FundingSchemesQueryVariables = Exact<{
+  first?: number | null | undefined;
+  after?: string | null | undefined;
+}>;
+
+
+export type FundingSchemesQuery = { fundingSchemes: { nodes: Array<{ id: string, name: string, funder: string, summary: string, status: CatalogueStatus, evidence: EvidenceQuality, officialSource: boolean, sourceUrl: string, sourceHash: string | null, lastVerifiedAt: string, currency: string, deadlineAt: string | null, deadlineTimezone: string | null, requiredDocuments: Array<string>, maxAmount: { minorUnits: string, currency: string, exponent: number } | null }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type ReportQueryVariables = Exact<{
   id: string;
 }>;
 
 
-export type ReportQuery = { report: { id: string, version: number, title: string, status: ReportStatus, sessionId: string, communityId: string | null, areaId: string, planOptionId: string, finalizedAt: string, archivedAt: string | null, proposals: { nodes: Array<{ id: string, version: number, reportId: string, sections: Array<ProposalSection>, status: ProposalStatus, flaggedCount: number, downloadPath: string | null, job: { id: string, version: number, kind: JobKind, status: JobStatus, stage: string | null, attempts: number, maxAttempts: number, errorCode: ErrorCode | null, eventsPath: string, updatedAt: string } | null }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } } | null };
+export type ReportQuery = { report: { id: string, version: number, title: string, status: ReportStatus, sessionId: string, communityId: string | null, areaId: string, planOptionId: string, planName: string | null, finalizedAt: string, archivedAt: string | null, area: { id: string, name: string, countryCode: string } | null, impact: { provenance: { evidence: EvidenceQuality } } | null, proposals: { nodes: Array<{ id: string, version: number, reportId: string, sections: Array<ProposalSection>, status: ProposalStatus, flaggedCount: number, downloadPath: string | null, previewPath: string | null, job: { id: string, version: number, kind: JobKind, status: JobStatus, stage: string | null, attempts: number, maxAttempts: number, errorCode: ErrorCode | null, eventsPath: string, updatedAt: string } | null }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } }, goal: { id: string, kind: GoalKind, description: string }, economics: { engineVersion: string, currency: string, assumptions: Array<string>, notes: Array<string>, capex: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, upfrontTotal: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, recurringAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, avoidedTankerAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, netAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, funding: { fullyFunded: boolean, note: string, totalCost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, approved: { minorUnits: string, currency: string, exponent: number }, gap: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, candidate: { minorUnits: string, currency: string, exponent: number } } } | null } | null };
 
 export type ProposalQueryVariables = Exact<{
   id: string;
 }>;
 
 
-export type ProposalQuery = { proposal: { id: string, version: number, reportId: string, sections: Array<ProposalSection>, status: ProposalStatus, flaggedCount: number, downloadPath: string | null, job: { id: string, version: number, kind: JobKind, status: JobStatus, stage: string | null, attempts: number, maxAttempts: number, errorCode: ErrorCode | null, eventsPath: string, updatedAt: string } | null } | null };
+export type ProposalQuery = { proposal: { id: string, version: number, reportId: string, sections: Array<ProposalSection>, status: ProposalStatus, flaggedCount: number, downloadPath: string | null, previewPath: string | null, job: { id: string, version: number, kind: JobKind, status: JobStatus, stage: string | null, attempts: number, maxAttempts: number, errorCode: ErrorCode | null, eventsPath: string, updatedAt: string } | null } | null };
 
 export type JobQueryVariables = Exact<{
   id: string;
@@ -1071,27 +1160,27 @@ export type FinalizeReportMutationVariables = Exact<{
 }>;
 
 
-export type FinalizeReportMutation = { finalizeReport: { report: { id: string, version: number, title: string, status: ReportStatus, sessionId: string, communityId: string | null, areaId: string, planOptionId: string, finalizedAt: string, archivedAt: string | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
+export type FinalizeReportMutation = { finalizeReport: { report: { id: string, version: number, title: string, status: ReportStatus, sessionId: string, communityId: string | null, areaId: string, planOptionId: string, planName: string | null, finalizedAt: string, archivedAt: string | null, goal: { id: string, kind: GoalKind, description: string }, economics: { engineVersion: string, currency: string, assumptions: Array<string>, notes: Array<string>, capex: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, upfrontTotal: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, recurringAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, avoidedTankerAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, netAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, funding: { fullyFunded: boolean, note: string, totalCost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, approved: { minorUnits: string, currency: string, exponent: number }, gap: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, candidate: { minorUnits: string, currency: string, exponent: number } } } | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
 export type ArchiveReportMutationVariables = Exact<{
   input: ArchiveReportInput;
 }>;
 
 
-export type ArchiveReportMutation = { archiveReport: { report: { id: string, version: number, title: string, status: ReportStatus, sessionId: string, communityId: string | null, areaId: string, planOptionId: string, finalizedAt: string, archivedAt: string | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
+export type ArchiveReportMutation = { archiveReport: { report: { id: string, version: number, title: string, status: ReportStatus, sessionId: string, communityId: string | null, areaId: string, planOptionId: string, planName: string | null, finalizedAt: string, archivedAt: string | null, goal: { id: string, kind: GoalKind, description: string }, economics: { engineVersion: string, currency: string, assumptions: Array<string>, notes: Array<string>, capex: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, upfrontTotal: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, recurringAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, avoidedTankerAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, netAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, funding: { fullyFunded: boolean, note: string, totalCost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, approved: { minorUnits: string, currency: string, exponent: number }, gap: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, candidate: { minorUnits: string, currency: string, exponent: number } } } | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
 export type GenerateProposalMutationVariables = Exact<{
   input: GenerateProposalInput;
 }>;
 
 
-export type GenerateProposalMutation = { generateProposal: { proposal: { id: string, version: number, reportId: string, sections: Array<ProposalSection>, status: ProposalStatus, flaggedCount: number, downloadPath: string | null, job: { id: string, version: number, kind: JobKind, status: JobStatus, stage: string | null, attempts: number, maxAttempts: number, errorCode: ErrorCode | null, eventsPath: string, updatedAt: string } | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
+export type GenerateProposalMutation = { generateProposal: { proposal: { id: string, version: number, reportId: string, sections: Array<ProposalSection>, status: ProposalStatus, flaggedCount: number, downloadPath: string | null, previewPath: string | null, job: { id: string, version: number, kind: JobKind, status: JobStatus, stage: string | null, attempts: number, maxAttempts: number, errorCode: ErrorCode | null, eventsPath: string, updatedAt: string } | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
-export type ProjectFieldsFragment = { id: string, version: number, reportId: string, communityId: string | null, title: string, status: ProjectStatus, startedAt: string };
+export type ProjectFieldsFragment = { id: string, version: number, reportId: string, reportVersion: number, areaId: string, communityId: string | null, sharedWithCommunity: boolean, title: string, status: ProjectStatus, startedAt: string, expenses: Array<{ description: string, spentOn: string, source: string, amount: { minorUnits: string, currency: string, exponent: number } }> };
 
-export type MilestoneFieldsFragment = { id: string, version: number, projectId: string, title: string, plannedOn: string, status: MilestoneStatus, completedAt: string | null };
+export type MilestoneFieldsFragment = { id: string, version: number, projectId: string, title: string, plannedOn: string, responsibleIdentity: string | null, tasks: Array<string>, status: MilestoneStatus, completedOn: string | null, completedAt: string | null };
 
-export type ObservationFieldsFragment = { id: string, version: number, projectId: string, metricId: string, observedOn: string, method: string, note: string, evidence: ObservationEvidence, recordedByViewer: boolean, quantity: { value: string, unit: Unit } };
+export type ObservationFieldsFragment = { id: string, version: number, projectId: string, metricId: string, observedOn: string, method: string, sourceType: ObservationSourceType, source: string, permittedSourceConfirmed: boolean, areaId: string, windowStart: string | null, windowEnd: string | null, coverageObservedDays: number, coverageExpectedDays: number, note: string, evidence: ObservationEvidence, recordedByViewer: boolean, comparison: { status: ComparisonStatus, reason: string, relation: string | null, forecastLow: { value: string, unit: Unit } | null, forecastHigh: { value: string, unit: Unit } | null }, quantity: { value: string, unit: Unit } };
 
 export type MyImplementationProjectsQueryVariables = Exact<{
   first?: number | null | undefined;
@@ -1099,14 +1188,29 @@ export type MyImplementationProjectsQueryVariables = Exact<{
 }>;
 
 
-export type MyImplementationProjectsQuery = { myImplementationProjects: { nodes: Array<{ id: string, version: number, reportId: string, communityId: string | null, title: string, status: ProjectStatus, startedAt: string }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type MyImplementationProjectsQuery = { myImplementationProjects: { nodes: Array<{ id: string, version: number, reportId: string, reportVersion: number, areaId: string, communityId: string | null, sharedWithCommunity: boolean, title: string, status: ProjectStatus, startedAt: string, expenses: Array<{ description: string, spentOn: string, source: string, amount: { minorUnits: string, currency: string, exponent: number } }> }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type ImplementationProjectQueryVariables = Exact<{
   id: string;
 }>;
 
 
-export type ImplementationProjectQuery = { implementationProject: { id: string, version: number, reportId: string, communityId: string | null, title: string, status: ProjectStatus, startedAt: string, milestones: { nodes: Array<{ id: string, version: number, projectId: string, title: string, plannedOn: string, status: MilestoneStatus, completedAt: string | null }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } } | null };
+export type ImplementationProjectQuery = { implementationProject: { id: string, version: number, reportId: string, reportVersion: number, areaId: string, communityId: string | null, sharedWithCommunity: boolean, title: string, status: ProjectStatus, startedAt: string, milestones: { nodes: Array<{ id: string, version: number, projectId: string, title: string, plannedOn: string, responsibleIdentity: string | null, tasks: Array<string>, status: MilestoneStatus, completedOn: string | null, completedAt: string | null }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } }, expenses: Array<{ description: string, spentOn: string, source: string, amount: { minorUnits: string, currency: string, exponent: number } }> } | null };
+
+export type TrackingReportsQueryVariables = Exact<{
+  first?: number | null | undefined;
+  after?: string | null | undefined;
+}>;
+
+
+export type TrackingReportsQuery = { reports: { nodes: Array<{ id: string, version: number, title: string, status: ReportStatus, communityId: string | null, areaId: string, finalizedAt: string, goal: { horizonDays: number | null }, impact: { metrics: Array<{ metricId: string, projectedLow: { quantity: { value: string, unit: Unit } | null }, projectedHigh: { quantity: { value: string, unit: Unit } | null } }> } | null }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type TrackingReportQueryVariables = Exact<{
+  id: string;
+}>;
+
+
+export type TrackingReportQuery = { report: { id: string, version: number, title: string, status: ReportStatus, communityId: string | null, areaId: string, finalizedAt: string, goal: { horizonDays: number | null }, impact: { metrics: Array<{ metricId: string, projectedLow: { quantity: { value: string, unit: Unit } | null }, projectedHigh: { quantity: { value: string, unit: Unit } | null } }> } | null } | null };
 
 export type ObservationsQueryVariables = Exact<{
   projectId: string;
@@ -1115,28 +1219,42 @@ export type ObservationsQueryVariables = Exact<{
 }>;
 
 
-export type ObservationsQuery = { implementationProject: { id: string, observations: { nodes: Array<{ id: string, version: number, projectId: string, metricId: string, observedOn: string, method: string, note: string, evidence: ObservationEvidence, recordedByViewer: boolean, quantity: { value: string, unit: Unit } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } } | null };
+export type ObservationsQuery = { implementationProject: { id: string, observations: { nodes: Array<{ id: string, version: number, projectId: string, metricId: string, observedOn: string, method: string, sourceType: ObservationSourceType, source: string, permittedSourceConfirmed: boolean, areaId: string, windowStart: string | null, windowEnd: string | null, coverageObservedDays: number, coverageExpectedDays: number, note: string, evidence: ObservationEvidence, recordedByViewer: boolean, comparison: { status: ComparisonStatus, reason: string, relation: string | null, forecastLow: { value: string, unit: Unit } | null, forecastHigh: { value: string, unit: Unit } | null }, quantity: { value: string, unit: Unit } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } } | null };
 
 export type StartImplementationProjectMutationVariables = Exact<{
   input: StartImplementationProjectInput;
 }>;
 
 
-export type StartImplementationProjectMutation = { startImplementationProject: { project: { id: string, version: number, reportId: string, communityId: string | null, title: string, status: ProjectStatus, startedAt: string } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
+export type StartImplementationProjectMutation = { startImplementationProject: { project: { id: string, version: number, reportId: string, reportVersion: number, areaId: string, communityId: string | null, sharedWithCommunity: boolean, title: string, status: ProjectStatus, startedAt: string, expenses: Array<{ description: string, spentOn: string, source: string, amount: { minorUnits: string, currency: string, exponent: number } }> } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
 export type UpdateMilestoneMutationVariables = Exact<{
   input: UpdateMilestoneInput;
 }>;
 
 
-export type UpdateMilestoneMutation = { updateMilestone: { milestone: { id: string, version: number, projectId: string, title: string, plannedOn: string, status: MilestoneStatus, completedAt: string | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
+export type UpdateMilestoneMutation = { updateMilestone: { milestone: { id: string, version: number, projectId: string, title: string, plannedOn: string, responsibleIdentity: string | null, tasks: Array<string>, status: MilestoneStatus, completedOn: string | null, completedAt: string | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
 export type RecordObservationMutationVariables = Exact<{
   input: RecordObservationInput;
 }>;
 
 
-export type RecordObservationMutation = { recordObservation: { observation: { id: string, version: number, projectId: string, metricId: string, observedOn: string, method: string, note: string, evidence: ObservationEvidence, recordedByViewer: boolean, quantity: { value: string, unit: Unit } } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
+export type RecordObservationMutation = { recordObservation: { observation: { id: string, version: number, projectId: string, metricId: string, observedOn: string, method: string, sourceType: ObservationSourceType, source: string, permittedSourceConfirmed: boolean, areaId: string, windowStart: string | null, windowEnd: string | null, coverageObservedDays: number, coverageExpectedDays: number, note: string, evidence: ObservationEvidence, recordedByViewer: boolean, comparison: { status: ComparisonStatus, reason: string, relation: string | null, forecastLow: { value: string, unit: Unit } | null, forecastHigh: { value: string, unit: Unit } | null }, quantity: { value: string, unit: Unit } } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
+
+export type AddProjectExpenseMutationVariables = Exact<{
+  input: AddProjectExpenseInput;
+}>;
+
+
+export type AddProjectExpenseMutation = { addProjectExpense: { project: { id: string, version: number, reportId: string, reportVersion: number, areaId: string, communityId: string | null, sharedWithCommunity: boolean, title: string, status: ProjectStatus, startedAt: string, expenses: Array<{ description: string, spentOn: string, source: string, amount: { minorUnits: string, currency: string, exponent: number } }> } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
+
+export type UpdateProjectStatusMutationVariables = Exact<{
+  input: UpdateProjectStatusInput;
+}>;
+
+
+export type UpdateProjectStatusMutation = { updateProjectStatus: { project: { id: string, version: number, reportId: string, reportVersion: number, areaId: string, communityId: string | null, sharedWithCommunity: boolean, title: string, status: ProjectStatus, startedAt: string, expenses: Array<{ description: string, spentOn: string, source: string, amount: { minorUnits: string, currency: string, exponent: number } }> } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
 export class TypedDocumentString<TResult, TVariables>
   extends String
@@ -1322,6 +1440,17 @@ export const CommunityFieldsFragmentDoc = new TypedDocumentString(`
   status
   memberCount
   archivedAt
+  contactName
+  contactEmail
+  area {
+    id
+    name
+    countryCode
+  }
+  sharedReport {
+    goal
+    finalizedAt
+  }
   viewerMembership {
     ...MembershipFields
   }
@@ -1353,6 +1482,15 @@ export const FundingMatchFieldsFragmentDoc = new TypedDocumentString(`
   window
   status
   rulesVersion
+  eligibility
+  eligibilityEvidence {
+    criterionId
+    status
+    reason
+  }
+  relevanceOrder
+  rankingStatus
+  rankingReason
   results {
     criterionId
     status
@@ -1368,6 +1506,13 @@ export const FundingMatchFieldsFragmentDoc = new TypedDocumentString(`
     closesOn
     sourceUrl
     lastVerifiedAt
+    deadlineAt
+    deadlineTimezone
+    sourceHash
+    geography
+    applicantCategories
+    interventions
+    amountRules
     evidence
     requiredDocuments
     maxAmount {
@@ -1457,6 +1602,8 @@ export const AreaLocationFieldsFragmentDoc = new TypedDocumentString(`
     fragment AreaLocationFields on Area {
   id
   name
+  centroidLat
+  centroidLon
   countryCode
   timezone
   currency
@@ -2276,10 +2423,92 @@ export const ReportFieldsFragmentDoc = new TypedDocumentString(`
   communityId
   areaId
   planOptionId
+  planName
+  goal {
+    id
+    kind
+    description
+  }
+  economics {
+    engineVersion
+    currency
+    capex {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    upfrontTotal {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    recurringAnnual {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    avoidedTankerAnnual {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    netAnnual {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    funding {
+      totalCost {
+        low {
+          ...MoneyFields
+        }
+        high {
+          ...MoneyFields
+        }
+      }
+      approved {
+        ...MoneyFields
+      }
+      gap {
+        low {
+          ...MoneyFields
+        }
+        high {
+          ...MoneyFields
+        }
+      }
+      candidate {
+        ...MoneyFields
+      }
+      fullyFunded
+      note
+    }
+    assumptions
+    notes
+  }
   finalizedAt
   archivedAt
 }
-    `, {"fragmentName":"ReportFields"}) as unknown as TypedDocumentString<ReportFieldsFragment, unknown>;
+    fragment MoneyFields on Money {
+  minorUnits
+  currency
+  exponent
+}`, {"fragmentName":"ReportFields"}) as unknown as TypedDocumentString<ReportFieldsFragment, unknown>;
 export const JobFieldsFragmentDoc = new TypedDocumentString(`
     fragment JobFields on Job {
   id
@@ -2303,6 +2532,7 @@ export const ProposalFieldsFragmentDoc = new TypedDocumentString(`
   status
   flaggedCount
   downloadPath
+  previewPath
   job {
     ...JobFields
   }
@@ -2324,12 +2554,27 @@ export const ProjectFieldsFragmentDoc = new TypedDocumentString(`
   id
   version
   reportId
+  reportVersion
+  areaId
   communityId
+  sharedWithCommunity
   title
   status
   startedAt
+  expenses {
+    description
+    spentOn
+    source
+    amount {
+      ...MoneyFields
+    }
+  }
 }
-    `, {"fragmentName":"ProjectFields"}) as unknown as TypedDocumentString<ProjectFieldsFragment, unknown>;
+    fragment MoneyFields on Money {
+  minorUnits
+  currency
+  exponent
+}`, {"fragmentName":"ProjectFields"}) as unknown as TypedDocumentString<ProjectFieldsFragment, unknown>;
 export const MilestoneFieldsFragmentDoc = new TypedDocumentString(`
     fragment MilestoneFields on Milestone {
   id
@@ -2337,7 +2582,10 @@ export const MilestoneFieldsFragmentDoc = new TypedDocumentString(`
   projectId
   title
   plannedOn
+  responsibleIdentity
+  tasks
   status
+  completedOn
   completedAt
 }
     `, {"fragmentName":"MilestoneFields"}) as unknown as TypedDocumentString<MilestoneFieldsFragment, unknown>;
@@ -2349,9 +2597,30 @@ export const ObservationFieldsFragmentDoc = new TypedDocumentString(`
   metricId
   observedOn
   method
+  sourceType
+  source
+  permittedSourceConfirmed
+  areaId
+  windowStart
+  windowEnd
+  coverageObservedDays
+  coverageExpectedDays
   note
   evidence
   recordedByViewer
+  comparison {
+    status
+    reason
+    relation
+    forecastLow {
+      value
+      unit
+    }
+    forecastHigh {
+      value
+      unit
+    }
+  }
   quantity {
     ...QuantityFields
   }
@@ -2604,6 +2873,17 @@ fragment CommunityFields on Community {
   status
   memberCount
   archivedAt
+  contactName
+  contactEmail
+  area {
+    id
+    name
+    countryCode
+  }
+  sharedReport {
+    goal
+    finalizedAt
+  }
   viewerMembership {
     ...MembershipFields
   }
@@ -2644,6 +2924,17 @@ fragment CommunityFields on Community {
   status
   memberCount
   archivedAt
+  contactName
+  contactEmail
+  area {
+    id
+    name
+    countryCode
+  }
+  sharedReport {
+    goal
+    finalizedAt
+  }
   viewerMembership {
     ...MembershipFields
   }
@@ -2671,6 +2962,17 @@ fragment CommunityFields on Community {
   status
   memberCount
   archivedAt
+  contactName
+  contactEmail
+  area {
+    id
+    name
+    countryCode
+  }
+  sharedReport {
+    goal
+    finalizedAt
+  }
   viewerMembership {
     ...MembershipFields
   }
@@ -2736,10 +3038,47 @@ fragment CommunityFields on Community {
   status
   memberCount
   archivedAt
+  contactName
+  contactEmail
+  area {
+    id
+    name
+    countryCode
+  }
+  sharedReport {
+    goal
+    finalizedAt
+  }
   viewerMembership {
     ...MembershipFields
   }
 }`) as unknown as TypedDocumentString<MyMembershipsQuery, MyMembershipsQueryVariables>;
+export const CommunitySourceReportsDocument = new TypedDocumentString(`
+    query CommunitySourceReports($filter: ReportFilter, $first: Int, $after: String) {
+  reports(filter: $filter, first: $first, after: $after) {
+    nodes {
+      id
+      title
+      status
+      finalizedAt
+      goal {
+        kind
+      }
+      area {
+        id
+        name
+        private
+      }
+    }
+    pageInfo {
+      ...PageInfoFields
+    }
+  }
+}
+    fragment PageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`) as unknown as TypedDocumentString<CommunitySourceReportsQuery, CommunitySourceReportsQueryVariables>;
 export const CreateCommunityDocument = new TypedDocumentString(`
     mutation CreateCommunity($input: CreateCommunityInput!) {
   createCommunity(input: $input) {
@@ -2778,6 +3117,17 @@ fragment CommunityFields on Community {
   status
   memberCount
   archivedAt
+  contactName
+  contactEmail
+  area {
+    id
+    name
+    countryCode
+  }
+  sharedReport {
+    goal
+    finalizedAt
+  }
   viewerMembership {
     ...MembershipFields
   }
@@ -2878,6 +3228,17 @@ fragment CommunityFields on Community {
   status
   memberCount
   archivedAt
+  contactName
+  contactEmail
+  area {
+    id
+    name
+    countryCode
+  }
+  sharedReport {
+    goal
+    finalizedAt
+  }
   viewerMembership {
     ...MembershipFields
   }
@@ -2918,6 +3279,15 @@ fragment FundingMatchFields on FundingMatch {
   window
   status
   rulesVersion
+  eligibility
+  eligibilityEvidence {
+    criterionId
+    status
+    reason
+  }
+  relevanceOrder
+  rankingStatus
+  rankingReason
   results {
     criterionId
     status
@@ -2933,6 +3303,13 @@ fragment FundingMatchFields on FundingMatch {
     closesOn
     sourceUrl
     lastVerifiedAt
+    deadlineAt
+    deadlineTimezone
+    sourceHash
+    geography
+    applicantCategories
+    interventions
+    amountRules
     evidence
     requiredDocuments
     maxAmount {
@@ -2982,6 +3359,15 @@ fragment FundingMatchFields on FundingMatch {
   window
   status
   rulesVersion
+  eligibility
+  eligibilityEvidence {
+    criterionId
+    status
+    reason
+  }
+  relevanceOrder
+  rankingStatus
+  rankingReason
   results {
     criterionId
     status
@@ -2997,6 +3383,13 @@ fragment FundingMatchFields on FundingMatch {
     closesOn
     sourceUrl
     lastVerifiedAt
+    deadlineAt
+    deadlineTimezone
+    sourceHash
+    geography
+    applicantCategories
+    interventions
+    amountRules
     evidence
     requiredDocuments
     maxAmount {
@@ -3263,6 +3656,8 @@ export const AreaLocationDocument = new TypedDocumentString(`
     fragment AreaLocationFields on Area {
   id
   name
+  centroidLat
+  centroidLon
   countryCode
   timezone
   currency
@@ -3310,6 +3705,8 @@ export const ConfirmLocationDocument = new TypedDocumentString(`
 fragment AreaLocationFields on Area {
   id
   name
+  centroidLat
+  centroidLon
   countryCode
   timezone
   currency
@@ -4466,7 +4863,12 @@ export const ReportsDocument = new TypedDocumentString(`
     }
   }
 }
-    fragment PageInfoFields on PageInfo {
+    fragment MoneyFields on Money {
+  minorUnits
+  currency
+  exponent
+}
+fragment PageInfoFields on PageInfo {
   hasNextPage
   endCursor
 }
@@ -4479,13 +4881,137 @@ fragment ReportFields on Report {
   communityId
   areaId
   planOptionId
+  planName
+  goal {
+    id
+    kind
+    description
+  }
+  economics {
+    engineVersion
+    currency
+    capex {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    upfrontTotal {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    recurringAnnual {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    avoidedTankerAnnual {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    netAnnual {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    funding {
+      totalCost {
+        low {
+          ...MoneyFields
+        }
+        high {
+          ...MoneyFields
+        }
+      }
+      approved {
+        ...MoneyFields
+      }
+      gap {
+        low {
+          ...MoneyFields
+        }
+        high {
+          ...MoneyFields
+        }
+      }
+      candidate {
+        ...MoneyFields
+      }
+      fullyFunded
+      note
+    }
+    assumptions
+    notes
+  }
   finalizedAt
   archivedAt
 }`) as unknown as TypedDocumentString<ReportsQuery, ReportsQueryVariables>;
+export const FundingSchemesDocument = new TypedDocumentString(`
+    query FundingSchemes($first: Int, $after: String) {
+  fundingSchemes(first: $first, after: $after) {
+    nodes {
+      id
+      name
+      funder
+      summary
+      status
+      evidence
+      officialSource
+      sourceUrl
+      sourceHash
+      lastVerifiedAt
+      currency
+      maxAmount {
+        ...MoneyFields
+      }
+      deadlineAt
+      deadlineTimezone
+      requiredDocuments
+    }
+    pageInfo {
+      ...PageInfoFields
+    }
+  }
+}
+    fragment MoneyFields on Money {
+  minorUnits
+  currency
+  exponent
+}
+fragment PageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`) as unknown as TypedDocumentString<FundingSchemesQuery, FundingSchemesQueryVariables>;
 export const ReportDocument = new TypedDocumentString(`
     query Report($id: ID!) {
   report(id: $id) {
     ...ReportFields
+    area {
+      id
+      name
+      countryCode
+    }
+    impact {
+      provenance {
+        evidence
+      }
+    }
     proposals(first: 10) {
       nodes {
         ...ProposalFields
@@ -4496,7 +5022,12 @@ export const ReportDocument = new TypedDocumentString(`
     }
   }
 }
-    fragment PageInfoFields on PageInfo {
+    fragment MoneyFields on Money {
+  minorUnits
+  currency
+  exponent
+}
+fragment PageInfoFields on PageInfo {
   hasNextPage
   endCursor
 }
@@ -4521,6 +5052,84 @@ fragment ReportFields on Report {
   communityId
   areaId
   planOptionId
+  planName
+  goal {
+    id
+    kind
+    description
+  }
+  economics {
+    engineVersion
+    currency
+    capex {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    upfrontTotal {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    recurringAnnual {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    avoidedTankerAnnual {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    netAnnual {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    funding {
+      totalCost {
+        low {
+          ...MoneyFields
+        }
+        high {
+          ...MoneyFields
+        }
+      }
+      approved {
+        ...MoneyFields
+      }
+      gap {
+        low {
+          ...MoneyFields
+        }
+        high {
+          ...MoneyFields
+        }
+      }
+      candidate {
+        ...MoneyFields
+      }
+      fullyFunded
+      note
+    }
+    assumptions
+    notes
+  }
   finalizedAt
   archivedAt
 }
@@ -4532,6 +5141,7 @@ fragment ProposalFields on Proposal {
   status
   flaggedCount
   downloadPath
+  previewPath
   job {
     ...JobFields
   }
@@ -4562,6 +5172,7 @@ fragment ProposalFields on Proposal {
   status
   flaggedCount
   downloadPath
+  previewPath
   job {
     ...JobFields
   }
@@ -4605,6 +5216,11 @@ export const FinalizeReportDocument = new TypedDocumentString(`
   currentVersion
   requestId
 }
+fragment MoneyFields on Money {
+  minorUnits
+  currency
+  exponent
+}
 fragment ReportFields on Report {
   id
   version
@@ -4614,6 +5230,84 @@ fragment ReportFields on Report {
   communityId
   areaId
   planOptionId
+  planName
+  goal {
+    id
+    kind
+    description
+  }
+  economics {
+    engineVersion
+    currency
+    capex {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    upfrontTotal {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    recurringAnnual {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    avoidedTankerAnnual {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    netAnnual {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    funding {
+      totalCost {
+        low {
+          ...MoneyFields
+        }
+        high {
+          ...MoneyFields
+        }
+      }
+      approved {
+        ...MoneyFields
+      }
+      gap {
+        low {
+          ...MoneyFields
+        }
+        high {
+          ...MoneyFields
+        }
+      }
+      candidate {
+        ...MoneyFields
+      }
+      fullyFunded
+      note
+    }
+    assumptions
+    notes
+  }
   finalizedAt
   archivedAt
 }`) as unknown as TypedDocumentString<FinalizeReportMutation, FinalizeReportMutationVariables>;
@@ -4638,6 +5332,11 @@ export const ArchiveReportDocument = new TypedDocumentString(`
   currentVersion
   requestId
 }
+fragment MoneyFields on Money {
+  minorUnits
+  currency
+  exponent
+}
 fragment ReportFields on Report {
   id
   version
@@ -4647,6 +5346,84 @@ fragment ReportFields on Report {
   communityId
   areaId
   planOptionId
+  planName
+  goal {
+    id
+    kind
+    description
+  }
+  economics {
+    engineVersion
+    currency
+    capex {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    upfrontTotal {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    recurringAnnual {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    avoidedTankerAnnual {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    netAnnual {
+      low {
+        ...MoneyFields
+      }
+      high {
+        ...MoneyFields
+      }
+    }
+    funding {
+      totalCost {
+        low {
+          ...MoneyFields
+        }
+        high {
+          ...MoneyFields
+        }
+      }
+      approved {
+        ...MoneyFields
+      }
+      gap {
+        low {
+          ...MoneyFields
+        }
+        high {
+          ...MoneyFields
+        }
+      }
+      candidate {
+        ...MoneyFields
+      }
+      fullyFunded
+      note
+    }
+    assumptions
+    notes
+  }
   finalizedAt
   archivedAt
 }`) as unknown as TypedDocumentString<ArchiveReportMutation, ArchiveReportMutationVariables>;
@@ -4691,6 +5468,7 @@ fragment ProposalFields on Proposal {
   status
   flaggedCount
   downloadPath
+  previewPath
   job {
     ...JobFields
   }
@@ -4706,7 +5484,12 @@ export const MyImplementationProjectsDocument = new TypedDocumentString(`
     }
   }
 }
-    fragment PageInfoFields on PageInfo {
+    fragment MoneyFields on Money {
+  minorUnits
+  currency
+  exponent
+}
+fragment PageInfoFields on PageInfo {
   hasNextPage
   endCursor
 }
@@ -4714,10 +5497,21 @@ fragment ProjectFields on ImplementationProject {
   id
   version
   reportId
+  reportVersion
+  areaId
   communityId
+  sharedWithCommunity
   title
   status
   startedAt
+  expenses {
+    description
+    spentOn
+    source
+    amount {
+      ...MoneyFields
+    }
+  }
 }`) as unknown as TypedDocumentString<MyImplementationProjectsQuery, MyImplementationProjectsQueryVariables>;
 export const ImplementationProjectDocument = new TypedDocumentString(`
     query ImplementationProject($id: ID!) {
@@ -4733,7 +5527,12 @@ export const ImplementationProjectDocument = new TypedDocumentString(`
     }
   }
 }
-    fragment PageInfoFields on PageInfo {
+    fragment MoneyFields on Money {
+  minorUnits
+  currency
+  exponent
+}
+fragment PageInfoFields on PageInfo {
   hasNextPage
   endCursor
 }
@@ -4741,10 +5540,21 @@ fragment ProjectFields on ImplementationProject {
   id
   version
   reportId
+  reportVersion
+  areaId
   communityId
+  sharedWithCommunity
   title
   status
   startedAt
+  expenses {
+    description
+    spentOn
+    source
+    amount {
+      ...MoneyFields
+    }
+  }
 }
 fragment MilestoneFields on Milestone {
   id
@@ -4752,9 +5562,86 @@ fragment MilestoneFields on Milestone {
   projectId
   title
   plannedOn
+  responsibleIdentity
+  tasks
   status
+  completedOn
   completedAt
 }`) as unknown as TypedDocumentString<ImplementationProjectQuery, ImplementationProjectQueryVariables>;
+export const TrackingReportsDocument = new TypedDocumentString(`
+    query TrackingReports($first: Int, $after: String) {
+  reports(filter: { status: FINALIZED }, first: $first, after: $after) {
+    nodes {
+      id
+      version
+      title
+      status
+      communityId
+      areaId
+      finalizedAt
+      goal {
+        horizonDays
+      }
+      impact {
+        metrics {
+          metricId
+          projectedLow {
+            quantity {
+              value
+              unit
+            }
+          }
+          projectedHigh {
+            quantity {
+              value
+              unit
+            }
+          }
+        }
+      }
+    }
+    pageInfo {
+      ...PageInfoFields
+    }
+  }
+}
+    fragment PageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`) as unknown as TypedDocumentString<TrackingReportsQuery, TrackingReportsQueryVariables>;
+export const TrackingReportDocument = new TypedDocumentString(`
+    query TrackingReport($id: ID!) {
+  report(id: $id) {
+    id
+    version
+    title
+    status
+    communityId
+    areaId
+    finalizedAt
+    goal {
+      horizonDays
+    }
+    impact {
+      metrics {
+        metricId
+        projectedLow {
+          quantity {
+            value
+            unit
+          }
+        }
+        projectedHigh {
+          quantity {
+            value
+            unit
+          }
+        }
+      }
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<TrackingReportQuery, TrackingReportQueryVariables>;
 export const ObservationsDocument = new TypedDocumentString(`
     query Observations($projectId: ID!, $first: Int, $after: String) {
   implementationProject(id: $projectId) {
@@ -4784,9 +5671,30 @@ fragment ObservationFields on Observation {
   metricId
   observedOn
   method
+  sourceType
+  source
+  permittedSourceConfirmed
+  areaId
+  windowStart
+  windowEnd
+  coverageObservedDays
+  coverageExpectedDays
   note
   evidence
   recordedByViewer
+  comparison {
+    status
+    reason
+    relation
+    forecastLow {
+      value
+      unit
+    }
+    forecastHigh {
+      value
+      unit
+    }
+  }
   quantity {
     ...QuantityFields
   }
@@ -4812,14 +5720,30 @@ export const StartImplementationProjectDocument = new TypedDocumentString(`
   currentVersion
   requestId
 }
+fragment MoneyFields on Money {
+  minorUnits
+  currency
+  exponent
+}
 fragment ProjectFields on ImplementationProject {
   id
   version
   reportId
+  reportVersion
+  areaId
   communityId
+  sharedWithCommunity
   title
   status
   startedAt
+  expenses {
+    description
+    spentOn
+    source
+    amount {
+      ...MoneyFields
+    }
+  }
 }`) as unknown as TypedDocumentString<StartImplementationProjectMutation, StartImplementationProjectMutationVariables>;
 export const UpdateMilestoneDocument = new TypedDocumentString(`
     mutation UpdateMilestone($input: UpdateMilestoneInput!) {
@@ -4848,7 +5772,10 @@ fragment MilestoneFields on Milestone {
   projectId
   title
   plannedOn
+  responsibleIdentity
+  tasks
   status
+  completedOn
   completedAt
 }`) as unknown as TypedDocumentString<UpdateMilestoneMutation, UpdateMilestoneMutationVariables>;
 export const RecordObservationDocument = new TypedDocumentString(`
@@ -4883,10 +5810,123 @@ fragment ObservationFields on Observation {
   metricId
   observedOn
   method
+  sourceType
+  source
+  permittedSourceConfirmed
+  areaId
+  windowStart
+  windowEnd
+  coverageObservedDays
+  coverageExpectedDays
   note
   evidence
   recordedByViewer
+  comparison {
+    status
+    reason
+    relation
+    forecastLow {
+      value
+      unit
+    }
+    forecastHigh {
+      value
+      unit
+    }
+  }
   quantity {
     ...QuantityFields
   }
 }`) as unknown as TypedDocumentString<RecordObservationMutation, RecordObservationMutationVariables>;
+export const AddProjectExpenseDocument = new TypedDocumentString(`
+    mutation AddProjectExpense($input: AddProjectExpenseInput!) {
+  addProjectExpense(input: $input) {
+    project {
+      ...ProjectFields
+    }
+    error {
+      ...MutationErrorFields
+    }
+  }
+}
+    fragment MutationErrorFields on MutationError {
+  code
+  message
+  fieldErrors {
+    field
+    message
+  }
+  currentVersion
+  requestId
+}
+fragment MoneyFields on Money {
+  minorUnits
+  currency
+  exponent
+}
+fragment ProjectFields on ImplementationProject {
+  id
+  version
+  reportId
+  reportVersion
+  areaId
+  communityId
+  sharedWithCommunity
+  title
+  status
+  startedAt
+  expenses {
+    description
+    spentOn
+    source
+    amount {
+      ...MoneyFields
+    }
+  }
+}`) as unknown as TypedDocumentString<AddProjectExpenseMutation, AddProjectExpenseMutationVariables>;
+export const UpdateProjectStatusDocument = new TypedDocumentString(`
+    mutation UpdateProjectStatus($input: UpdateProjectStatusInput!) {
+  updateProjectStatus(input: $input) {
+    project {
+      ...ProjectFields
+    }
+    error {
+      ...MutationErrorFields
+    }
+  }
+}
+    fragment MutationErrorFields on MutationError {
+  code
+  message
+  fieldErrors {
+    field
+    message
+  }
+  currentVersion
+  requestId
+}
+fragment MoneyFields on Money {
+  minorUnits
+  currency
+  exponent
+}
+fragment ProjectFields on ImplementationProject {
+  id
+  version
+  reportId
+  reportVersion
+  areaId
+  communityId
+  sharedWithCommunity
+  title
+  status
+  startedAt
+  expenses {
+    description
+    spentOn
+    source
+    amount {
+      ...MoneyFields
+    }
+  }
+}`) as unknown as TypedDocumentString<UpdateProjectStatusMutation, UpdateProjectStatusMutationVariables>;

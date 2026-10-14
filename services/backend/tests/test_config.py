@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from conftest import LOCAL_OK, PILOT_OK, LoadSettings
+from waterlens.cli.sources import _admin
 from waterlens.config import AppMode, ConfigError, Settings, parse_emulator_host
 
 
@@ -96,6 +97,12 @@ def test_pilot_mode_valid(load_settings: LoadSettings) -> None:
     assert s.is_pilot is True
     assert s.firestore_emulator is None
     assert s.auth_emulator is None
+
+
+def test_source_admin_rejects_remote_fetch_in_pilot(load_settings: LoadSettings) -> None:
+    settings = load_settings(PILOT_OK)
+    with pytest.raises(SystemExit, match="egress protections"):
+        _admin(settings, allow_network=True)
 
 
 def test_pilot_mode_rejects_emulator_flag(load_settings: LoadSettings) -> None:

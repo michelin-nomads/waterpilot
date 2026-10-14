@@ -19,8 +19,9 @@ service is called, and then routes through the same authorized service.
 
 from __future__ import annotations
 
+import hashlib
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 from waterlens.application.agent.actions import (
@@ -131,7 +132,6 @@ class AgentToolRuntime:
     ctx: RequestContext
     """The verified request context; its principal is the only identity any tool runs as."""
     run_id: str
-    _repeats: dict[tuple[str, str], int] = field(default_factory=dict, init=False)
 
     @property
     def _limits(self) -> AiLimits:
@@ -141,7 +141,13 @@ class AgentToolRuntime:
         return tuple(TOOLS_BY_NAME.values())
 
     def call(
-        self, name: str, args: Json, *, prior_step: int | None = None, call_id: str | None = None
+        self,
+        name: str,
+        args: Json,
+        *,
+        prior_step: int | None = None,
+        call_id: str | None = None,
+        expected_session_version: int | None = None,
     ) -> ToolResult:
         """Run one tool call. When given, ``prior_step`` is the step the caller believes is
         current; a value that does not match the run's durable cursor is a replayed/old step
@@ -159,7 +165,21 @@ class AgentToolRuntime:
         run_ctx = RunContext(
             services=self.services, ctx=self.ctx, session_id=run.session_id, run_id=run.id
         )
-        data = spec.handler(run_ctx, payload)
+
+        def execute() -> Json:
+            if expected_session_version is not None:
+                session = self.services.sessions.get(self.ctx, run.session_id)
+                session.require_version(expected_session_version)
+            return spec.handler(run_ctx, payload)
+
+        # Claim/repeat counters remain durable even when an effect is refused. The
+        # version guard and effect share a transaction, so a concurrent manual edit
+        # cannot slip between a freshness read and a write.
+        data = (
+            self.services.deps.store.transaction(execute)
+            if expected_session_version is not None
+            else execute()
+        )
         prepared = spec.kind is ToolKind.PREPARE
         return ToolResult(
             name=name,
@@ -186,14 +206,24 @@ class AgentToolRuntime:
         return results
 
     def _guard_loop(self, name: str, args: Json) -> None:
-        key = (name, _canonical(args))
-        count = self._repeats.get(key, 0) + 1
-        self._repeats[key] = count
-        if count > self._limits.max_tool_repeats:
-            raise DomainError(
-                ErrorCode.PRECONDITION_FAILED,
-                "this tool was already called with the same arguments; make progress or stop",
+        key = hashlib.sha256(f"{name}:{_canonical(args)}".encode()).hexdigest()
+        store = self.services.deps.store
+
+        def tx() -> None:
+            run = store.agent_runs.get(self.run_id)
+            assert run is not None
+            count = run.tool_repeats.get(key, 0) + 1
+            if count > self._limits.max_tool_repeats:
+                raise DomainError(
+                    ErrorCode.PRECONDITION_FAILED,
+                    "this tool was already called with the same arguments; make progress or stop",
+                )
+            store.agent_runs.replace(
+                run.model_copy(update={"tool_repeats": {**run.tool_repeats, key: count}}),
+                run.version,
             )
+
+        store.transaction(tx)
 
     def _claim_step(self, uid: str, prior_step: int | None) -> AgentRun:
         """Authorize against the run's current record and claim the next monotonic step.

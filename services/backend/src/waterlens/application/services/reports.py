@@ -32,7 +32,13 @@ from waterlens.domain.ids import IdKind, new_id, require_id
 from waterlens.domain.interventions import CATALOGUE
 from waterlens.domain.jobs import JobKind, JobRecord, job_id_for
 from waterlens.domain.planning import PlanOption
-from waterlens.domain.reports import Proposal, ProposalSection, Report, ReportStatus
+from waterlens.domain.reports import (
+    Proposal,
+    ProposalApplicant,
+    ProposalSection,
+    Report,
+    ReportStatus,
+)
 from waterlens.domain.values import Frozen
 
 
@@ -43,6 +49,8 @@ class FinalizeReportInput(Frozen):
 
 class GenerateProposalInput(Frozen):
     report_id: str
+    scheme_id: str | None = None
+    applicant: ProposalApplicant | None = None
     sections: tuple[ProposalSection, ...] = Field(min_length=1, max_length=len(ProposalSection))
 
 
@@ -241,11 +249,41 @@ class ProposalService:
         payload = build(GenerateProposalInput, data)
         store, now = self._d.store, self._d.clock()
         report_id = require_id(payload.report_id, IdKind.REPORT)
+        scheme_id = (
+            require_id(payload.scheme_id, IdKind.FUNDING_SCHEME, "schemeId")
+            if payload.scheme_id
+            else None
+        )
+        applicant = payload.applicant
+        if scheme_id is not None and applicant is None:
+            raise DomainError(
+                ErrorCode.VALIDATION_FAILED,
+                "provide applicant details for the selected funding scheme",
+                field="applicant",
+            )
 
         def create() -> tuple[str, ...]:
             report = readable_report(store, report_id, principal)
             if report.status is ReportStatus.ARCHIVED:
                 raise _archived("report")
+            if scheme_id is not None:
+                scheme = store.funding_schemes.get(scheme_id)
+                if scheme is None or scheme.effective_status(now).value not in {"active", "demo"}:
+                    raise not_found("verified funding scheme")
+                if scheme.status.value == "active" and (
+                    not scheme.official_source or not scheme.source_hash
+                ):
+                    raise DomainError(
+                        ErrorCode.PRECONDITION_FAILED,
+                        "the funding scheme has not been verified from an official source",
+                        field="schemeId",
+                    )
+                if scheme.evidence.value == "synthetic" and scheme.status.value != "demo":
+                    raise DomainError(
+                        ErrorCode.PRECONDITION_FAILED,
+                        "synthetic schemes are available only in clearly labelled demo mode",
+                        field="schemeId",
+                    )
             proposal_id = new_id(IdKind.PROPOSAL)
             job_id = job_id_for(JobKind.PROPOSAL_GENERATION, proposal_id)
             job = JobRecord(
@@ -263,6 +301,8 @@ class ProposalService:
                     id=proposal_id,
                     owner_uid=principal.uid,
                     report_id=report.id,
+                    scheme_id=scheme_id,
+                    applicant=applicant,
                     sections=_sections(report, payload.sections),
                     job_id=job_id,
                     created_at=now,

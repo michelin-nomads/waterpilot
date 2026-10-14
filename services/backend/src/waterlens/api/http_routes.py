@@ -15,7 +15,7 @@ from starlette.concurrency import run_in_threadpool
 from waterlens.adapters.factory import ApiRuntime
 from waterlens.api.auth import resolve_principal
 from waterlens.api.runtime import ApiError, http_error, runtime_or_503
-from waterlens.application.artifacts import PDF
+from waterlens.application.artifacts import HTML, PDF
 from waterlens.application.identity import RequestContext
 from waterlens.domain.errors import DomainError, ErrorCode
 from waterlens.domain.jobs import AgentRun, AgentRunStatus, JobRecord, JobStatus
@@ -144,10 +144,13 @@ def build_http_router(
     async def download_proposal(proposal_id: str, request: Request, c: Ctx) -> Response:
         rt, ctx = c
         proposal = await checked(request, lambda: rt.services.proposals.get(ctx, proposal_id))
-        if proposal.status is not ProposalStatus.APPROVED or proposal.artifact_key is None:
+        if (
+            proposal.status not in {ProposalStatus.NEEDS_REVIEW, ProposalStatus.APPROVED}
+            or proposal.artifact_key is None
+        ):
             raise http_error(
                 DomainError(
-                    ErrorCode.PRECONDITION_FAILED, "this proposal has not been approved yet"
+                    ErrorCode.PRECONDITION_FAILED, "this proposal is not ready for review yet"
                 ),
                 request,
             )
@@ -160,6 +163,47 @@ def build_http_router(
                 "Content-Disposition": f'attachment; filename="proposal-{proposal.id}.pdf"',
                 "Cache-Control": "private, no-store",
                 "X-Content-Type-Options": "nosniff",
+            },
+        )
+
+    @router.get(
+        "/proposals/{proposal_id}/preview",
+        tags=["downloads"],
+        response_class=Response,
+        responses={200: {"content": {"text/html": {}}}, **_ERRORS},
+        summary="Open the owner's private reviewable HTML proposal.",
+    )
+    async def preview_proposal(proposal_id: str, request: Request, c: Ctx) -> Response:
+        rt, ctx = c
+        proposal = await checked(request, lambda: rt.services.proposals.get(ctx, proposal_id))
+        if (
+            proposal.status not in {ProposalStatus.NEEDS_REVIEW, ProposalStatus.APPROVED}
+            or proposal.html_artifact_key is None
+        ):
+            raise http_error(
+                DomainError(
+                    ErrorCode.PRECONDITION_FAILED, "this proposal is not ready for review yet"
+                ),
+                request,
+            )
+        data = await checked(
+            request,
+            lambda: rt.artifacts.read_owned(
+                proposal.html_artifact_key or "", proposal.owner_uid, HTML
+            ),
+        )
+        return Response(
+            data,
+            media_type="text/html",
+            headers={
+                "Content-Disposition": "inline; filename=proposal-review.html",
+                "Cache-Control": "private, no-store",
+                "X-Content-Type-Options": "nosniff",
+                "Content-Security-Policy": (
+                    "default-src 'none'; style-src 'unsafe-inline'; img-src data:; "
+                    "base-uri 'none'; form-action 'none'"
+                ),
+                "Referrer-Policy": "no-referrer",
             },
         )
 

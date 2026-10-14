@@ -9,6 +9,7 @@ import pytest
 from conftest import LOCAL_OK, LoadSettings
 from graphql_harness import NOW, Harness, make_harness
 from waterlens.api.export_openapi import build_openapi
+from waterlens.application.artifacts import HTML
 from waterlens.domain.ids import IdKind, new_id
 from waterlens.domain.jobs import JobKind, JobRecord, JobStatus
 from waterlens.domain.planning import Goal, GoalKind
@@ -34,7 +35,13 @@ def _job(h: Harness, owner: str, status: JobStatus) -> JobRecord:
     return h.store.jobs.insert(job)
 
 
-def _proposal(h: Harness, owner: str, status: ProposalStatus, artifact: str | None) -> Proposal:
+def _proposal(
+    h: Harness,
+    owner: str,
+    status: ProposalStatus,
+    artifact: str | None,
+    html_artifact: str | None = None,
+) -> Proposal:
     report = h.store.reports.insert(
         Report(
             id=new_id(IdKind.REPORT),
@@ -58,6 +65,7 @@ def _proposal(h: Harness, owner: str, status: ProposalStatus, artifact: str | No
             status=status,
             job_id=new_id(IdKind.JOB),
             artifact_key=artifact,
+            html_artifact_key=html_artifact,
             created_at=NOW,
             updated_at=NOW,
         )
@@ -107,16 +115,24 @@ def test_download_requires_approval_and_read_access(h: Harness) -> None:
 
     key = "proposals/alice/prp_1/proposal-a1.pdf"
     h.storage.put(key, b"%PDF-1.7 synthetic", content_type="application/pdf")
-    approved = _proposal(h, "alice", ProposalStatus.APPROVED, key)
+    html_key = "proposals/alice/prp_1/proposal-a1.html"
+    h.storage.put(html_key, b"<!doctype html><title>Private review</title>", content_type=HTML)
+    approved = _proposal(h, "alice", ProposalStatus.NEEDS_REVIEW, key, html_key)
     path = f"/v1/proposals/{approved.id}/download"
     assert h.client.get(path, headers=auth("t-bob")).status_code == 404
     assert h.client.get(path).status_code == 401
+    hidden_preview = h.client.get(f"/v1/proposals/{approved.id}/preview", headers=auth("t-bob"))
+    assert hidden_preview.status_code == 404
     ok = h.client.get(path, headers=auth("t-alice"))
     assert ok.status_code == 200
     assert ok.content == b"%PDF-1.7 synthetic"
     assert ok.headers["content-type"] == "application/pdf"
     assert ok.headers["cache-control"] == "private, no-store"
     assert ok.headers["content-disposition"].startswith("attachment;")
+    preview = h.client.get(f"/v1/proposals/{approved.id}/preview", headers=auth("t-alice"))
+    assert preview.status_code == 200 and b"Private review" in preview.content
+    assert preview.headers["content-security-policy"].startswith("default-src 'none'")
+    assert preview.headers["cache-control"] == "private, no-store"
 
 
 def test_download_refuses_artifacts_outside_the_owner_prefix(h: Harness) -> None:
@@ -124,11 +140,18 @@ def test_download_refuses_artifacts_outside_the_owner_prefix(h: Harness) -> None
     become a cross-tenant read: the key's owner segment has to match the record owner."""
     bob_key = "proposals/bob/prp_2/proposal-a1.pdf"
     h.storage.put(bob_key, b"%PDF-1.7 bob's", content_type="application/pdf")
+    bob_html = "proposals/bob/prp_2/proposal-a1.html"
+    h.storage.put(bob_html, b"<html>private bob preview</html>", content_type=HTML)
     for key in (bob_key, "proposals/../bob/x.pdf", "elsewhere.pdf"):
-        bad = _proposal(h, "alice", ProposalStatus.APPROVED, key)
+        html_key = bob_html if key == bob_key else None
+        bad = _proposal(h, "alice", ProposalStatus.APPROVED, key, html_key)
         resp = h.client.get(f"/v1/proposals/{bad.id}/download", headers=auth("t-alice"))
         assert resp.status_code == 404, key
         assert b"bob" not in resp.content
+        if html_key:
+            preview = h.client.get(f"/v1/proposals/{bad.id}/preview", headers=auth("t-alice"))
+            assert preview.status_code == 404
+            assert b"bob" not in preview.content
 
 
 def test_download_reports_a_missing_or_oversized_artifact_without_leaking(h: Harness) -> None:

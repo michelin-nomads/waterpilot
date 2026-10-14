@@ -8,12 +8,17 @@ from waterlens.api.graphql.context import Info, attempt, call
 from waterlens.api.graphql.scalars import LocalDate, UtcDateTime
 from waterlens.api.graphql.types_common import (
     Connection,
+    Money,
+    MoneyInput,
     MutationError,
     Quantity,
     QuantityInput,
     connection,
     input_data,
     page_args,
+)
+from waterlens.application.services.tracking import (
+    ObservationComparison as ObservationComparisonData,
 )
 from waterlens.domain import tracking as dt
 
@@ -25,7 +30,10 @@ class Milestone:
     project_id: strawberry.ID
     title: str
     planned_on: LocalDate
+    responsible_identity: str | None
+    tasks: list[str]
     status: dt.MilestoneStatus
+    completed_on: LocalDate | None
     completed_at: UtcDateTime | None
 
     @staticmethod
@@ -36,8 +44,49 @@ class Milestone:
             project_id=strawberry.ID(m.project_id),
             title=m.title,
             planned_on=LocalDate(m.planned_on),
+            responsible_identity=m.responsible_identity,
+            tasks=list(m.tasks),
             status=m.status,
+            completed_on=LocalDate(m.completed_on) if m.completed_on else None,
             completed_at=UtcDateTime(m.completed_at) if m.completed_at else None,
+        )
+
+
+@strawberry.type
+class ProjectExpense:
+    description: str
+    spent_on: LocalDate
+    amount: Money
+    source: str
+
+    @staticmethod
+    def of(expense: dt.ProjectExpense) -> ProjectExpense:
+        return ProjectExpense(
+            description=expense.description,
+            spent_on=LocalDate(expense.spent_on),
+            amount=Money.of(expense.amount),
+            source=expense.source,
+        )
+
+
+@strawberry.type
+class ObservationComparison:
+    status: dt.ComparisonStatus
+    reason: str
+    forecast_low: Quantity | None
+    forecast_high: Quantity | None
+    relation: str | None
+
+    @staticmethod
+    def of(comparison: ObservationComparisonData) -> ObservationComparison:
+        return ObservationComparison(
+            status=comparison.status,
+            reason=comparison.reason,
+            forecast_low=Quantity.of(comparison.forecast_low) if comparison.forecast_low else None,
+            forecast_high=Quantity.of(comparison.forecast_high)
+            if comparison.forecast_high
+            else None,
+            relation=comparison.relation,
         )
 
 
@@ -50,6 +99,14 @@ class Observation:
     observed_on: LocalDate
     quantity: Quantity
     method: str
+    source_type: dt.ObservationSourceType
+    source: str
+    permitted_source_confirmed: bool
+    area_id: strawberry.ID
+    window_start: LocalDate | None
+    window_end: LocalDate | None
+    coverage_observed_days: int
+    coverage_expected_days: int
     note: str
     evidence: dt.ObservationEvidence
     recorded_by_viewer: bool
@@ -65,11 +122,25 @@ class Observation:
             observed_on=LocalDate(o.observed_on),
             quantity=Quantity.of(o.quantity),
             method=o.method,
+            source_type=o.source_type,
+            source=o.source,
+            permitted_source_confirmed=o.permitted_source_confirmed,
+            area_id=strawberry.ID(o.area_id),
+            window_start=LocalDate(o.window_start) if o.window_start else None,
+            window_end=LocalDate(o.window_end) if o.window_end else None,
+            coverage_observed_days=o.coverage_observed_days,
+            coverage_expected_days=o.coverage_expected_days,
             note=o.note,
             evidence=o.evidence,
             recorded_by_viewer=o.recorded_by_uid == viewer_uid,
             created_at=UtcDateTime(o.created_at),
         )
+
+    @strawberry.field
+    async def comparison(self, info: Info) -> ObservationComparison:
+        tracking = info.context.services.tracking
+        result = await call(tracking.compare_observation, info.context.ctx, str(self.id))
+        return ObservationComparison.of(result)
 
 
 def _viewer_uid(info: Info) -> str | None:
@@ -82,8 +153,12 @@ class ImplementationProject:
     id: strawberry.ID
     version: int
     report_id: strawberry.ID
+    report_version: int
+    area_id: strawberry.ID
     community_id: strawberry.ID | None
+    shared_with_community: bool
     title: str
+    expenses: list[ProjectExpense]
     status: dt.ProjectStatus
     started_at: UtcDateTime
     created_at: UtcDateTime
@@ -95,8 +170,12 @@ class ImplementationProject:
             id=strawberry.ID(p.id),
             version=p.version,
             report_id=strawberry.ID(p.report_id),
+            report_version=p.report_version,
+            area_id=strawberry.ID(p.area_id),
             community_id=strawberry.ID(p.community_id) if p.community_id else None,
+            shared_with_community=p.shared_with_community,
             title=p.title,
+            expenses=[ProjectExpense.of(expense) for expense in p.expenses],
             status=p.status,
             started_at=UtcDateTime(p.started_at),
             created_at=UtcDateTime(p.created_at),
@@ -124,6 +203,8 @@ class ImplementationProject:
 class MilestoneInput:
     title: str
     planned_on: LocalDate
+    responsible_identity: str | None = None
+    tasks: list[str] = strawberry.field(default_factory=list)
 
 
 @strawberry.input
@@ -131,6 +212,7 @@ class StartImplementationProjectInput:
     report_id: strawberry.ID
     title: str
     milestones: list[MilestoneInput] = strawberry.field(default_factory=list)
+    share_with_community: bool = False
     idempotency_key: str
 
 
@@ -139,6 +221,7 @@ class UpdateMilestoneInput:
     id: strawberry.ID
     expected_version: int
     status: dt.MilestoneStatus
+    completed_on: LocalDate | None = None
 
 
 @strawberry.input
@@ -148,8 +231,33 @@ class RecordObservationInput:
     observed_on: LocalDate
     quantity: QuantityInput
     method: str
+    source_type: dt.ObservationSourceType = dt.ObservationSourceType.USER_RECORDED
+    source: str
+    permitted_source_confirmed: bool = False
+    area_id: strawberry.ID | None = None
+    window_start: LocalDate
+    window_end: LocalDate
+    coverage_observed_days: int
+    coverage_expected_days: int
     note: str = ""
     idempotency_key: str
+
+
+@strawberry.input
+class AddProjectExpenseInput:
+    project_id: strawberry.ID
+    expected_version: int
+    description: str
+    spent_on: LocalDate
+    amount: MoneyInput
+    source: str
+
+
+@strawberry.input
+class UpdateProjectStatusInput:
+    project_id: strawberry.ID
+    expected_version: int
+    status: dt.ProjectStatus
 
 
 @strawberry.type
@@ -212,7 +320,13 @@ class Mutation:
             info,
             lambda: MilestonePayload(
                 milestone=Milestone.of(
-                    t.update_milestone(ctx, str(input.id), input.expected_version, input.status)
+                    t.update_milestone(
+                        ctx,
+                        str(input.id),
+                        input.expected_version,
+                        input.status,
+                        input.completed_on,
+                    )
                 )
             ),
             lambda e: MilestonePayload(error=e),
@@ -231,4 +345,49 @@ class Mutation:
                 )
             ),
             lambda e: ObservationPayload(error=e),
+        )
+
+    @strawberry.mutation
+    async def add_project_expense(
+        self, info: Info, input: AddProjectExpenseInput
+    ) -> ImplementationProjectPayload:
+        t, ctx = info.context.services.tracking, info.context.ctx
+        return await attempt(
+            info,
+            lambda: ImplementationProjectPayload(
+                project=ImplementationProject.of(
+                    t.add_expense(
+                        ctx,
+                        str(input.project_id),
+                        input.expected_version,
+                        {
+                            "description": input.description,
+                            "spent_on": input.spent_on,
+                            "amount": input_data(input.amount),
+                            "source": input.source,
+                        },
+                    )
+                )
+            ),
+            lambda e: ImplementationProjectPayload(error=e),
+        )
+
+    @strawberry.mutation
+    async def update_project_status(
+        self, info: Info, input: UpdateProjectStatusInput
+    ) -> ImplementationProjectPayload:
+        t, ctx = info.context.services.tracking, info.context.ctx
+        return await attempt(
+            info,
+            lambda: ImplementationProjectPayload(
+                project=ImplementationProject.of(
+                    t.update_status(
+                        ctx,
+                        str(input.project_id),
+                        input.expected_version,
+                        input.status,
+                    )
+                )
+            ),
+            lambda e: ImplementationProjectPayload(error=e),
         )

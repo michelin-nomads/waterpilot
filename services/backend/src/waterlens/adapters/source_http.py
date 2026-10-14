@@ -8,6 +8,9 @@ credentials, and stops reading once a body exceeds the caller's limit.
 
 from __future__ import annotations
 
+import ipaddress
+import socket
+from collections.abc import Callable, Sequence
 from urllib.parse import urlsplit
 
 import httpx
@@ -19,18 +22,40 @@ TIMEOUT = httpx.Timeout(20.0, connect=10.0)
 
 
 class HttpSourceFetcher:
-    def __init__(self, transport: httpx.BaseTransport | None = None) -> None:
+    def __init__(
+        self,
+        transport: httpx.BaseTransport | None = None,
+        *,
+        resolve_host: Callable[[str, int], Sequence[str]] | None = None,
+    ) -> None:
+        self._resolve_host = resolve_host or _resolve_host
         self._client = httpx.Client(
             transport=transport,
             timeout=TIMEOUT,
             follow_redirects=False,
+            trust_env=False,
             headers={"User-Agent": USER_AGENT},
         )
 
-    @staticmethod
-    def _check(url: str) -> None:
-        if urlsplit(url).scheme != "https":
+    def _check(self, url: str) -> None:
+        try:
+            parts = urlsplit(url)
+            port = parts.port
+        except ValueError:
+            raise FetchError("URL is invalid") from None
+        host = parts.hostname or ""
+        if parts.scheme != "https" or not host:
             raise FetchError("only https URLs are fetched")
+        if parts.username or parts.password or port not in {None, 443}:
+            raise FetchError("URL credentials and non-standard ports are not allowed")
+        try:
+            addresses = self._resolve_host(host, port or 443)
+            if not addresses or any(not _is_public_address(value) for value in addresses):
+                raise FetchError("URL resolves to a non-public address")
+        except FetchError:
+            raise
+        except (OSError, ValueError):
+            raise FetchError("URL host could not be verified as public") from None
 
     def probe(self, url: str) -> int:
         self._check(url)
@@ -63,3 +88,15 @@ class HttpSourceFetcher:
 
     def close(self) -> None:
         self._client.close()
+
+
+def _resolve_host(host: str, port: int) -> tuple[str, ...]:
+    return tuple(
+        str(address[4][0])
+        for address in socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
+    )
+
+
+def _is_public_address(value: str) -> bool:
+    address = ipaddress.ip_address(value.split("%", 1)[0])
+    return address.is_global

@@ -157,7 +157,7 @@ scope:
   The enforceable rule there is the **monotonic session revision** (`version` /
   `_storage_update_marker`): an append is accepted only against the current revision, and any
   replay from an earlier state is refused with `StaleSessionError`. The current revision
-  already reflects every retained *and* trimmed event, so a replay cannot silently re-insert a
+  already reflects every retained _and_ trimmed event, so a replay cannot silently re-insert a
   trimmed event. We therefore do **not** claim "forever" id dedup; beyond the window the
   revision marker is the dedup.
 

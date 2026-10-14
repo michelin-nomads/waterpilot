@@ -90,6 +90,8 @@ class Settings(BaseSettings):
     # Local application store (ADR 0005): the Firestore emulator by default, so data
     # survives an API restart; "memory" keeps everything in-process. Pilot ignores it.
     local_store: Literal["firestore", "memory"] = "firestore"
+    funding_admin_uids: list[str] = Field(default_factory=list, max_length=20)
+    funding_fake_embeddings: bool = False
     # Guest-to-account claims (ADR 0004). Bounds are enforced by domain.accounts.ClaimPolicy.
     account_claim_ttl_seconds: int = 600
     account_claim_fresh_sign_in_seconds: int = 300
@@ -112,6 +114,7 @@ class Settings(BaseSettings):
     # can happen here. In a pilot the gateway builds the Vertex provider through ADC and a
     # dedicated runtime service account. Every field below is a proposed, overridable bound.
     ai_enabled: bool = False
+    agent_fake_inference: bool = False
     """Owner opt-in. Even when true, local mode has no live provider, and a budget must be
     set before any spend is permitted."""
     ai_kill_switch: bool = False
@@ -168,6 +171,10 @@ class Settings(BaseSettings):
         )
 
     def _ai_problems(self) -> list[str]:
+        if self.is_pilot and self.funding_fake_embeddings:
+            return ["WL_FUNDING_FAKE_EMBEDDINGS is local-only"]
+        if self.is_pilot and self.agent_fake_inference:
+            return ["WL_AGENT_FAKE_INFERENCE is local-only"]
         problems: list[str] = []
         if self.ai_model not in MODEL_CATALOGUE:
             problems.append(

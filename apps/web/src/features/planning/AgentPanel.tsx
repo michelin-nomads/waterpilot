@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState } from 'react';
 
 import { Badge } from '../../components/Badge/Badge';
 import { Button } from '../../components/Button/Button';
@@ -8,9 +8,12 @@ import { AiStatusDocument, type AiStatusQuery } from '../../graphql/generated/gr
 import { useGraphQLQuery } from '../../graphql/hooks';
 import { queryKeys } from '../../graphql/queryKeys';
 import styles from './AgentPanel.module.scss';
+import { env } from '../../config/env';
+import { usePlanningSession } from '../../session/sessionContext';
 
 const AgentGoalCheck = lazy(() => import('../goals/AgentGoalCheck'));
 const AgentScenario = lazy(() => import('../plans/AgentScenario'));
+const AgentConversation = lazy(() => import('./AgentConversation'));
 
 type AiStatusValue = AiStatusQuery['aiStatus'];
 
@@ -39,7 +42,7 @@ function panelContent(status: AiStatusValue | undefined): PanelContent {
         `The assistant works on the same planning session as the workspace, and every number ` +
         `it shows comes from the deterministic calculations, not the language model. It uses ` +
         `${status.modelId}; ${status.requestsRemaining} of ${status.dailyRequestLimit} requests ` +
-        `remain today. The conversation itself arrives in a later build.`,
+        `remain today.`,
     };
   }
   const reason = status?.reason ?? null;
@@ -90,8 +93,19 @@ function panelContent(status: AiStatusValue | undefined): PanelContent {
  * workspace. The deterministic goal and scenario checks below are the same results the
  * agent's tools return, so Agent mode never shows a different number.
  */
-export function AgentPanel({ onUseTraditional }: { onUseTraditional: () => void }) {
+export function AgentPanel({
+  onUseTraditional,
+  onFocusWorkspace,
+}: {
+  onUseTraditional: () => void;
+  onFocusWorkspace?: () => void;
+}) {
   const query = useGraphQLQuery(queryKeys.ai.status(), AiStatusDocument, {});
+  const { view } = usePlanningSession();
+  const [enabledSession, setEnabledSession] = useState<string | null>(null);
+  if (query.data?.aiStatus.available && view?.id && enabledSession !== view.id)
+    setEnabledSession(view.id);
+  const keepConversation = query.data?.aiStatus.available || (view && enabledSession === view.id);
   const content = panelContent(query.data?.aiStatus);
   return (
     <div className={styles.agent} data-ai-status={content.state}>
@@ -100,18 +114,31 @@ export function AgentPanel({ onUseTraditional }: { onUseTraditional: () => void 
         <h2 className={styles.title}>Conversation</h2>
         <Badge tone={content.badgeTone}>{content.badge}</Badge>
       </div>
-      <EmptyState
-        icon="sparkle"
-        title={content.title}
-        headingLevel={3}
-        actions={
-          <Button variant="secondary" startIcon="list" onClick={onUseTraditional}>
-            Use Traditional mode
-          </Button>
-        }
-      >
-        <p>{content.body}</p>
-      </EmptyState>
+      {keepConversation && env.appMode === 'local' ? (
+        <>
+          <h3>{content.title}</h3>
+          <p>{content.body}</p>
+          <Suspense fallback={<p role="status">Opening conversation…</p>}>
+            <AgentConversation
+              onUseTraditional={onUseTraditional}
+              onFocusWorkspace={onFocusWorkspace}
+            />
+          </Suspense>
+        </>
+      ) : (
+        <EmptyState
+          icon="sparkle"
+          title={content.title}
+          headingLevel={3}
+          actions={
+            <Button variant="secondary" startIcon="list" onClick={onUseTraditional}>
+              Use Traditional mode
+            </Button>
+          }
+        >
+          <p>{content.body}</p>
+        </EmptyState>
+      )}
       <Suspense fallback={null}>
         <AgentGoalCheck />
       </Suspense>

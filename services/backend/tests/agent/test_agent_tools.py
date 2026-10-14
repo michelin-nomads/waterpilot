@@ -31,7 +31,8 @@ from waterlens.domain.communities import Community
 from waterlens.domain.errors import DomainError, ErrorCode
 from waterlens.domain.ids import IdKind, new_id
 from waterlens.domain.jobs import AgentRun, AgentRunStatus, AgentStopReason
-from waterlens.domain.planning import PlanningMode, PlanningSession
+from waterlens.domain.planning import Goal, GoalKind, PlanningMode, PlanningSession
+from waterlens.domain.reports import Report
 from waterlens.domain.tracking import ImplementationProject, Milestone, MilestoneStatus
 
 NOW = datetime(2026, 10, 13, 9, 0, tzinfo=UTC)
@@ -101,13 +102,50 @@ class World:
         return run
 
     def make_community(self, who: Principal = OWNER, key: str = "make-community") -> Community:
-        return self.services.communities.create(_ctx(who), {"name": "River Keepers"}, _key(key))
+        report = self.make_report(who)
+        return self.services.communities.create(
+            _ctx(who),
+            {
+                "name": "River Keepers",
+                "report_id": report.id,
+                "contact_name": "Coordinator",
+            },
+            _key(key),
+        )
+
+    def make_report(self, who: Principal = OWNER) -> Report:
+        report = Report(
+            id=new_id(IdKind.REPORT),
+            owner_uid=who.uid,
+            session_id=self.session.id,
+            area_id=AREA_ID,
+            title="Private plan title at 1 Secret Lane",
+            goal=Goal(id=new_id(IdKind.GOAL), kind=GoalKind.REDUCE_SHORTAGE),
+            plan_option_id=new_id(IdKind.PLAN_OPTION),
+            finalized_at=NOW,
+            created_at=NOW,
+            updated_at=NOW,
+        )
+        self.store.transaction(lambda: self.store.reports.insert(report))
+        return report
+
+    def create_community_args(self) -> dict[str, object]:
+        report = self.make_report()
+        return {
+            "name": "River Keepers",
+            "report_id": report.id,
+            "contact_name": "Coordinator",
+            "contact_email": "owner@example.org",
+        }
 
     def seed_project(self) -> tuple[ImplementationProject, Milestone]:
+        report = self.make_report()
         project = ImplementationProject(
             id=new_id(IdKind.PROJECT),
             owner_uid=OWNER.uid,
-            report_id=new_id(IdKind.REPORT),
+            report_id=report.id,
+            report_version=report.version,
+            area_id=report.area_id,
             title="Recharge pits",
             started_at=NOW,
             created_at=NOW,
@@ -400,9 +438,10 @@ def test_confirmation_still_requires_the_services_own_permission() -> None:
 
 def test_creating_a_community_needs_a_permanent_account_even_when_confirmed() -> None:
     w = World()
+    args = w.create_community_args()
     prepared = w.runtime.call(
         "prepare_create_community",
-        {"name": "Guests United"},
+        {**args, "name": "Guests United"},
         prior_step=0,
     )
     guest_actions = AgentActionService(w.services)
@@ -436,7 +475,7 @@ def test_repeating_an_idempotent_confirmation_does_not_create_twice() -> None:
     # version (create a community), resubmitting the same confirmation returns the first
     # result instead of creating a second community.
     w = World()
-    prepared = w.runtime.call("prepare_create_community", {"name": "River Keepers"}, prior_step=0)
+    prepared = w.runtime.call("prepare_create_community", w.create_community_args(), prior_step=0)
     submitted = _confirm_input(prepared.data, idempotency_key=_key("confirm-create"))
     first = w.actions.confirm(_ctx(OWNER), submitted)
     again = w.actions.confirm(_ctx(OWNER), submitted)

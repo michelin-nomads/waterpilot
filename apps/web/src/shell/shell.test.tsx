@@ -162,12 +162,14 @@ describe('application shell', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Make It Happen' })).toBeInTheDocument();
   });
 
-  it('stage pages state plainly that no data is shown yet', async () => {
+  it('opens the implementation project stage with its guest sign-in state', async () => {
     await renderAt('/tracking');
     expect(
-      screen.getByRole('heading', { name: 'This stage is not built yet' }),
+      screen.getByRole('heading', { level: 1, name: 'Implementation projects' }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/nothing on this page is a result/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Sign in to view implementation projects' }),
+    ).toBeInTheDocument();
   });
 
   it('moves focus to the new page heading after navigation', async () => {
@@ -200,7 +202,9 @@ describe('application shell', () => {
       'page',
     );
     expect(within(primary).getByRole('link', { name: 'Communities' })).toBeInTheDocument();
-    expect(screen.getByText(/require a permanent sign-in/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Sign in to view saved reports' }),
+    ).toBeInTheDocument();
   });
 });
 

@@ -2858,7 +2858,7 @@ Stopped after Prompt 14; Prompt 15 (ADK sessions) was not started.
   replay of an already-settled key is refused before the model is called. Settle and release
   are idempotent on the status transition; the per-run call counter advances exactly once.
 - **Reservation covers every permitted attempt:** the hold is `max_attempts × (input +
-  max_output)` cost, where `max_attempts = transient retries + 1`, so a retried call can
+max_output)` cost, where `max_attempts = transient retries + 1`, so a retried call can
   never exceed its hold or overspend the budget.
 - **Reconciliation (conservative):** on success, settle charges the provider's **actual**
   usage. On failure the gateway splits by whether the request was **dispatched**: a failure
@@ -2885,22 +2885,22 @@ Stopped after Prompt 14; Prompt 15 (ADK sessions) was not started.
 
 ### Acceptance — point by point
 
-| Owner point                                             | Result    | Evidence                                                                                                                                                                                       |
-| ------------------------------------------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| No duplicate spending reservation                       | ✅ pass   | `test_a_replayed_call_key_never_reserves_or_spends_twice`, `test_reserving_the_same_key_twice_yields_one_hold` (one hold, request_count 1, provider called once)                               |
-| Budget rejection                                        | ✅ pass   | `test_budget_rejection_when_the_estimate_exceeds_the_ceiling` (model never called), `test_daily_request_limit_rejects_further_calls`                                                           |
-| Graceful UI fallback                                    | ✅ pass   | `agentPanel.test.tsx` (disabled/invite/budget/no-budget/available) + `test_ai_graphql.py::test_ordinary_planning_works_with_ai_disabled`                                                       |
-| Bounded transient retries                               | ✅ pass   | `test_two_transient_errors_are_retried_then_the_call_succeeds` (retries=2), `test_a_persistent_transient_error_settles_conservatively_not_released`, `test_a_terminal_error_is_not_retried_and_settles_conservatively` |
-| Cancellation before dispatch releases the hold          | ✅ pass   | `test_cancellation_before_dispatch_releases_the_hold_and_makes_no_charge` (RELEASED, no charge, provider not called)                                                                           |
-| Ambiguous dispatched failure stays conservative         | ✅ pass   | `test_cancellation_after_dispatch_settles_conservatively`, `test_a_persistent_transient_error_settles_conservatively_not_released` (SETTLED `estimated=True` at worst-case, never released, not replayed) |
-| Structured-output validation                            | ✅ pass   | `test_invalid_structured_output_is_rejected_but_billed` (VALIDATION_FAILED, hold still settled)                                                                                                |
+| Owner point                                             | Result    | Evidence                                                                                                                                                                                                                                                           |
+| ------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| No duplicate spending reservation                       | ✅ pass   | `test_a_replayed_call_key_never_reserves_or_spends_twice`, `test_reserving_the_same_key_twice_yields_one_hold` (one hold, request_count 1, provider called once)                                                                                                   |
+| Budget rejection                                        | ✅ pass   | `test_budget_rejection_when_the_estimate_exceeds_the_ceiling` (model never called), `test_daily_request_limit_rejects_further_calls`                                                                                                                               |
+| Graceful UI fallback                                    | ✅ pass   | `agentPanel.test.tsx` (disabled/invite/budget/no-budget/available) + `test_ai_graphql.py::test_ordinary_planning_works_with_ai_disabled`                                                                                                                           |
+| Bounded transient retries                               | ✅ pass   | `test_two_transient_errors_are_retried_then_the_call_succeeds` (retries=2), `test_a_persistent_transient_error_settles_conservatively_not_released`, `test_a_terminal_error_is_not_retried_and_settles_conservatively`                                             |
+| Cancellation before dispatch releases the hold          | ✅ pass   | `test_cancellation_before_dispatch_releases_the_hold_and_makes_no_charge` (RELEASED, no charge, provider not called)                                                                                                                                               |
+| Ambiguous dispatched failure stays conservative         | ✅ pass   | `test_cancellation_after_dispatch_settles_conservatively`, `test_a_persistent_transient_error_settles_conservatively_not_released` (SETTLED `estimated=True` at worst-case, never released, not replayed)                                                          |
+| Structured-output validation                            | ✅ pass   | `test_invalid_structured_output_is_rejected_but_billed` (VALIDATION_FAILED, hold still settled)                                                                                                                                                                    |
 | Reservation recovery (dispatch-aware)                   | ✅ pass   | `test_crash_recovery_releases_only_a_hold_proven_never_dispatched`, `test_crash_recovery_conservatively_settles_a_dispatched_orphan`; emulator `test_reconcile_expired_releases_a_hold_proven_never_dispatched` / `..._conservatively_settles_a_dispatched_orphan` |
-| Reservation covers all permitted attempts               | ✅ pass   | `test_the_reservation_covers_every_permitted_dispatched_attempt`, `test_retries_cannot_overspend_the_budget`, domain `test_reservation_covers_every_permitted_dispatched_attempt`             |
-| Reconciliation may raise or lower an estimate           | ✅ pass   | `test_reconciliation_can_lower_an_overestimated_charge`, `test_reconciliation_can_raise_an_underestimated_charge`, emulator `test_reconcile_usage_resolves_an_estimate_and_then_applies_the_ttl` |
-| Retention preserves unresolved reconciliation records   | ✅ pass   | domain `test_retention_keeps_unresolved_records_and_ttls_resolved_ones`; emulator asserts no `_expiresAt` on an unresolved estimate                                                            |
-| Bounded agent calls / Continue checkpoint / kill switch | ✅ pass   | `test_a_run_pauses_at_the_continue_checkpoint_then_resumes`, `test_the_hard_cap_stops_a_run`, `test_only_one_run_is_active_per_session`, `test_kill_switch_disables_ai_everywhere`             |
-| Planning works when AI is unavailable                   | ✅ pass   | `test_ordinary_planning_works_with_ai_disabled`; the gateway is never on the planning path                                                                                                     |
-| One explicitly gated live smoke records model usage     | ⏭ not run | `tests/live/test_vertex_ai_live.py` (`-m live`, skipped unless `WL_LIVE_VERTEX_PROJECT`); not run per instruction                                                                              |
+| Reservation covers all permitted attempts               | ✅ pass   | `test_the_reservation_covers_every_permitted_dispatched_attempt`, `test_retries_cannot_overspend_the_budget`, domain `test_reservation_covers_every_permitted_dispatched_attempt`                                                                                  |
+| Reconciliation may raise or lower an estimate           | ✅ pass   | `test_reconciliation_can_lower_an_overestimated_charge`, `test_reconciliation_can_raise_an_underestimated_charge`, emulator `test_reconcile_usage_resolves_an_estimate_and_then_applies_the_ttl`                                                                   |
+| Retention preserves unresolved reconciliation records   | ✅ pass   | domain `test_retention_keeps_unresolved_records_and_ttls_resolved_ones`; emulator asserts no `_expiresAt` on an unresolved estimate                                                                                                                                |
+| Bounded agent calls / Continue checkpoint / kill switch | ✅ pass   | `test_a_run_pauses_at_the_continue_checkpoint_then_resumes`, `test_the_hard_cap_stops_a_run`, `test_only_one_run_is_active_per_session`, `test_kill_switch_disables_ai_everywhere`                                                                                 |
+| Planning works when AI is unavailable                   | ✅ pass   | `test_ordinary_planning_works_with_ai_disabled`; the gateway is never on the planning path                                                                                                                                                                         |
+| One explicitly gated live smoke records model usage     | ⏭ not run | `tests/live/test_vertex_ai_live.py` (`-m live`, skipped unless `WL_LIVE_VERTEX_PROJECT`); not run per instruction                                                                                                                                                  |
 
 ### Checks run
 
@@ -2911,17 +2911,17 @@ prints the `PATH` export; `eval "$(scripts/use-pinned-node.sh)"` selects it repr
 `engine-strict=true` stays on. (The phase-1 note about Homebrew Node 24.6.0 no longer
 applies.)
 
-| Command                                                           | Result                                                                                                                   |
-| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `npm run test:py`                                                 | ✅ 893 passed, 139 deselected (adds 36 non-emulator AI tests: 11 domain + 20 gateway + 5 API; live smoke + 6 emulator deselected) |
-| AI subset                                                         | ✅ 36 passed (`tests/domain/test_ai.py` 11, `tests/test_ai_gateway.py` 20, `tests/api/test_ai_graphql.py` 5)             |
-| `npm run validate:domain`                                         | ✅ 368 passed (+1 AI domain source/pricing-mode test)                                                                   |
-| `uv run mypy src`, `uv run ruff check .`, `ruff format --check .` | ✅ clean (mypy 125 source files)                                                                                         |
-| `npm run test:web`                                                | ✅ 370 passed, 19 files                                                                                                  |
-| `npm run typecheck`, `npm run lint`                               | ✅ clean (contracts + web, pinned toolchain)                                                                             |
-| `npm run build`                                                   | ✅ built; bundle within budget                                                                                           |
+| Command                                                           | Result                                                                                                                                                                                                           |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run test:py`                                                 | ✅ 893 passed, 139 deselected (adds 36 non-emulator AI tests: 11 domain + 20 gateway + 5 API; live smoke + 6 emulator deselected)                                                                                |
+| AI subset                                                         | ✅ 36 passed (`tests/domain/test_ai.py` 11, `tests/test_ai_gateway.py` 20, `tests/api/test_ai_graphql.py` 5)                                                                                                     |
+| `npm run validate:domain`                                         | ✅ 368 passed (+1 AI domain source/pricing-mode test)                                                                                                                                                            |
+| `uv run mypy src`, `uv run ruff check .`, `ruff format --check .` | ✅ clean (mypy 125 source files)                                                                                                                                                                                 |
+| `npm run test:web`                                                | ✅ 370 passed, 19 files                                                                                                                                                                                          |
+| `npm run typecheck`, `npm run lint`                               | ✅ clean (contracts + web, pinned toolchain)                                                                                                                                                                     |
+| `npm run build`                                                   | ✅ built; bundle within budget                                                                                                                                                                                   |
 | `npm run test:emulator:py` (`-m emulator`)                        | ✅ 104 passed, incl. `tests/emulator/test_firestore_ai.py` (6): concurrent reservations never overspend, duplicate `call_key`s charge once, settlement + TTL, crash recovery, and Prompt 13 economics round-trip |
-| `pytest -m live`, cloud/provision/deploy/billing                  | ⏭ not run (instructed not to call live Vertex, provision, deploy or enable billing)                                      |
+| `pytest -m live`, cloud/provision/deploy/billing                  | ⏭ not run (instructed not to call live Vertex, provision, deploy or enable billing)                                                                                                                              |
 
 ### Close-out (2026-10-12) — point by point
 
@@ -2938,7 +2938,7 @@ applies.)
    resolves an estimate and then the TTL applies. It also round-trips **Prompt 13 economics**
    through Firestore. The full `-m emulator` suite is **106 passed**.
 3. **Ambiguous provider failures are conservative.** The gateway distinguishes
-   *not dispatched* (release — proven zero usage) from *dispatched but ambiguous*
+   _not dispatched_ (release — proven zero usage) from _dispatched but ambiguous_
    (timeout / cancellation after dispatch / exhausted transient retries), which is
    **settled at the reserved worst-case** with `estimated=True`, **never released and never
    replayed**, pending reconciliation. Covered by
@@ -2951,7 +2951,7 @@ applies.)
    incl. thinking, cached input, embedding). Every note states project access is
    **UNVERIFIED**; no page or field claims this project has access.
 5. **AI stays disabled without an allowance.** No budget ⇒ `NO_BUDGET_CONFIGURED` ⇒ disabled;
-   the $5 is a *suggested* owner setting only. `test_no_spend_without_a_configured_budget`
+   the $5 is a _suggested_ owner setting only. `test_no_spend_without_a_configured_budget`
    now also asserts `start_run` is refused (`SERVICE_UNAVAILABLE`), so no run or call can be
    dispatched without an explicit allowance.
 
@@ -2986,7 +2986,7 @@ Verified the four accounting invariants and fixed the gaps found; no live/cloud 
    reconciled. Tests: domain `test_retention_keeps_unresolved_records_and_ttls_resolved_ones`;
    emulator asserts no `_expiresAt` on an unresolved estimate, then present after reconcile.
 4. **Reconciliation may raise or lower an estimate.** Added `reconcile_usage(reservation_id,
-   evidence)`: it resolves an `estimated` hold against evidenced actuals, moving the day's
+evidence)`: it resolves an `estimated` hold against evidenced actuals, moving the day's
    settled total by the **signed** delta (up or down) and clearing `estimated`. Docs that
    claimed an estimate "can only lower" were corrected. Tests:
    `test_reconciliation_can_lower_an_overestimated_charge`,
@@ -3257,3 +3257,323 @@ Firestore client raised `ValueError: Failed to commit transaction in 5 attempts.
 
 Prompt 17 awaits an explicit instruction. Nothing was deployed, provisioned, billed or run
 against live/cloud services; no live Vertex call was made.
+
+## Prompt 17 — Agent conversation and workspace sync (2026-10-13)
+
+**Status:** Local implementation complete; automated Chromium E2E blocked by host sandbox.
+Scope is the owner's Prompt 17, including actual ADK Runner wiring with fake inference.
+Prompt 18 has not started. No live Vertex call, cloud provisioning, deployment or billing.
+
+### Implemented
+
+- Reused the desktop left-agent/right-workspace split, resize control and mobile keyboard
+  tabs. The conversation stays mounted across mode switches on the same session. Added a
+  labelled composer, public progress, escaped structured tool cards, explicit confirmation,
+  cancellation, Continue, Retry connection and normal-mode controls. Consecutive text
+  fragments render as one response. No thought stream, auto-scroll or animation.
+- Actual ADK Runner + persisted session adapter + gateway + authorized tool catalogue in
+  `application/agent/conversation.py`, exposed through `api/agent_routes.py`. Opt-in local
+  fake provider, explicitly rejected in pilot. Default AI remains disabled. Protocol and
+  local settings are documented in `docs/api/agent-stream.md` and ADR 0018.
+- Durable public run history: monotonic run-scoped event IDs, retained snapshot/cursor reset,
+  heartbeat, authenticated fetch reconnection, idle timeout and auth rotation. GETs read
+  history only; no reconnect/restart creates a model call. Idempotent starts bind the prompt.
+- Durable session lease, completed-tool replay guard, interrupted-tool refusal and identical
+  tool counters surviving runtime restart. Existing reservation/kill-switch/quota/budget
+  checks remain in the gateway. Continue is explicit and retains cumulative run counters.
+- Authoritative session/query workspace. Model steps read current session context; stale
+  inferred actions are refused, and the version comparison and effect are transactional.
+  Manual saves notify/reconcile state. Cache cancellation/refetch is limited to affected
+  prefixes; confirmed actions invalidate their affected families.
+- Synchronous gateway, tools, ADK session reads/writes and Firestore retry/backoff run in
+  threads. Context deadlines cap SDK begin/read/commit and provider attempts; bounded outer
+  retry rounds/backoff respect remaining time. Execution segments cap at 35 seconds under
+  a 45-second lease, with loop time capped at 30 seconds and run/lease expiry headroom.
+
+### Findings fixed during acceptance
+
+- Saved coordinator state had initially disabled the composer; `saved` now permits Send.
+- Completion/cancellation status and terminal event now commit atomically, avoiding a stream
+  closing in between the two writes.
+- Public text fragments now join into one paragraph instead of splitting words into rows.
+- A delayed initial history response could erase a successfully started run. An operation
+  epoch now refuses outdated history loads; a regression test proves one start and retained
+  live messages when the initial response arrives late.
+- A fresh question in an existing ADK session now uses its own prompt, rather than being
+  incorrectly treated as a checkpoint Continue.
+- The stale-edit guard originally enclosed step claims in the effect transaction. A refused
+  coverage tool rolled its counter back only on Firestore (memory transactions do not roll
+  back). Step/repeat claims now commit independently; only version check + effect share a
+  transaction. The memory and actual Firestore Runner checks both pass after this fix.
+
+### Exact checks
+
+- `.venv/bin/pytest` — **978 passed, 159 deselected**, one upstream Starlette TestClient
+  deprecation warning. No live tests run.
+- `.venv/bin/pytest -m emulator` with running local Auth + Firestore emulators — **121 passed,
+  1016 deselected**, one upstream warning. Includes the new actual Runner checkpoint/restart
+  test and the existing gateway, lease-concurrency, stale-holder and conversation tests.
+- `npm -w apps/web run test` — **376 passed in 21 files**.
+- `npm run typecheck`, `npm run lint`, Python mypy (**141 source files**), Ruff lint and
+  Ruff formatting (**215 files**) — **pass**.
+- `npm run build` and `npm run budget` — **pass**. Initial JS **148.78 kB gzip / 150 kB**;
+  initial CSS **5.41 kB gzip / 8 kB**. Contracts regenerated from the HTTP API.
+- `git diff --check` — **pass**.
+- Repository-wide `npm run format:check` observed pre-existing documentation formatting
+  failures (seven files at the first run); changed files are formatted separately. The final
+  remaining unchanged-file failures are recorded in the delivered validation report.
+- `WL_E2E_AGENT=1 ... playwright test agent.spec.ts --workers=1` — **3 launch failures,
+  zero browser tests executed**. Chromium fails before opening a page with macOS
+  `bootstrap_check_in ... MachPortRendezvousServer: Permission denied (1100)`. No assertions
+  were disabled or weakened to make this pass. Specs remain for a normal desktop run.
+
+### Acceptance evidence
+
+`tests/agent/test_conversation.py`: actual Runner/tool events, strict ordering, repeated
+start without more model calls, one run across concurrent instances, cancellation without
+late completion, event-loop responsiveness during blocked fake inference, manual-edit
+reconciliation/stale-tool refusal, completed-tool replay, fresh questions, expired execution
+lease recovery without automatic inference, and durable identical-tool counters.
+
+`tests/api/test_agent_conversation_http.py`: real HTTP command/SSE routes, header-based
+bearer checks, rejected URL-only tokens, cross-owner refusal, cursor replay without calls,
+explicit prepared-action confirmation, forged confirmation refusal and idempotent confirm.
+
+`tests/agent/test_deadline.py`: RPC deadline/no hidden SDK retries and contention/backoff
+stopping at the request deadline. `tests/emulator/test_agent_conversation.py`: real Firestore
+restart/Continue with the actual Runner, cumulative calls and no repeated tool effects.
+
+Frontend transport/component tests: split stream framing/heartbeats, forced auth refresh
+on 401 with unchanged run/cursor, signed-out refusal, usable composer after saving, partial
+results, workspace-focus action, duplicate-event suppression and scoped invalidation. The
+existing layout/session tests cover mobile tabs, mode persistence, keyboard and resize.
+App-browser inspection exercises the running local UI separately; it is not represented as
+an automated Playwright pass. Final manual inspection results are in the validation report.
+
+### Remaining limitations
+
+- Local fake inference only; provider-token streaming and general language planning are not
+  claimed. The local dialogue checks coverage and points to structured results/missing data.
+- Recovery after an expired execution segment is an explicit continuation turn from saved
+  history on the same run, not automatic resumption/replay of an uncertain provider request.
+- Public history is bounded (200 events/200 kB); trimmed actions need fresh preparation.
+  Raw ADK state remains private. This is not a complete audit archive.
+- Pilot/live adapters, live authentication renewal under production policies, cloud TTL,
+  live Vertex and deployment remain unverified. Existing scientific/data-review gaps remain.
+- Headless browser automation is blocked by the host sandbox. No full browser suite pass is
+  claimed. `npm ci` also reported 24 existing dependency advisories (4 moderate, 20 high);
+  dependency upgrades are outside Prompt 17 and no lockfile was changed.
+
+### Next
+
+Stop here. Prompt 18 awaits explicit instruction.
+
+### Final running-API and browser inspection
+
+A real HTTP probe of the running emulator-backed API created a fresh anonymous account and
+synthetic-area session, then completed the actual Runner: ordered IDs 1–11; public progress
+at 0.213s, structured coverage/result and first text at 0.214s, more text at 0.419s, completion
+at 0.624s. Cursor reconnect returned 200 without acknowledged IDs; repeating start returned
+the same run with the same cursor. Tokens were kept only in process memory and not printed.
+
+In-app browser mobile inspection at 390×844 verified Home-key Conversation tab selection,
+Traditional/Agent controls and document width 375px (no horizontal overflow); viewport reset.
+It also intermittently failed fetch/dynamic dev imports. Chrome was unavailable through the
+connector. This is **not a complete browser acceptance pass**, and no such pass is claimed.
+
+Final frontend suite: **376 passed**. Final production build/budget passed. Repository-wide
+Prettier still fails on five unchanged legacy documents (ADR 0015, ADK sessions, agent tools,
+AI gateway and product traceability); changed files are formatted. Full delivered evidence:
+`/Users/quashid/Documents/Codex/2026-10-13/can/outputs/Prompt-17-validation.md`.
+
+## Prompt 18 — desktop admin funding catalogue (2026-10-13)
+
+Owner-revised hackathon scope: desktop-only, minimal high-value verification, local
+emulators and fake/disabled inference. The owner authorized a mock document because
+no permitted official funding documents were supplied.
+
+Added `/admin/funding` and an admin-only HTTP catalogue importer: verified permanent
+Firebase identity plus server-side UID allowlist (empty denies all), bounded offline
+JSON/PDF evidence, server SHA-256 and immutable private artifacts. Preserves publisher,
+URL, geography, applicants, interventions, exact amount rules/units, deadline/timezone,
+documents, verification date, lifecycle status and explicit unknown fields/metadata.
+Human review controls real publication; synthetic records cannot become real funding.
+The checked-in mock source/import examples are labelled synthetic, status `demo`.
+
+Updates use transactional expected revisions. Withdrawal and publisher-timezone expiry
+invalidate stored matches by scheme revision/status on reads and idempotent replay;
+reports/financial snapshots are untouched. Drafts remain unpublished, existing matching
+is retained, and admin edits invalidate only funding caches. Bootstrap preserves saved
+catalogue changes. The editor guards account changes and late responses, reuses shared
+components, focuses Edit and retains basic desktop keyboard operation. No crawler,
+network download or extraction model was added.
+
+Validation: **73 passed** in affected backend/API checks (including exactly two new
+compact tests); **30 passed** in the final overlapping funding/schema recheck;
+**36 passed** in reused frontend tests (2 files); **2 passed** reused emulator checks.
+Mypy passes 143 source files; Ruff lint/format, ESLint (0 warnings), contract export/codegen,
+Prettier, TypeScript/build, bundle budget and diff checks pass. Lockfiles unchanged.
+Initial validation failures were corrected (HTTP error expectation, schema-export timing,
+JSON scalar codegen mapping, and a ref-cleanup lint warning). No new broad suite.
+
+Manual built-desktop inspection passed catalogue/empty/error presentation, synthetic
+labels, edit focus, Tab-to-revision and sign-out clearing. Actual emulator-backed HTTP
+import returned 200/demo/revision 1. An isolated in-memory store with actual Auth emulator
+was used for empty/final mock presentation; no catalogue data was deleted for this check.
+The in-app browser intermittently returned “Failed to fetch” after restart/sign-in;
+reopening a tab recovered, while direct API reads remained 200. This does not close all
+browser recovery criteria. Earlier five Markdown formatting failures are now fixed;
+repository formatting passes.
+
+Full exact evidence and limitations:
+`/Users/quashid/Documents/Codex/2026-10-13/can/outputs/Prompt-18-validation.md`.
+Contract/lifecycle documentation: `docs/domain/funding-catalogue.md`.
+Real official curation, non-INR economics and earlier scientific review gaps remain.
+Prompt 17 core desktop browser acceptance remains pending, eligible for Prompt 24.
+No live Vertex, embedding, Maps, provisioning, deployment or billing was performed.
+**Stop after Prompt 18; Prompt 19 awaits explicit revised instructions.**
+
+## Prompt 19 — eligibility and optional relevance (2026-10-14)
+
+Owner-revised desktop hackathon scope, local/emulator only. Added `funding-rules/2`:
+eligible/ineligible/needs-information with evidence for recorded geography, applicant,
+interventions, exact amount rules, publisher deadlines and required declarations/docs.
+Existing criterion results remain compatible; unsupported/free-text/source unknowns
+require information. Scheme/session/rules revisions and current expiry invalidate stale
+matches. Reports and approved-funding economics are untouched.
+
+The Make It Happen desktop workspace reads the saved authorized session/plan, accepts
+explicit declarations, displays source-backed cards/excluded reasons/no-match and
+optional fake relevance. Ranking never overrides eligibility or invents percentages.
+Mode/session plumbing and previous responsive/tests remain; no mobile work was added.
+
+Server fake embeddings use versioned model/dimension/full-content/source hashes and
+UID-scoped query caches. Calls share the AI ledger, budget, kill-switch and invitations;
+an atomic dispatch claim and durable tombstones prevent duplicates/replay. No embedding
+retry or conversation run is created. Retained unarmed Vertex and Firestore COSINE
+find_nearest adapters require separate future authorization/setup; the 768-dimensional
+index is declared but unprovisioned. SDKs remain locked at google-genai 2.29.0 and
+Firestore 2.34.1. Live pricing/token metering/index/quality are explicitly unverified;
+proposed byte-ceiling accounting is synthetic locally and estimated on the retained
+live path. Four rankable candidates/five cold calls is the hackathon bound; otherwise
+all deterministic results survive via explicit fallback.
+
+Verification: **99 affected backend tests passed**, including two new compact functions
+(four eligibility table cases + one cache/budget/kill/fallback test, 5 cases total).
+**39 reused frontend tests passed** (3 files). Mypy passes 148 source files; Ruff lint
+and format (150 files), contracts, ESLint (0 warnings), TypeScript/build, Prettier,
+diff and budget checks pass. Initial JS is 148.87/150.00 kB gzip; CSS 5.41/8.00.
+Lockfiles unchanged; no new broad suite or unrelated full-suite run.
+
+Desktop inspection passed saved-session loading, empty matches, needs-information
+source evidence, fake ranking preserving unknown co-funding, no-match for an excluded
+applicant, restored no-match after Retry, and Tab focus. Emulator inspection found two
+768-value fake cache records with native vector fields and two synthetic ledger requests;
+this is not evidence of real vector retrieval. A resumed in-app session read initially
+failed (`ClientDisconnect` in API log, health 200); Retry recovered. No exhaustive
+transport/restart pass is claimed. Prompt 17 core desktop browser acceptance remains
+pending for possible Prompt 24 verification. Global locations, proposals, communities,
+tracking and the non-INR economics gap remain in scope.
+
+Details: `docs/domain/funding-eligibility-ranking.md` and
+`/Users/quashid/Documents/Codex/2026-10-13/can/outputs/Prompt-19-validation.md`.
+**Stop after Prompt 19. Prompt 20 awaits explicit revised instructions.** No live
+Vertex, embedding, Maps, provisioning, deployment or billing action occurred.
+
+## Prompt 20 — immutable reports and proposal review (2026-10-14)
+
+Implemented desktop report review/list/detail/archive and proposal preparation. First report
+finalization requires permanent authentication, verifies the current plan and impact versions,
+and commits an immutable versioned snapshot under an idempotency key. Proposal generation
+uses a finalized snapshot and verified official source (or visibly synthetic demo), applicant
+details, exact saved financial values, assumptions, source evidence and a document checklist.
+Durable proposal jobs now produce deterministic review HTML and one-page PDF. Owner checks
+protect both artifacts; corrections create private versions, and external submission stays
+manual. Model wording has no authority over saved numbers.
+
+Focused verification passed: `pytest tests/test_durable_jobs.py tests/api/test_http_routes.py
+tests/api/test_economics_graphql.py tests/api/test_graphql_behaviour.py
+tests/api/test_impact_graphql.py` (73 passed, one Starlette/httpx deprecation warning), Ruff,
+mypy (149 source files), affected web ESLint, web typecheck/build, and bundle budget. The new
+service case checks finalization replay and proposal input figure fidelity; existing private
+artifact coverage now also checks HTML preview tenant isolation. One generated Letter PDF
+was rendered and visually inspected: one page, readable hierarchy, exact money and funding
+gap, required documents, source/hash/verification notes and synthetic disclaimer.
+
+Browser/manual report and proposal screen inspection is **skipped**, not passed. Emulator
+startup returns: `firebase-tools no longer supports Java version before 21. Please install a
+JDK at version 21 or above to get a compatible runtime.` The host only has Java 17. The
+top-level `npm run contracts` wrapper also could not run because `uv` is absent from PATH;
+the generated contract/build artifacts had been exported and code-generated with the pinned
+project runtimes before this close-out. Real funding sources, cloud worker delivery, live
+services, and non-INR economics remain unverified or outstanding. Prompt 17 core browser
+acceptance also remains pending. Details: `outputs/Prompt-20-validation.md`.
+
+**Stop after Prompt 20.** No live services, provisioning, deployment or billing actions were
+performed. Do not start Prompt 21 without an explicit instruction.
+
+## Prompt 21 — desktop communities (2026-10-14)
+
+Implemented the desktop nearby/name search, radius and archive filters, community details,
+creation, join/leave and archive flows. Creation requires a permanent account and an owned,
+finalized, non-archived report. Contact name/email are private unless separately selected for
+publication; the shared report summary contains only goal category and finalization date. The
+report's title, private address, applicant information, source documents and attachments are
+not exposed. Nearby discovery uses the selected planning area's centroid only for the bounded
+query and explains that proximity is not hydrological connectivity.
+
+Authenticated join is immediate; guest join requests sign-in while retaining the selected
+community and continue the intended join after authentication. Join/leave use idempotency keys
+and atomically maintain the member count. Last coordinator leave is rejected with archive
+guidance. Archive hides the community from ordinary and nearby discovery, rejects new joins,
+planning sessions and tracking writes. Its sanitized public summary remains visible from the
+explicit archive filter; member-only linked reports and projects remain read-only for existing
+members.
+
+**Checks:** 107 focused backend tests passed (one Starlette/httpx deprecation warning); the
+existing Firestore store/concurrency emulator suite passed (20 tests, same warning); targeted
+Ruff passed; mypy passed for 149 source files; affected web ESLint, web typecheck/build, bundle
+budget, API contract export/codegen and `git diff --check` passed. Manual desktop inspection showed the empty community list and the
+guest creation gate. Full creation, community detail and join/leave screen interaction remain
+unverified because no authenticated owner with a finalized report was seeded for this browser
+pass. No mobile acceptance was attempted.
+
+The Firestore emulator was started locally with JDK 21 and cached emulator binaries. Its first
+startup attempt failed because firebase-tools tried to create `/Users/quashid/.cache/firebase/
+emulators` outside the allowed filesystem; setting `FIREBASE_EMULATORS_PATH` to the workspace
+cache resolved it. No live service, provisioning, deployment or billing action occurred.
+Non-INR economics and hydrological connectivity evidence remain outstanding. See
+`outputs/Prompt-21-validation.md`.
+
+**Stop after Prompt 21.** Do not begin Prompt 22 without an explicit instruction.
+
+## Prompt 22 — implementation projects and observations (2026-10-14)
+
+The desktop tracking workspace creates projects from finalized report snapshots, private unless
+the owner explicitly shares with the report's community. Project version and report version are
+retained. Milestones carry tasks, responsible person/team, target and completion dates; status
+progress is shown as completed milestones only. Exact expenses use the existing native-currency
+minor-unit representation without conversion. Owners and community coordinators can write;
+active community members can read shared projects. Archived source reports and communities
+block project writes, while project archival preserves history.
+
+Manual observations include the exact value/unit, metric identifier, method, source/reference,
+observed date, measurement period and coverage. A permitted document reference requires explicit
+permission attestation. Forecast comparison is unknown unless metric definition, exact unit,
+report area, forecast period and complete coverage all match. A comparable result explicitly
+does not establish causation; tasks are not presented as outcome evidence. No IoT, automatic
+model training or collaboration infrastructure was added.
+
+Focused verification: five table-driven observation cases cover matching and incompatible
+metric/unit/period/coverage; authorization checks cover private/shared visibility, coordinator
+write, member write denial, unauthorized observation and stale milestone version. Existing agent
+write-confirmation tests remain in the focused run. Targeted backend tests, Ruff/mypy, web
+typecheck/build, affected ESLint and contract/codegen passed. The local in-app browser inspection
+checked the empty report state, private project creation, milestone completion date and manual
+observation entry with AI disabled. The saved observation correctly stayed unknown because the
+synthetic report had no forecast period. Playwright's installed Chromium could not launch in the
+macOS sandbox (`MachPortRendezvous` permission denied (1100)); the in-app browser completed the
+manual desktop check. No mobile acceptance or cloud action occurred. Details:
+`outputs/Prompt-22-validation.md`.
+
+**Stop after Prompt 22.** No live service, provisioning, deployment or billing action occurred.

@@ -7,7 +7,6 @@ import strawberry
 
 from waterlens.api.graphql.context import Info, attempt, call
 from waterlens.api.graphql.loaders import load_existing
-from waterlens.api.graphql.modules.planning import Area
 from waterlens.api.graphql.scalars import DecimalString, UtcDateTime
 from waterlens.api.graphql.types_common import (
     Connection,
@@ -55,6 +54,23 @@ def _viewer_uid(info: Info) -> str | None:
 
 
 @strawberry.type
+class SharedReportSummary:
+    """A deliberately small, address-free public projection of a finalized report."""
+
+    goal: str
+    finalized_at: UtcDateTime
+
+
+@strawberry.type
+class CommunityArea:
+    """Coarse public area only; no address, coordinates, boundary or provider metadata."""
+
+    id: strawberry.ID
+    name: str
+    country_code: str
+
+
+@strawberry.type
 class Community:
     id: strawberry.ID
     version: int
@@ -64,6 +80,9 @@ class Community:
     status: dc.CommunityStatus
     member_count: int
     archived_at: UtcDateTime | None
+    contact_name: str | None
+    contact_email: str | None
+    shared_report: SharedReportSummary | None
     created_at: UtcDateTime
     updated_at: UtcDateTime
 
@@ -78,16 +97,30 @@ class Community:
             status=c.status,
             member_count=c.member_count,
             archived_at=UtcDateTime(c.archived_at) if c.archived_at else None,
+            contact_name=c.contact_name if c.share_contact_name else None,
+            contact_email=c.contact_email if c.share_contact_email else None,
+            shared_report=(
+                SharedReportSummary(
+                    goal=c.shared_report_goal.value,
+                    finalized_at=UtcDateTime(c.shared_report_finalized_at),
+                )
+                if c.shared_report_goal is not None and c.shared_report_finalized_at is not None
+                else None
+            ),
             created_at=UtcDateTime(c.created_at),
             updated_at=UtcDateTime(c.updated_at),
         )
 
     @strawberry.field
-    async def area(self, info: Info) -> Area | None:
+    async def area(self, info: Info) -> CommunityArea | None:
         if self.area_id is None:
             return None
         found = await info.context.loaders.area.load(str(self.area_id))
-        return Area.of(found) if found is not None else None
+        if found is None or found.owner_uid is not None:
+            return None
+        return CommunityArea(
+            id=strawberry.ID(found.id), name=found.name, country_code=found.country_code
+        )
 
     @strawberry.field(description="The caller's active membership, or null.")
     async def viewer_membership(self, info: Info) -> Membership | None:
@@ -107,6 +140,7 @@ class Community:
 class CommunityFilter:
     area_id: strawberry.ID | None = None
     include_archived: bool = False
+    archived_only: bool = False
 
 
 @strawberry.input(description="A search circle around a point the user chose.")
@@ -141,6 +175,11 @@ class CreateCommunityInput:
     name: str
     description: str = ""
     area_id: strawberry.ID | None = None
+    report_id: strawberry.ID
+    contact_name: str
+    contact_email: str | None = None
+    share_contact_name: bool = False
+    share_contact_email: bool = False
     idempotency_key: str
 
 
@@ -191,7 +230,9 @@ class Query:
         f = filter or CommunityFilter()
         area = str(f.area_id) if f.area_id else None
         c = info.context.services.communities
-        page = await call(c.browse, area, f.include_archived, page_args(first, after))
+        page = await call(
+            c.browse, area, f.include_archived, f.archived_only, page_args(first, after)
+        )
         return connection(page, Community.of)
 
     @strawberry.field(description="Active communities within the radius, nearest first.")

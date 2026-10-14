@@ -1,0 +1,28 @@
+.page {
+  display: grid;
+  gap: var(--wl-space-5);
+}
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--wl-space-6);
+  align-items: start;
+}
+.card {
+  border: 1px solid var(--wl-color-border);
+  border-radius: var(--wl-radius-lg);
+  padding: var(--wl-space-5);
+  margin-block-end: var(--wl-space-5);
+  overflow-wrap: anywhere;
+  display: grid;
+  gap: var(--wl-space-3);
+  background: var(--wl-color-surface);
+}
+.card dl {
+  display: grid;
+  grid-template-columns: 8rem minmax(0, 1fr);
+  gap: var(--wl-space-2);
+}
+.card dd {
+  margin: 0;
+}

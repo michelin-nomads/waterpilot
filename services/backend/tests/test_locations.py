@@ -22,6 +22,7 @@ from waterlens.application.ports import NoPlaceSearch, PlaceSearchUnavailable
 from waterlens.application.services import Deps, Services
 from waterlens.config import ConfigError
 from waterlens.domain.errors import DomainError, ErrorCode
+from waterlens.domain.ids import IdKind, new_id
 from waterlens.domain.location import (
     AreaOrigin,
     ExtentKind,
@@ -252,7 +253,16 @@ def test_device_location_keeps_its_accuracy_and_a_private_community_is_refused()
     )
     assert area.accuracy_m == 2500 and area.owner_uid == "ben"
     with pytest.raises(DomainError) as err:
-        s.communities.create(ctx(BEN), {"name": "Well users", "area_id": area.id}, key("c1"))
+        s.communities.create(
+            ctx(BEN),
+            {
+                "name": "Well users",
+                "area_id": area.id,
+                "report_id": new_id(IdKind.REPORT),
+                "contact_name": "Ben",
+            },
+            key("c1"),
+        )
     assert "private" in err.value.message
 
 

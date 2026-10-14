@@ -23,9 +23,8 @@ from waterlens.adapters.auth_emulator import (
     EmulatorTokenVerifier,
 )
 from waterlens.adapters.auth_firebase import FirebaseAdminTokenVerifier, admin_sdk_verify
-from waterlens.adapters.factory import build_api_runtime, build_identity_verifier
+from waterlens.adapters.factory import build_identity_verifier
 from waterlens.application.identity import AccountKind, Principal
-from waterlens.config import ConfigError
 from waterlens.domain.errors import DomainError, ErrorCode
 
 NOW = datetime(2026, 10, 10, 6, 0, tzinfo=UTC)
@@ -238,7 +237,7 @@ def test_local_mode_builds_the_emulator_verifier(load_settings: LoadSettings) ->
     assert isinstance(build_identity_verifier(load_settings(LOCAL_OK)), EmulatorTokenVerifier)
 
 
-def test_pilot_mode_builds_the_admin_sdk_verifier_but_still_refuses_the_memory_store(
+def test_pilot_mode_builds_the_admin_sdk_verifier(
     load_settings: LoadSettings, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     settings = load_settings(PILOT_OK)
@@ -248,8 +247,6 @@ def test_pilot_mode_builds_the_admin_sdk_verifier_but_still_refuses_the_memory_s
     )
     verifier = build_identity_verifier(settings)
     assert isinstance(verifier, FirebaseAdminTokenVerifier)
-    with pytest.raises(ConfigError):
-        build_api_runtime(settings)
 
 
 class _DownVerifier:

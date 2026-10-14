@@ -23,6 +23,7 @@ from sources_support import (
 )
 from waterlens.adapters.source_http import HttpSourceFetcher
 from waterlens.application.artifacts import ArtifactStore
+from waterlens.application.ports import FetchError
 from waterlens.application.sources.admin import SourceAdmin
 from waterlens.application.sources.ingestion import snapshot_id_for
 from waterlens.application.sources.parsing import ParseRejected, parse_geojson_footprint
@@ -321,7 +322,9 @@ AUTHORIZED_FOR_TEST = {
 
 
 def _transport(handler: Any) -> HttpSourceFetcher:
-    return HttpSourceFetcher(httpx.MockTransport(handler))
+    return HttpSourceFetcher(
+        httpx.MockTransport(handler), resolve_host=lambda _host, _port: ("93.184.216.34",)
+    )
 
 
 def test_connectivity_is_recorded_separately_from_licence(tmp_path: Path) -> None:
@@ -377,6 +380,29 @@ def test_fetch_is_https_same_host_bounded_and_imports(tmp_path: Path) -> None:
     assert big.status is IngestionStatus.FAILED and "larger than" in big.problems[0]
     moved = admin.fetch_and_ingest("test-utility-supply", "https://data.example.org/moved.csv")
     assert moved.status is IngestionStatus.FAILED and "HTTP 302" in moved.problems[0]
+
+
+@pytest.mark.parametrize("address", ["127.0.0.1", "10.1.2.3", "169.254.169.254", "::1"])
+def test_fetcher_refuses_private_or_local_dns_targets(address: str) -> None:
+    fetcher = HttpSourceFetcher(
+        httpx.MockTransport(lambda _request: pytest.fail("private target was contacted")),
+        resolve_host=lambda _host, _port: (address,),
+    )
+    with pytest.raises(FetchError, match="non-public"):
+        fetcher.probe("https://data.example.org/supply.csv")
+
+
+def test_fetcher_refuses_url_credentials_and_nonstandard_ports() -> None:
+    fetcher = HttpSourceFetcher(
+        httpx.MockTransport(lambda _request: pytest.fail("unsafe URL was contacted")),
+        resolve_host=lambda _host, _port: ("93.184.216.34",),
+    )
+    for url in (
+        "https://user:password@data.example.org/supply.csv",
+        "https://data.example.org:8443/supply.csv",
+    ):
+        with pytest.raises(FetchError):
+            fetcher.probe(url)
 
 
 def test_registration_requires_a_registered_source_manifest(tmp_path: Path) -> None:

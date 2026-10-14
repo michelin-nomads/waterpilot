@@ -12,6 +12,7 @@ into the ADK loop), exactly as the gateway LLM bridge surfaces refusals.
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 from google.adk.tools.base_tool import BaseTool
@@ -46,7 +47,9 @@ class RuntimeTool(BaseTool):
         # runtime's, so this is safe to accept from the untrusted model loop.
         call_id = getattr(tool_context, "function_call_id", None)
         try:
-            result = self._runtime.call(self._spec.name, dict(args or {}), call_id=call_id)
+            result = await asyncio.to_thread(
+                self._runtime.call, self._spec.name, dict(args or {}), call_id=call_id
+            )
         except DomainError as err:
             return {"error": {"code": err.code.value, "message": err.message}}
         payload: Json = {"result": result.data, "step": result.step}

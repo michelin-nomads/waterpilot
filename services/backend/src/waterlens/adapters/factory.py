@@ -3,8 +3,8 @@
 Local mode uses the Firestore emulator (or the in-memory store), local files for
 artifacts and a local file queue for run requests. The Firestore store, Cloud Storage
 artifacts, Cloud Tasks dispatch and the worker's OIDC check are ready for a real project,
-but pilot mode is still refused as a whole until every live adapter it needs exists,
-rather than silently falling back to local disk or synthetic catalogues.
+and pilot mode selects only the cloud adapters; it never falls back to local disk or
+seeds synthetic catalogue data.
 """
 
 from __future__ import annotations
@@ -22,6 +22,7 @@ from waterlens.adapters.catalogue_synthetic import (
     synthetic_area_catalogue,
     synthetic_funding_catalogue,
 )
+from waterlens.adapters.funding_vectors import FakeFundingVectors
 from waterlens.adapters.jobqueue_memory import MemoryJobQueue
 from waterlens.adapters.jobrunner_local import LocalJobRunner
 from waterlens.adapters.storage_local import LocalObjectStorage
@@ -59,6 +60,7 @@ class ApiRuntime:
     services: Services
     verifier: IdentityVerifier
     artifacts: ArtifactStore
+    agent: object | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -70,18 +72,9 @@ class WorkerRuntime:
     worker_id: str
 
 
-PILOT_MISSING_ADAPTERS = (
-    "verified funding catalogue (Prompt 18)",
-    "proposal renderer (Prompt 20)",
-)
-
-
 def _require_local(settings: Settings, adapter: str) -> None:
     if settings.is_pilot:
-        raise ConfigError(
-            f"{adapter} is local-only and cannot run in pilot mode; pilot also needs: "
-            + "; ".join(PILOT_MISSING_ADAPTERS)
-        )
+        raise ConfigError(f"{adapter} is local-only and cannot run in pilot mode")
 
 
 def _missing(settings: Settings, *names: str) -> None:
@@ -182,6 +175,10 @@ def build_model_provider(settings: Settings) -> ModelProvider:
     the kill switch off, build the Vertex adapter through Application Default Credentials
     for the dedicated runtime service account."""
     if not settings.is_pilot:
+        if settings.agent_fake_inference:
+            from waterlens.adapters.model_agent_fake import LocalAgentProvider
+
+            return LocalAgentProvider(settings.ai_model)
         return NoModelProvider(settings.ai_model)
     if settings.ai_kill_switch or not settings.ai_enabled:
         return NoModelProvider(settings.ai_model)
@@ -197,8 +194,14 @@ def build_model_provider(settings: Settings) -> ModelProvider:
 
 
 def build_ai_config(settings: Settings) -> AiConfig:
+    from waterlens.adapters.embedding_fake import FakeEmbeddingProvider
+    from waterlens.application.ports import NoModelProvider
+
     return AiConfig(
         provider=build_model_provider(settings),
+        embedding_provider=FakeEmbeddingProvider()
+        if settings.funding_fake_embeddings and not settings.is_pilot
+        else NoModelProvider(),
         enabled=settings.ai_enabled,
         kill_switch=settings.ai_kill_switch,
         open_to_all=settings.ai_open_to_all,
@@ -240,19 +243,40 @@ def build_local_store(settings: Settings) -> Store:
         emulator_client(settings.gcp_project), fixed_areas=synthetic_area_catalogue()
     )
     for scheme in synthetic_funding_catalogue().all_active(limit=1_000):
-        store.funding_schemes.add(scheme)  # idempotent: set by id, emulator only
+        if store.funding_schemes.get(scheme.id) is None:
+            store.funding_schemes.add(scheme)  # seed once; preserve catalogue updates
     return store
 
 
+def build_pilot_store(settings: Settings) -> FirestoreStore:
+    """Use the project's default Firestore database without emulator or demo fixtures.
+
+    The Firestore store's funding catalogue is the curator-managed source of truth;
+    publication rules are enforced by ``FundingCatalogueAdmin`` and the funding service
+    keeps DEMO records distinct from verified ACTIVE records.
+    """
+    if not settings.is_pilot:
+        raise ConfigError("the pilot Firestore store is for pilot mode only")
+    from google.cloud import firestore
+
+    # No emulator host is passed here. Settings reject SDK emulator variables in pilot.
+    return FirestoreStore(firestore.Client(project=settings.gcp_project))
+
+
 def build_api_runtime(settings: Settings, clock: Callable[[], datetime] = _utc_now) -> ApiRuntime:
-    """Local mode: Firestore emulator (or in-memory) store with SYNTHETIC catalogue data,
-    emulator-token verification, local artifacts and the local file queue (the in-process
-    queue with the in-memory store, which no worker process can see). Pilot mode is
-    refused until every live adapter exists (see ``PILOT_MISSING_ADAPTERS``)."""
-    store = build_local_store(settings)
-    jobs: JobRunner = (
-        MemoryJobQueue() if settings.local_store == "memory" else build_local_job_runner(settings)
-    )
+    """Local mode uses emulator/memory data and local artifacts/jobs. Pilot mode uses
+    the default Firestore database, Cloud Tasks and private Cloud Storage. Both paths
+    share application services and authorization."""
+    if settings.is_pilot:
+        store: Store = build_pilot_store(settings)
+        jobs: JobRunner = build_cloud_job_runner(settings)
+    else:
+        store = build_local_store(settings)
+        jobs = (
+            MemoryJobQueue()
+            if settings.local_store == "memory"
+            else build_local_job_runner(settings)
+        )
     artifacts = ArtifactStore(build_object_storage(settings))
     deps = Deps(
         store=store,
@@ -263,11 +287,25 @@ def build_api_runtime(settings: Settings, clock: Callable[[], datetime] = _utc_n
         places=build_place_search(settings),
         series=ArtifactSeriesReader(artifacts),
         ai=build_ai_config(settings),
+        funding_vectors=FakeFundingVectors() if not settings.is_pilot else None,
+    )
+    services = Services.build(deps)
+    from waterlens.adapters.conversation_firestore import FirestoreConversationStore
+    from waterlens.adapters.conversation_memory import MemoryConversationStore
+    from waterlens.application.agent.conversation import ConversationAgent
+
+    conversations = (
+        FirestoreConversationStore(store.client)
+        if isinstance(store, FirestoreStore)
+        else MemoryConversationStore()
     )
     return ApiRuntime(
-        services=Services.build(deps),
+        services=services,
         verifier=build_identity_verifier(settings, clock),
         artifacts=artifacts,
+        agent=ConversationAgent(services, conversations)
+        if not settings.is_pilot and settings.agent_fake_inference
+        else None,
     )
 
 
@@ -304,4 +342,36 @@ def build_local_worker_runtime(
         )
     runner = build_local_job_runner(settings)
     store = build_local_store(settings)
-    return build_worker_runtime(store, runner, build_object_storage(settings), clock=clock), runner
+    from waterlens.adapters.proposal_renderer import LocalProposalRenderer
+
+    return (
+        build_worker_runtime(
+            store,
+            runner,
+            build_object_storage(settings),
+            renderer=LocalProposalRenderer(),
+            clock=clock,
+        ),
+        runner,
+    )
+
+
+def build_pilot_worker_runtime(
+    settings: Settings, clock: Callable[[], datetime] = _utc_now
+) -> WorkerRuntime:
+    """Build Cloud Tasks execution over the API's Firestore and private GCS resources.
+
+    The deterministic renderer consumes immutable report/scheme inputs and has no model
+    or external-service dependency; rendered documents use the private GCS adapter.
+    """
+    if not settings.is_pilot:
+        raise ConfigError("the HTTP worker runs in pilot mode only")
+    from waterlens.adapters.proposal_renderer import DeterministicProposalRenderer
+
+    return build_worker_runtime(
+        build_pilot_store(settings),
+        build_cloud_job_runner(settings),
+        build_object_storage(settings),
+        renderer=DeterministicProposalRenderer(),
+        clock=clock,
+    )

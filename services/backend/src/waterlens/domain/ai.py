@@ -206,9 +206,13 @@ class ModelTask(StrEnum):
     OPTION_EXPLANATION = "option_explanation"
     IMPACT_SUMMARY = "impact_summary"
     PROPOSAL_NARRATIVE = "proposal_narrative"
+    EMBEDDING_QUERY = "embedding_query"
+    EMBEDDING_DOCUMENT = "embedding_document"
 
 
 TASK_OUTPUT_LIMIT: dict[ModelTask, int] = {
+    ModelTask.EMBEDDING_QUERY: 0,
+    ModelTask.EMBEDDING_DOCUMENT: 0,
     ModelTask.GOAL_INTERPRETATION: 512,
     ModelTask.SCENARIO_INTERPRETATION: 512,
     ModelTask.OPTION_EXPLANATION: 1024,

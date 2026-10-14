@@ -36,7 +36,12 @@ from waterlens.adapters.store_firestore import FirestoreStore
 from waterlens.application.identity import AccountKind, Principal, RequestContext
 from waterlens.application.pagination import PageArgs, page_query
 from waterlens.application.services import Deps, Services
-from waterlens.domain.communities import CommunityStatus
+from waterlens.domain.communities import (
+    CommunityStatus,
+    Membership,
+    MembershipRole,
+    membership_id,
+)
 from waterlens.domain.errors import DomainError, ErrorCode
 from waterlens.domain.ids import IdKind, new_id
 from waterlens.domain.impact import (
@@ -53,7 +58,14 @@ from waterlens.domain.options import compare_options, comparison_key
 from waterlens.domain.planning import Goal, GoalFields, GoalKind, SessionStatus, SiteConstraints
 from waterlens.domain.reports import Report
 from waterlens.domain.scenario import Balance
-from waterlens.domain.values import Unit
+from waterlens.domain.tracking import (
+    ImplementationProject,
+    Milestone,
+    Observation,
+    ObservationSourceType,
+    ProjectExpense,
+)
+from waterlens.domain.values import Money, Quantity, Unit
 
 pytestmark = pytest.mark.emulator
 
@@ -65,6 +77,92 @@ def store(firestore_store: FirestoreStore) -> FirestoreStore:  # noqa: F811
 
 class TestFirestoreStore(StoreContract):
     pass
+
+
+def test_tracking_project_and_observation_fields_round_trip_in_firestore(
+    store: FirestoreStore,
+) -> None:
+    project = ImplementationProject(
+        id=new_id(IdKind.PROJECT),
+        owner_uid="project-owner",
+        report_id=new_id(IdKind.REPORT),
+        report_version=2,
+        area_id=AREA_ID,
+        community_id=new_id(IdKind.COMMUNITY),
+        shared_with_community=True,
+        title="Manual tracking fixture",
+        started_at=NOW,
+        created_at=NOW,
+        updated_at=NOW,
+        expenses=(
+            ProjectExpense(
+                description="Gauge",
+                spent_on=date(2026, 10, 11),
+                amount=Money(minor_units="1250", currency="INR"),
+                source="Invoice 21",
+            ),
+        ),
+    )
+    store.projects.insert(project)
+    member = Membership(
+        id=membership_id(project.community_id or "", "tracking-reader"),
+        community_id=project.community_id or "",
+        uid="tracking-reader",
+        role=MembershipRole.MEMBER,
+        joined_at=NOW,
+        created_at=NOW,
+        updated_at=NOW,
+    )
+    store.memberships.insert(member)
+    milestone = Milestone(
+        id=new_id(IdKind.MILESTONE),
+        project_id=project.id,
+        title="Install gauge",
+        planned_on=date(2026, 11, 1),
+        responsible_identity="Field team",
+        tasks=("Mount", "Calibrate"),
+        created_at=NOW,
+        updated_at=NOW,
+    )
+    store.milestones.insert(milestone)
+    observation = Observation(
+        id=new_id(IdKind.OBSERVATION),
+        project_id=project.id,
+        recorded_by_uid="project-owner",
+        metric_id="supply_volume_rate",
+        observed_on=date(2026, 10, 11),
+        quantity=Quantity(value="12.5", unit=Unit.LITRES_PER_DAY),
+        method="Manual gauge reading",
+        source_type=ObservationSourceType.PERMITTED_DOCUMENT,
+        source="Approved field log",
+        permitted_source_confirmed=True,
+        area_id=AREA_ID,
+        window_start=date(2026, 10, 10),
+        window_end=date(2026, 10, 12),
+        coverage_observed_days=3,
+        coverage_expected_days=3,
+        created_at=NOW,
+        updated_at=NOW,
+    )
+    store.observations.insert(observation)
+
+    saved_project = store.projects.get(project.id)
+    shared_filter = {"community_id": project.community_id}
+    shared_page = store.projects.page(shared_filter, PageArgs(first=10).bind(shared_filter))
+    member_page = services(store).tracking.my_projects(ctx("tracking-reader"), PageArgs(first=10))
+    saved_milestone = store.milestones.get(milestone.id)
+    saved_observation = store.observations.get(observation.id)
+    assert saved_project is not None and saved_project.expenses == project.expenses
+    assert saved_project.report_version == 2 and saved_project.area_id == AREA_ID
+    assert [item.id for item in shared_page.items] == [project.id]
+    assert [item.id for item in member_page.items] == [project.id]
+    assert saved_milestone is not None and saved_milestone.tasks == ("Mount", "Calibrate")
+    assert saved_milestone.responsible_identity == "Field team"
+    assert saved_observation is not None
+    assert saved_observation.source_type is ObservationSourceType.PERMITTED_DOCUMENT
+    assert saved_observation.permitted_source_confirmed is True
+    assert saved_observation.coverage_observed_days == 3
+    assert saved_observation.quantity == observation.quantity
 
 
 # --- concurrent mutations through the application services -----------------------------
@@ -102,9 +200,26 @@ def active_members(s: Services, community_id: str) -> int:
     return len(page.items)
 
 
+def community_input(store: FirestoreStore) -> dict[str, str]:
+    report = Report(
+        id=new_id(IdKind.REPORT),
+        owner_uid="alice",
+        session_id=new_id(IdKind.SESSION),
+        area_id=AREA_ID,
+        title="Private test report",
+        goal=Goal(id=new_id(IdKind.GOAL), kind=GoalKind.REDUCE_SHORTAGE),
+        plan_option_id=new_id(IdKind.PLAN_OPTION),
+        finalized_at=NOW,
+        created_at=NOW,
+        updated_at=NOW,
+    )
+    store.transaction(lambda: store.reports.insert(report))
+    return {"name": "Lake friends", "report_id": report.id, "contact_name": "Alice"}
+
+
 def test_concurrent_joins_count_every_member_exactly_once(store: FirestoreStore) -> None:
     s = services(store)
-    community = s.communities.create(ctx("alice"), {"name": "Lake friends"}, key(0))
+    community = s.communities.create(ctx("alice"), community_input(store), key(0))
     users = [f"user-{i}" for i in range(6)]
     results = race(
         [
@@ -119,7 +234,7 @@ def test_concurrent_joins_count_every_member_exactly_once(store: FirestoreStore)
 
 def test_one_user_joining_twice_at_once_is_one_membership(store: FirestoreStore) -> None:
     s = services(store)
-    community = s.communities.create(ctx("alice"), {"name": "Lake friends"}, key(0))
+    community = s.communities.create(ctx("alice"), community_input(store), key(0))
     results = race(
         [
             lambda i=i: s.communities.join(ctx("bob"), community.id, key(10 + i))  # type: ignore[misc]
@@ -134,7 +249,7 @@ def test_one_user_joining_twice_at_once_is_one_membership(store: FirestoreStore)
 
 def test_join_and_leave_races_keep_the_counter_consistent(store: FirestoreStore) -> None:
     s = services(store)
-    community = s.communities.create(ctx("alice"), {"name": "Lake friends"}, key(0))
+    community = s.communities.create(ctx("alice"), community_input(store), key(0))
     joined = {
         u: s.communities.join(ctx(u), community.id, key(20 + i))
         for i, u in enumerate(("bob", "carol", "dan"))
@@ -154,7 +269,7 @@ def test_archive_racing_joins_never_admits_a_member_after_archive(
     store: FirestoreStore,
 ) -> None:
     s = services(store)
-    community = s.communities.create(ctx("alice"), {"name": "Lake friends"}, key(0))
+    community = s.communities.create(ctx("alice"), community_input(store), key(0))
 
     def archive_latest() -> Any:
         """A coordinator retrying with the fresh version, as the UI does on conflict."""
@@ -336,12 +451,8 @@ def test_concurrent_session_starts_leave_one_active_session(store: FirestoreStor
 
 def test_idempotent_replays_racing_each_other_create_one_record(store: FirestoreStore) -> None:
     s = services(store)
-    results = race(
-        [
-            lambda: s.communities.create(ctx("alice"), {"name": "Same intent"}, key(70))
-            for _ in range(4)
-        ]
-    )
+    data = community_input(store)
+    results = race([lambda: s.communities.create(ctx("alice"), data, key(70)) for _ in range(4)])
     assert not [r for r in results if isinstance(r, DomainError)], results
     assert len({r.id for r in results}) == 1
 

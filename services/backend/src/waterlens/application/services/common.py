@@ -11,6 +11,7 @@ from pydantic import BaseModel, ValidationError
 
 from waterlens.application.pagination import Page, PageArgs, PageQuery
 from waterlens.application.ports import (
+    FundingVectors,
     JobRunner,
     ModelProvider,
     NoModelProvider,
@@ -39,6 +40,7 @@ class AiConfig:
     Local and test mode never carry a live provider here."""
 
     provider: ModelProvider = field(default_factory=NoModelProvider)
+    embedding_provider: ModelProvider = field(default_factory=NoModelProvider)
     enabled: bool = False
     kill_switch: bool = False
     open_to_all: bool = False
@@ -64,6 +66,8 @@ class Deps:
     series: SeriesReader | None = None
     """Reads imported snapshots' daily series. Without it the baseline uses typed-in
     values only and says that sourced series could not be read."""
+    funding_vectors: FundingVectors | None = None
+    embedding_version: str = "fake-token-hash-1"
     ai: AiConfig = field(default_factory=AiConfig)
     """Model provider and AI usage policy (ADR 0015). Disabled by default; local and test
     mode never hold a live provider, so ordinary planning never depends on it."""

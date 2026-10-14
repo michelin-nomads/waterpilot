@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+.venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+*.py[cod]
+tests/
+.local-jobs/
+.local-object-store/

@@ -16,3 +16,37 @@
   font-size: var(--wl-text-lg);
   color: var(--wl-color-text);
 }
+
+.conversation {
+  display: grid;
+  gap: var(--wl-space-3);
+  min-width: 0;
+  form {
+    display: grid;
+    gap: var(--wl-space-2);
+  }
+  textarea {
+    width: 100%;
+    color: var(--wl-color-text);
+    background: var(--wl-color-surface);
+  }
+}
+.messages {
+  overflow-wrap: anywhere;
+}
+.result {
+  border: 1px solid var(--wl-color-border);
+  border-radius: var(--wl-radius-md);
+  padding: var(--wl-space-3);
+  margin-block: var(--wl-space-3);
+  dl {
+    max-height: 20rem;
+    overflow: auto;
+  }
+  dt {
+    font-weight: 600;
+  }
+  dd {
+    margin: 0 0 var(--wl-space-2);
+  }
+}

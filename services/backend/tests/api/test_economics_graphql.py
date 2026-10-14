@@ -12,10 +12,12 @@ import pytest
 from test_impact_graphql import OTHER_AREA, TOKEN, ok, place, session, update
 
 from conftest import LOCAL_OK, LoadSettings
+from graphql_harness import NOW, Harness, make_harness, seed_plan_option
 from graphql_harness import TOKENS as HARNESS_TOKENS
-from graphql_harness import Harness, make_harness, seed_plan_option
 from waterlens.application.identity import RequestContext
+from waterlens.application.jobs.proposals import proposal_inputs
 from waterlens.application.tools import options as tools
+from waterlens.domain.reports import ProposalSection
 
 ECON = """economics {
   engineVersion currency
@@ -140,6 +142,64 @@ def test_economics_is_shown_with_the_option_and_exported_values_match_exactly(h:
     tool_econ = by_tool["options"][0]["economics"]
     assert tool_econ["upfrontTotal"]["low"]["minorUnits"] == "11000000"
     assert tool_econ["funding"]["approved"]["minorUnits"] == "4000000"
+
+
+def test_finalization_replay_and_proposal_inputs_keep_exact_report_numbers(
+    h: Harness, tmp_path: Path
+) -> None:
+    session_state = update(h, session(h), {"goal": goal()})
+    option = _only_option(h, session_state["id"])
+    selected = update(h, session_state, {"selectedPlanOptionId": option["id"]})
+    finalized = _finalize(h, selected["id"], "key-prompt20-finalize-01")
+    replay = _finalize(h, selected["id"], "key-prompt20-finalize-01")
+    assert replay["report"]["id"] == finalized["report"]["id"]
+    assert replay["report"]["economics"] == finalized["report"]["economics"]
+
+    services = h.services
+    assert services is not None
+    ctx = RequestContext("prompt20", HARNESS_TOKENS[TOKEN])
+    scheme_id = next(iter(h.store.funding_schemes.all_active(10))).id
+    submission = {
+        "report_id": finalized["report"]["id"],
+        "scheme_id": scheme_id,
+        "applicant": {
+            "name": "Test Applicant",
+            "organization": "Synthetic Community",
+            "category": "Community group",
+            "assumptions": ["Applicant will obtain land permission."],
+        },
+        "sections": [s.value for s in (ProposalSection.PLAN, ProposalSection.COSTS)],
+    }
+    proposal = services.proposals.generate(ctx, submission, "key-prompt20-proposal-01")
+    repeated = services.proposals.generate(ctx, submission, "key-prompt20-proposal-01")
+    assert repeated.id == proposal.id
+
+    report_record = h.store.reports.get(finalized["report"]["id"])
+    scheme_record = h.store.funding_schemes.get(scheme_id)
+    inputs = proposal_inputs(report_record, proposal, scheme_record)
+    assert inputs["economics"] == report_record.economics.model_dump(mode="json")
+    economics = inputs["economics"]
+    assert economics["upfront_total"]["low"]["minor_units"] == "11000000"
+    assert economics["funding"]["gap"]["high"]["minor_units"] == "9200000"
+    assert inputs["applicant"]["assumptions"] == ["Applicant will obtain land permission."]
+    assert inputs["scheme"]["evidence"] == "synthetic"
+
+    from waterlens.adapters.factory import build_worker_runtime
+    from waterlens.adapters.proposal_renderer import LocalProposalRenderer
+    from waterlens.application.artifacts import PDF, ArtifactStore
+    from waterlens.application.jobs import RunOutcome
+
+    worker = build_worker_runtime(
+        h.store, h.jobs, h.storage, renderer=LocalProposalRenderer(), clock=lambda: NOW
+    )
+    assert worker.executor.run(proposal.job_id, 1, "prompt20-review") is RunOutcome.SUCCEEDED
+    rendered = h.store.proposals.get(proposal.id)
+    assert rendered is not None and rendered.status.value == "needs_review"
+    assert rendered.html_artifact_key is not None and rendered.artifact_key is not None
+    private = ArtifactStore(h.storage)
+    (tmp_path / "proposal-review.pdf").write_bytes(
+        private.read_owned(rendered.artifact_key, "alice", PDF)
+    )
 
 
 def test_a_tariff_in_another_currency_is_reported_not_converted(h: Harness) -> None:

@@ -36,6 +36,7 @@ from google.api_core import exceptions as gexc
 from google.cloud import firestore
 from pydantic import BaseModel
 
+from waterlens.application.deadline import bound_client, deadline, remaining
 from waterlens.application.pagination import Page, PageQuery, Position, encode_cursor
 from waterlens.application.repositories import AreaCatalogue, IdempotencyRecord, Where
 from waterlens.domain.accounts import AccountClaim
@@ -47,6 +48,7 @@ from waterlens.domain.ai import (
     reservation_expires_at,
 )
 from waterlens.domain.communities import Community, CommunityStatus, Membership
+from waterlens.domain.embeddings import FundingEmbedding
 from waterlens.domain.errors import DomainError, ErrorCode
 from waterlens.domain.funding import FundingMatch, FundingScheme
 from waterlens.domain.jobs import AgentRun, JobRecord, OutboxRecord, outbox_expires_at
@@ -432,7 +434,25 @@ class LayeredAreaCatalogue:
         self._stored.add(item)
 
 
+class FirestoreEmbeddingRepository(FirestoreRecordRepository[FundingEmbedding]):
+    def _encode(self, item: FundingEmbedding) -> dict[str, Any]:
+        from google.cloud.firestore_v1.vector import Vector
+
+        data = super()._encode(item)
+        data["_embeddingVector"] = Vector(item.vector)
+        return data
+
+
 class FirestoreFundingCatalogue(FirestoreCatalogue[FundingScheme]):
+    def save(self, item: FundingScheme, expected_revision: int) -> None:
+        current = self.get(item.id)
+        if (current.revision if current else 0) != expected_revision:
+            raise DomainError(ErrorCode.VERSION_CONFLICT, "catalogue changed; reload before saving")
+        uow = _active.get()
+        if uow is None:
+            raise RuntimeError("funding catalogue saves require a transaction")
+        uow.write((self.name, item.id), "set", self._encode(item))
+
     def all_active(self, limit: int) -> tuple[FundingScheme, ...]:
         query = self._client.collection(self.name).order_by("__name__").limit(limit)
         return tuple(FundingScheme.model_validate(_strip(s.to_dict())) for s in query.stream())
@@ -498,6 +518,7 @@ class FirestoreStore:
         self, client: firestore.Client, *, fixed_areas: AreaCatalogue | None = None
     ) -> None:
         self.client = client
+        bound_client(client)
         stored = FirestoreAreaCatalogue(self, "areas", Area, _name_position)
         self.areas: AreaCatalogue = (
             stored if fixed_areas is None else LayeredAreaCatalogue(fixed_areas, stored)
@@ -529,6 +550,9 @@ class FirestoreStore:
         self.funding_schemes = FirestoreFundingCatalogue(
             self, "fundingSchemes", FundingScheme, _verified_position
         )
+        self.funding_embeddings = FirestoreEmbeddingRepository(
+            self, "fundingEmbeddings", FundingEmbedding
+        )
         self.idempotency = FirestoreIdempotencyStore(self)
         self.source_registrations = rec(self, "sourceRegistrations", SourceRegistration)
         self.source_snapshots = rec(self, "sourceSnapshots", SourceSnapshot)
@@ -558,8 +582,12 @@ class FirestoreStore:
             return result
 
         for round_ in range(TRANSACTION_ROUNDS):
+            if deadline.get() is not None:
+                remaining()
             try:
-                tx = self.client.transaction(max_attempts=MAX_TRANSACTION_ATTEMPTS)
+                tx = self.client.transaction(
+                    max_attempts=1 if deadline.get() is not None else MAX_TRANSACTION_ATTEMPTS
+                )
                 result: T = attempt(tx)
                 return result
             except gexc.AlreadyExists:
@@ -569,7 +597,11 @@ class FirestoreStore:
             except ValueError as err:
                 if not str(err).startswith("Failed to commit transaction in"):
                     raise
-            time.sleep(random.uniform(0, BACKOFF_SECONDS * 2**round_))  # noqa: S311
+            time.sleep(
+                min(random.uniform(0, BACKOFF_SECONDS * 2**round_), remaining())
+                if deadline.get() is not None
+                else random.uniform(0, BACKOFF_SECONDS * 2**round_)
+            )  # noqa: S311
         raise _busy()
 
     def lock_owner(self, uid: str) -> None:

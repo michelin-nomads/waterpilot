@@ -9,6 +9,15 @@ fragment FundingMatchFields on FundingMatch {
   window
   status
   rulesVersion
+  eligibility
+  eligibilityEvidence {
+    criterionId
+    status
+    reason
+  }
+  relevanceOrder
+  rankingStatus
+  rankingReason
   results {
     criterionId
     status
@@ -24,6 +33,13 @@ fragment FundingMatchFields on FundingMatch {
     closesOn
     sourceUrl
     lastVerifiedAt
+    deadlineAt
+    deadlineTimezone
+    sourceHash
+    geography
+    applicantCategories
+    interventions
+    amountRules
     evidence
     requiredDocuments
     maxAmount {

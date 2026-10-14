@@ -50,14 +50,14 @@ is configurable (`WL_AI_MODEL`), defaulting to the stable (non-introductory)
 - Estimates are **not an invoice.** The reservation uses a worst-case estimate; the settle
   uses the provider's **actual** reported usage.
 - The reservation covers **every permitted dispatched attempt**: `max_attempts = transient
-  retries + 1`, and each attempt re-sends the input and may emit the full output, so a
+retries + 1`, and each attempt re-sends the input and may emit the full output, so a
   retried call can never exceed its hold or overspend the budget.
 
-| Quantity              | Formula                                                                                                              |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| per-attempt worst case | `input × input_price + max_output × output_price`                                                                   |
-| reserved (worst case) | `max_attempts × (input × input_price + max_output × output_price)`                                                   |
-| settled (actual)      | `non_cached_input × input_price + cached_input × cached_price + output × output_price + embedding × embedding_price` |
+| Quantity               | Formula                                                                                                              |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| per-attempt worst case | `input × input_price + max_output × output_price`                                                                    |
+| reserved (worst case)  | `max_attempts × (input × input_price + max_output × output_price)`                                                   |
+| settled (actual)       | `non_cached_input × input_price + cached_input × cached_price + output × output_price + embedding × embedding_price` |
 
 `output` already includes thinking tokens; `thinking_tokens` is kept only as information.
 `settled (actual)` sums tokens across every billable attempt (a retried attempt is counted).

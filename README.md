@@ -31,6 +31,62 @@ docs/                HLD, build guide, domain specs, traceability, progress
 
 No cloud account or credentials are required for local development.
 
+## Quick local demo (macOS/Linux)
+
+From the repository root, install the locked dependencies once and create local-only
+environment files:
+
+```bash
+eval "$(scripts/use-pinned-node.sh)"  # or: nvm use
+npm run bootstrap
+npm run contracts
+cp apps/web/.env.example apps/web/.env
+cp services/backend/.env.example services/backend/.env
+```
+
+Open two terminals at the repository root. In the first, start Auth + Firestore emulators,
+the API and the web app:
+
+```bash
+eval "$(scripts/use-pinned-node.sh)"  # or: nvm use
+bash scripts/dev.sh
+```
+
+In the second, start the local worker. It drains the local report/proposal file queue and
+reconciles job state against the Firestore emulator; keep it running while using those
+features. Run one local worker only; this single-process queue is not production durability:
+
+```bash
+eval "$(scripts/use-pinned-node.sh)"  # or: nvm use
+npm run dev:worker
+```
+
+Open <http://127.0.0.1:5173>. The Firebase Emulator UI is at
+<http://127.0.0.1:4000>; Auth and Firestore are local at ports 9099 and 8080. Create or
+sign in to accounts through the app; they belong only to the Auth emulator. Use the clearly
+labelled synthetic demo area and synthetic catalogue entries for a demo. Press Ctrl-C in
+each terminal to stop the processes. `scripts/dev.sh` checks for occupied ports and stops
+its emulator/API/web process trees together.
+
+AI is off by default. To exercise the local agent without live model calls, add these
+explicit opt-in settings to `services/backend/.env`, then restart the API:
+
+```dotenv
+WL_AGENT_FAKE_INFERENCE=true
+WL_AI_ENABLED=true
+WL_AI_OPEN_TO_ALL=true
+WL_AI_DAILY_BUDGET_USD=5
+```
+
+This selects deterministic fake inference; it makes no network or billable model calls.
+The configured allowance still bounds the local usage ledger. Keep `WL_APP_MODE=local`,
+`WL_USE_EMULATORS=true` and the `demo-waterlens` project settings from the example file.
+Do not put credentials or secrets in either `.env` file or commit the copied files.
+
+For Windows, start `npm run emulators`, `npm run dev:api`, and `npm run dev:web` in separate
+PowerShell terminals, and run `npm run dev:worker` in a fourth. Load pinned Node 24.21.0 in
+each terminal. The environment files and local-only safety settings are the same.
+
 ## Install (first run)
 
 macOS / Linux:
@@ -38,6 +94,7 @@ macOS / Linux:
 ```bash
 nvm use                   # Node 24.21.0 from .nvmrc
 npm run bootstrap         # npm ci + uv sync --frozen (exact lockfiles; fails if they drift)
+npm run contracts         # refresh generated API/GraphQL contract outputs
 cp apps/web/.env.example apps/web/.env
 cp services/backend/.env.example services/backend/.env
 npx playwright install chromium   # once, for E2E
@@ -48,6 +105,7 @@ Windows (PowerShell):
 ```powershell
 nvm use 24.21.0           # nvm-windows, or install Node 24.21.0 directly
 npm run bootstrap
+npm run contracts
 Copy-Item apps/web/.env.example apps/web/.env
 Copy-Item services/backend/.env.example services/backend/.env
 npx playwright install chromium
@@ -112,8 +170,10 @@ rendered with labelled UI fixtures (the route does not exist in other modes).
   `FIRESTORE_EMULATOR_HOST` / `FIREBASE_AUTH_EMULATOR_HOST` are validated too.
 - **Pilot mode fails closed** if any emulator/demo/test setting is present (either naming),
   or CORS origins are not https/non-loopback. The local worker and local storage/job
-  adapters refuse pilot mode. Cloud Storage and Cloud Tasks adapters exist (ADR 0007) but
-  the pilot runtime stays refused until the remaining adapters (Prompts 08, 18, 20) exist.
+  adapters refuse pilot mode. Pilot code includes Firestore, Cloud Tasks and private Cloud
+  Storage wiring plus the deterministic proposal renderer, but this local guide does not
+  validate cloud behavior: the deployment prerequisites, IAM and service setup in
+  `infra/README.md` are still required before any pilot run.
 - **The local job queue is a single-process development tool**, not durable
   infrastructure: delivery is at-least-once with idempotent effects in every mode, and
   durability is only claimed for the Firestore outbox + Cloud Tasks path (ADR 0007).
@@ -132,7 +192,28 @@ rendered with labelled UI fixtures (the route does not exist in other modes).
   `npm run test:emulator` and `npm run test:e2e:emulator` (both run inside
   `firebase emulators:exec --only auth,firestore`). Local mode stores application data in
   the Firestore emulator (`WL_LOCAL_STORE=firestore`, the default).
-- **Browser-to-API connectivity** — **not implemented or verified** yet: screens are
-  placeholders and do not call the API.
+- **Browser-to-API connectivity** — planning screens use authenticated GraphQL and
+  authoritative session state. Prompt 17 adds opt-in local agent conversation over HTTP
+  with the actual ADK Runner and fake inference; see `docs/api/agent-stream.md`.
+  Live inference and pilot deployment remain blocked.
 - There are **no** official local emulators for Cloud Tasks, Vertex AI or Earth Engine;
   those adapters arrive later and require real configured credentials.
+
+## Local funding catalogue administration (Prompt 18)
+
+Open `/admin/funding` with a permanent emulator account whose UID is in the server's
+`WL_FUNDING_ADMIN_UIDS` JSON list (empty by default). The offline importer accepts
+permitted JSON/PDF documents and reviewed scheme metadata; no URLs or models are called.
+Use `docs/domain/examples/funding/mock-scheme.json` with `mock-source.json` for the
+owner-approved **synthetic** hackathon demo. The ready-to-POST `mock-import.json` is
+available too. No real active funding is seeded. See `docs/domain/funding-catalogue.md`
+for the import contract, lifecycle, limits and publication requirements.
+
+## Local eligibility and fake relevance (Prompt 19)
+
+With a saved selected plan, `/make-it-happen` checks deterministic funding eligibility and
+shows missing information/excluded reasons. Optional fake relevance requires
+`WL_FUNDING_FAKE_EMBEDDINGS=true` plus the existing AI enablement, invitation and explicit
+budget controls. Defaults use deterministic fallback. Vertex/Firestore vector adapters
+remain unarmed, and the index is not deployed; live behavior is unverified. See
+`docs/domain/funding-eligibility-ranking.md` for exact SDK/model/index/cache requirements.

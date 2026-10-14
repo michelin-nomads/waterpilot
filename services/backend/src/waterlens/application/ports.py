@@ -7,11 +7,12 @@ the adapter does (ADR 0007).
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol
 
+from waterlens.domain.embeddings import FundingEmbedding
 from waterlens.domain.location import PlaceCandidate
 
 type JsonValue = str | int | float | bool | None | list[JsonValue] | dict[str, JsonValue]
@@ -82,14 +83,14 @@ class JobRunner(Protocol):
 class RenderedDocument:
     data: bytes
     content_type: str
+    html: bytes | None = None
 
 
 class ProposalRenderer(Protocol):
     """Turns assembled, versioned proposal inputs into a reviewable document.
 
-    The production renderer (PDF + HTML, model narrative constrained to engine numbers)
-    is Prompt 20; until then no adapter exists and proposal jobs fail with an explicit
-    ``SERVICE_UNAVAILABLE`` instead of producing a placeholder document."""
+    The renderer receives only versioned server inputs. Financial values are rendered
+    directly from the economics snapshot and cannot be changed by generated wording."""
 
     def render(self, inputs: dict[str, JsonValue]) -> RenderedDocument: ...
 
@@ -222,3 +223,9 @@ class NoPlaceSearch:
 
     def reverse(self, lat: float, lon: float, limit: int) -> tuple[PlaceCandidate, ...]:
         raise PlaceSearchUnavailable("place lookup is not configured")
+
+
+class FundingVectors(Protocol):
+    def order(
+        self, query: FundingEmbedding, documents: Sequence[FundingEmbedding]
+    ) -> tuple[str, ...]: ...

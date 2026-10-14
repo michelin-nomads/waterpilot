@@ -123,11 +123,16 @@ export default function PlanningLayout() {
       )}
 
       <div ref={panesRef} className={styles.panes} data-mode={mode} style={panesStyle}>
-        {agentMode ? (
-          <aside className={styles.agentPane} {...paneProps('conversation')}>
-            <AgentPanel onUseTraditional={() => setMode('traditional')} />
-          </aside>
-        ) : null}
+        <aside
+          className={styles.agentPane}
+          {...paneProps('conversation')}
+          hidden={!agentMode || (tabbed && pane !== 'conversation')}
+        >
+          <AgentPanel
+            onUseTraditional={() => setMode('traditional')}
+            onFocusWorkspace={() => setPane('workspace')}
+          />
+        </aside>
         {split ? (
           <ResizeHandle
             value={paneWidth}

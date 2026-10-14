@@ -11,7 +11,7 @@ from waterlens.domain.economics import OptionEconomics
 from waterlens.domain.impact_records import ReviewNeed
 from waterlens.domain.planning import Goal, ImpactAssessment
 from waterlens.domain.records import Record
-from waterlens.domain.values import UtcDateTime
+from waterlens.domain.values import Frozen, UtcDateTime
 
 
 class ReportStatus(StrEnum):
@@ -68,11 +68,24 @@ class ProposalStatus(StrEnum):
     FAILED = "failed"
 
 
+class ProposalApplicant(Frozen):
+    """Applicant-supplied details captured with one immutable proposal revision."""
+
+    name: str = Field(min_length=1, max_length=200)
+    organization: str = Field(min_length=1, max_length=200)
+    category: str = Field(min_length=1, max_length=100)
+    contact_email: str | None = Field(default=None, max_length=254)
+    assumptions: tuple[str, ...] = Field(default=(), max_length=30)
+
+
 class Proposal(Record):
     owner_uid: str
     report_id: str
+    scheme_id: str | None = None
+    applicant: ProposalApplicant | None = None
     sections: tuple[ProposalSection, ...] = Field(min_length=1, max_length=len(ProposalSection))
     status: ProposalStatus = ProposalStatus.QUEUED
     job_id: str
     artifact_key: str | None = None
+    html_artifact_key: str | None = None
     flagged_count: int = Field(default=0, ge=0)

@@ -49,6 +49,8 @@ def client() -> Any:
 def test_declared_index_serves_its_query(client: Any, index: dict[str, Any]) -> None:
     from google.cloud import firestore
 
+    if any("vectorConfig" in field for field in index["fields"]):
+        pytest.skip("vector retrieval requires separate authorized live verification")
     *equality, ordered = index["fields"]
     query = client.collection(index["collectionGroup"])
     for field in equality:

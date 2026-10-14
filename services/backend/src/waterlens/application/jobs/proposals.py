@@ -23,11 +23,19 @@ from __future__ import annotations
 import json
 from datetime import datetime
 
-from waterlens.application.artifacts import JSON, PDF, ArtifactKey, ArtifactKind, ArtifactStore
+from waterlens.application.artifacts import (
+    HTML,
+    JSON,
+    PDF,
+    ArtifactKey,
+    ArtifactKind,
+    ArtifactStore,
+)
 from waterlens.application.jobs.execution import Completion, JobContext, TerminalJobError
 from waterlens.application.ports import JsonValue, ProposalRenderer
 from waterlens.application.repositories import Store
 from waterlens.domain.errors import ErrorCode
+from waterlens.domain.funding import CatalogueStatus, FundingScheme
 from waterlens.domain.jobs import JobRecord
 from waterlens.domain.reports import Proposal, ProposalStatus, Report
 from waterlens.domain.values import utc_iso
@@ -37,13 +45,17 @@ INPUTS_NAME = "inputs-v2.json"
 _OPEN = frozenset({ProposalStatus.QUEUED, ProposalStatus.DRAFTING})
 
 
-def proposal_inputs(report: Report, proposal: Proposal) -> dict[str, JsonValue]:
+def proposal_inputs(
+    report: Report, proposal: Proposal, scheme_record: FundingScheme | None = None
+) -> dict[str, JsonValue]:
     """Everything a renderer may use, taken from the immutable report snapshot. The
     wider-system impact goes in whole, with its provenance (ADR 0013): a renderer may
     summarize it with citations but has nothing else to draw on."""
     goal: dict[str, JsonValue] = report.goal.model_dump(mode="json")
     impact: JsonValue = report.impact.model_dump(mode="json") if report.impact else None
     reviews: list[JsonValue] = [r.model_dump(mode="json") for r in report.required_reviews()]
+    scheme: JsonValue = scheme_record.model_dump(mode="json") if scheme_record else None
+    economics: JsonValue = report.economics.model_dump(mode="json") if report.economics else None
     return {
         "schema": INPUTS_SCHEMA,
         "proposalId": proposal.id,
@@ -54,6 +66,10 @@ def proposal_inputs(report: Report, proposal: Proposal) -> dict[str, JsonValue]:
         # (finalized before reports kept impact): a renderer says "not assessed", never
         # treats a missing assessment as no effect.
         "impactStatus": report.impact_status(),
+        "applicant": proposal.applicant.model_dump(mode="json") if proposal.applicant else None,
+        "scheme": scheme,
+        "economics": economics,
+        "financialFiguresSource": "immutable report.economics snapshot",
         "report": {
             "id": report.id,
             "version": report.version,
@@ -92,7 +108,23 @@ class ProposalJobHandler:
             "assembling_inputs",
             self._transition(ctx, proposal.id, {"status": ProposalStatus.DRAFTING}),
         )
-        inputs = proposal_inputs(report, proposal)
+        scheme = store.funding_schemes.get(proposal.scheme_id) if proposal.scheme_id else None
+        if proposal.scheme_id:
+            if scheme is None or scheme.effective_status(ctx.now()) not in {
+                # A job that waited through expiry must not render a stale application.
+                # Demo schemes stay visibly synthetic and are useful only for local review.
+                CatalogueStatus.ACTIVE,
+                CatalogueStatus.DEMO,
+            }:
+                raise TerminalJobError(
+                    ErrorCode.PRECONDITION_FAILED, "the selected scheme has expired"
+                )
+            if scheme.status is CatalogueStatus.ACTIVE and not scheme.has_verified_source:
+                raise TerminalJobError(
+                    ErrorCode.PRECONDITION_FAILED,
+                    "the selected scheme no longer has verified permitted source evidence",
+                )
+        inputs = proposal_inputs(report, proposal, scheme)
         self._artifacts.put(
             ArtifactKey(ArtifactKind.PROPOSAL, proposal.owner_uid, proposal.id, INPUTS_NAME),
             _canonical(inputs),
@@ -116,8 +148,27 @@ class ProposalJobHandler:
             document.data,
             PDF,
         )
+        html_key: str | None = None
+        html_data = getattr(document, "html", None)
+        if html_data:
+            html_key = self._artifacts.put(
+                ArtifactKey(
+                    ArtifactKind.PROPOSAL,
+                    proposal.owner_uid,
+                    proposal.id,
+                    f"proposal-a{ctx.job.attempts}.html",
+                ),
+                html_data,
+                HTML,
+            )
         return self._transition(
-            ctx, proposal.id, {"status": ProposalStatus.NEEDS_REVIEW, "artifact_key": key}
+            ctx,
+            proposal.id,
+            {
+                "status": ProposalStatus.NEEDS_REVIEW,
+                "artifact_key": key,
+                "html_artifact_key": html_key,
+            },
         )
 
     @staticmethod

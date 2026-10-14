@@ -24,6 +24,7 @@ why Firestore needs this adapter rather than reusing it.
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Callable
 from datetime import datetime, timedelta
 
@@ -97,14 +98,17 @@ class AdkSessionService(BaseSessionService):
             updated_at=now,
         )
         try:
-            created = self._store.create_session(
-                record, app_delta=deltas["app"], user_delta=deltas["user"]
+            created = await asyncio.to_thread(
+                self._store.create_session,
+                record,
+                app_delta=deltas["app"],
+                user_delta=deltas["user"],
             )
         except DomainError as err:
             if err.code is ErrorCode.VERSION_CONFLICT:
                 raise AlreadyExistsError(f"Session with id {sid} already exists.") from err
             raise
-        return self._to_adk(created, [])
+        return await asyncio.to_thread(self._to_adk, created, [])
 
     async def get_session(
         self,
@@ -114,12 +118,13 @@ class AdkSessionService(BaseSessionService):
         session_id: str,
         config: GetSessionConfig | None = None,
     ) -> Session | None:
-        record = self._store.read_session(app_name, user_id, session_id)
+        record = await asyncio.to_thread(self._store.read_session, app_name, user_id, session_id)
         if record is None:
             return None
         events: list[Event] = []
         if not (config and config.num_recent_events == 0):
-            rows = self._store.read_events(
+            rows = await asyncio.to_thread(
+                self._store.read_events,
                 app_name,
                 user_id,
                 session_id,
@@ -129,16 +134,18 @@ class AdkSessionService(BaseSessionService):
             )
             # The store returns newest-first; ADK sessions carry events oldest-first.
             events = [Event.model_validate(row.payload) for row in reversed(rows)]
-        return self._to_adk(record, events)
+        return await asyncio.to_thread(self._to_adk, record, events)
 
     async def list_sessions(
         self, *, app_name: str, user_id: str | None = None
     ) -> ListSessionsResponse:
-        rows = self._store.list_sessions(app_name, user_id)
-        return ListSessionsResponse(sessions=[self._to_adk(row, []) for row in rows])
+        rows = await asyncio.to_thread(self._store.list_sessions, app_name, user_id)
+        return ListSessionsResponse(
+            sessions=[await asyncio.to_thread(self._to_adk, row, []) for row in rows]
+        )
 
     async def delete_session(self, *, app_name: str, user_id: str, session_id: str) -> None:
-        self._store.delete_session(app_name, user_id, session_id)
+        await asyncio.to_thread(self._store.delete_session, app_name, user_id, session_id)
 
     async def append_event(self, session: Session, event: Event) -> Event:
         if event.partial:
@@ -178,7 +185,7 @@ class AdkSessionService(BaseSessionService):
             max_events=self._max_events,
         )
         try:
-            outcome = self._store.append(request)
+            outcome = await asyncio.to_thread(self._store.append, request)
         except StaleConversation as err:
             raise StaleSessionError(_STALE_MESSAGE) from err
         except ConversationNotFound as err:

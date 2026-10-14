@@ -8,6 +8,7 @@ membership (ADR 0005)."""
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass
 from typing import Any
 
@@ -46,10 +47,22 @@ class CreateCommunityInput(Frozen):
     name: str = Field(min_length=3, max_length=120)
     description: str = Field(default="", max_length=2000)
     area_id: str | None = None
+    report_id: str
+    contact_name: str = Field(min_length=1, max_length=120)
+    contact_email: str | None = Field(
+        default=None, max_length=254, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
+    )
+    share_contact_name: bool = False
+    share_contact_email: bool = False
 
 
 class JoinCommunityInput(Frozen):
     community_id: str
+
+
+class LeaveCommunityInput(Frozen):
+    community_id: str
+    expected_version: int = Field(ge=1)
 
 
 class NearbyInput(Frozen):
@@ -88,12 +101,14 @@ class CommunityService:
         return self._d.store.communities.get_many(community_ids)
 
     def browse(
-        self, area_id: str | None, include_archived: bool, page: PageArgs
+        self, area_id: str | None, include_archived: bool, archived_only: bool, page: PageArgs
     ) -> Page[Community]:
         where: dict[str, FilterValue] = {}
         if area_id is not None:
             where["area_id"] = require_id(area_id, IdKind.AREA, "areaId")
-        if not include_archived:
+        if archived_only:
+            where["status"] = CommunityStatus.ARCHIVED.value
+        elif not include_archived:
             where["status"] = CommunityStatus.ACTIVE.value
         return page_of(self._d.store.communities, where, page)
 
@@ -192,8 +207,25 @@ class CommunityService:
                 "longitude": area.centroid_lon,
                 "geohash": geo.encode(lat, lon),
             }
+        report_id = require_id(payload.report_id, IdKind.REPORT, "reportId")
+        if payload.share_contact_email and payload.contact_email is None:
+            raise DomainError(
+                ErrorCode.VALIDATION_FAILED,
+                "provide a contact email before choosing to publish it",
+                field="shareContactEmail",
+            )
 
         def create() -> tuple[str, ...]:
+            report = store.reports.get(report_id)
+            if report is None or report.owner_uid != principal.uid:
+                raise not_found("finalized report")
+            if report.status.value != "finalized":
+                raise DomainError(
+                    ErrorCode.PRECONDITION_FAILED,
+                    "choose one of your finalized, nonarchived reports",
+                    field="reportId",
+                )
+
             community = store.communities.insert(
                 Community(
                     id=new_id(IdKind.COMMUNITY),
@@ -201,6 +233,13 @@ class CommunityService:
                     description=payload.description,
                     area_id=payload.area_id,
                     member_count=1,
+                    linked_report_id=report.id,
+                    shared_report_goal=report.goal.kind,
+                    shared_report_finalized_at=report.finalized_at,
+                    contact_name=payload.contact_name,
+                    contact_email=payload.contact_email,
+                    share_contact_name=payload.share_contact_name,
+                    share_contact_email=payload.share_contact_email,
                     created_at=now,
                     updated_at=now,
                     **location,
@@ -295,25 +334,38 @@ class CommunityService:
         return membership
 
     def leave(self, ctx: RequestContext, community_id: str, expected_version: int) -> Membership:
-        """``expected_version`` is the caller's membership version."""
+        """Leave idempotently for the expected membership version.
+
+        The key is deterministic for this desired transition, so a lost response can be
+        retried without decrementing the member count twice. A later rejoin advances the
+        membership version and makes an old leave confirmation stale.
+        """
         principal = ctx.require_permanent()
         store = self._d.store
         community_id = require_id(community_id, IdKind.COMMUNITY)
+        payload = LeaveCommunityInput(
+            community_id=community_id, expected_version=expected_version
+        )
+        key_digest = hashlib.sha256(
+            f"{community_id}\x1f{principal.uid}\x1f{expected_version}".encode()
+        ).hexdigest()
+        idempotency_key = f"leave-{key_digest}"
 
-        def tx() -> Membership:
+        def leave_once() -> tuple[str, ...]:
             community = existing_community(store, community_id)
             membership = store.memberships.get(membership_id(community.id, principal.uid))
-            if membership is None or not membership.is_active:
+            if membership is None:
                 raise not_found("membership")
+            if not membership.is_active:
+                return (membership.id,)
             membership.require_version(expected_version)
             if (
                 membership.role is MembershipRole.COORDINATOR
-                and community.member_count > 1
                 and not self._other_coordinator(community.id, principal.uid)
             ):
                 raise DomainError(
                     ErrorCode.PRECONDITION_FAILED,
-                    "appoint another coordinator before leaving this community",
+                    "you are the last coordinator; archive this community before leaving",
                 )
             now = self._d.clock()
             left = store.memberships.replace(
@@ -328,9 +380,23 @@ class CommunityService:
                 ),
                 community.version,
             )
-            return left
+            return (left.id,)
 
-        return store.transaction(tx)
+        (mid,) = store.transaction(
+            lambda: run_once(
+                store,
+                uid=principal.uid,
+                operation="leaveCommunity",
+                key=idempotency_key,
+                payload=payload,
+                now=self._d.clock(),
+                create=leave_once,
+            )
+        )
+        membership = store.memberships.get(mid)
+        if membership is None:  # pragma: no cover - committed with the idempotency record
+            raise not_found("membership")
+        return membership
 
     def archive(self, ctx: RequestContext, community_id: str, expected_version: int) -> Community:
         principal = ctx.require_permanent()

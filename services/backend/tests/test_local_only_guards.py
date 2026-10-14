@@ -10,7 +10,6 @@ from pydantic import BaseModel
 from conftest import LOCAL_OK, PILOT_OK, LoadSettings
 from waterlens.adapters.catalogue_synthetic import SYNTHETIC_SCHEME_ID
 from waterlens.adapters.factory import (
-    PILOT_MISSING_ADAPTERS,
     build_cloud_job_runner,
     build_job_runner,
     build_local_job_runner,
@@ -116,10 +115,9 @@ def test_local_memory_store_is_seeded_with_the_synthetic_funding_scheme(
     assert store.funding_schemes.get(SYNTHETIC_SCHEME_ID) is not None
 
 
-def test_pilot_refusal_names_every_missing_live_adapter(load_settings: LoadSettings) -> None:
-    with pytest.raises(ConfigError) as exc:
+def test_local_store_refuses_pilot_mode(load_settings: LoadSettings) -> None:
+    with pytest.raises(ConfigError, match="local-only"):
         build_local_store(load_settings(PILOT_OK))
-    assert all(adapter in str(exc.value) for adapter in PILOT_MISSING_ADAPTERS)
 
 
 class _Blob(BaseModel):

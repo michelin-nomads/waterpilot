@@ -19,6 +19,8 @@ fragment PlaceCandidateFields on PlaceCandidate {
 fragment AreaLocationFields on Area {
   id
   name
+  centroidLat
+  centroidLon
   countryCode
   timezone
   currency

@@ -1,0 +1,49 @@
+{
+  "scheme": {
+    "id": "fsc_SYNTH02SYNTH02SYNTH02SYNTH",
+    "name": "Mock Community Water Resilience Grant \u2014 SYNTHETIC",
+    "funder": "Mock Public Water Agency \u2014 not an official publisher",
+    "summary": "SYNTHETIC hackathon document. No real scheme, award or application window.",
+    "currency": "INR",
+    "max_amount": {
+      "minor_units": "100000000",
+      "currency": "INR"
+    },
+    "opens_on": "2026-04-01",
+    "closes_on": "2027-04-01",
+    "criteria": [],
+    "required_documents": ["Mock registration certificate", "Mock project budget"],
+    "source_url": "https://example.invalid/mock-water-grant",
+    "last_verified_at": "2026-10-01T00:00:00Z",
+    "evidence": "synthetic",
+    "revision": 1,
+    "status": "demo",
+    "geography": ["IN \u2014 fictional demonstration only"],
+    "applicant_categories": ["Registered community groups (mock)"],
+    "interventions": ["Rainwater harvesting (mock)", "Water efficiency (mock)"],
+    "amount_rules": "Up to INR 1,000,000 (100,000,000 paise); hypothetical cap, not an award.",
+    "deadline_at": "2027-03-31T23:59:59+05:30",
+    "deadline_timezone": "Asia/Kolkata",
+    "source_hash": null,
+    "source_document_key": null,
+    "permission_note": "Created for WaterLens local hackathon testing; permitted to reuse.",
+    "official_source": false,
+    "reviewed_by": null,
+    "unknown_fields": ["co_funding_ratio", "contact", "payment_schedule"],
+    "unknown_metadata": {
+      "co_funding_ratio": null,
+      "contact": null,
+      "payment_schedule": null
+    },
+    "eligibility_rules": {
+      "country_codes": ["IN"],
+      "applicant_types": ["community"],
+      "intervention_ids": ["rooftop_rainwater_harvesting", "efficient_fixtures"],
+      "required_information": ["registration"]
+    }
+  },
+  "expected_revision": 0,
+  "human_reviewed": false,
+  "source_document_base64": "ewogICJ0aXRsZSI6ICJNb2NrIENvbW11bml0eSBXYXRlciBSZXNpbGllbmNlIEdyYW50IFx1MjAxNCBTWU5USEVUSUMiLAogICJwdWJsaXNoZXIiOiAiTW9jayBQdWJsaWMgV2F0ZXIgQWdlbmN5IFx1MjAxNCBub3QgYW4gb2ZmaWNpYWwgcHVibGlzaGVyIiwKICAibm90aWNlIjogIlNZTlRIRVRJQyBoYWNrYXRob24gZG9jdW1lbnQuIE5vIHJlYWwgc2NoZW1lLCBhd2FyZCBvciBhcHBsaWNhdGlvbiB3aW5kb3cuIiwKICAiZ2VvZ3JhcGh5IjogWyJJTiBcdTIwMTQgZmljdGlvbmFsIGRlbW9uc3RyYXRpb24gb25seSJdLAogICJhcHBsaWNhbnRzIjogWyJSZWdpc3RlcmVkIGNvbW11bml0eSBncm91cHMgKG1vY2spIl0sCiAgImludGVydmVudGlvbnMiOiBbIlJhaW53YXRlciBoYXJ2ZXN0aW5nIChtb2NrKSIsICJXYXRlciBlZmZpY2llbmN5IChtb2NrKSJdLAogICJhbW91bnRfcnVsZXMiOiAiVXAgdG8gSU5SIDEsMDAwLDAwMCAoMTAwLDAwMCwwMDAgcGFpc2UpOyBoeXBvdGhldGljYWwgY2FwLCBub3QgYW4gYXdhcmQuIiwKICAiZGVhZGxpbmUiOiAiMjAyNy0wMy0zMVQyMzo1OTo1OSswNTozMCIsCiAgInRpbWV6b25lIjogIkFzaWEvS29sa2F0YSIsCiAgInJlcXVpcmVkX2RvY3VtZW50cyI6IFsiTW9jayByZWdpc3RyYXRpb24gY2VydGlmaWNhdGUiLCAiTW9jayBwcm9qZWN0IGJ1ZGdldCJdLAogICJwZXJtaXNzaW9uIjogIkNyZWF0ZWQgZm9yIFdhdGVyTGVucyBsb2NhbCBoYWNrYXRob24gdGVzdGluZzsgcGVybWl0dGVkIHRvIHJldXNlLiIsCiAgInVua25vd25fZmllbGRzIjogWyJjb19mdW5kaW5nX3JhdGlvIiwgImNvbnRhY3QiLCAicGF5bWVudF9zY2hlZHVsZSJdCn0K",
+  "source_content_type": "application/json"
+}

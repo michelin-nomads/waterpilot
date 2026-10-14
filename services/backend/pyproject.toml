@@ -56,6 +56,7 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["tests"]
 # Emulator tests need a running Firebase Auth emulator: `npm run test:emulator`.
 addopts = "-q -m 'not emulator and not live'"
 markers = [
