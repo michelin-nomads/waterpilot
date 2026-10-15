@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../../auth/authContext';
-import { Button, ButtonLink } from '../../components/Button/Button';
+import { Button, ButtonLink, Select } from '../../components';
 import { Notice } from '../../components/Notice/Notice';
 import { EmptyState, ErrorState, PermissionState } from '../../components/StatePanel/StatePanel';
 import { LoadingRegion, Skeleton } from '../../components/Skeleton/Skeleton';
@@ -159,9 +159,8 @@ export default function CreateCommunityPage() {
             </label>
             <label className={styles.label} htmlFor="source-report">
               Finalized report
-              <select
+              <Select
                 id="source-report"
-                className={styles.select}
                 value={reportId}
                 onChange={(event) => {
                   setReportId(event.target.value);
@@ -174,7 +173,7 @@ export default function CreateCommunityPage() {
                     {report.title} · {new Date(report.finalizedAt).toLocaleDateString()}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
             <label className={`${styles.label} ${styles.wide}`} htmlFor="community-description">
               Description (public)

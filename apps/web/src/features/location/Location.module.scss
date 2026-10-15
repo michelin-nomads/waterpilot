@@ -22,8 +22,8 @@
   @include card;
 
   display: grid;
-  gap: var(--wl-space-3);
-  padding: var(--wl-space-5);
+  gap: var(--wl-card-body-gap);
+  padding: var(--wl-card-padding);
 }
 
 .title {
@@ -55,7 +55,7 @@
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--wl-space-2);
+  gap: var(--wl-card-footer-gap);
 }
 
 .search {
@@ -192,7 +192,7 @@
 
 .form {
   display: grid;
-  gap: var(--wl-space-3);
+  gap: var(--wl-card-body-gap);
 }
 
 .formRow {

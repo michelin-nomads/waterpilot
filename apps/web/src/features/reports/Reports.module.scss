@@ -1,16 +1,16 @@
 .page {
   display: grid;
-  gap: var(--wl-space-6);
+  gap: var(--wl-card-section-gap);
   max-width: 1120px;
   margin: 0 auto;
-  padding: var(--wl-space-6);
+  padding: var(--wl-space-5);
 }
 
 .section,
 .review {
   display: grid;
-  gap: var(--wl-space-4);
-  padding: var(--wl-space-5);
+  gap: var(--wl-card-section-gap);
+  padding: var(--wl-card-padding);
   border: 1px solid var(--wl-color-border);
   border-radius: var(--wl-radius-lg);
   background: var(--wl-color-surface);
@@ -40,7 +40,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--wl-space-4);
-  padding: var(--wl-space-4);
+  padding: var(--wl-card-padding-compact);
   border: 1px solid var(--wl-color-border);
   border-radius: var(--wl-radius-md);
   background: var(--wl-color-surface-sunken);
@@ -53,7 +53,7 @@
 .card h3 {
   margin-block: var(--wl-space-1);
 }
-.card a {
+.card a:not([class]) {
   color: var(--wl-color-accent-strong);
 }
 .open {
@@ -64,7 +64,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--wl-space-3);
+  gap: var(--wl-card-footer-gap);
 }
 
 .review dl {

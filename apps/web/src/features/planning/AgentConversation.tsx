@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '../../components/Button/Button';
+import { Button, Textarea } from '../../components';
 import { usePlanningSession } from '../../session/sessionContext';
 import {
   agentCommand,
@@ -331,7 +331,7 @@ export default function AgentConversation({
         }}
       >
         <label htmlFor="agent-message">Message</label>
-        <textarea
+        <Textarea
           id="agent-message"
           value={input}
           onChange={(event) => setInput(event.target.value)}

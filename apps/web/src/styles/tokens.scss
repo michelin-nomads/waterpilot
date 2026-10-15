@@ -37,6 +37,16 @@
   --wl-space-6: 2rem;
   --wl-space-7: 3rem;
 
+  // Shared surface rhythm. Large cards use 24px insets, while nested cards stay compact.
+  --wl-card-padding: var(--wl-space-5);
+  --wl-card-padding-compact: var(--wl-space-4);
+  --wl-card-padding-nested: var(--wl-space-3);
+  --wl-card-header-gap: var(--wl-space-2);
+  --wl-card-body-gap: var(--wl-space-3);
+  --wl-card-section-gap: var(--wl-space-4);
+  --wl-card-footer-gap: var(--wl-space-4);
+  --wl-field-gap: var(--wl-space-2);
+
   // Radii
   --wl-radius-sm: 6px;
   --wl-radius-md: 10px;

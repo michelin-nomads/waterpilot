@@ -6,7 +6,7 @@
 }
 
 .item {
-  @include card;
+  @include card(0);
 
   overflow: hidden;
 }

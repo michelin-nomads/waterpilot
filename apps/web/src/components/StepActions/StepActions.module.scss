@@ -2,8 +2,8 @@
 
 .actions {
   display: grid;
-  gap: var(--wl-space-3);
-  padding-top: var(--wl-space-4);
+  gap: var(--wl-card-body-gap);
+  padding-top: var(--wl-card-footer-gap);
 
   @include tablet-up {
     grid-template-columns: auto 1fr;
@@ -19,7 +19,7 @@
 
 .forward {
   display: grid;
-  gap: var(--wl-space-2);
+  gap: var(--wl-card-header-gap);
 
   @include tablet-up {
     display: flex;

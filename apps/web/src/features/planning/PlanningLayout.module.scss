@@ -61,10 +61,12 @@
 }
 
 .agentPane {
-  padding: var(--wl-space-4);
+  min-width: 0;
+  padding: var(--wl-card-padding);
   border: 1px solid var(--wl-color-border);
   border-radius: var(--wl-radius-lg);
   background: var(--wl-color-surface);
+  overflow-wrap: anywhere;
 
   @include desktop-up {
     align-self: start;

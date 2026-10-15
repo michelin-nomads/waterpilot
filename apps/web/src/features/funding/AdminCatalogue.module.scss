@@ -11,11 +11,11 @@
 .card {
   border: 1px solid var(--wl-color-border);
   border-radius: var(--wl-radius-lg);
-  padding: var(--wl-space-5);
+  padding: var(--wl-card-padding);
   margin-block-end: var(--wl-space-5);
   overflow-wrap: anywhere;
   display: grid;
-  gap: var(--wl-space-3);
+  gap: var(--wl-card-body-gap);
   background: var(--wl-color-surface);
 }
 .card dl {
