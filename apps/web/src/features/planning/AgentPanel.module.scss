@@ -1,7 +1,7 @@
 .agent {
   display: grid;
   align-content: start;
-  gap: var(--wl-space-4);
+  gap: var(--wl-card-section-gap);
 }
 
 .header {
@@ -19,34 +19,53 @@
 
 .conversation {
   display: grid;
-  gap: var(--wl-space-3);
+  gap: var(--wl-card-body-gap);
   min-width: 0;
   form {
     display: grid;
     gap: var(--wl-space-2);
   }
-  textarea {
-    width: 100%;
-    color: var(--wl-color-text);
-    background: var(--wl-color-surface);
-  }
 }
 .messages {
+  display: grid;
+  gap: var(--wl-space-3);
   overflow-wrap: anywhere;
+  min-width: 0;
+
+  > p {
+    margin: 0;
+    padding: var(--wl-space-3) var(--wl-space-4);
+    border: 1px solid var(--wl-color-border);
+    border-radius: var(--wl-radius-md);
+    background: var(--wl-color-surface-sunken);
+  }
 }
 .result {
   border: 1px solid var(--wl-color-border);
   border-radius: var(--wl-radius-md);
-  padding: var(--wl-space-3);
-  margin-block: var(--wl-space-3);
+  display: grid;
+  gap: var(--wl-card-body-gap);
+  min-width: 0;
+  padding: var(--wl-card-padding-compact);
+  margin: 0;
+
+  > h3,
+  > p {
+    margin: 0;
+  }
+
   dl {
     max-height: 20rem;
     overflow: auto;
+    display: grid;
+    gap: var(--wl-space-2);
+    margin: 0;
   }
   dt {
     font-weight: 600;
   }
   dd {
-    margin: 0 0 var(--wl-space-2);
+    margin: 0;
+    overflow-wrap: anywhere;
   }
 }

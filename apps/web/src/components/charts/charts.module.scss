@@ -1,12 +1,11 @@
 @use 'mixins' as *;
 
 .figure {
-  @include card;
+  @include card(var(--wl-card-padding-compact));
 
   display: grid;
-  gap: var(--wl-space-2);
+  gap: var(--wl-card-body-gap);
   margin: 0;
-  padding: var(--wl-space-4);
 }
 
 .figureHeader {

@@ -2,7 +2,7 @@
 
 .panel {
   display: grid;
-  gap: var(--wl-space-5);
+  gap: var(--wl-card-section-gap);
 }
 
 .section {
@@ -10,7 +10,7 @@
 
   display: grid;
   align-content: start;
-  gap: var(--wl-space-3);
+  gap: var(--wl-card-body-gap);
 }
 
 .sectionTitle {

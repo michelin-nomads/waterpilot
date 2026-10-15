@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { useAuth } from '../../auth/authContext';
-import { Button, ButtonLink } from '../../components/Button/Button';
+import { Button, ButtonLink, Select } from '../../components';
 import { Notice } from '../../components/Notice/Notice';
 import { EmptyState, ErrorState } from '../../components/StatePanel/StatePanel';
 import { LoadingRegion, Skeleton } from '../../components/Skeleton/Skeleton';
@@ -164,9 +164,8 @@ export default function CommunitiesPage() {
             {nearbyMode && (
               <label className={styles.label} htmlFor="radius">
                 Radius
-                <select
+                <Select
                   id="radius"
-                  className={styles.select}
                   value={radius}
                   onChange={(event) => setRadius(Number(event.target.value))}
                 >
@@ -175,7 +174,7 @@ export default function CommunitiesPage() {
                       {meters / 1000} km
                     </option>
                   ))}
-                </select>
+                </Select>
               </label>
             )}
           </div>

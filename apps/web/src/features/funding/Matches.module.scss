@@ -5,8 +5,8 @@
 .form,
 .card {
   display: grid;
-  gap: var(--wl-space-3);
-  padding: var(--wl-space-5);
+  gap: var(--wl-card-body-gap);
+  padding: var(--wl-card-padding);
   border: 1px solid var(--wl-color-border);
   border-radius: var(--wl-radius-lg);
   background: var(--wl-color-surface);

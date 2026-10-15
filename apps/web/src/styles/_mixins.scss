@@ -68,9 +68,10 @@ $bp-wide: 1280px;
   min-height: var(--wl-tap-target);
 }
 
-@mixin card {
+@mixin card($padding: var(--wl-card-padding)) {
   background: var(--wl-color-surface);
   border: 1px solid var(--wl-color-border);
   border-radius: var(--wl-radius-lg);
   box-shadow: var(--wl-shadow-sm);
+  padding: $padding;
 }

@@ -2,7 +2,7 @@
 
 .page {
   display: grid;
-  gap: var(--wl-space-5);
+  gap: var(--wl-card-section-gap);
 }
 
 .section {
@@ -10,7 +10,7 @@
 
   display: grid;
   align-content: start;
-  gap: var(--wl-space-3);
+  gap: var(--wl-card-body-gap);
 }
 
 .sectionHeader {
@@ -18,7 +18,7 @@
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: var(--wl-space-2);
+  gap: var(--wl-card-header-gap);
 }
 
 .sectionTitle {
@@ -28,7 +28,7 @@
 
 .grid {
   display: grid;
-  gap: var(--wl-space-4);
+  gap: var(--wl-card-body-gap);
 
   @include tablet-up {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -64,7 +64,7 @@
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--wl-space-2);
+  gap: var(--wl-card-footer-gap);
 }
 
 .list {

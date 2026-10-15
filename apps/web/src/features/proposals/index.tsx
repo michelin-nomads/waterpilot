@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useAuth } from '../../auth/authContext';
-import { Button, ButtonLink } from '../../components/Button/Button';
+import { Button, ButtonLink, Select } from '../../components';
 import { Notice } from '../../components/Notice/Notice';
 import { EmptyState, ErrorState } from '../../components/StatePanel/StatePanel';
 import { LoadingRegion, Skeleton } from '../../components/Skeleton/Skeleton';
@@ -154,9 +154,8 @@ export default function ProposalsPage() {
           <label className={styles.label} htmlFor="scheme">
             Funding scheme
           </label>
-          <select
+          <Select
             id="scheme"
-            className={styles.input}
             value={schemeId}
             onChange={(event) => setSchemeId(event.target.value)}
           >
@@ -167,7 +166,7 @@ export default function ProposalsPage() {
                 {scheme.name} · {scheme.funder}
               </option>
             ))}
-          </select>
+          </Select>
           {selected && (
             <div className={styles.source}>
               {selected.status === 'DEMO' ? (

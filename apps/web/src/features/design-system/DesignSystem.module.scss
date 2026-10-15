@@ -42,12 +42,11 @@
 }
 
 .form {
-  @include card;
+  @include card(var(--wl-card-padding-compact));
 
   display: grid;
   gap: var(--wl-space-4);
   max-width: 40rem;
-  padding: var(--wl-space-4);
 }
 
 .grid {

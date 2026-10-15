@@ -9,7 +9,7 @@
   @include card;
 
   display: grid;
-  gap: var(--wl-space-4);
+  gap: var(--wl-card-section-gap);
 }
 
 .title {
@@ -78,7 +78,7 @@
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--wl-space-3);
+  gap: var(--wl-card-footer-gap);
 }
 
 .error {

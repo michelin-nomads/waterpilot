@@ -51,7 +51,7 @@
   align-items: flex-start;
   gap: var(--wl-space-3);
   min-height: var(--wl-tap-target);
-  padding: var(--wl-space-4);
+  padding: var(--wl-card-padding-compact);
   border: 1px solid var(--wl-color-border);
   border-radius: var(--wl-radius-lg);
   background: var(--wl-color-surface);
@@ -66,7 +66,7 @@
 
   &:has(:checked) {
     border: 2px solid var(--wl-color-accent);
-    padding: calc(var(--wl-space-4) - 1px);
+    padding: calc(var(--wl-card-padding-compact) - 1px);
     background: var(--wl-color-accent-soft);
   }
 

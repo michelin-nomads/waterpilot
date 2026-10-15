@@ -4,7 +4,7 @@
   @include card;
 
   display: grid;
-  gap: var(--wl-space-4);
+  gap: var(--wl-card-section-gap);
 }
 
 .head {
@@ -62,7 +62,7 @@
 
 .section {
   display: grid;
-  gap: var(--wl-space-3);
+  gap: var(--wl-card-body-gap);
   padding-block-start: var(--wl-space-4);
   border-block-start: 1px solid var(--wl-color-border);
 }
@@ -75,7 +75,7 @@
 
 .details {
   display: grid;
-  gap: var(--wl-space-3);
+  gap: var(--wl-card-body-gap);
   margin: 0;
 }
 
@@ -100,7 +100,7 @@
 
 .evidence {
   display: grid;
-  gap: var(--wl-space-3);
+  gap: var(--wl-card-body-gap);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -129,7 +129,7 @@
 
 .indicators {
   display: grid;
-  gap: var(--wl-space-3);
+  gap: var(--wl-card-body-gap);
   margin: 0;
   padding: 0;
   list-style: none;

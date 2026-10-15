@@ -25,7 +25,10 @@
   &:disabled,
   &[aria-disabled='true'] {
     cursor: not-allowed;
-    opacity: 0.6;
+    opacity: 1;
+    border-color: var(--wl-color-border);
+    background: var(--wl-color-surface-sunken);
+    color: var(--wl-color-text-muted);
   }
 }
 
@@ -51,7 +54,7 @@
   width: 100%;
 }
 
-.primary {
+.button.primary {
   background: var(--wl-color-accent);
   color: var(--wl-color-on-accent);
 

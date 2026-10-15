@@ -29,7 +29,7 @@
 }
 
 .item {
-  @include card;
+  @include card(var(--wl-card-padding-compact));
 
   display: flex;
   gap: var(--wl-space-3);
