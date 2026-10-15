@@ -1,19 +1,9 @@
-import { LogoMark } from '../components/Logo/Logo';
-import styles from './LaunchScreen.module.scss';
+import { WaterDropletLoader } from '../components/WaterDropletLoader/WaterDropletLoader';
 
 /**
- * Shown while the router resolves the first route. It reflects real loading only — there
- * is no minimum display time and no progress percentage.
+ * Shown while auth restores and the router resolves the first route. It has no minimum
+ * display time or simulated progress; readiness unmounts it and stops its animations.
  */
 export function LaunchScreen() {
-  return (
-    <div className={styles.launch} role="status">
-      <div className={styles.emblem} aria-hidden="true">
-        <span className={styles.ripple} />
-        <span className={styles.ripple} />
-        <LogoMark className={styles.mark} />
-      </div>
-      <p className={styles.text}>Loading WaterLens…</p>
-    </div>
-  );
+  return <WaterDropletLoader statusText="Loading WaterLens…" />;
 }
