@@ -162,14 +162,12 @@ export function LocationStep({ onConfirmed, onCancel, extraActions }: LocationSt
           </section>
         ) : (
           <>
-            <section aria-label="Search" className={styles.card}>
+            <section aria-label="Choose your location" className={styles.card}>
               <LocationSearch
                 adapter={adapter}
                 onSelect={(place) => review({ origin: 'PLACE_SEARCH', place })}
                 onEnterManually={() => setPhase({ kind: 'custom', initial: {}, key: Date.now() })}
               />
-            </section>
-            <section aria-label="Other ways to set the location" className={styles.card}>
               <div className={styles.actions}>
                 <Button
                   variant="secondary"
@@ -177,7 +175,7 @@ export function LocationStep({ onConfirmed, onCancel, extraActions }: LocationSt
                   loading={locating}
                   onClick={() => void locateDevice()}
                 >
-                  Use my current location
+                  Use my location
                 </Button>
                 <Button
                   variant="secondary"
@@ -207,7 +205,9 @@ export function LocationStep({ onConfirmed, onCancel, extraActions }: LocationSt
         )}
       </div>
       <aside className={styles.aside} aria-label="Map">
-        <MapPanel adapter={adapter} point={mapPoint} onPick={pickOnMap} />
+        <div className={styles.mapStage}>
+          <MapPanel adapter={adapter} point={mapPoint} onPick={pickOnMap} />
+        </div>
       </aside>
     </div>
   );

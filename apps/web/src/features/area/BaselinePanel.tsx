@@ -1,9 +1,8 @@
-import { useRef, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 import {
   Accordion,
   Badge,
-  Button,
   ButtonLink,
   ErrorState,
   EvidenceBadge,
@@ -25,6 +24,7 @@ import {
 import { useGraphQLQuery } from '../../graphql/hooks';
 import { queryKeys } from '../../graphql/queryKeys';
 import { GraphQLRequestError } from '../../graphql/requestError';
+import { formatPercentFromRatio } from '../../lib/format';
 import { evidenceFromApi } from '../../lib/status';
 import {
   HEADLINE_METRICS,
@@ -99,6 +99,102 @@ function Card({ metric, units }: { metric: BaselineMetric; units: Units }) {
         definition={METRIC_HELP[metric.metric]}
       />
     </div>
+  );
+}
+
+function decimalProduct(left: string, right: string): string {
+  const [leftWhole = '0', leftFraction = ''] = left.split('.');
+  const [rightWhole = '0', rightFraction = ''] = right.split('.');
+  const scale = leftFraction.length + rightFraction.length;
+  const product = BigInt(leftWhole + leftFraction) * BigInt(rightWhole + rightFraction);
+  const padded = product.toString().padStart(scale + 1, '0');
+  const whole = scale ? padded.slice(0, -scale) : padded;
+  const fraction = scale ? padded.slice(-scale).replace(/0+$/, '') : '';
+  return fraction ? `${whole}.${fraction}` : whole;
+}
+
+function decimalDifference(left: string, right: string): string {
+  const leftScale = left.split('.')[1]?.length ?? 0;
+  const rightScale = right.split('.')[1]?.length ?? 0;
+  const scale = Math.max(leftScale, rightScale);
+  const toScaled = (value: string) => {
+    const [whole = '0', fraction = ''] = value.split('.');
+    return BigInt(whole + fraction.padEnd(scale, '0'));
+  };
+  const difference = toScaled(left) - toScaled(right);
+  const digits = difference.toString().padStart(scale + 1, '0');
+  if (!scale) return digits;
+  const whole = digits.slice(0, -scale);
+  const fraction = digits.slice(-scale).replace(/0+$/, '');
+  return fraction ? `${whole}.${fraction}` : whole;
+}
+
+function SupplyComposition({
+  delivered,
+  tankerShare,
+  units,
+}: {
+  delivered?: BaselineMetric;
+  tankerShare?: BaselineMetric;
+  units: Units;
+}) {
+  const ratio = tankerShare?.value;
+  const total = delivered?.value;
+  const ratioValue = ratio === undefined || ratio === null ? NaN : Number(ratio);
+  if (!total || !ratio || !Number.isFinite(ratioValue) || ratioValue < 0 || ratioValue > 1) {
+    return (
+      <section className={styles.composition} aria-labelledby="baseline-composition">
+        <div>
+          <h3 id="baseline-composition" className={styles.subTitle}>
+            Supply composition
+          </h3>
+          <p className={styles.muted}>
+            Unavailable until compatible delivered-supply and tanker records are provided.
+          </p>
+        </div>
+      </section>
+    );
+  }
+  const tankerAmount = decimalProduct(total, ratio);
+  const otherAmount = decimalDifference(total, tankerAmount);
+  const tankerPercent = formatPercentFromRatio(ratio);
+  const otherPercent = formatPercentFromRatio(decimalDifference('1', ratio));
+  const tankerDisplay = quantityText(formatQuantity(tankerAmount, delivered.unit, units));
+  const otherDisplay = quantityText(formatQuantity(otherAmount, delivered.unit, units));
+  return (
+    <section className={styles.composition} aria-labelledby="baseline-composition">
+      <div className={styles.compositionHead}>
+        <h3 id="baseline-composition" className={styles.subTitle}>
+          Supply composition
+        </h3>
+        <span className={styles.muted}>
+          Total {quantityText(formatQuantity(total, delivered.unit, units))}
+        </span>
+      </div>
+      <div
+        className={styles.compositionBar}
+        role="img"
+        aria-label={`Tanker supply ${tankerPercent}; other delivered supply ${otherPercent}`}
+      >
+        <span style={{ width: `${ratioValue * 100}%` }} />
+        <span style={{ width: `${(1 - ratioValue) * 100}%` }} />
+      </div>
+      <ul className={styles.compositionLegend}>
+        <li>
+          <span className={styles.tankerSwatch} aria-hidden="true" />
+          <span>
+            Tanker supply · {tankerPercent} · {tankerDisplay}
+          </span>
+        </li>
+        <li>
+          <span className={styles.otherSwatch} aria-hidden="true" />
+          <span>
+            Other delivered sources (derived remainder) · {otherPercent} · {otherDisplay}
+          </span>
+        </li>
+      </ul>
+      {tankerShare.reasons.length > 0 && <List items={tankerShare.reasons} />}
+    </section>
   );
 }
 
@@ -235,13 +331,6 @@ function Indicator({ item, units }: { item: BaselineIndicator; units: Units }) {
   );
 }
 
-function focusInput(input: string) {
-  const row = document.querySelector<HTMLElement>(`[data-input="${input}"]`);
-  if (!row) return;
-  row.scrollIntoView({ block: 'start' });
-  row.querySelector<HTMLInputElement>('input')?.focus();
-}
-
 function Missing({ baseline, sessionId }: { baseline: Baseline; sessionId: string | null }) {
   const missing = [...baseline.missingEssentials, ...baseline.missingOptional];
   if (missing.length === 0) return null;
@@ -282,19 +371,18 @@ function Missing({ baseline, sessionId }: { baseline: Baseline; sessionId: strin
 }
 
 interface BaselinePanelProps {
+  showActions?: boolean;
   areaId: string;
   /** Include this session's own entered values; requires the session's saved area. */
   sessionId: string | null;
 }
 
 /** The Understand result: what is known about the area now, from ready inputs only. */
-export function BaselinePanel({ areaId, sessionId }: BaselinePanelProps) {
+export function BaselinePanel({ areaId, sessionId, showActions = true }: BaselinePanelProps) {
   const query = useGraphQLQuery(queryKeys.baseline.area(areaId, sessionId), AreaBaselineDocument, {
     areaId,
     sessionId,
   });
-  const headingRef = useRef<HTMLHeadingElement>(null);
-
   if (query.isPending) {
     return (
       <LoadingRegion label="Calculating your water baseline">
@@ -335,17 +423,13 @@ export function BaselinePanel({ areaId, sessionId }: BaselinePanelProps) {
   const note = unitNote(units);
   const metric = (id: string) => b.metrics.find((m) => m.metric === id);
   const headline = HEADLINE_METRICS.map(metric).filter((m): m is BaselineMetric => !!m);
-  const rest = b.metrics.filter((m) => !HEADLINE_METRICS.includes(m.metric));
   const chart = baselineChart(b, units);
   const firstMissing = b.missingEssentials[0] ?? null;
   const available = b.metrics.some((m) => m.value !== null);
 
   return (
-    <section aria-labelledby="baseline-title" className={styles.panel} data-baseline-id={b.id}>
+    <section aria-label="Your water baseline" className={styles.panel} data-baseline-id={b.id}>
       <div className={styles.head}>
-        <h2 id="baseline-title" ref={headingRef} className={styles.title}>
-          Your water baseline
-        </h2>
         <p className={styles.muted}>
           As of {formatLocalDate(b.asOf)}
           {b.window
@@ -394,34 +478,56 @@ export function BaselinePanel({ areaId, sessionId }: BaselinePanelProps) {
           <Card key={m.metric} metric={m} units={units} />
         ))}
       </div>
-      <h3 className={styles.subTitle}>How dependable supply is</h3>
-      <p className={styles.muted}>
-        Three different measures of demand met. Each answers a different question; none stands in
-        for another.
-      </p>
-      <div className={styles.grid}>
-        {rest.map((m) => (
-          <Card key={m.metric} metric={m} units={units} />
-        ))}
-      </div>
+      <SupplyComposition
+        delivered={metric('delivered_supply')}
+        tankerShare={metric('tanker_dependence')}
+        units={units}
+      />
 
       {chart && <LineChart data={chart} />}
 
       <section aria-labelledby="baseline-details" className={styles.section}>
         <h3 id="baseline-details" className={styles.subTitle}>
-          Details, evidence and uncertainty
+          Baseline details
         </h3>
         <Accordion
           headingLevel={4}
-          items={b.metrics.map((m) => ({
-            id: m.metric,
-            title: METRIC_LABEL[m.metric] ?? m.name,
-            summary:
-              m.value === null
-                ? 'Unavailable'
-                : quantityText(formatQuantity(m.value, m.unit, units)),
-            content: <MetricDetails metric={m} baseline={b} units={units} />,
-          }))}
+          items={[
+            {
+              id: 'data-sources',
+              title: 'Data sources and supply details',
+              content: (
+                <Accordion
+                  headingLevel={5}
+                  items={b.metrics.map((m) => ({
+                    id: m.metric,
+                    title: METRIC_LABEL[m.metric] ?? m.name,
+                    summary:
+                      m.value === null
+                        ? 'Unavailable'
+                        : quantityText(formatQuantity(m.value, m.unit, units)),
+                    content: <MetricDetails metric={m} baseline={b} units={units} />,
+                  }))}
+                />
+              ),
+            },
+            {
+              id: 'key-assumptions',
+              title: 'Key assumptions',
+              content: (
+                <List
+                  items={[
+                    ...b.notes,
+                    ...b.metrics.flatMap((m) =>
+                      m.assumptions.map(
+                        (assumption) => `${METRIC_LABEL[m.metric] ?? m.name}: ${assumption}`,
+                      ),
+                    ),
+                  ]}
+                />
+              ),
+            },
+          ]}
         />
       </section>
 
@@ -442,34 +548,38 @@ export function BaselinePanel({ areaId, sessionId }: BaselinePanelProps) {
 
       <Missing baseline={b} sessionId={sessionId} />
 
-      {firstMissing && sessionId ? (
-        <StepActions
-          primary={
-            <Button onClick={() => focusInput(firstMissing)} aria-describedby="baseline-next-note">
-              Add {INPUT_LABEL[firstMissing]?.toLowerCase() ?? 'missing values'}
-            </Button>
-          }
-          secondary={
-            <ButtonLink to="/goals" variant="ghost">
-              Continue to your goal
-            </ButtonLink>
-          }
-          note={
-            <p id="baseline-next-note" className={styles.muted}>
-              Essential values are missing, so demand or supply is unknown. You can still continue;
-              later steps will say what they cannot calculate.
-            </p>
-          }
-        />
-      ) : (
-        <StepActions
-          primary={
-            <ButtonLink to="/goals" endIcon="target">
-              Set your goal
-            </ButtonLink>
-          }
-        />
-      )}
+      {showActions &&
+        (firstMissing && sessionId ? (
+          <StepActions
+            primary={
+              <ButtonLink
+                to={firstMissing === 'POPULATION' ? '/baseline' : '/baseline/inputs'}
+                aria-describedby="baseline-next-note"
+              >
+                Add {INPUT_LABEL[firstMissing]?.toLowerCase() ?? 'missing values'}
+              </ButtonLink>
+            }
+            secondary={
+              <ButtonLink to="/goals" variant="ghost">
+                Continue to your goal
+              </ButtonLink>
+            }
+            note={
+              <p id="baseline-next-note" className={styles.muted}>
+                Essential values are missing, so demand or supply is unknown. You can still
+                continue; later steps will say what they cannot calculate.
+              </p>
+            }
+          />
+        ) : (
+          <StepActions
+            primary={
+              <ButtonLink to="/goals" endIcon="target">
+                Set your goal
+              </ButtonLink>
+            }
+          />
+        ))}
     </section>
   );
 }

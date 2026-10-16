@@ -117,6 +117,7 @@ export const queryKeys = {
       near: { latitude: string; longitude: string; radiusMeters: number },
       page: Page = {},
     ) => ['communities', 'nearby', near, page] as const,
+    memberships: (page: Page = {}) => ['communities', 'memberships', page] as const,
     detail: (communityId: string) => ['communities', communityId] as const,
     members: (communityId: string, page: Page = {}) =>
       ['communities', communityId, 'members', page] as const,

@@ -10,7 +10,11 @@ import { usePlanningSession } from '../../session/sessionContext';
 import { PageHeader } from '../../shell/PageHeader';
 import { getStage, pathForSessionStage, PLANNING_STAGES } from '../../shell/stages';
 import { ModeChooser } from '../planning/ModeChooser';
-import { toSessionMode, usePreferredPlanningMode } from '../planning/planningMode';
+import {
+  toSessionMode,
+  usePreferredPlanningMode,
+  type PlanningMode,
+} from '../planning/planningMode';
 import styles from './Start.module.scss';
 
 /**
@@ -22,7 +26,8 @@ export default function StartPage() {
   const session = usePlanningSession();
   const online = useOnlineStatus();
   const navigate = useNavigate();
-  const [mode, setMode] = usePreferredPlanningMode();
+  const [, setPreferredMode] = usePreferredPlanningMode();
+  const [mode, setMode] = useState<PlanningMode | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,6 +38,7 @@ export default function StartPage() {
     : undefined;
 
   const start = async () => {
+    if (!mode || !online || starting) return;
     setConfirming(false);
     setStarting(true);
     setError(null);
@@ -50,7 +56,13 @@ export default function StartPage() {
   return (
     <div className={styles.page}>
       <PageHeader title="New report" subtitle="Start a new plan from the first step." />
-      <ModeChooser value={mode} onChange={setMode} />
+      <ModeChooser
+        value={mode}
+        onChange={(nextMode) => {
+          setMode(nextMode);
+          setPreferredMode(nextMode);
+        }}
+      />
       {error && (
         <p role="alert" className={styles.error}>
           {error}
@@ -62,7 +74,7 @@ export default function StartPage() {
             size="lg"
             endIcon="arrow-right"
             loading={starting || session.state.status === 'loading'}
-            aria-disabled={!online || undefined}
+            disabled={!mode || !online}
             onClick={() => (current ? setConfirming(true) : void start())}
           >
             Start new report
@@ -96,7 +108,9 @@ export default function StartPage() {
             <Button variant="ghost" onClick={() => setConfirming(false)}>
               Keep current plan
             </Button>
-            <Button onClick={() => void start()}>Start new report</Button>
+            <Button disabled={!mode || !online} loading={starting} onClick={() => void start()}>
+              Start new report
+            </Button>
           </>
         }
       >

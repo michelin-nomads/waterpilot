@@ -52,6 +52,9 @@ export function useAgentMaxWidth(areaRef: RefObject<HTMLElement | null>, enabled
   if (areaWidth === 0) return AGENT_WIDTH.max;
   return Math.max(
     AGENT_WIDTH.min,
-    Math.min(AGENT_WIDTH.max, Math.floor(areaWidth * AGENT_WIDTH.maxShare)),
+    Math.min(
+      AGENT_WIDTH.max,
+      Math.min(Math.floor(areaWidth * AGENT_WIDTH.maxShare), areaWidth - 560),
+    ),
   );
 }

@@ -24,7 +24,7 @@ test('app boots to the Welcome screen', async ({ page }) => {
     'Plan for water security, together',
   );
   await expect(page.getByText(/coverage varies by location/i)).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Start planning' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Start exploring' })).toBeEnabled();
 });
 
 test('a network failure while starting shows a retry and keeps the user on Welcome', async ({
@@ -32,7 +32,7 @@ test('a network failure while starting shows a retry and keeps the user on Welco
 }) => {
   await page.route('**/identitytoolkit.googleapis.com/**', (route) => route.abort());
   await page.goto('/');
-  await page.getByRole('button', { name: 'Start planning' }).click();
+  await page.getByRole('button', { name: 'Start exploring' }).click();
   await expect(page.getByText(/could not reach the sign-in service/i)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible();
   await expect(page).toHaveURL(/\/$/);
@@ -48,11 +48,11 @@ test.describe('with the Auth emulator', () => {
     await fetch(`${EMULATOR}/emulator/v1/projects/demo-waterlens/accounts`, { method: 'DELETE' });
   });
 
-  test('Start planning creates a guest that survives a reload', async ({ page }) => {
+  test('Start exploring creates a guest that survives a reload', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('button', { name: 'Start planning' }).click();
+    await page.getByRole('button', { name: 'Start exploring' }).click();
     await expect(page).toHaveURL(/\/area$/);
-    await expect(page.getByRole('heading', { name: /understand your area/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /location/i })).toBeVisible();
     await expect(page.getByRole('banner').getByText('Guest')).toBeVisible();
 
     await page.goto('/');
@@ -63,7 +63,7 @@ test.describe('with the Auth emulator', () => {
     page,
   }) => {
     await page.goto('/');
-    await page.getByRole('button', { name: 'Sign in to your account' }).click();
+    await page.getByRole('banner').getByRole('button', { name: 'Sign in' }).click();
     const dialog = page.getByRole('dialog', { name: 'Sign in to WaterLens' });
     const popupPromise = page.waitForEvent('popup');
     await dialog.getByRole('button', { name: 'Continue with Google' }).click();
@@ -76,7 +76,7 @@ test.describe('with the Auth emulator', () => {
 
   test('a guest links a new email account and keeps planning', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('button', { name: 'Start planning' }).click();
+    await page.getByRole('button', { name: 'Start exploring' }).click();
     await expect(page).toHaveURL(/\/area$/);
     await page.getByRole('banner').getByRole('button', { name: 'Sign in' }).click();
     const dialog = page.getByRole('dialog', { name: 'Sign in to WaterLens' });

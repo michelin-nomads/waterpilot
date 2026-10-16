@@ -1,18 +1,18 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-import { Button, LoadingRegion, Notice, Skeleton } from '../../components';
+import { Button, LoadingRegion, Notice, Skeleton, StepActions } from '../../components';
 import { env } from '../../config/env';
 import { usePlanningSession } from '../../session/sessionContext';
 import { LocationStep } from '../location/LocationStep';
 import { LocationSummary } from '../location/LocationSummary';
 import { StagePage } from '../planning/StagePage';
-import { BaselinePanel } from './BaselinePanel';
-import { ReadinessPanel } from './ReadinessPanel';
 
 /** The synthetic demo area served by local mode only; never present in the pilot. */
 export const DEMO_AREA_ID = 'are_SYNTH01SYNTH01SYNTH01SYNTH';
 
 function Body() {
+  const navigate = useNavigate();
   const { coordinator, state, view, inputsPending } = usePlanningSession();
   const [changing, setChanging] = useState(false);
   if (state.status === 'loading') {
@@ -27,7 +27,10 @@ function Body() {
   if (!areaId || changing) {
     return (
       <LocationStep
-        onConfirmed={() => setChanging(false)}
+        onConfirmed={() => {
+          setChanging(false);
+          navigate('/baseline');
+        }}
         onCancel={areaId ? () => setChanging(false) : undefined}
         extraActions={
           env.appMode === 'local' && view && coordinator ? (
@@ -47,7 +50,6 @@ function Body() {
     );
   }
   const saved = savedArea === areaId;
-  const sessionId = saved && view ? view.id : null;
   return (
     <>
       {!saved && (
@@ -56,15 +58,22 @@ function Body() {
         </Notice>
       )}
       <LocationSummary areaId={areaId} onChange={() => setChanging(true)} />
-      <BaselinePanel areaId={areaId} sessionId={sessionId} />
-      <ReadinessPanel areaId={areaId} sessionId={sessionId} />
+      {saved && !inputsPending && (
+        <StepActions
+          primary={<Button onClick={() => navigate('/baseline')}>Confirm location</Button>}
+        />
+      )}
     </>
   );
 }
 
 export default function AreaPage() {
   return (
-    <StagePage stageId="area">
+    <StagePage
+      stageId="area"
+      title="Confirm your location"
+      subtitle="Choose the area for your water plan. You can change it before confirming."
+    >
       <Body />
     </StagePage>
   );

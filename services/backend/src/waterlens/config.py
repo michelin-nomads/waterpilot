@@ -86,7 +86,14 @@ class Settings(BaseSettings):
     gcp_project: str = LOCAL_DEMO_PROJECT
     object_storage_dir: str = ".local-object-store"
     job_queue_dir: str = ".local-jobs"
-    allowed_origins: list[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
+    # The primary Vite port is 5173. Keep the explicit 5175 pair for the alternate local
+    # browser session used while another WaterLens instance occupies 5173/5174.
+    allowed_origins: list[str] = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:5175",
+        "http://127.0.0.1:5175",
+    ]
     # Local application store (ADR 0005): the Firestore emulator by default, so data
     # survives an API restart; "memory" keeps everything in-process. Pilot ignores it.
     local_store: Literal["firestore", "memory"] = "firestore"

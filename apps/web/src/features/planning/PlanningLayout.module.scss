@@ -5,19 +5,6 @@
   gap: var(--wl-space-4);
 }
 
-.toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--wl-space-3);
-
-  > nav {
-    flex: 1 1 32rem;
-    min-width: 0;
-  }
-}
-
 .paneTabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -79,4 +66,70 @@
 
 .workspace {
   min-width: 0;
+}
+
+.workspaceNav {
+  padding: var(--wl-space-3) var(--wl-workspace-inset) 0;
+  background: var(--wl-color-surface);
+}
+
+.workspaceBody {
+  display: grid;
+  gap: var(--wl-section-gap);
+  padding: var(--wl-workspace-inset);
+  min-width: 0;
+  padding-bottom: var(--wl-space-7);
+}
+
+@include desktop-up {
+  .planning,
+  .panes {
+    height: 100%;
+    min-height: 0;
+  }
+
+  .planning {
+    display: block;
+  }
+
+  .panes {
+    align-items: stretch;
+    gap: 0;
+
+    &[data-mode='agent'] {
+      column-gap: 0;
+    }
+  }
+
+  .agentPane {
+    position: static;
+    align-self: stretch;
+    height: 100%;
+    max-height: none;
+    min-height: 0;
+    padding: var(--wl-workspace-inset);
+    padding-bottom: var(--wl-space-7);
+    border: 0;
+    border-radius: 0;
+    background: var(--wl-color-bg);
+    overflow: auto;
+    scrollbar-gutter: stable;
+    overscroll-behavior: contain;
+  }
+
+  .workspace {
+    height: 100%;
+    min-height: 0;
+    overflow: auto;
+    scrollbar-gutter: stable;
+    overscroll-behavior: contain;
+    scroll-padding-block: 5rem var(--wl-space-6);
+    background: var(--wl-color-surface);
+  }
+
+  .workspaceNav {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
 }

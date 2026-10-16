@@ -4,25 +4,30 @@ import { EmptyState } from '../../components/StatePanel/StatePanel';
 import { PageHeader } from '../../shell/PageHeader';
 import { getStage, PLANNING_STAGES, type PlanningStage } from '../../shell/stages';
 import { PlanSummary } from './PlanSummary';
+import styles from './StagePage.module.scss';
 
 interface StagePageProps {
   stageId: PlanningStage['id'];
   children: ReactNode;
+  title?: string;
+  subtitle?: string;
 }
 
 /** Standard frame for a planning stage: "Step N of 5", title and subtitle. */
-export function StagePage({ stageId, children }: StagePageProps) {
+export function StagePage({ stageId, children, title, subtitle }: StagePageProps) {
   const { stage, index } = getStage(stageId);
   return (
-    <>
+    <div className={styles.stage}>
       <PageHeader
         eyebrow={`Step ${index + 1} of ${PLANNING_STAGES.length}`}
-        title={stage.label}
-        subtitle={stage.subtitle}
+        title={title ?? stage.label}
+        subtitle={subtitle ?? stage.subtitle}
       />
-      <PlanSummary />
-      {children}
-    </>
+      <div className={styles.content}>
+        <PlanSummary />
+        <div className={styles.sections}>{children}</div>
+      </div>
+    </div>
   );
 }
 

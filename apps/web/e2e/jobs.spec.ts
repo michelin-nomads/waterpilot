@@ -39,7 +39,7 @@ async function startAsGuest(page: Page): Promise<string> {
     .waitForRequest((r) => r.url().endsWith('/graphql') && !!r.headers()['authorization'])
     .then((r) => r.headers()['authorization']!.split(' ')[1]!);
   await page.goto('/');
-  await page.getByRole('button', { name: 'Start planning' }).click();
+  await page.getByRole('button', { name: 'Start exploring' }).click();
   await expect(page).toHaveURL(/\/area$/);
   const payload = JSON.parse(Buffer.from((await token).split('.')[1]!, 'base64url').toString()) as {
     user_id: string;

@@ -44,9 +44,7 @@ test('a guest checks a goal against their baseline, saves it, and sees an imposs
   page,
 }) => {
   await page.goto('/');
-  const option = page.getByRole('radio', { name: /traditional/i });
-  await page.locator('label', { has: option }).click();
-  await page.getByRole('button', { name: 'Start planning' }).click();
+  await page.getByRole('button', { name: 'Start exploring' }).click();
   await page.getByRole('button', { name: 'Use the synthetic demo area' }).click();
   await enter(page, 'DELIVERED_SUPPLY', '1', 'MLD', 'Utility monthly report');
   await enter(page, 'TANKER_SUPPLY', '0.3', 'MLD', 'Tanker delivery receipts');

@@ -1,0 +1,19 @@
+.overviewLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: var(--wl-card-section-gap);
+}
+
+.overviewMain,
+.overviewContext {
+  display: grid;
+  min-width: 0;
+  gap: var(--wl-card-section-gap);
+}
+
+@media (min-width: 64rem) {
+  .overviewLayout {
+    grid-template-columns: minmax(0, 1.75fr) minmax(15rem, 1fr);
+  }
+}

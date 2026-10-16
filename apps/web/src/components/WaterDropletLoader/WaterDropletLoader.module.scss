@@ -1,0 +1,86 @@
+@use 'mixins' as *;
+
+.loader {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--wl-space-4);
+  min-height: 100vh;
+  padding: var(--wl-space-5);
+  background: var(--wl-color-bg);
+  color: var(--wl-color-text);
+  text-align: center;
+}
+
+.art {
+  display: block;
+  width: min(220px, 58vw);
+  height: auto;
+  overflow: visible;
+}
+
+.drop {
+  fill: var(--wl-color-accent-soft);
+}
+
+.fillGroup {
+  transform-box: view-box;
+  animation: fill 8s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+}
+
+.waveTrack {
+  transform-box: view-box;
+  animation: drift 3.5s linear infinite;
+}
+
+.backWave {
+  fill: var(--wl-color-accent-strong);
+  opacity: 0.48;
+}
+
+.frontWave {
+  fill: var(--wl-color-accent);
+}
+
+.accentArc {
+  fill: none;
+  stroke: color-mix(in srgb, var(--wl-color-accent) 35%, #04211f);
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+
+.label {
+  color: var(--wl-color-text-muted);
+  font-weight: 600;
+}
+
+@keyframes fill {
+  from {
+    transform: translateY(95.333%);
+  }
+
+  to {
+    transform: translateY(6.667%);
+  }
+}
+
+@keyframes drift {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+@include reduced-motion {
+  .fillGroup {
+    animation: none;
+    transform: translateY(6.667%);
+  }
+
+  .waveTrack {
+    animation: none;
+  }
+}

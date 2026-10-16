@@ -101,7 +101,7 @@ export function CandidateReview({
     <form className={styles.review} onSubmit={submit} noValidate aria-labelledby={`${id}-title`}>
       <div className={styles.summaryHead}>
         <h2 id={`${id}-title`} className={styles.title}>
-          Is this the right location?
+          Confirm your location
         </h2>
         {fixture && <Badge tone="warning">Test place, not real data</Badge>}
       </div>
@@ -259,7 +259,7 @@ export function CandidateReview({
           Confirm location
         </Button>
         <Button variant="ghost" onClick={onBack}>
-          Choose another place
+          Change area
         </Button>
       </div>
     </form>

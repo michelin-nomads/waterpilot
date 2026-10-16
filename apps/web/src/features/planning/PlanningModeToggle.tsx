@@ -1,40 +1,45 @@
-import { useId } from 'react';
-
-import { Icon, type IconName } from '../../components/Icon/Icon';
-import type { PlanningMode } from './planningMode';
+import { Icon } from '../../components/Icon/Icon';
+import { PLANNING_MODE_OPTIONS, type PlanningMode } from './planningMode';
 import styles from './PlanningModeToggle.module.scss';
-
-const OPTIONS: ReadonlyArray<{ id: PlanningMode; label: string; icon: IconName }> = [
-  { id: 'traditional', label: 'Traditional', icon: 'list' },
-  { id: 'agent', label: 'Agent', icon: 'sparkle' },
-];
 
 interface Props {
   mode: PlanningMode;
   onChange: (mode: PlanningMode) => void;
 }
 
-/** Segmented control built on native radios, so arrow-key behaviour comes from the browser. */
+const MODE_HELP: Record<PlanningMode, string> = {
+  traditional: 'Build your plan yourself, step by step.',
+  agent: 'Plan with AI assistance. You can make changes yourself anytime.',
+};
+
+/** Two compact, keyboard-operable icon radios for switching the current session's view. */
 export function PlanningModeToggle({ mode, onChange }: Props) {
-  const name = useId();
   return (
-    <fieldset className={styles.toggle}>
-      <legend className={styles.legend}>Planning mode</legend>
-      <div className={styles.options}>
-        {OPTIONS.map((option) => (
-          <label key={option.id} className={styles.option}>
-            <input
-              type="radio"
-              name={name}
-              value={option.id}
-              checked={mode === option.id}
-              onChange={() => onChange(option.id)}
-            />
-            <Icon name={option.icon} size="sm" />
-            {option.label}
-          </label>
-        ))}
-      </div>
+    <fieldset className={styles.group} aria-label="Planning mode">
+      {PLANNING_MODE_OPTIONS.map((option) => (
+        <label
+          key={option.id}
+          className={styles.option}
+          data-active={mode === option.id}
+          title={`${option.label}: ${MODE_HELP[option.id]}`}
+        >
+          <input
+            type="radio"
+            name="planning-mode"
+            value={option.id}
+            checked={mode === option.id}
+            aria-label={`${option.label}: ${MODE_HELP[option.id]}`}
+            onChange={() => onChange(option.id)}
+          />
+          <span className={styles.icon} aria-hidden="true">
+            <Icon name={option.icon} size="md" />
+          </span>
+          <span className={styles.tooltip} role="tooltip">
+            <strong>{option.label}</strong>
+            <span>{MODE_HELP[option.id]}</span>
+          </span>
+        </label>
+      ))}
     </fieldset>
   );
 }

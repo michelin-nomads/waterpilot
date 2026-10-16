@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { useAuth } from '../../auth/authContext';
 import {
@@ -135,6 +135,7 @@ type MilestoneDraft = {
 function TrackingCreate() {
   const auth = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const permanent = auth.status === 'ready' && auth.user?.kind === 'permanent';
   const reports = useGraphQLQuery(
     queryKeys.reports.list({ status: 'FINALIZED' }, PAGE),
@@ -146,14 +147,14 @@ function TrackingCreate() {
     'startImplementationProject',
     StartImplementationProjectDocument,
   );
-  const [reportId, setReportId] = useState('');
+  const [reportId, setReportId] = useState(() => searchParams.get('reportId') ?? '');
   const [title, setTitle] = useState('');
   const [share, setShare] = useState(false);
   const [milestones, setMilestones] = useState<MilestoneDraft[]>([
     { title: '', plannedOn: '', responsibleIdentity: '', tasks: '' },
   ]);
   const [error, setError] = useState('');
-  const key = useRef(newIdempotencyKey());
+  const key = useRef<{ payload: string; value: string } | null>(null);
   const report = useMemo(
     () => reports.data?.reports.nodes.find((item) => item.id === reportId) ?? null,
     [reports.data, reportId],
@@ -168,7 +169,7 @@ function TrackingCreate() {
         ))
       )
         return;
-      const result = await create.mutateAsync({
+      const input = {
         reportId,
         title: title.trim(),
         shareWithCommunity: share,
@@ -183,8 +184,10 @@ function TrackingCreate() {
               .map((v) => v.trim())
               .filter(Boolean),
           })),
-        idempotencyKey: key.current,
-      });
+      };
+      const payload = JSON.stringify(input);
+      if (key.current?.payload !== payload) key.current = { payload, value: newIdempotencyKey() };
+      const result = await create.mutateAsync({ ...input, idempotencyKey: key.current.value });
       const { project } = unwrapPayload(result.startImplementationProject);
       if (!project) throw new Error('No project was returned.');
       navigate(`/tracking/${project.id}`);
@@ -748,11 +751,29 @@ function TrackingDetail({ projectId }: { projectId: string }) {
         )}
       </section>
       <section className={styles.section}>
-        <h2>Manual observations</h2>
+        <h2>Predicted vs observed</h2>
         <p>
           Record the exact value and unit with method, source, time window and coverage. Permitted
           documents require your permission attestation. No files are uploaded here.
         </p>
+        {metrics.length > 0 && (
+          <dl className={styles.details}>
+            {metrics.map((metric) => (
+              <div key={metric.metricId}>
+                <dt>{metric.metricId.replaceAll('_', ' ').toLowerCase()} · report forecast</dt>
+                <dd>
+                  {metric.projectedLow.quantity
+                    ? `${metric.projectedLow.quantity.value} ${displayUnit(metric.projectedLow.quantity.unit)}`
+                    : 'Unknown'}
+                  {' – '}
+                  {metric.projectedHigh.quantity
+                    ? `${metric.projectedHigh.quantity.value} ${displayUnit(metric.projectedHigh.quantity.unit)}`
+                    : 'Unknown'}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        )}
         {observationsQuery.isError ? (
           <ErrorState
             title="Observations could not load"

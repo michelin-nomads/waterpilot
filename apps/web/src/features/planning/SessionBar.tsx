@@ -71,6 +71,7 @@ function SaveStatus({ state, onRetry }: { state: CoordinatorState; onRetry: () =
         return null;
     }
   })();
+  if (!content) return null;
   return (
     <p className={styles.status} role="status" data-save={state.save}>
       {content}

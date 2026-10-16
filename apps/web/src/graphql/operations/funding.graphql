@@ -36,6 +36,8 @@ fragment FundingMatchFields on FundingMatch {
     deadlineAt
     deadlineTimezone
     sourceHash
+    status
+    officialSource
     geography
     applicantCategories
     interventions

@@ -1,6 +1,7 @@
 export { Accordion, type AccordionItem } from './Accordion/Accordion';
 export { Badge, EvidenceBadge } from './Badge/Badge';
 export { Button, ButtonLink } from './Button/Button';
+export { WaterDropletLoader } from './WaterDropletLoader/WaterDropletLoader';
 export { BarChart } from './charts/BarChart';
 export { LineChart } from './charts/LineChart';
 export type { ChartData, ChartSeries } from './charts/scale';

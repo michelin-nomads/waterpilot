@@ -61,7 +61,7 @@ const ESTIMATE_FIELDS = [
 ] as const satisfies readonly (keyof EstimateDraft)[];
 
 const SECTION_FIELDS: Record<string, readonly string[]> = {
-  constraints: ['budgetAmount', 'currency', 'timelineDays', 'horizonDays', 'priority'],
+  constraints: ['currency', 'horizonDays', 'priority'],
   site: [
     'scale',
     'roofArea',
@@ -151,30 +151,20 @@ export function GoalForm({
     .map(sectionOf)
     .filter((s): s is string => s !== null);
   const expanded = [...new Set([...open, ...withErrors])];
+  const primaryGoalIds = ['shortage', 'tanker', 'bills'];
+  const otherGoals = PRESETS.filter((preset) => !primaryGoalIds.includes(preset.id));
+  const selectedPreset = presetFor(draft);
+  const otherGoalSelected = otherGoals.some((preset) => preset.id === selectedPreset);
+  const [moreGoalsOpen, setMoreGoalsOpen] = useState(false);
 
   const sections = kind
     ? [
         {
           id: 'constraints',
-          title: 'Budget and time',
-          summary: 'Optional. Budget, maximum build time, horizon and priority.',
+          title: 'Additional planning constraints',
+          summary: 'Optional. Set the planning horizon, currency and priority.',
           content: (
             <div className={styles.grid}>
-              <Field
-                id={fid('budgetAmount')}
-                label={`Budget (${draft.currency || 'currency'})`}
-                hint="Whole amount without commas or symbols, for example 1000000."
-                error={errors.budgetAmount}
-              >
-                {(p) => (
-                  <Input
-                    {...p}
-                    inputMode="decimal"
-                    value={draft.budgetAmount}
-                    onChange={(e) => set('budgetAmount', e.target.value)}
-                  />
-                )}
-              </Field>
               <Field
                 id={fid('currency')}
                 label="Currency"
@@ -191,21 +181,6 @@ export function GoalForm({
                     maxLength={3}
                     value={draft.currency}
                     onChange={(e) => set('currency', e.target.value.toUpperCase())}
-                  />
-                )}
-              </Field>
-              <Field
-                id={fid('timelineDays')}
-                label="Maximum implementation time (days)"
-                hint="How long building may take, for example 365."
-                error={errors.timelineDays}
-              >
-                {(p) => (
-                  <Input
-                    {...p}
-                    inputMode="numeric"
-                    value={draft.timelineDays}
-                    onChange={(e) => set('timelineDays', e.target.value)}
                   />
                 )}
               </Field>
@@ -517,20 +492,42 @@ export function GoalForm({
       <div id={fid('kind')} tabIndex={-1}>
         <ChoiceCards
           legend="What do you want to achieve?"
-          hint="Start from an example and edit it. Nothing is judged achievable when you choose it."
-          options={PRESETS.map((p) => ({
+          hint="Choose a goal to compare against your baseline. Selecting a goal does not promise it is achievable."
+          options={PRESETS.filter((p) => primaryGoalIds.includes(p.id)).map((p) => ({
             value: p.id,
             title: p.title,
             description: p.description,
           }))}
-          value={presetFor(draft)}
+          value={selectedPreset && primaryGoalIds.includes(selectedPreset) ? selectedPreset : null}
           onChange={(presetId) => {
             const preset = PRESETS.find((p) => p.id === presetId);
             if (preset) onChange(preset.apply({ ...draft, targetParameter: '', also: [] }));
           }}
           columns={3}
+          presentation="featured"
         />
       </div>
+      <details
+        className={styles.otherGoals}
+        open={moreGoalsOpen || otherGoalSelected}
+        onToggle={(event) => setMoreGoalsOpen(event.currentTarget.open)}
+      >
+        <summary>More goals and constraints</summary>
+        <ChoiceCards
+          legend="Other supported goals"
+          options={otherGoals.map((p) => ({
+            value: p.id,
+            title: p.title,
+            description: p.description,
+          }))}
+          value={otherGoalSelected ? selectedPreset : null}
+          onChange={(presetId) => {
+            const preset = PRESETS.find((p) => p.id === presetId);
+            if (preset) onChange(preset.apply({ ...draft, targetParameter: '', also: [] }));
+          }}
+          columns={2}
+        />
+      </details>
       {kind === 'CUSTOM' && (
         <div className={styles.stack}>
           <Field
@@ -561,6 +558,40 @@ export function GoalForm({
             This wording is what I mean; use it for planning.
           </label>
           {errors.confirmed && <p className={styles.error}>{errors.confirmed}</p>}
+        </div>
+      )}
+      {kind && (
+        <div className={styles.goalLimits} role="group" aria-label="Optional budget and timeframe">
+          <Field
+            id={fid('budgetAmount')}
+            label={`Budget (${draft.currency || 'currency'})`}
+            hint="Optional. Whole amount without commas or symbols. Amounts are never converted."
+            error={errors.budgetAmount}
+          >
+            {(p) => (
+              <Input
+                {...p}
+                inputMode="decimal"
+                value={draft.budgetAmount}
+                onChange={(e) => set('budgetAmount', e.target.value)}
+              />
+            )}
+          </Field>
+          <Field
+            id={fid('timelineDays')}
+            label="Timeframe (maximum build days)"
+            hint="Optional. How long implementation may take."
+            error={errors.timelineDays}
+          >
+            {(p) => (
+              <Input
+                {...p}
+                inputMode="numeric"
+                value={draft.timelineDays}
+                onChange={(e) => set('timelineDays', e.target.value)}
+              />
+            )}
+          </Field>
         </div>
       )}
       {kind && (

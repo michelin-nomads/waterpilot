@@ -24,6 +24,8 @@ interface ChoiceCardsProps<V extends string> {
   onChange: (value: V) => void;
   /** Cards per row from tablet width up; one per row below that. */
   columns?: 2 | 3;
+  /** Roomier, centered cards for prominent choices such as a new planning mode. */
+  presentation?: 'compact' | 'featured';
 }
 
 /**
@@ -38,6 +40,7 @@ export function ChoiceCards<V extends string>({
   value,
   onChange,
   columns = 2,
+  presentation = 'compact',
 }: ChoiceCardsProps<V>) {
   const name = useId();
   const hintId = hint ? `${name}-hint` : undefined;
@@ -50,7 +53,9 @@ export function ChoiceCards<V extends string>({
           {hint}
         </p>
       )}
-      <div className={`${styles.grid} ${styles[`cols${columns}`]}`}>
+      <div
+        className={`${styles.grid} ${styles[`cols${columns}`]} ${presentation === 'featured' ? styles.featured : ''}`}
+      >
         {options.map((option) => {
           const id = `${name}-${option.value}`;
           const reasonId = option.disabledReason ? `${id}-reason` : undefined;

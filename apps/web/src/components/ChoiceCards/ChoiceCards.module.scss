@@ -45,6 +45,42 @@
   }
 }
 
+.featured {
+  .card {
+    display: grid;
+    justify-items: center;
+    align-content: start;
+    gap: var(--wl-space-3);
+    min-height: 14rem;
+    padding: var(--wl-space-5);
+    text-align: center;
+
+    &:has(:checked) {
+      padding: calc(var(--wl-space-5) - 1px);
+    }
+  }
+
+  .icon {
+    width: 3.5rem;
+    height: 3.5rem;
+  }
+
+  .content {
+    justify-items: center;
+    gap: var(--wl-space-2);
+  }
+
+  .titleRow {
+    justify-content: center;
+  }
+
+  .check {
+    position: absolute;
+    inset-block-start: var(--wl-space-4);
+    inset-inline-end: var(--wl-space-4);
+  }
+}
+
 .card {
   position: relative;
   display: flex;

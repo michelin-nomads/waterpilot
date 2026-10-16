@@ -470,7 +470,7 @@ class ConversationTool(RuntimeTool):
                 "result",
                 name=self.name,
                 result=result,
-                action="/area"
+                action="/baseline/overview"
                 if self.name in {"inspect_coverage", "inspect_baseline"}
                 else "/plans",
             )

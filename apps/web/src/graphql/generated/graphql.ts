@@ -518,9 +518,13 @@ export type PlanningSessionPatch = {
 };
 
 export type PlanningStage =
+  | 'BASELINE'
+  | 'BASELINE_INPUTS'
+  | 'BASELINE_OVERVIEW'
   | 'COMPARE'
   | 'GOAL'
   | 'MAKE_IT_HAPPEN'
+  | 'REVIEW'
   | 'TRACK'
   | 'UNDERSTAND';
 
@@ -901,7 +905,7 @@ export type ArchiveCommunityMutationVariables = Exact<{
 
 export type ArchiveCommunityMutation = { archiveCommunity: { community: { id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, contactName: string | null, contactEmail: string | null, area: { id: string, name: string, countryCode: string } | null, sharedReport: { goal: string, finalizedAt: string } | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
-export type FundingMatchFieldsFragment = { id: string, version: number, sessionId: string, planOptionId: string, metCount: number, notMetCount: number, needsCheckCount: number, window: WindowStatus, status: FundingMatchStatus, rulesVersion: string, eligibility: EligibilityStatus, relevanceOrder: number | null, rankingStatus: string, rankingReason: string, eligibilityEvidence: Array<{ criterionId: string, status: CriterionStatus, reason: string }>, results: Array<{ criterionId: string, status: CriterionStatus, reason: string }>, scheme: { id: string, name: string, funder: string, summary: string, currency: string, opensOn: string | null, closesOn: string | null, sourceUrl: string, lastVerifiedAt: string, deadlineAt: string | null, deadlineTimezone: string | null, sourceHash: string | null, geography: Array<string>, applicantCategories: Array<string>, interventions: Array<string>, amountRules: string | null, evidence: EvidenceQuality, requiredDocuments: Array<string>, maxAmount: { minorUnits: string, currency: string, exponent: number } | null, criteria: Array<{ id: string, text: string, machineCheckable: boolean }> } };
+export type FundingMatchFieldsFragment = { id: string, version: number, sessionId: string, planOptionId: string, metCount: number, notMetCount: number, needsCheckCount: number, window: WindowStatus, status: FundingMatchStatus, rulesVersion: string, eligibility: EligibilityStatus, relevanceOrder: number | null, rankingStatus: string, rankingReason: string, eligibilityEvidence: Array<{ criterionId: string, status: CriterionStatus, reason: string }>, results: Array<{ criterionId: string, status: CriterionStatus, reason: string }>, scheme: { id: string, name: string, funder: string, summary: string, currency: string, opensOn: string | null, closesOn: string | null, sourceUrl: string, lastVerifiedAt: string, deadlineAt: string | null, deadlineTimezone: string | null, sourceHash: string | null, status: CatalogueStatus, officialSource: boolean, geography: Array<string>, applicantCategories: Array<string>, interventions: Array<string>, amountRules: string | null, evidence: EvidenceQuality, requiredDocuments: Array<string>, maxAmount: { minorUnits: string, currency: string, exponent: number } | null, criteria: Array<{ id: string, text: string, machineCheckable: boolean }> } };
 
 export type FundingMatchesQueryVariables = Exact<{
   sessionId: string;
@@ -911,14 +915,14 @@ export type FundingMatchesQueryVariables = Exact<{
 }>;
 
 
-export type FundingMatchesQuery = { fundingMatches: { nodes: Array<{ id: string, version: number, sessionId: string, planOptionId: string, metCount: number, notMetCount: number, needsCheckCount: number, window: WindowStatus, status: FundingMatchStatus, rulesVersion: string, eligibility: EligibilityStatus, relevanceOrder: number | null, rankingStatus: string, rankingReason: string, eligibilityEvidence: Array<{ criterionId: string, status: CriterionStatus, reason: string }>, results: Array<{ criterionId: string, status: CriterionStatus, reason: string }>, scheme: { id: string, name: string, funder: string, summary: string, currency: string, opensOn: string | null, closesOn: string | null, sourceUrl: string, lastVerifiedAt: string, deadlineAt: string | null, deadlineTimezone: string | null, sourceHash: string | null, geography: Array<string>, applicantCategories: Array<string>, interventions: Array<string>, amountRules: string | null, evidence: EvidenceQuality, requiredDocuments: Array<string>, maxAmount: { minorUnits: string, currency: string, exponent: number } | null, criteria: Array<{ id: string, text: string, machineCheckable: boolean }> } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type FundingMatchesQuery = { fundingMatches: { nodes: Array<{ id: string, version: number, sessionId: string, planOptionId: string, metCount: number, notMetCount: number, needsCheckCount: number, window: WindowStatus, status: FundingMatchStatus, rulesVersion: string, eligibility: EligibilityStatus, relevanceOrder: number | null, rankingStatus: string, rankingReason: string, eligibilityEvidence: Array<{ criterionId: string, status: CriterionStatus, reason: string }>, results: Array<{ criterionId: string, status: CriterionStatus, reason: string }>, scheme: { id: string, name: string, funder: string, summary: string, currency: string, opensOn: string | null, closesOn: string | null, sourceUrl: string, lastVerifiedAt: string, deadlineAt: string | null, deadlineTimezone: string | null, sourceHash: string | null, status: CatalogueStatus, officialSource: boolean, geography: Array<string>, applicantCategories: Array<string>, interventions: Array<string>, amountRules: string | null, evidence: EvidenceQuality, requiredDocuments: Array<string>, maxAmount: { minorUnits: string, currency: string, exponent: number } | null, criteria: Array<{ id: string, text: string, machineCheckable: boolean }> } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type MatchFundingMutationVariables = Exact<{
   input: MatchFundingInput;
 }>;
 
 
-export type MatchFundingMutation = { matchFunding: { matches: Array<{ id: string, version: number, sessionId: string, planOptionId: string, metCount: number, notMetCount: number, needsCheckCount: number, window: WindowStatus, status: FundingMatchStatus, rulesVersion: string, eligibility: EligibilityStatus, relevanceOrder: number | null, rankingStatus: string, rankingReason: string, eligibilityEvidence: Array<{ criterionId: string, status: CriterionStatus, reason: string }>, results: Array<{ criterionId: string, status: CriterionStatus, reason: string }>, scheme: { id: string, name: string, funder: string, summary: string, currency: string, opensOn: string | null, closesOn: string | null, sourceUrl: string, lastVerifiedAt: string, deadlineAt: string | null, deadlineTimezone: string | null, sourceHash: string | null, geography: Array<string>, applicantCategories: Array<string>, interventions: Array<string>, amountRules: string | null, evidence: EvidenceQuality, requiredDocuments: Array<string>, maxAmount: { minorUnits: string, currency: string, exponent: number } | null, criteria: Array<{ id: string, text: string, machineCheckable: boolean }> } }> | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
+export type MatchFundingMutation = { matchFunding: { matches: Array<{ id: string, version: number, sessionId: string, planOptionId: string, metCount: number, notMetCount: number, needsCheckCount: number, window: WindowStatus, status: FundingMatchStatus, rulesVersion: string, eligibility: EligibilityStatus, relevanceOrder: number | null, rankingStatus: string, rankingReason: string, eligibilityEvidence: Array<{ criterionId: string, status: CriterionStatus, reason: string }>, results: Array<{ criterionId: string, status: CriterionStatus, reason: string }>, scheme: { id: string, name: string, funder: string, summary: string, currency: string, opensOn: string | null, closesOn: string | null, sourceUrl: string, lastVerifiedAt: string, deadlineAt: string | null, deadlineTimezone: string | null, sourceHash: string | null, status: CatalogueStatus, officialSource: boolean, geography: Array<string>, applicantCategories: Array<string>, interventions: Array<string>, amountRules: string | null, evidence: EvidenceQuality, requiredDocuments: Array<string>, maxAmount: { minorUnits: string, currency: string, exponent: number } | null, criteria: Array<{ id: string, text: string, machineCheckable: boolean }> } }> | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
 export type GoalAssessmentFieldsFragment = { outcome: GoalOutcome, summary: string, nextSteps: Array<string>, catalogueVersion: string, baselineId: string | null, target: { outcome: GoalOutcome, message: string, metric: string | null, unit: Unit | null, baseline: string | null, targetLevel: string | null, caveats: Array<string> }, constraints: Array<{ code: string, message: string, outcome: GoalOutcome | null }>, conflicts: Array<{ code: string, message: string, outcome: GoalOutcome | null }>, interventions: Array<{ interventionId: string, name: string, family: InterventionFamily, relevant: boolean, outcome: GoalOutcome, benefit: string, preferred: boolean, site: { outcome: GoalOutcome, message: string }, cost: { outcome: GoalOutcome, message: string } | null, time: { outcome: GoalOutcome, message: string } | null }> };
 
@@ -1124,7 +1128,7 @@ export type ReportsQueryVariables = Exact<{
 }>;
 
 
-export type ReportsQuery = { reports: { nodes: Array<{ id: string, version: number, title: string, status: ReportStatus, sessionId: string, communityId: string | null, areaId: string, planOptionId: string, planName: string | null, finalizedAt: string, archivedAt: string | null, goal: { id: string, kind: GoalKind, description: string }, economics: { engineVersion: string, currency: string, assumptions: Array<string>, notes: Array<string>, capex: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, upfrontTotal: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, recurringAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, avoidedTankerAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, netAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, funding: { fullyFunded: boolean, note: string, totalCost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, approved: { minorUnits: string, currency: string, exponent: number }, gap: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, candidate: { minorUnits: string, currency: string, exponent: number } } } | null }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type ReportsQuery = { reports: { nodes: Array<{ id: string, version: number, title: string, status: ReportStatus, sessionId: string, communityId: string | null, areaId: string, planOptionId: string, planName: string | null, finalizedAt: string, archivedAt: string | null, area: { id: string, name: string, countryCode: string } | null, goal: { id: string, kind: GoalKind, description: string }, economics: { engineVersion: string, currency: string, assumptions: Array<string>, notes: Array<string>, capex: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, upfrontTotal: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, recurringAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, avoidedTankerAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, netAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, funding: { fullyFunded: boolean, note: string, totalCost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, approved: { minorUnits: string, currency: string, exponent: number }, gap: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, candidate: { minorUnits: string, currency: string, exponent: number } } } | null }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type FundingSchemesQueryVariables = Exact<{
   first?: number | null | undefined;
@@ -1139,7 +1143,7 @@ export type ReportQueryVariables = Exact<{
 }>;
 
 
-export type ReportQuery = { report: { id: string, version: number, title: string, status: ReportStatus, sessionId: string, communityId: string | null, areaId: string, planOptionId: string, planName: string | null, finalizedAt: string, archivedAt: string | null, area: { id: string, name: string, countryCode: string } | null, impact: { provenance: { evidence: EvidenceQuality } } | null, proposals: { nodes: Array<{ id: string, version: number, reportId: string, sections: Array<ProposalSection>, status: ProposalStatus, flaggedCount: number, downloadPath: string | null, previewPath: string | null, job: { id: string, version: number, kind: JobKind, status: JobStatus, stage: string | null, attempts: number, maxAttempts: number, errorCode: ErrorCode | null, eventsPath: string, updatedAt: string } | null }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } }, goal: { id: string, kind: GoalKind, description: string }, economics: { engineVersion: string, currency: string, assumptions: Array<string>, notes: Array<string>, capex: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, upfrontTotal: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, recurringAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, avoidedTankerAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, netAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, funding: { fullyFunded: boolean, note: string, totalCost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, approved: { minorUnits: string, currency: string, exponent: number }, gap: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, candidate: { minorUnits: string, currency: string, exponent: number } } } | null } | null };
+export type ReportQuery = { report: { id: string, version: number, title: string, status: ReportStatus, sessionId: string, communityId: string | null, areaId: string, planOptionId: string, planName: string | null, finalizedAt: string, archivedAt: string | null, area: { id: string, name: string, countryCode: string } | null, impact: { assumptions: Array<string>, metrics: Array<{ metricId: string, baseline: { availability: Availability, reason: string | null, quantity: { value: string, unit: Unit } | null }, projectedLow: { availability: Availability, reason: string | null, quantity: { value: string, unit: Unit } | null }, projectedHigh: { availability: Availability, reason: string | null, quantity: { value: string, unit: Unit } | null } }>, neighbourEffect: { availability: Availability, reason: string | null, quantity: { value: string, unit: Unit } | null }, provenance: { evidence: EvidenceQuality, sourceIds: Array<string>, asOf: string } } | null, proposals: { nodes: Array<{ id: string, version: number, reportId: string, sections: Array<ProposalSection>, status: ProposalStatus, flaggedCount: number, downloadPath: string | null, previewPath: string | null, job: { id: string, version: number, kind: JobKind, status: JobStatus, stage: string | null, attempts: number, maxAttempts: number, errorCode: ErrorCode | null, eventsPath: string, updatedAt: string } | null }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } }, goal: { id: string, kind: GoalKind, description: string }, economics: { engineVersion: string, currency: string, assumptions: Array<string>, notes: Array<string>, capex: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, upfrontTotal: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, recurringAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, avoidedTankerAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, netAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, funding: { fullyFunded: boolean, note: string, totalCost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, approved: { minorUnits: string, currency: string, exponent: number }, gap: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, candidate: { minorUnits: string, currency: string, exponent: number } } } | null } | null };
 
 export type ProposalQueryVariables = Exact<{
   id: string;
@@ -1509,6 +1513,8 @@ export const FundingMatchFieldsFragmentDoc = new TypedDocumentString(`
     deadlineAt
     deadlineTimezone
     sourceHash
+    status
+    officialSource
     geography
     applicantCategories
     interventions
@@ -3306,6 +3312,8 @@ fragment FundingMatchFields on FundingMatch {
     deadlineAt
     deadlineTimezone
     sourceHash
+    status
+    officialSource
     geography
     applicantCategories
     interventions
@@ -3386,6 +3394,8 @@ fragment FundingMatchFields on FundingMatch {
     deadlineAt
     deadlineTimezone
     sourceHash
+    status
+    officialSource
     geography
     applicantCategories
     interventions
@@ -4857,6 +4867,11 @@ export const ReportsDocument = new TypedDocumentString(`
   reports(filter: $filter, first: $first, after: $after) {
     nodes {
       ...ReportFields
+      area {
+        id
+        name
+        countryCode
+      }
     }
     pageInfo {
       ...PageInfoFields
@@ -5008,8 +5023,46 @@ export const ReportDocument = new TypedDocumentString(`
       countryCode
     }
     impact {
+      metrics {
+        metricId
+        baseline {
+          availability
+          quantity {
+            value
+            unit
+          }
+          reason
+        }
+        projectedLow {
+          availability
+          quantity {
+            value
+            unit
+          }
+          reason
+        }
+        projectedHigh {
+          availability
+          quantity {
+            value
+            unit
+          }
+          reason
+        }
+      }
+      neighbourEffect {
+        availability
+        quantity {
+          value
+          unit
+        }
+        reason
+      }
+      assumptions
       provenance {
         evidence
+        sourceIds
+        asOf
       }
     }
     proposals(first: 10) {

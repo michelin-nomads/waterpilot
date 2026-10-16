@@ -9,7 +9,7 @@ export type ResolvedTheme = Exclude<ThemePreference, 'system'>;
 export const PALETTE_IDS = ['estuary', 'monsoon', 'grove'] as const;
 export type PaletteId = (typeof PALETTE_IDS)[number];
 
-/** Provisional palettes: original choices, not the unseen approved design. */
+/** Display palettes: Estuary follows the supplied design reference; others remain optional. */
 export const PALETTES: ReadonlyArray<{ id: PaletteId; label: string; description: string }> = [
   { id: 'estuary', label: 'Estuary', description: 'Teal accent' },
   { id: 'monsoon', label: 'Monsoon', description: 'Blue accent' },

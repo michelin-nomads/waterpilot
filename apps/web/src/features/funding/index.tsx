@@ -10,17 +10,20 @@ import {
   Notice,
   Textarea,
 } from '../../components';
+import { useSearchParams } from 'react-router-dom';
 import {
   FundingMatchesDocument,
   MatchFundingDocument,
+  PlanComparisonDocument,
+  ReportDocument,
   type FundingMatchFieldsFragment,
 } from '../../graphql/generated/graphql';
 import { useGraphQLMutation, useGraphQLQuery } from '../../graphql/hooks';
 import { queryKeys } from '../../graphql/queryKeys';
-import { formatMoney } from '../plans/plansFormat';
+import { formatMoney, formatMoneyRange } from '../plans/plansFormat';
 import { usePlanningSession } from '../../session/sessionContext';
 import type { SessionState } from '../../session/sessionState';
-import { StagePage } from '../planning/StagePage';
+import { PageHeader } from '../../shell/PageHeader';
 import styles from './Matches.module.scss';
 
 const list = (text: string) =>
@@ -29,7 +32,7 @@ const list = (text: string) =>
     .map((value) => value.trim())
     .filter(Boolean);
 
-function MatchCard({ match }: { match: FundingMatchFieldsFragment }) {
+function MatchCard({ match, reportId }: { match: FundingMatchFieldsFragment; reportId?: string }) {
   const scheme = match.scheme;
   const label =
     match.eligibility === 'ELIGIBLE'
@@ -84,11 +87,22 @@ function MatchCard({ match }: { match: FundingMatchFieldsFragment }) {
         {match.rankingReason}
         {match.relevanceOrder !== null && ` Relevance order ${match.relevanceOrder}.`}
       </p>
+      {reportId &&
+        match.eligibility === 'ELIGIBLE' &&
+        scheme.status === 'ACTIVE' &&
+        scheme.officialSource &&
+        scheme.sourceHash && (
+          <ButtonLink
+            to={`/proposals/new?reportId=${encodeURIComponent(reportId)}&schemeId=${encodeURIComponent(scheme.id)}`}
+          >
+            Prepare proposal
+          </ButtonLink>
+        )}
     </article>
   );
 }
 
-function FundingWorkspace({ session }: { session: SessionState }) {
+function FundingWorkspace({ session, reportId }: { session: SessionState; reportId?: string }) {
   const [applicant, setApplicant] = useState('');
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState(session.goal?.budget?.currency ?? '');
@@ -96,6 +110,7 @@ function FundingWorkspace({ session }: { session: SessionState }) {
   const [information, setInformation] = useState('');
   const [ranking, setRanking] = useState(false);
   const [queryText, setQueryText] = useState('');
+  const [schemeSearch, setSchemeSearch] = useState('');
   const [error, setError] = useState('');
   const [results, setResults] = useState<FundingMatchFieldsFragment[] | null>(null);
   const [after, setAfter] = useState<string | null>(null);
@@ -112,11 +127,43 @@ function FundingWorkspace({ session }: { session: SessionState }) {
     FundingMatchesDocument,
     { sessionId: session.id, planOptionId: session.selectedPlanOptionId, first: 50, after },
   );
+  const comparison = useGraphQLQuery(
+    queryKeys.sessions.planComparison(session.id, session.inputsRevision),
+    PlanComparisonDocument,
+    { id: session.id },
+  );
+  const savedReport = useGraphQLQuery(
+    queryKeys.reports.detail(reportId ?? ''),
+    ReportDocument,
+    { id: reportId ?? '' },
+    { enabled: Boolean(reportId) },
+  );
   const mutation = useGraphQLMutation('matchFunding', MatchFundingDocument);
   const stored = query.data?.fundingMatches;
   const matches = results ?? [...previous, ...(stored?.nodes ?? [])];
-  const candidates = matches.filter((m) => m.eligibility !== 'INELIGIBLE');
-  const excluded = matches.filter((m) => m.eligibility === 'INELIGIBLE');
+  const term = schemeSearch.trim().toLocaleLowerCase();
+  const visibleMatches = term
+    ? matches.filter((match) =>
+        `${match.scheme.name} ${match.scheme.funder} ${match.scheme.summary}`
+          .toLocaleLowerCase()
+          .includes(term),
+      )
+    : matches;
+  const candidates = visibleMatches.filter((m) => m.eligibility !== 'INELIGIBLE');
+  const excluded = visibleMatches.filter((m) => m.eligibility === 'INELIGIBLE');
+  const comparisonSession = comparison.data?.planningSession;
+  const selectedOption = comparisonSession?.planComparison.options.find(
+    (option) => option.id === session.selectedPlanOptionId,
+  );
+  const planCurrent =
+    comparisonSession?.selectedPlanStatus === 'CURRENT' && Boolean(selectedOption);
+  const proposalReport = savedReport.data?.report;
+  const proposalContextValid = Boolean(
+    proposalReport &&
+    proposalReport.status === 'FINALIZED' &&
+    proposalReport.sessionId === session.id &&
+    proposalReport.planOptionId === session.selectedPlanOptionId,
+  );
   const busy = mutation.isPending;
   const { inputsPending } = usePlanningSession();
 
@@ -160,6 +207,25 @@ function FundingWorkspace({ session }: { session: SessionState }) {
         Eligibility is checked using recorded rules and your declared information. Relevance cannot
         change it. Possible funding is never counted as approved money.
       </Notice>
+      {selectedOption && planCurrent && (
+        <section className={styles.form} aria-label="Selected plan funding context">
+          <h2>{selectedOption.name}</h2>
+          <p>
+            Current comparison · funding gap:{' '}
+            {selectedOption.economics?.funding.gap
+              ? formatMoneyRange(selectedOption.economics.funding.gap)
+              : 'not calculated'}
+          </p>
+          <p className={styles.meta}>
+            Possible awards remain unapproved and do not reduce this gap.
+          </p>
+        </section>
+      )}
+      {!planCurrent && !comparison.isPending && (
+        <Notice kind="stale" title="Selected plan needs review">
+          Return to Compare and select a current option before checking funding.
+        </Notice>
+      )}
       <form
         className={styles.form}
         onSubmit={(event) => {
@@ -245,7 +311,7 @@ function FundingWorkspace({ session }: { session: SessionState }) {
             )}
           </Field>
         )}
-        <Button type="submit" disabled={inputsPending} loading={busy}>
+        <Button type="submit" disabled={inputsPending || !planCurrent} loading={busy}>
           Check funding matches
         </Button>
       </form>
@@ -269,15 +335,35 @@ function FundingWorkspace({ session }: { session: SessionState }) {
         </EmptyState>
       )}
       {(results !== null || matches.length > 0) && candidates.length === 0 && (
-        <EmptyState title="No eligible scheme in these results">
-          The listed rules exclude these schemes. Review the evidence below; relevance cannot
-          override an exclusion.
+        <EmptyState
+          title={
+            term ? 'No opportunities match this filter' : 'No eligible scheme in these results'
+          }
+        >
+          {term
+            ? 'Clear or change the local filter to see the submitted results.'
+            : 'The listed rules exclude these schemes. Review the evidence below; relevance cannot override an exclusion.'}
         </EmptyState>
       )}
       {matches.length > 0 && (
         <p>
           Results reflect the last submitted information. Check again after editing these fields.
         </p>
+      )}
+      {matches.length > 0 && (
+        <Field
+          label="Filter opportunities"
+          hint="Filters displayed results only; it does not run another funding check."
+        >
+          {(control) => (
+            <Input
+              {...control}
+              type="search"
+              value={schemeSearch}
+              onChange={(event) => setSchemeSearch(event.target.value)}
+            />
+          )}
+        </Field>
       )}
       {candidates.length > 0 && (
         <p role="status">
@@ -288,16 +374,30 @@ function FundingWorkspace({ session }: { session: SessionState }) {
       {matches[0]?.rankingStatus === 'deterministic_fallback' && (
         <Notice kind="info">{matches[0].rankingReason}</Notice>
       )}
+      {candidates.some((match) => match.eligibility === 'ELIGIBLE') && !proposalContextValid && (
+        <Notice kind="info" announce={false}>
+          To prepare a proposal, save a finalized report for this same planning session and selected
+          plan first. Possible funding is not approved funding.
+        </Notice>
+      )}
       <div className={styles.results}>
         {candidates.map((match) => (
-          <MatchCard key={match.id} match={match} />
+          <MatchCard
+            key={match.id}
+            match={match}
+            reportId={proposalContextValid ? reportId : undefined}
+          />
         ))}
       </div>
       {excluded.length > 0 && (
         <details>
           <summary>{excluded.length} excluded scheme(s) — show reasons</summary>
           {excluded.map((match) => (
-            <MatchCard key={match.id} match={match} />
+            <MatchCard
+              key={match.id}
+              match={match}
+              reportId={proposalContextValid ? reportId : undefined}
+            />
           ))}
         </details>
       )}
@@ -324,9 +424,15 @@ function FundingWorkspace({ session }: { session: SessionState }) {
 
 export default function FundingPage() {
   const { state, inputsPending } = usePlanningSession();
+  const [params] = useSearchParams();
+  const reportId = params.get('reportId') ?? undefined;
   const session = state.server;
   return (
-    <StagePage stageId="funding">
+    <div>
+      <PageHeader
+        title="Funding opportunities"
+        subtitle="Explore funding for your selected plan."
+      />
       {!session?.selectedPlanOptionId ? (
         <EmptyState
           title="Choose a plan before matching funding"
@@ -340,8 +446,9 @@ export default function FundingPage() {
         <FundingWorkspace
           key={`${session.id}:${session.inputsRevision}:${session.selectedPlanOptionId}`}
           session={session}
+          reportId={reportId}
         />
       )}
-    </StagePage>
+    </div>
   );
 }

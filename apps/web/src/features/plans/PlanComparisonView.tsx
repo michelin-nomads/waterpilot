@@ -1,7 +1,7 @@
-import { useId } from 'react';
+import { useId, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import { Accordion, Badge, Button, Notice } from '../../components';
+import { Accordion, Badge, Button, Drawer, Notice } from '../../components';
 import type {
   ComparedOptionFieldsFragment,
   PlanComparisonQuery,
@@ -36,22 +36,33 @@ function OptionCard({
   selected,
   busy,
   onChoose,
+  onDetails,
 }: {
   option: ComparedOptionFieldsFragment;
   comparison: Comparison;
   selected: boolean;
   busy: boolean;
   onChoose: () => void;
+  onDetails: () => void;
 }) {
   const headingId = useId();
   const unit = comparison.unit ?? 'RATIO';
   return (
-    <li className={styles.option} aria-labelledby={headingId} data-option-id={option.id}>
+    <li
+      className={styles.option}
+      aria-labelledby={headingId}
+      data-option-id={option.id}
+      data-selected={selected || undefined}
+    >
       <div className={styles.optionHead}>
         <h3 id={headingId} className={styles.optionTitle}>
           <span className={styles.rank}>Plan {option.rank}</span> {option.name}
         </h3>
-        {selected && <Badge tone="accent">Chosen</Badge>}
+        {selected && (
+          <Badge tone="accent" icon="check">
+            Chosen
+          </Badge>
+        )}
       </div>
       <dl className={styles.facts}>
         <div>
@@ -188,6 +199,9 @@ function OptionCard({
         ]}
       />
       <div className={styles.actions}>
+        <Button variant="secondary" onClick={onDetails}>
+          View plan details
+        </Button>
         <Button
           variant={selected ? 'secondary' : 'primary'}
           disabled={selected || busy}
@@ -200,7 +214,111 @@ function OptionCard({
   );
 }
 
+function PlanDetails({
+  option,
+  comparison,
+}: {
+  option: ComparedOptionFieldsFragment;
+  comparison: Comparison;
+}) {
+  const unit = comparison.unit ?? 'RATIO';
+  const topRank = option.rank === 1 && Boolean(comparison.ranking.trim());
+  return (
+    <div className={styles.detailContent}>
+      <div className={styles.detailHead}>
+        <h3 className={styles.optionTitle}>{option.name}</h3>
+        {topRank && <Badge tone="accent">Ranked first</Badge>}
+      </div>
+      <dl className={styles.detailKpis} aria-label="Plan outcomes">
+        <div>
+          <dt>Outcome with your estimates</dt>
+          <dd>{formatRange(option.pessimistic, option.optimistic, unit)}</dd>
+        </div>
+        <div>
+          <dt>Cost</dt>
+          <dd>{formatMoneyRange(option.cost)}</dd>
+        </div>
+        <div>
+          <dt>Build time</dt>
+          <dd>{formatDays(option.buildDays)}</dd>
+        </div>
+        <div>
+          <dt>First benefit</dt>
+          <dd>{TIMING_LABEL[option.firstBenefit]}</dd>
+        </div>
+        <div>
+          <dt>Water saved or added</dt>
+          <dd>
+            {option.waterLow && option.waterHigh
+              ? formatRange(option.waterLow, option.waterHigh, 'LITRES_PER_DAY')
+              : 'Not known'}
+          </dd>
+        </div>
+      </dl>
+      <section className={styles.block} aria-labelledby="plan-monthly-outlook">
+        <h4 id="plan-monthly-outlook" className={styles.blockTitle}>
+          Monthly outlook
+        </h4>
+        <Notice kind="info" announce={false}>
+          The current comparison does not provide month-by-month values for this plan. No monthly
+          chart is available; the exact outcome range above is based on your estimates.
+        </Notice>
+      </section>
+      <section className={styles.block} aria-labelledby="plan-detail-measures">
+        <h4 id="plan-detail-measures" className={styles.blockTitle}>
+          Measures and operating costs
+        </h4>
+        <ul className={styles.list}>
+          {option.measures.map((measure) => (
+            <li key={measure.interventionId}>
+              <strong>{measure.name}</strong> —{' '}
+              {measure.waterLow && measure.waterHigh
+                ? formatRange(measure.waterLow, measure.waterHigh, 'LITRES_PER_DAY')
+                : 'water effect not known'}
+              {measure.recurring
+                ? `; yearly operation and maintenance ${formatMoneyRange(measure.recurring)}`
+                : ''}
+              {measure.buildDays ? `; build ${formatDays(measure.buildDays)}` : ''}
+              {measure.effects.map((effect) => (
+                <span key={effect.key}>
+                  {' '}
+                  {effect.label}: {formatRange(effect.low, effect.high, effect.unit)} (
+                  {ORIGIN_LABEL[effect.origin]}).
+                </span>
+              ))}
+            </li>
+          ))}
+        </ul>
+      </section>
+      {option.economics && <EconomicsCard economics={option.economics} />}
+      <section className={styles.block} aria-labelledby="plan-detail-assumptions">
+        <h4 id="plan-detail-assumptions" className={styles.blockTitle}>
+          Assumptions and trade-offs
+        </h4>
+        <p className={styles.text}>{option.why}</p>
+        <ul className={styles.list}>
+          {[...option.tradeoffs, ...option.uncertainty].map((item, index) => (
+            <li key={`${index}-${item}`}>{item}</li>
+          ))}
+          {option.uncountedHigh && (
+            <li>
+              Not counted: up to {formatLitres(option.uncountedHigh)} beyond replaced tanker
+              deliveries.
+            </li>
+          )}
+        </ul>
+        {comparison.ranking && (
+          <p className={styles.muted}>Current ordering: {comparison.ranking}</p>
+        )}
+      </section>
+      <OptionImpact impact={option.impact} />
+    </div>
+  );
+}
+
 export function PlanComparisonView({ comparison, selectedId, busy, onChoose }: Props) {
+  const [detailOptionId, setDetailOptionId] = useState<string | null>(null);
+  const detailOption = comparison.options.find((option) => option.id === detailOptionId) ?? null;
   const status = STATUS[comparison.status];
   const unit = comparison.unit ?? 'RATIO';
   const r = comparison.rejections;
@@ -272,6 +390,7 @@ export function PlanComparisonView({ comparison, selectedId, busy, onChoose }: P
               selected={o.id === selectedId}
               busy={busy}
               onChoose={() => onChoose(o.id)}
+              onDetails={() => setDetailOptionId(o.id)}
             />
           ))}
         </ol>
@@ -325,6 +444,33 @@ export function PlanComparisonView({ comparison, selectedId, busy, onChoose }: P
           },
         ]}
       />
+      <Drawer
+        open={detailOption !== null}
+        onClose={() => setDetailOptionId(null)}
+        title={`Plan ${detailOption?.rank ?? ''} details`}
+        description="Review the current option, its estimates and limitations. This does not finalize a report."
+        size="lg"
+        footer={
+          <div className={styles.actions}>
+            <Button variant="secondary" onClick={() => setDetailOptionId(null)}>
+              Back to compare
+            </Button>
+            {detailOption && (
+              <Button
+                disabled={detailOption.id === selectedId || busy}
+                onClick={() => {
+                  onChoose(detailOption.id);
+                  setDetailOptionId(null);
+                }}
+              >
+                {detailOption.id === selectedId ? 'Selected plan' : 'Select this plan'}
+              </Button>
+            )}
+          </div>
+        }
+      >
+        {detailOption && <PlanDetails option={detailOption} comparison={comparison} />}
+      </Drawer>
     </div>
   );
 }

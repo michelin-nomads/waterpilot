@@ -72,7 +72,7 @@ export const METRIC_HELP: Record<string, string> = {
   days_until_shortage: 'Days until supply is projected to fall short of demand.',
 };
 
-export const HEADLINE_METRICS = ['demand', 'delivered_supply', 'reliable_supply', 'deficit'];
+export const HEADLINE_METRICS = ['demand', 'delivered_supply', 'deficit'];
 
 export const INPUT_LABEL: Partial<Record<ReadinessInput, string>> = {
   POPULATION: 'Population served',

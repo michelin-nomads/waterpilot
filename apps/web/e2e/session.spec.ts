@@ -55,11 +55,8 @@ async function expectSettled(count: () => number, expected: number) {
 
 async function startPlanning(page: Page, mode: 'Traditional' | 'With the assistant') {
   await page.goto('/');
-  const option = page.getByRole('radio', { name: new RegExp(mode, 'i') });
-  // The card label covers the native radio, as it does for a pointer user.
-  await page.locator('label', { has: option }).click();
-  await expect(option).toBeChecked();
-  await page.getByRole('button', { name: 'Start planning' }).click();
+  const button = mode === 'Traditional' ? 'Start exploring' : 'Plan with Copilot';
+  await page.getByRole('button', { name: button }).click();
   await expect(page).toHaveURL(/\/area$/);
 }
 
@@ -88,12 +85,12 @@ async function recoveryRecords(page: Page): Promise<Array<{ uid: string; pending
 test('refresh and Continue restore the saved mode and step', async ({ page }) => {
   await startPlanning(page, 'With the assistant');
   await expect(page.getByRole('complementary', { name: 'Conversation' })).toBeVisible();
-  await stageLink(page, /set your goal/i).click();
+  await stageLink(page, /goal/i).click();
   await expect(saveStatus(page)).toContainText('Changes saved');
 
   await page.reload();
-  await expect(page.getByRole('heading', { level: 1, name: 'Set Your Goal' })).toBeVisible();
-  await expect(page.getByRole('radio', { name: 'Agent' })).toBeChecked();
+  await expect(page.getByRole('heading', { level: 1, name: 'Goal' })).toBeVisible();
+  await expect(page.getByRole('radio', { name: 'Copilot' })).toBeChecked();
 
   await page.goto('/');
   await page.getByRole('button', { name: 'Continue planning' }).click();
@@ -111,7 +108,7 @@ test('"Changes saved" waits for the server to acknowledge', async ({ page }) => 
     await held;
     await route.fulfill({ response });
   });
-  await stageLink(page, /compare plans/i).click();
+  await stageLink(page, /compare/i).click();
   await expect(saveStatus(page)).toContainText('Saving…');
   await page.waitForTimeout(500);
   await expect(page.getByText('Changes saved')).toHaveCount(0);
@@ -152,9 +149,9 @@ test('two tabs share one session without duplicate or lost writes', async ({ con
   const firstCounts = countAppliedUpdates(first);
   const secondCounts = countAppliedUpdates(second);
 
-  await stageLink(first, /set your goal/i).click();
+  await stageLink(first, /goal/i).click();
   await expect(saveStatus(first)).toContainText('Changes saved');
-  await stageLink(second, /compare plans/i).click();
+  await stageLink(second, /compare/i).click();
   await expect(saveStatus(second)).toContainText('Changes saved');
 
   await expectSettled(() => firstCounts.applied + secondCounts.applied, 2);
@@ -172,10 +169,10 @@ test('switching mode keeps the same session', async ({ page }) => {
       created.push(request.url());
     }
   });
-  await page.getByRole('radio', { name: 'Agent' }).check();
+  await page.getByRole('radio', { name: 'Copilot' }).check();
   await expect(saveStatus(page)).toContainText('Changes saved');
   await page.reload();
-  await expect(page.getByRole('radio', { name: 'Agent' })).toBeChecked();
+  await expect(page.getByRole('radio', { name: 'Copilot' })).toBeChecked();
   expect(created).toEqual([]);
   await expectSettled(() => counts.applied, 1);
 });
@@ -185,7 +182,7 @@ test('an account switch shows nothing of the previous account and clears its dev
 }) => {
   const email = `switch-${Date.now()}@example.org`;
   await startPlanning(page, 'Traditional');
-  await stageLink(page, /set your goal/i).click();
+  await stageLink(page, /goal/i).click();
   await expect(saveStatus(page)).toContainText('Changes saved');
 
   // The guest becomes a permanent account and keeps the plan.
@@ -200,11 +197,11 @@ test('an account switch shows nothing of the previous account and clears its dev
   await expect(page.getByRole('link', { name: /resume set your goal/i })).toBeVisible();
 
   await page.getByRole('banner').getByRole('button', { name: 'Sign out' }).click();
-  await expect(page.getByRole('button', { name: 'Start planning' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Start exploring' })).toBeVisible();
   await expect.poll(async () => (await recoveryRecords(page)).length).toBe(0);
 
   // A different person on the same browser starts clean.
   await startPlanning(page, 'Traditional');
-  await expect(page.getByRole('heading', { level: 1, name: 'Understand Your Area' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Location' })).toBeVisible();
   await expect(page.getByRole('banner').getByText(email)).toHaveCount(0);
 });

@@ -54,8 +54,22 @@ def test_new_sessions_start_at_revision_zero(h: Harness) -> None:
     assert create(h)["inputsRevision"] == 0
 
 
-def test_mode_and_stage_are_not_upstream_inputs(h: Harness) -> None:
-    session = ok(patch(h, create(h), {"mode": "TRADITIONAL", "stage": "GOAL"}))
+@pytest.mark.parametrize(
+    "stage",
+    [
+        "UNDERSTAND",
+        "BASELINE",
+        "BASELINE_INPUTS",
+        "BASELINE_OVERVIEW",
+        "GOAL",
+        "COMPARE",
+        "REVIEW",
+        "MAKE_IT_HAPPEN",
+        "TRACK",
+    ],
+)
+def test_mode_and_stage_are_not_upstream_inputs(h: Harness, stage: str) -> None:
+    session = ok(patch(h, create(h), {"mode": "TRADITIONAL", "stage": stage}))
     assert session["inputsRevision"] == 0 and session["version"] == 2
 
 

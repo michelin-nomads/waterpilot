@@ -1,56 +1,77 @@
 @use 'mixins' as *;
 
-.toggle {
+.group {
   display: flex;
   align-items: center;
-  gap: var(--wl-space-2);
+  gap: var(--wl-space-1);
   margin: 0;
-  padding: 0;
-  border: 0;
-}
-
-.legend {
-  float: left;
-  padding: 0;
-  margin-right: var(--wl-space-2);
-  font-size: var(--wl-text-sm);
-  font-weight: 600;
-  color: var(--wl-color-text-muted);
-}
-
-.options {
-  display: inline-flex;
-  padding: 0.1875rem;
-  border: 1px solid var(--wl-color-border-strong);
-  border-radius: var(--wl-radius-pill);
-  background: var(--wl-color-surface);
+  padding: var(--wl-space-1);
+  border: 1px solid var(--wl-color-border);
+  border-radius: var(--wl-radius-lg);
+  background: var(--wl-color-surface-sunken);
 }
 
 .option {
   position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--wl-space-1);
-  padding: 0.375rem 0.875rem;
-  border-radius: var(--wl-radius-pill);
-  font-size: var(--wl-text-sm);
-  font-weight: 600;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--wl-radius-md);
+  color: var(--wl-color-text-muted);
   cursor: pointer;
 
-  input {
-    position: absolute;
-    inset: 0;
-    margin: 0;
-    opacity: 0;
-    cursor: pointer;
+  &:hover {
+    background: var(--wl-color-surface);
+    color: var(--wl-color-text);
   }
 
-  &:has(input:checked) {
+  &[data-active='true'] {
     background: var(--wl-color-accent);
     color: var(--wl-color-on-accent);
   }
 
   &:has(input:focus-visible) {
     @include focus-ring;
+  }
+
+  input {
+    @include visually-hidden;
+  }
+
+  &:hover .tooltip,
+  &:has(input:focus-visible) .tooltip {
+    display: grid;
+  }
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+}
+
+.tooltip {
+  position: absolute;
+  z-index: calc(var(--wl-z-toast) - 1);
+  top: calc(100% + var(--wl-space-2));
+  right: 0;
+  display: none;
+  gap: var(--wl-space-1);
+  width: max-content;
+  max-width: min(18rem, 80vw);
+  padding: var(--wl-space-2) var(--wl-space-3);
+  border-radius: var(--wl-radius-sm);
+  background: var(--wl-color-text);
+  box-shadow: var(--wl-shadow-md);
+  color: var(--wl-color-surface);
+  font-size: var(--wl-text-xs);
+  font-weight: 400;
+  line-height: var(--wl-leading-normal);
+  text-align: start;
+  pointer-events: none;
+
+  strong {
+    font-size: var(--wl-text-sm);
   }
 }

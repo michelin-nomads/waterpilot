@@ -1,9 +1,7 @@
-// WaterLens design tokens — PROVISIONAL.
-// No approved palette, stylesheet or logo exists in docs/design/approved/, so these values
-// are original provisional choices, not a reproduction of any prior design. Theme
-// (light/dark) and palette (estuary/monsoon/grove) are independent axes, selected through
-// `data-theme` and `data-palette` on <html>. Contrast pairs are checked in
-// apps/web/e2e/design-system.spec.ts for all six combinations.
+// WaterLens design tokens. Estuary follows the supplied light/dark design references;
+// monsoon and grove remain optional display palettes. Theme and palette are independent
+// axes selected through `data-theme` and `data-palette` on <html>. Contrast pairs are
+// checked in apps/web/e2e/design-system.spec.ts for all six combinations.
 
 @use 'sass:map';
 
@@ -46,6 +44,10 @@
   --wl-card-section-gap: var(--wl-space-4);
   --wl-card-footer-gap: var(--wl-space-4);
   --wl-field-gap: var(--wl-space-2);
+
+  --wl-workspace-inset: var(--wl-space-5);
+  --wl-section-gap: var(--wl-space-5);
+  --wl-planning-height: calc(100dvh - 6.5rem);
 
   // Radii
   --wl-radius-sm: 6px;

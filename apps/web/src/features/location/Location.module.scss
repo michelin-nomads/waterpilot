@@ -5,7 +5,7 @@
   gap: var(--wl-space-5);
 
   @include desktop-up {
-    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
     align-items: start;
   }
 }
@@ -56,6 +56,15 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--wl-card-footer-gap);
+}
+
+.mapStage {
+  @include card;
+
+  display: grid;
+  align-content: start;
+  min-height: 30rem;
+  padding: var(--wl-card-padding);
 }
 
 .search {
@@ -216,7 +225,7 @@
   background: var(--wl-color-surface-sunken);
 
   @include desktop-up {
-    min-height: 26rem;
+    min-height: 30rem;
   }
 }
 

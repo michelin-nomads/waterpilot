@@ -73,13 +73,28 @@
   margin: 0;
   padding: 0;
   list-style: none;
+
+  @include wide-up {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
 }
 
 .option {
   display: grid;
   gap: var(--wl-space-3);
-  padding-block-start: var(--wl-space-4);
-  border-block-start: 1px solid var(--wl-color-border);
+  min-width: 0;
+  height: 100%;
+  padding: var(--wl-card-padding);
+  border: 1px solid var(--wl-color-border);
+  border-radius: var(--wl-radius-lg);
+  background: var(--wl-color-surface-raised);
+
+  &[data-selected='true'] {
+    border: 2px solid var(--wl-color-accent);
+    padding: calc(var(--wl-card-padding) - 1px);
+    background: var(--wl-color-accent-soft);
+  }
 }
 
 .optionTitle {
@@ -177,4 +192,91 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--wl-card-footer-gap);
+  align-items: end;
+  margin-block-start: auto;
+}
+
+.locationContext {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wl-space-3);
+  padding: var(--wl-space-3) var(--wl-space-4);
+  border: 1px solid var(--wl-color-border);
+  border-radius: var(--wl-radius-lg);
+  background: var(--wl-color-surface-raised);
+
+  > div {
+    display: grid;
+    gap: var(--wl-space-1);
+  }
+}
+
+.scenarioPrompt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wl-space-4);
+  padding: var(--wl-space-4);
+  border: 1px solid var(--wl-color-border);
+  border-radius: var(--wl-radius-lg);
+  background: var(--wl-color-surface-raised);
+
+  > div {
+    display: grid;
+    gap: var(--wl-space-2);
+  }
+
+  p {
+    max-width: 58ch;
+  }
+}
+
+.detailContent {
+  display: grid;
+  gap: var(--wl-space-5);
+  min-width: 0;
+}
+
+.detailHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wl-space-3);
+}
+
+.detailKpis {
+  display: grid;
+  gap: var(--wl-space-3);
+  margin: 0;
+  grid-template-columns: minmax(0, 1fr);
+
+  @include tablet-up {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  > div {
+    display: grid;
+    align-content: start;
+    gap: var(--wl-space-1);
+    min-width: 0;
+    padding: var(--wl-space-3);
+    border: 1px solid var(--wl-color-border);
+    border-radius: var(--wl-radius-md);
+    background: var(--wl-color-surface-raised);
+  }
+
+  dt {
+    color: var(--wl-color-text-muted);
+    font-size: var(--wl-text-sm);
+  }
+
+  dd {
+    margin: 0;
+    font-weight: 650;
+    overflow-wrap: anywhere;
+  }
 }
