@@ -1,26 +1,17 @@
 import { Badge } from '../../components/Badge/Badge';
 import { ChoiceCards, type ChoiceOption } from '../../components/ChoiceCards/ChoiceCards';
-import type { PlanningMode } from './planningMode';
+import { PLANNING_MODE_OPTIONS, type PlanningMode } from './planningMode';
 
-const OPTIONS: readonly ChoiceOption<PlanningMode>[] = [
-  {
-    value: 'traditional',
-    title: 'Traditional',
-    description: 'Work through each step yourself.',
-    icon: 'layers',
-  },
-  {
-    value: 'agent',
-    title: 'With the assistant',
-    description:
-      'Describe what you need and the assistant works through the steps with you, on the same plan. Availability is shown in the conversation pane; the steps stay available beside it.',
-    icon: 'sparkle',
-    badge: <Badge tone="neutral">Optional help</Badge>,
-  },
-];
+const OPTIONS: readonly ChoiceOption<PlanningMode>[] = PLANNING_MODE_OPTIONS.map((option) => ({
+  value: option.id,
+  title: option.label,
+  description: option.description,
+  icon: option.icon,
+  ...(option.id === 'agent' ? { badge: <Badge tone="neutral">Optional help</Badge> } : {}),
+}));
 
 interface ModeChooserProps {
-  value: PlanningMode;
+  value: PlanningMode | null;
   onChange: (mode: PlanningMode) => void;
   legend?: string;
 }
@@ -34,10 +25,11 @@ export function ModeChooser({
   return (
     <ChoiceCards
       legend={legend}
-      hint="You can switch at any time from the planning toolbar; both ways use the same plan."
+      hint="You can switch modes any time from the planning header without losing your work."
       options={OPTIONS}
       value={value}
       onChange={onChange}
+      presentation="featured"
     />
   );
 }

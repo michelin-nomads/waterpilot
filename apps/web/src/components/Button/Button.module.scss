@@ -21,15 +21,6 @@
   &:active:not([aria-disabled='true'], :disabled) {
     transform: translateY(1px);
   }
-
-  &:disabled,
-  &[aria-disabled='true'] {
-    cursor: not-allowed;
-    opacity: 1;
-    border-color: var(--wl-color-border);
-    background: var(--wl-color-surface-sunken);
-    color: var(--wl-color-text-muted);
-  }
 }
 
 .sm {
@@ -89,4 +80,16 @@
   background: var(--wl-color-danger-soft);
   border-color: var(--wl-color-danger);
   color: var(--wl-color-danger);
+}
+
+// Disabled styles follow variants so primary and secondary cannot override them.
+.button {
+  &:disabled,
+  &[aria-disabled='true'] {
+    cursor: not-allowed;
+    opacity: 1;
+    border-color: var(--wl-color-border);
+    background: var(--wl-color-surface-sunken);
+    color: var(--wl-color-text-muted);
+  }
 }

@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { AxiosAdapter, InternalAxiosRequestConfig } from 'axios';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 
 import type {
   AreaReadinessFieldsFragment,
@@ -11,6 +11,11 @@ import { AuthTestProviders } from '../../test/AuthTestProviders';
 import { FakeAuthBackend, permanent } from '../../test/fakeAuth';
 import { baseline, baselineReply, demoBaseline, manualBaseline } from '../../test/baselineFixtures';
 import { FakeSessionServer } from '../../test/fakeSession';
+import { usePlanningSession } from '../../session/sessionContext';
+import { BaselinePanel } from './BaselinePanel';
+import { calculatePopulationEstimate } from './populationEstimateMath';
+import { ReadinessPanel } from './ReadinessPanel';
+import BaselinePage from './BaselinePage';
 import AreaPage, { DEMO_AREA_ID } from './index';
 
 const AREA = 'are_0000000000000000000000AREA';
@@ -155,13 +160,51 @@ const populationRow = async () =>
     .getByText('Population served')
     .closest('li') as HTMLElement;
 
-function renderArea(areaId: string | null = AREA) {
+// Keep the existing panel-level calculation/input coverage independent of route placement.
+function BaselinePanelsForTest() {
+  const { view, state } = usePlanningSession();
+  if (!view?.areaId || state.server?.areaId !== view.areaId) return null;
+  return (
+    <>
+      <BaselinePanel areaId={view.areaId} sessionId={view.id} />
+      <ReadinessPanel areaId={view.areaId} sessionId={view.id} />
+    </>
+  );
+}
+
+function RoutePathProbe() {
+  const { pathname } = useLocation();
+  return <output data-testid="route-path">{pathname}</output>;
+}
+
+function renderArea(areaId: string | null = AREA, showCommunityReadiness = false) {
   const sessions = new FakeSessionServer();
   if (areaId !== undefined) sessions.seed('user-1', { id: 'ses_1', areaId });
   render(
     <AuthTestProviders backend={new FakeAuthBackend(permanent())} sessions={sessions}>
       <MemoryRouter>
         <AreaPage />
+        {!showCommunityReadiness && <BaselinePanelsForTest />}
+        {showCommunityReadiness && (
+          <ReadinessPanel areaId={AREA} sessionId="ses_1" section="community" />
+        )}
+        <RoutePathProbe />
+      </MemoryRouter>
+    </AuthTestProviders>,
+  );
+  return sessions;
+}
+
+function renderBaseline(initialEntry = '/baseline') {
+  const sessions = new FakeSessionServer();
+  sessions.seed('user-1', { id: 'ses_1', stage: 'BASELINE', areaId: AREA });
+  render(
+    <AuthTestProviders backend={new FakeAuthBackend(permanent())} sessions={sessions}>
+      <MemoryRouter initialEntries={[initialEntry]}>
+        <Routes>
+          <Route path="/baseline/:section?" element={<BaselinePage />} />
+        </Routes>
+        <RoutePathProbe />
       </MemoryRouter>
     </AuthTestProviders>,
   );
@@ -171,9 +214,7 @@ function renderArea(areaId: string | null = AREA) {
 describe('AreaPage', () => {
   it('renders the stage heading and position', async () => {
     renderArea();
-    expect(
-      screen.getByRole('heading', { level: 1, name: /understand your area/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: /location/i })).toBeInTheDocument();
     expect(screen.getByText('Step 1 of 5')).toBeInTheDocument();
     await screen.findByRole('heading', { name: /data coverage/i });
   });
@@ -211,12 +252,67 @@ describe('AreaPage', () => {
     expect(within(price).queryByRole('textbox')).not.toBeInTheDocument();
   });
 
+  it('groups community inputs and reports water-input completion inside an expandable section', async () => {
+    const base = readiness().inputs[0]!;
+    handlers.AreaReadiness = () =>
+      areaReply(
+        readiness({
+          inputs: [
+            base,
+            {
+              ...base,
+              input: 'PER_CAPITA_STANDARD',
+              label: 'Per-person daily water need',
+              unit: 'LITRES_PER_DAY',
+            },
+            {
+              ...base,
+              input: 'DELIVERED_SUPPLY',
+              label: 'Delivered supply',
+              unit: 'LITRES_PER_DAY',
+              state: 'AVAILABLE',
+              manualEntryAllowed: false,
+            },
+            {
+              ...base,
+              input: 'TANKER_SUPPLY',
+              label: 'Tanker supply',
+              unit: 'LITRES_PER_DAY',
+              state: 'USER_ENTERED',
+              manualEntryAllowed: false,
+            },
+            {
+              ...base,
+              input: 'FORWARD_SERIES',
+              label: 'Forward supply and demand projection',
+              unit: 'LITRES_PER_DAY',
+              manualEntryAllowed: false,
+            },
+          ],
+        }),
+      );
+    renderArea(AREA, true);
+    const panel = await readinessInputs();
+    expect(within(panel).getByText('Population served')).toBeInTheDocument();
+    expect(within(panel).getByText('Per-person daily water need')).toBeInTheDocument();
+    const disclosure = within(panel).getByText('Water sources and supply').closest('details')!;
+    expect(disclosure).not.toHaveAttribute('open');
+    expect(within(disclosure).getByText('2 of 3 complete')).toBeInTheDocument();
+    fireEvent.click(within(disclosure).getByText('Water sources and supply'));
+    expect(within(disclosure).getByText('Delivered supply')).toBeVisible();
+    expect(within(disclosure).getByText('Tanker supply')).toBeVisible();
+    expect(within(disclosure).getByText('Forward supply and demand projection')).toBeVisible();
+  });
+
   it('shows the confirmed location with region settings and a user-input banner', async () => {
     renderArea();
     expect(await screen.findByRole('heading', { name: 'Test ward' })).toBeInTheDocument();
     expect(screen.getByText(/^INR \(set by you\)$/)).toBeInTheDocument();
     expect(screen.getByText('Asia/Kolkata')).toBeInTheDocument();
     expect(screen.getByText(/reference point only/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Change area' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm location' }));
+    expect(screen.getByTestId('route-path')).toHaveTextContent('/baseline');
     expect(await screen.findByText('User-input assessment')).toBeInTheDocument();
   });
 
@@ -362,6 +458,169 @@ describe('AreaPage', () => {
   });
 });
 
+describe('Baseline community setup', () => {
+  it('keeps Baseline active and Continue opens water inputs without skipping the overview', async () => {
+    renderBaseline();
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Build your community baseline' }),
+    ).toBeVisible();
+    const baselineSections = screen.getByRole('navigation', { name: 'Baseline sections' });
+    expect(screen.getByRole('button', { name: 'Community inputs' })).toHaveAttribute(
+      'aria-current',
+      'step',
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Build your water baseline' }),
+    ).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Water inputs' })).toHaveAttribute(
+      'aria-current',
+      'step',
+    );
+    expect(screen.getByText('Missing does not mean zero')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'View data availability' }));
+    expect(await screen.findByRole('dialog', { name: 'Data coverage and sources' })).toBeVisible();
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(screen.getByTestId('route-path')).toHaveTextContent('/baseline/inputs');
+    fireEvent.click(screen.getByRole('button', { name: 'Overview' }));
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Your water baseline' }),
+    ).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Overview' })).toHaveAttribute(
+      'aria-current',
+      'step',
+    );
+    expect(screen.getByRole('button', { name: 'Edit' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Build your water baseline' }),
+    ).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Build your community baseline' }),
+    ).toBeVisible();
+    expect(baselineSections).toBeInTheDocument();
+  });
+
+  it('offers the estimate route and Back leaves saved inputs unchanged', async () => {
+    renderBaseline();
+    expect(await screen.findByText('Population served')).toBeVisible();
+    fireEvent.click(screen.getByRole('link', { name: /i don’t know yet — estimate/i }));
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Estimate your community baseline' }),
+    ).toBeVisible();
+    fireEvent.change(screen.getByLabelText(/occupied homes/i), { target: { value: '10' } });
+    fireEvent.change(screen.getByLabelText(/residents per occupied home/i), {
+      target: { value: '2' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Build your community baseline' }),
+    ).toBeVisible();
+    expect(sent.some((item) => item.op === 'RecordManualInput')).toBe(false);
+  });
+
+  it('accepts exact estimated population and per-person demand with stated provenance', async () => {
+    handlers.RecordManualInput = (variables) => {
+      const input = variables.input as Record<string, unknown>;
+      return {
+        data: {
+          recordManualInput: {
+            manualInput: {
+              id: `min_${String(input.input)}`,
+              input: input.input,
+              value: input.value,
+              unit: input.unit,
+              enteredValue: input.value,
+              enteredUnit: input.unit,
+              asOf: input.asOf,
+              note: input.note,
+            },
+            error: null,
+          },
+        },
+      };
+    };
+    renderBaseline('/baseline/estimate');
+    await screen.findByRole('heading', { level: 1, name: 'Estimate your community baseline' });
+    fireEvent.change(screen.getByLabelText(/occupied homes/i), { target: { value: '10' } });
+    fireEvent.change(screen.getByLabelText(/residents per occupied home/i), {
+      target: { value: '2' },
+    });
+    fireEvent.change(screen.getByLabelText(/daily use per person/i), {
+      target: { value: '135.5' },
+    });
+    fireEvent.change(screen.getByLabelText(/source and assumptions/i), {
+      target: { value: 'Housing register; stated occupancy assumption' },
+    });
+    expect(screen.getByRole('region', { name: 'Estimated baseline result' })).toHaveTextContent(
+      '20 people · 2710 L/day',
+    );
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Accept estimate' })));
+    await waitFor(() => expect(screen.getByTestId('route-path')).toHaveTextContent('/baseline'));
+    const writes = sent
+      .filter((item) => item.op === 'RecordManualInput')
+      .map((item) => item.variables.input as Record<string, unknown>);
+    expect(writes).toHaveLength(2);
+    expect(writes[0]).toMatchObject({ input: 'POPULATION', value: '20', unit: 'COUNT' });
+    expect(writes[1]).toMatchObject({
+      input: 'PER_CAPITA_STANDARD',
+      value: '135.5',
+      unit: 'LITRES_PER_DAY',
+    });
+    expect(writes[0]?.note).toBe(
+      'Estimate from Housing register; stated occupancy assumption; 10 occupied homes × 2 residents/home; 135.5 L/person/day; estimated demand 2710 L/day.',
+    );
+    expect(writes[1]?.note).toBe(writes[0]?.note);
+  });
+
+  it.each([
+    ['10', '2', '135.5', { population: '20', dailyDemandLitres: '2710' }],
+    ['3', '1.5', '100', null],
+    ['0', '2', '100', null],
+    ['10', '2', '0', null],
+    ['10', '2.0001', '100', null],
+  ])(
+    'calculates only exact supported estimate inputs (%s homes)',
+    (homes, residents, use, expected) => {
+      expect(calculatePopulationEstimate(homes, residents, use)).toEqual(expected);
+    },
+  );
+});
+
+describe('Baseline data coverage drawer', () => {
+  it('shows real coverage fields and closes on Escape without changing the current baseline route', async () => {
+    renderBaseline('/baseline/inputs');
+    const trigger = await screen.findByRole('button', { name: 'View data availability' });
+    trigger.focus();
+    fireEvent.click(trigger);
+    const drawer = await screen.findByRole('dialog', { name: 'Data coverage and sources' });
+    const table = await within(drawer).findByRole('table');
+    for (const header of ['Dataset', 'Source', 'Date', 'Resolution', 'Coverage', 'Status']) {
+      expect(within(table).getByRole('columnheader', { name: header })).toBeInTheDocument();
+    }
+    expect(within(table).getAllByText('Source not recorded').length).toBeGreaterThan(0);
+    expect(within(drawer).getByText('Limitations and assumptions')).toBeVisible();
+    fireEvent.keyDown(drawer, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(trigger).toHaveFocus();
+    expect(screen.getByTestId('route-path')).toHaveTextContent('/baseline/inputs');
+  });
+
+  it('keeps entered-source provenance and provisional status visible in the evidence table', async () => {
+    handlers.AreaBaseline = () => baselineReply(manualBaseline());
+    renderBaseline('/baseline/inputs');
+    fireEvent.click(await screen.findByRole('button', { name: 'View data availability' }));
+    const drawer = await screen.findByRole('dialog', { name: 'Data coverage and sources' });
+    const table = await within(drawer).findByRole('table');
+    expect(within(table).getAllByText('Demand').length).toBeGreaterThan(0);
+    expect(within(table).getAllByText(/Ward census table/i).length).toBeGreaterThan(0);
+    expect(within(table).getAllByText('Partial').length).toBeGreaterThan(0);
+    expect(within(drawer).getByText(/Non-domestic use was not provided/i)).toBeInTheDocument();
+  });
+});
+
 describe('BaselinePanel', () => {
   const card = (metric: string) =>
     document.querySelector(`[data-baseline-metric="${metric}"]`) as HTMLElement;
@@ -370,7 +629,7 @@ describe('BaselinePanel', () => {
   it('shows every metric as unavailable with a reason when nothing is known', async () => {
     renderArea();
     const region = await baselineRegion();
-    for (const metric of ['demand', 'delivered_supply', 'reliable_supply', 'deficit']) {
+    for (const metric of ['demand', 'delivered_supply', 'deficit']) {
       expect(within(card(metric)).getByText('Unavailable')).toBeInTheDocument();
       expect(within(card(metric)).getByText('A value it needs is missing.')).toBeInTheDocument();
     }
@@ -378,13 +637,18 @@ describe('BaselinePanel', () => {
     expect(
       within(region).getByText('Nothing can be calculated yet.', { exact: false }),
     ).toBeVisible();
+    expect(within(region).getByText(/supply composition/i)).toBeInTheDocument();
+    expect(
+      within(region).getByText(/unavailable until compatible delivered-supply and tanker records/i),
+    ).toBeInTheDocument();
+    expect(region.querySelectorAll('[data-baseline-metric]')).toHaveLength(3);
     expect(sent.find((s) => s.op === 'AreaBaseline')).toEqual({
       op: 'AreaBaseline',
       variables: { areaId: AREA, sessionId: 'ses_1' },
     });
   });
 
-  it('makes adding the first missing essential the primary action and focuses its field', async () => {
+  it('makes adding the first missing essential the primary action and links to its input section', async () => {
     renderArea();
     const region = await baselineRegion();
     const missing = within(region).getByRole('region', {
@@ -392,14 +656,8 @@ describe('BaselinePanel', () => {
     });
     expect(within(missing).getByText(/labelled as your estimate/i)).toBeInTheDocument();
     expect(within(missing).getByText(/stay unavailable until daily records/i)).toBeInTheDocument();
-    const primary = within(region).getByRole('button', { name: 'Add population served' });
-    const population = await populationRow();
-    // jsdom has no layout, so scrolling is observed rather than performed.
-    const scrollIntoView = vi.fn();
-    population.scrollIntoView = scrollIntoView;
-    fireEvent.click(primary);
-    expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start' });
-    expect(within(population).getByLabelText(/population served value/i)).toHaveFocus();
+    const primary = within(region).getByRole('link', { name: 'Add population served' });
+    expect(primary).toHaveAttribute('href', '/baseline');
     expect(within(region).getByRole('link', { name: 'Continue to your goal' })).toHaveAttribute(
       'href',
       '/goals',
@@ -409,24 +667,35 @@ describe('BaselinePanel', () => {
   it('labels typed-in results as your estimate and keeps day-by-day metrics unavailable', async () => {
     handlers.AreaBaseline = () => baselineReply(manualBaseline());
     renderArea();
-    await baselineRegion();
+    const region = await baselineRegion();
     expect(within(card('demand')).getByText('1.6')).toBeInTheDocument();
     expect(within(card('demand')).getByText('MLD')).toBeInTheDocument();
     expect(card('demand').querySelector('[data-origin="USER_ESTIMATE"]')).toHaveTextContent(
       'Your estimate',
     );
     expect(within(card('demand')).getByText('Provisional')).toBeInTheDocument();
-    expect(within(card('tanker_dependence')).getByText('30%')).toBeInTheDocument();
-    expect(within(card('reliable_supply')).getByText('Unavailable')).toBeInTheDocument();
-    expect(within(card('reliable_supply')).getByText(/defined day by day/i)).toBeInTheDocument();
+    expect(within(region).getByRole('img', { name: /tanker supply 30%/i })).toBeInTheDocument();
+    fireEvent.click(
+      within(region).getByRole('button', { name: 'Data sources and supply details' }),
+    );
+    const sources = within(region).getByRole('region', {
+      name: 'Data sources and supply details',
+    });
+    fireEvent.click(within(sources).getByRole('button', { name: /Reliable supply/i }));
+    expect(within(sources).getAllByText('Unavailable').length).toBeGreaterThan(0);
+    expect(within(sources).getAllByText(/defined day by day/i).length).toBeGreaterThan(0);
     expect(screen.getByRole('link', { name: 'Set your goal' })).toHaveAttribute('href', '/goals');
   });
 
   it('discloses definition, exact value, assumptions and evidence progressively', async () => {
     handlers.AreaBaseline = () => baselineReply(manualBaseline());
     renderArea();
-    const details = within(await baselineRegion()).getByRole('region', {
-      name: 'Details, evidence and uncertainty',
+    const baseline = await baselineRegion();
+    fireEvent.click(
+      within(baseline).getByRole('button', { name: 'Data sources and supply details' }),
+    );
+    const details = within(baseline).getByRole('region', {
+      name: 'Data sources and supply details',
     });
     expect(within(details).getByText(/population \* per_capita_lpcd/)).not.toBeVisible();
     fireEvent.click(within(details).getByRole('button', { name: /water demand/i }));
@@ -436,6 +705,10 @@ describe('BaselinePanel', () => {
     expect(within(details).getByText('Population served (entered by you)')).toBeInTheDocument();
     expect(within(details).getAllByText(/Uncertainty: Not quantified/)).toHaveLength(2);
     expect(within(details).getAllByText(/as of 1 Oct 2026/i).length).toBeGreaterThan(0);
+    fireEvent.click(within(baseline).getByRole('button', { name: 'Key assumptions' }));
+    expect(
+      within(baseline).getByText(/Water demand: Non-domestic use was not provided/i),
+    ).toBeVisible();
   });
 
   it('reproduces the golden fixture values from the demo source, labelled synthetic', async () => {
@@ -445,22 +718,22 @@ describe('BaselinePanel', () => {
     const expected: Record<string, string> = {
       demand: '10.0',
       delivered_supply: '10.1',
-      reliable_supply: '8.0',
       deficit: '2.0',
-      dependable_supply_ratio: '80%',
-      volume_reliability: '94%',
-      time_reliability: '70%',
-      shortage_days: '3',
-      tanker_dependence: '27%',
     };
     for (const [metric, text] of Object.entries(expected)) {
       expect(within(card(metric)).getByText(text)).toBeInTheDocument();
     }
+    expect(region.querySelectorAll('[data-baseline-metric]')).toHaveLength(3);
     expect(card('delivered_supply').querySelector('[data-origin="MEASURED"]')).not.toBeNull();
     expect(card('deficit').querySelector('[data-origin="USER_ESTIMATE"]')).not.toBeNull();
+    expect(
+      within(region).getByRole('img', { name: /tanker supply 27%; other delivered supply 73%/i }),
+    ).toBeInTheDocument();
     expect(within(card('delivered_supply')).getByText('Synthetic demo data')).toBeInTheDocument();
     expect(within(region).getByText('Demo data')).toBeInTheDocument();
-    expect(within(region).getByText(/10 of the last 365 days/, { selector: 'li' })).toBeVisible();
+    expect(
+      within(region).getAllByText(/10 of the last 365 days/, { selector: 'li' }).length,
+    ).toBeGreaterThan(0);
   });
 
   it('keeps the chart and its table equivalent, with gaps unavailable in both', async () => {
@@ -500,8 +773,7 @@ describe('BaselinePanel', () => {
     await baselineRegion();
     expect(within(card('delivered_supply')).getByText('Average of 9 of 10 days')).toBeVisible();
     expect(within(card('delivered_supply')).getByText('Provisional')).toBeInTheDocument();
-    // Complete windows and typed-in constants carry no coverage caption.
-    expect(card('reliable_supply').querySelector('[data-coverage]')).toBeNull();
+    // Typed-in constants carry no coverage caption.
     expect(card('demand').querySelector('[data-coverage]')).toBeNull();
   });
 

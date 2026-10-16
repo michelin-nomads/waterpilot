@@ -155,7 +155,12 @@ class PlanningMode(StrEnum):
 
 
 class PlanningStage(StrEnum):
+    # Retain legacy values so existing sessions and immutable reports remain readable.
     UNDERSTAND = "understand"
+    BASELINE = "baseline"
+    BASELINE_INPUTS = "baseline_inputs"
+    BASELINE_OVERVIEW = "baseline_overview"
+    REVIEW = "review"
     GOAL = "goal"
     COMPARE = "compare"
     MAKE_IT_HAPPEN = "make_it_happen"

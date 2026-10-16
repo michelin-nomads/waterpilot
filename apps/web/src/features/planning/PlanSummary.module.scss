@@ -1,28 +1,30 @@
-@use 'mixins' as *;
-
 .summary {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: var(--wl-space-2);
   margin: 0;
 
-  @include tablet-up {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
   > div {
-    @include card(var(--wl-card-padding-nested));
-
-    display: grid;
-    gap: var(--wl-space-1);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--wl-space-1) var(--wl-space-2);
+    min-width: 0;
+    padding: var(--wl-space-2) var(--wl-space-3);
+    border: 1px solid var(--wl-color-border);
+    border-radius: var(--wl-radius-pill);
+    background: var(--wl-color-surface);
   }
 
   dt {
     color: var(--wl-color-text-muted);
-    font-size: var(--wl-text-sm);
+    font-size: var(--wl-text-xs);
   }
 
   dd {
     margin: 0;
+    font-size: var(--wl-text-sm);
     font-weight: 600;
     overflow-wrap: anywhere;
   }

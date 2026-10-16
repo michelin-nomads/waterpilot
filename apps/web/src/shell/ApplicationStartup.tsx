@@ -19,7 +19,6 @@ export function ApplicationStartup() {
     () => false,
   );
 
-  
   if (auth.status === 'loading' || !routerInitialized) return <LaunchScreen />;
 
   return (

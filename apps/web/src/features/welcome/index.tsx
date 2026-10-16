@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 
 import { AuthFailure, toAuthFailure } from '../../auth/authErrors';
 import { useAuth } from '../../auth/authContext';
@@ -7,30 +7,25 @@ import { Button, ButtonLink } from '../../components/Button/Button';
 import { Icon, type IconName } from '../../components/Icon/Icon';
 import { Notice } from '../../components/Notice/Notice';
 import { ErrorState } from '../../components/StatePanel/StatePanel';
-import { StepActions } from '../../components/StepActions/StepActions';
+import { env } from '../../config/env';
 import { useOnlineStatus } from '../../lib/useOnlineStatus';
 import { usePlanningSession } from '../../session/sessionContext';
-import { PageHeader } from '../../shell/PageHeader';
 import { pathForSessionStage } from '../../shell/stages';
-import { ModeChooser } from '../planning/ModeChooser';
 import { toSessionMode, usePreferredPlanningMode } from '../planning/planningMode';
 import styles from './Welcome.module.scss';
 
-const BENEFITS: ReadonlyArray<{ icon: IconName; title: string; text: string }> = [
+const BENEFITS: ReadonlyArray<{ icon: IconName; text: string }> = [
   {
     icon: 'map',
-    title: 'Understand your area',
-    text: 'See what is known about water where you live, and what is not.',
+    text: 'Understand what is known about water where you live, and what is not.',
   },
   {
     icon: 'layers',
-    title: 'Compare plans',
-    text: 'Weigh options side by side, with the assumptions behind every figure.',
+    text: 'Compare practical plans with the assumptions behind every figure.',
   },
   {
     icon: 'chart',
-    title: 'Track results',
-    text: 'Record what happens once work starts, against the goal you set.',
+    text: 'Track results against the goal you set when work starts.',
   },
 ];
 
@@ -38,7 +33,7 @@ const GUEST_PAUSED = 'New guest sessions are paused right now. Try again later o
 const START_FAILED = 'Your plan could not be started. Check your connection and try again.';
 
 /**
- * S1 Welcome: choose how to plan, then start as a guest (an anonymous account) or sign in.
+ * S1 Welcome: start immediately in Explorer or Copilot as a guest, or sign in from the header.
  * Signed-in accounts land on their dashboard; a guest with a plan continues it.
  */
 export default function WelcomePage() {
@@ -50,17 +45,16 @@ export default function WelcomePage() {
   const [starting, setStarting] = useState(false);
   const [failure, setFailure] = useState<AuthFailure | null>(null);
   const [startError, setStartError] = useState<string | null>(null);
-  const [signInCancelled, setSignInCancelled] = useState(false);
 
   if (auth.status === 'ready' && auth.user?.kind === 'permanent') {
     return <Navigate to="/dashboard" replace />;
   }
 
-  const start = async () => {
+  const start = async (selectedMode = mode) => {
+    setMode(selectedMode);
     setStarting(true);
     setFailure(null);
     setStartError(null);
-    setSignInCancelled(false);
     try {
       try {
         await auth.startGuest();
@@ -69,7 +63,7 @@ export default function WelcomePage() {
         return;
       }
       try {
-        const started = await session.startPlanning(toSessionMode(mode));
+        const started = await session.startPlanning(toSessionMode(selectedMode));
         navigate(pathForSessionStage(started.stage));
       } catch {
         setStartError(START_FAILED);
@@ -77,11 +71,6 @@ export default function WelcomePage() {
     } finally {
       setStarting(false);
     }
-  };
-
-  const signIn = async () => {
-    setFailure(null);
-    setSignInCancelled(!(await auth.openSignIn()));
   };
 
   const sessionLoading = auth.user !== null && session.state.status === 'loading';
@@ -92,30 +81,13 @@ export default function WelcomePage() {
 
   return (
     <div className={styles.page}>
-      <PageHeader
-        title="Plan for water security, together"
-        subtitle="WaterLens helps you understand your area's water, compare practical plans and track what changes."
-      />
-
-      <section aria-labelledby="welcome-benefits" className={styles.benefits}>
-        <h2 id="welcome-benefits" className={styles.sectionTitle}>
-          What you get
-        </h2>
-        <ul className={styles.list}>
-          {BENEFITS.map((benefit) => (
-            <li key={benefit.title} className={styles.item}>
-              <Icon name={benefit.icon} />
-              <div>
-                <p className={styles.itemTitle}>{benefit.title}</p>
-                <p className={styles.itemText}>{benefit.text}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
-        <p className={styles.coverage}>
-          Coverage varies by location; we show what is known and what is not.
+      <header className={styles.hero}>
+        <p className={styles.eyebrow}>Water planning for your community</p>
+        <h1 className={styles.title}>A better water plan starts here.</h1>
+        <p className={styles.subtitle}>
+          Understand your situation and explore practical improvements for your community.
         </p>
-      </section>
+      </header>
 
       {auth.status === 'error' ? (
         <ErrorState title="Sign-in could not load" onRetry={auth.reload} headingLevel={2}>
@@ -124,21 +96,62 @@ export default function WelcomePage() {
         </ErrorState>
       ) : (
         <>
-          {!current && !sessionLoading && <ModeChooser value={mode} onChange={setMode} />}
+          {!current && !sessionLoading && (
+            <section className={styles.choices} aria-label="Choose how to plan">
+              <article className={styles.choice}>
+                <span className={styles.choiceIcon}>
+                  <Icon name="sparkle" size="lg" />
+                </span>
+                <h2 className={styles.choiceTitle}>Guide me with WaterLensAgent</h2>
+                <p className={styles.choiceText}>
+                  Tell us what you need. Your agent will guide you while the workspace updates
+                  beside it.
+                </p>
+                <Button
+                  className={styles.choiceButton}
+                  size="lg"
+                  endIcon="arrow-right"
+                  loading={starting || auth.status === 'loading' || sessionLoading}
+                  aria-disabled={!online || undefined}
+                  aria-describedby={!online ? offlineNoteId : undefined}
+                  onClick={() => void start('agent')}
+                >
+                  {failed && mode === 'agent' ? 'Try again' : 'Start with agent'}
+                </Button>
+              </article>
+              <article className={styles.choice}>
+                <span className={styles.choiceIcon}>
+                  <Icon name="chart" size="lg" />
+                </span>
+                <h2 className={styles.choiceTitle}>Explore on my own</h2>
+                <p className={styles.choiceText}>
+                  Use the same tools at your own pace, with help available whenever you need it.
+                </p>
+                <Button
+                  className={styles.choiceButton}
+                  variant="secondary"
+                  size="lg"
+                  endIcon="arrow-right"
+                  loading={starting || auth.status === 'loading' || sessionLoading}
+                  aria-disabled={!online || undefined}
+                  aria-describedby={!online ? offlineNoteId : undefined}
+                  onClick={() => void start('traditional')}
+                >
+                  {failed && mode === 'traditional' ? 'Try again' : 'Start exploring'}
+                </Button>
+              </article>
+            </section>
+          )}
           {guestPaused && <Notice kind="budget">{GUEST_PAUSED}</Notice>}
           {failed && (
             <div role="alert" className={styles.error}>
               {startError ?? failure?.message}
             </div>
           )}
-          {signInCancelled && (
-            <Notice kind="auth-cancelled">
-              Sign-in was cancelled. You can still start planning as a guest.
-            </Notice>
-          )}
-          <StepActions
-            primary={
-              current ? (
+          {current && (
+            <section className={styles.continue} aria-label="Continue your plan">
+              <p>You already have a plan in progress.</p>
+              <div className={styles.actions}>
                 <Button
                   size="lg"
                   endIcon="arrow-right"
@@ -146,45 +159,57 @@ export default function WelcomePage() {
                 >
                   Continue planning
                 </Button>
-              ) : (
-                <Button
-                  size="lg"
-                  endIcon="arrow-right"
-                  loading={starting || auth.status === 'loading' || sessionLoading}
-                  aria-disabled={!online || undefined}
-                  aria-describedby={!online ? offlineNoteId : undefined}
-                  onClick={() => void start()}
-                >
-                  {failed ? 'Try again' : 'Start planning'}
-                </Button>
-              )
-            }
-            secondary={
-              current ? (
                 <ButtonLink to="/start" variant="ghost" size="lg">
                   New report
                 </ButtonLink>
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="lg"
-                  aria-disabled={auth.status === 'loading' || undefined}
-                  onClick={() => void signIn()}
-                >
-                  Sign in to your account
-                </Button>
-              )
-            }
-            note={
-              !online ? (
-                <span id={offlineNoteId}>You are offline. Starting needs a connection.</span>
-              ) : auth.user?.kind === 'guest' ? (
-                'You are planning as a guest. Sign in before finalizing a report.'
-              ) : (
-                'No account needed to plan. You will be asked to sign in before finalizing a report.'
-              )
-            }
-          />
+              </div>
+            </section>
+          )}
+          {!current && !sessionLoading && (
+            <>
+              <details className={styles.howItWorks}>
+                <summary>How WaterLens works</summary>
+                <ul className={styles.benefits}>
+                  {BENEFITS.map((benefit) => (
+                    <li key={benefit.text} className={styles.benefit}>
+                      <Icon name={benefit.icon} className={styles.benefitIcon} />
+                      <span className={styles.benefitText}>{benefit.text}</span>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+              <p className={styles.coverage}>
+                Coverage varies by location. We show what is known and what is not. No account is
+                needed to plan; sign in is required only to save your first report.
+              </p>
+              {env.appMode === 'local' && (
+                <details className={styles.previewPages}>
+                  <summary>Browse other screens</summary>
+                  <nav aria-label="WaterLens screen previews" className={styles.previewLinks}>
+                    <Link to="/area">Understand your area</Link>
+                    <Link to="/goals">Set a goal</Link>
+                    <Link to="/plans">Compare plans</Link>
+                    <Link to="/make-it-happen">Funding</Link>
+                    <Link to="/start">New report</Link>
+                    <Link to="/reports">Reports</Link>
+                    <Link to="/proposals">Proposals</Link>
+                    <Link to="/communities">Communities</Link>
+                    <Link to="/tracking">Implementation projects</Link>
+                    <Link to="/dashboard">Dashboard</Link>
+                  </nav>
+                  <p className={styles.coverage}>
+                    Previewing a page does not start a plan. Some screens need a plan, saved report,
+                    or signed-in account to show populated data.
+                  </p>
+                </details>
+              )}
+              {!online && (
+                <span id={offlineNoteId} className={styles.coverage}>
+                  You are offline. Starting needs a connection.
+                </span>
+              )}
+            </>
+          )}
         </>
       )}
     </div>

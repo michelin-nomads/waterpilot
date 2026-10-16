@@ -197,7 +197,10 @@ export default function AgentConversation({
         {displayed.map((event) => {
           if (event.type === 'message' || event.type === 'text')
             return (
-              <p key={event.id}>
+              <p
+                key={event.id}
+                className={event.role === 'user' ? styles.userMessage : styles.assistantMessage}
+              >
                 {event.role === 'user' ? 'You: ' : ''}
                 {event.text}
               </p>
@@ -314,6 +317,7 @@ export default function AgentConversation({
         </Button>
       )}
       <form
+        className={styles.composer}
         onSubmit={(event) => {
           event.preventDefault();
           if (!sid || !input.trim() || active || busy || isSaving) return;

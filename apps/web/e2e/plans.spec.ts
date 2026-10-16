@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
-// Compare Plans, and what-ifs explored in Agent mode, against the local API and the
+// Compare, and what-ifs explored in Agent mode, against the local API and the
 // Firebase emulators (`npm run test:e2e:emulator`). Every number comes from the
 // deterministic engines.
 const EMULATOR = 'http://127.0.0.1:9099';
@@ -45,9 +45,7 @@ test('a guest compares only feasible plans, chooses one, and tests a what-if in 
   page,
 }) => {
   await page.goto('/');
-  const option = page.getByRole('radio', { name: /traditional/i });
-  await page.locator('label', { has: option }).click();
-  await page.getByRole('button', { name: 'Start planning' }).click();
+  await page.getByRole('button', { name: 'Start exploring' }).click();
   await page.getByRole('button', { name: 'Use the synthetic demo area' }).click();
   // 12000 people x 135 L = 1,620,000 L/day demand; 300,000 L/day from tankers (30%).
   await enter(page, 'POPULATION', '12000', null, 'Ward census table, 2011');
@@ -70,7 +68,7 @@ test('a guest compares only feasible plans, chooses one, and tests a what-if in 
   await page.getByLabel('Longest build (days)').fill('60');
   await page.getByRole('button', { name: 'Save goal' }).click();
   await expect(page.getByRole('button', { name: 'Goal saved' })).toBeDisabled();
-  await page.getByRole('link', { name: 'Continue to compare plans' }).click();
+  await page.getByRole('link', { name: 'Compare plans' }).click();
   await expect(page).toHaveURL(/\/plans$/);
 
   // One measure passes; nothing is invented to fill three slots.
@@ -111,7 +109,7 @@ test('a guest compares only feasible plans, chooses one, and tests a what-if in 
   await expect(page.getByRole('group', { name: 'Water demand' })).toHaveCount(0);
 
   // Agent mode explores the what-if against the same baseline.
-  await page.getByRole('radio', { name: 'Agent' }).check();
+  await page.getByRole('radio', { name: 'Copilot' }).check();
   const agent = page.locator('[data-agent-scenario]');
   const demand = agent.getByRole('group', { name: 'Water demand' });
   await demand.getByLabel('Change').selectOption('INCREASE_BY');
@@ -130,12 +128,12 @@ test('a guest compares only feasible plans, chooses one, and tests a what-if in 
   // Demand 2,430,000 L/day: 20% savings leave 624,000 of 1,324,000 L/day from tankers.
   await expect(page.locator('[data-status="NO_FEASIBLE_PLAN"]')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Choose this plan' })).toHaveCount(0);
-  await expect(page.getByRole('link', { name: 'Continue to funding' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Continue to review' })).toHaveCount(0);
   const result = page.locator('[data-scenario-result="applied"]');
   await expect(result.getByText('Agent-generated')).toBeVisible();
 
   // Back in Traditional mode the agent's what-if is shown read-only.
-  await page.getByRole('radio', { name: 'Traditional' }).check();
+  await page.getByRole('radio', { name: 'Explorer' }).check();
   await expect(result.getByRole('button', { name: 'Open Agent mode' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Preview' })).toHaveCount(0);
 });

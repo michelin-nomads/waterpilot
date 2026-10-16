@@ -19,10 +19,15 @@ import styles from './Location.module.scss';
 interface LocationSummaryProps {
   areaId: string;
   onChange: () => void;
+  actionLabel?: string;
 }
 
 /** The confirmed location, its area treatment and its region settings. */
-export function LocationSummary({ areaId, onChange }: LocationSummaryProps) {
+export function LocationSummary({
+  areaId,
+  onChange,
+  actionLabel = 'Change area',
+}: LocationSummaryProps) {
   const query = useGraphQLQuery(queryKeys.areas.detail(areaId), AreaLocationDocument, {
     id: areaId,
   });
@@ -144,7 +149,7 @@ export function LocationSummary({ areaId, onChange }: LocationSummaryProps) {
       )}
       <div className={styles.actions}>
         <Button variant="secondary" startIcon="map" onClick={onChange}>
-          Change location
+          {actionLabel}
         </Button>
       </div>
     </section>

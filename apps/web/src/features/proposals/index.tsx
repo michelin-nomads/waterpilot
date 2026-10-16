@@ -38,13 +38,14 @@ export default function ProposalsPage() {
     SCHEME_PAGE,
   );
   const mutation = useGraphQLMutation('generateProposal', GenerateProposalDocument);
-  const [schemeId, setSchemeId] = useState('');
+  const [schemeId, setSchemeId] = useState(() => params.get('schemeId') ?? '');
   const [name, setName] = useState('');
   const [organization, setOrganization] = useState('');
   const [category, setCategory] = useState('');
   const [email, setEmail] = useState('');
   const [assumptions, setAssumptions] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<'summary' | 'budget' | 'documents'>('summary');
 
   if (!reportId) {
     return (
@@ -150,111 +151,193 @@ export default function ProposalsPage() {
         </EmptyState>
       ) : (
         <section className={styles.review} aria-labelledby="proposal-form-title">
-          <h2 id="proposal-form-title">Applicant and scheme</h2>
-          <label className={styles.label} htmlFor="scheme">
-            Funding scheme
-          </label>
-          <Select
-            id="scheme"
-            value={schemeId}
-            onChange={(event) => setSchemeId(event.target.value)}
-          >
-            <option value="">Choose a scheme</option>
-            {schemes.map((scheme) => (
-              <option key={scheme.id} value={scheme.id}>
-                {scheme.status === 'DEMO' ? '[SYNTHETIC DEMO] ' : ''}
-                {scheme.name} · {scheme.funder}
-              </option>
+          <h2 id="proposal-form-title">Proposal preparation</h2>
+          <div className={styles.reportTabs} role="tablist" aria-label="Proposal sections">
+            {(['summary', 'budget', 'documents'] as const).map((section) => (
+              <button
+                type="button"
+                role="tab"
+                key={section}
+                id={`proposal-tab-${section}`}
+                aria-controls="proposal-tab-panel"
+                aria-selected={tab === section}
+                onClick={() => setTab(section)}
+              >
+                {section[0].toUpperCase() + section.slice(1)}
+              </button>
             ))}
-          </Select>
-          {selected && (
-            <div className={styles.source}>
-              {selected.status === 'DEMO' ? (
-                <Notice kind="caution" title="Synthetic scheme">
-                  This example is not real funding and must not be submitted.
-                </Notice>
-              ) : null}
-              <p>{selected.summary}</p>
-              <p>
-                Publisher: {selected.funder} · verified{' '}
-                {new Date(selected.lastVerifiedAt).toLocaleDateString()}
-              </p>
-              <p>
-                Source hash: <code>{selected.sourceHash ?? 'Unknown'}</code>
-              </p>
-              <p>
-                <a href={selected.sourceUrl} target="_blank" rel="noreferrer">
-                  Open publisher source
-                </a>
-              </p>
-            </div>
-          )}
-          <div className={styles.formGrid}>
-            <label className={styles.label} htmlFor="applicant-name">
-              Applicant name
-              <input
-                id="applicant-name"
-                className={styles.input}
-                autoComplete="name"
-                maxLength={200}
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-              />
-            </label>
-            <label className={styles.label} htmlFor="organization">
-              Organization
-              <input
-                id="organization"
-                className={styles.input}
-                autoComplete="organization"
-                maxLength={200}
-                value={organization}
-                onChange={(event) => setOrganization(event.target.value)}
-              />
-            </label>
-            <label className={styles.label} htmlFor="category">
-              Applicant category
-              <input
-                id="category"
-                className={styles.input}
-                maxLength={100}
-                value={category}
-                onChange={(event) => setCategory(event.target.value)}
-                placeholder="As specified by the scheme"
-              />
-            </label>
-            <label className={styles.label} htmlFor="contact-email">
-              Contact email (optional)
-              <input
-                id="contact-email"
-                className={styles.input}
-                autoComplete="email"
-                type="email"
-                maxLength={254}
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-              />
-            </label>
-            <label className={`${styles.label} ${styles.wide}`} htmlFor="assumptions">
-              Assumptions and corrections, one per line
-              <textarea
-                id="assumptions"
-                className={styles.input}
-                rows={4}
-                maxLength={6000}
-                value={assumptions}
-                onChange={(event) => setAssumptions(event.target.value)}
-              />
-            </label>
           </div>
-          <p className={styles.meta}>
-            Required documents:{' '}
-            {selected?.requiredDocuments.join(', ') || 'No checklist supplied by the catalogue.'}
-          </p>
-          <p className={styles.meta}>
-            Each correction or regeneration creates a new private proposal version. Review the HTML
-            and PDF before any external submission.
-          </p>
+          <div
+            id="proposal-tab-panel"
+            role="tabpanel"
+            aria-labelledby={`proposal-tab-${tab}`}
+            tabIndex={0}
+          >
+            {tab === 'summary' && (
+              <div className={styles.tabContent}>
+                <h3>Applicant and scheme</h3>
+                <label className={styles.label} htmlFor="scheme">
+                  Funding scheme
+                </label>
+                <Select
+                  id="scheme"
+                  value={schemeId}
+                  onChange={(event) => setSchemeId(event.target.value)}
+                >
+                  <option value="">Choose a scheme</option>
+                  {schemes.map((scheme) => (
+                    <option key={scheme.id} value={scheme.id}>
+                      {scheme.status === 'DEMO' ? '[SYNTHETIC DEMO] ' : ''}
+                      {scheme.name} · {scheme.funder}
+                    </option>
+                  ))}
+                </Select>
+                {selected && (
+                  <div className={styles.source}>
+                    {selected.status === 'DEMO' ? (
+                      <Notice kind="caution" title="Synthetic scheme">
+                        This example is not real funding and must not be submitted.
+                      </Notice>
+                    ) : null}
+                    <p>{selected.summary}</p>
+                    <p>
+                      Publisher: {selected.funder} · verified{' '}
+                      {new Date(selected.lastVerifiedAt).toLocaleDateString()}
+                    </p>
+                    <p>
+                      Source hash: <code>{selected.sourceHash ?? 'Unknown'}</code>
+                    </p>
+                    <p>
+                      <a href={selected.sourceUrl} target="_blank" rel="noreferrer">
+                        Open publisher source
+                      </a>
+                    </p>
+                  </div>
+                )}
+                <div className={styles.formGrid}>
+                  <label className={styles.label} htmlFor="applicant-name">
+                    Applicant name
+                    <input
+                      id="applicant-name"
+                      className={styles.input}
+                      autoComplete="name"
+                      maxLength={200}
+                      value={name}
+                      onChange={(event) => setName(event.target.value)}
+                    />
+                  </label>
+                  <label className={styles.label} htmlFor="organization">
+                    Organization
+                    <input
+                      id="organization"
+                      className={styles.input}
+                      autoComplete="organization"
+                      maxLength={200}
+                      value={organization}
+                      onChange={(event) => setOrganization(event.target.value)}
+                    />
+                  </label>
+                  <label className={styles.label} htmlFor="category">
+                    Applicant category
+                    <input
+                      id="category"
+                      className={styles.input}
+                      maxLength={100}
+                      value={category}
+                      onChange={(event) => setCategory(event.target.value)}
+                      placeholder="As specified by the scheme"
+                    />
+                  </label>
+                  <label className={styles.label} htmlFor="contact-email">
+                    Contact email (optional)
+                    <input
+                      id="contact-email"
+                      className={styles.input}
+                      autoComplete="email"
+                      type="email"
+                      maxLength={254}
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                    />
+                  </label>
+                  <label className={`${styles.label} ${styles.wide}`} htmlFor="assumptions">
+                    Assumptions and corrections, one per line
+                    <textarea
+                      id="assumptions"
+                      className={styles.input}
+                      rows={4}
+                      maxLength={6000}
+                      value={assumptions}
+                      onChange={(event) => setAssumptions(event.target.value)}
+                    />
+                  </label>
+                </div>
+              </div>
+            )}
+            {tab === 'budget' && (
+              <div className={styles.tabContent}>
+                <h3>Authoritative budget</h3>
+                {report.economics ? (
+                  <dl>
+                    <div>
+                      <dt>Currency</dt>
+                      <dd>{report.economics.currency}; exact minor units</dd>
+                    </div>
+                    <div>
+                      <dt>Upfront cost</dt>
+                      <dd>
+                        {report.economics.upfrontTotal.low.minorUnits}–
+                        {report.economics.upfrontTotal.high.minorUnits} {report.economics.currency}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Annual net return</dt>
+                      <dd>
+                        {report.economics.netAnnual
+                          ? `${report.economics.netAnnual.low.minorUnits}–${report.economics.netAnnual.high.minorUnits} ${report.economics.currency}`
+                          : 'Not recorded'}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Funding gap</dt>
+                      <dd>
+                        {report.economics.funding.gap.low.minorUnits}–
+                        {report.economics.funding.gap.high.minorUnits} {report.economics.currency}
+                      </dd>
+                    </div>
+                  </dl>
+                ) : (
+                  <p>Costs and returns were not recorded in this report version.</p>
+                )}
+                <p className={styles.meta}>
+                  Proposal wording cannot change report figures; possible scheme awards are not
+                  approved funding.
+                </p>
+              </div>
+            )}
+            {tab === 'documents' && (
+              <div className={styles.tabContent}>
+                <h3>Documents checklist</h3>
+                {selected?.requiredDocuments.length ? (
+                  <ul className={styles.assumptions}>
+                    {selected.requiredDocuments.map((document) => (
+                      <li key={document}>{document}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No checklist was supplied by the catalogue.</p>
+                )}
+                <p className={styles.meta}>
+                  This is a preparation checklist; files are not attached or submitted
+                  automatically.
+                </p>
+                <p className={styles.meta}>
+                  Generated HTML/PDF artifacts are private. Review every version before any external
+                  submission.
+                </p>
+              </div>
+            )}
+          </div>
           {error && (
             <p role="alert" className={styles.error}>
               {error}

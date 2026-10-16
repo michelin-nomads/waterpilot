@@ -11,13 +11,15 @@ interface Props {
   scenario: SessionState['scenario'];
   agentMode: boolean;
   onOpenAgent: () => void;
+  onSave: (scenario: SessionState['scenario']) => void;
+  busy: boolean;
 }
 
 /**
  * A what-if saved from Agent mode, shown read-only in the shared workspace and labelled as
  * agent-generated. Traditional mode has no what-if controls; it can only open Agent mode.
  */
-export function ScenarioResult({ saved, scenario, agentMode, onOpenAgent }: Props) {
+export function ScenarioResult({ saved, scenario, agentMode, onOpenAgent, onSave, busy }: Props) {
   const id = useId();
   if (saved.status === 'none') return null;
   const awaiting = saved.status === 'awaiting_confirmation';
@@ -42,10 +44,24 @@ export function ScenarioResult({ saved, scenario, agentMode, onOpenAgent }: Prop
         Calculated by the deterministic scenario engine ({saved.engineVersion}), not by a language
         model.
       </p>
+      {awaiting && scenario && (
+        <div className={styles.actions}>
+          <Button disabled={busy} onClick={() => onSave({ ...scenario, confirmed: true })}>
+            Apply this scenario
+          </Button>
+        </div>
+      )}
       {scenario?.interpretedFrom && (
         <p className={styles.text}>Prepared from: “{scenario.interpretedFrom}”</p>
       )}
       <ScenarioRows comparison={saved} />
+      {saved.status === 'applied' && (
+        <div className={styles.actions}>
+          <Button variant="secondary" disabled={busy} onClick={() => onSave(null)}>
+            Return to baseline
+          </Button>
+        </div>
+      )}
       {!agentMode && (
         <div className={styles.actions}>
           <p className={styles.muted}>To change, confirm or remove it, open Agent mode.</p>

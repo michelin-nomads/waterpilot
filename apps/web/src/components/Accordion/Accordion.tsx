@@ -18,7 +18,7 @@ interface AccordionProps {
   /** Controlled expansion; pair with `onExpandedChange`. */
   expanded?: readonly string[];
   onExpandedChange?: (expanded: string[]) => void;
-  headingLevel?: 2 | 3 | 4;
+  headingLevel?: 2 | 3 | 4 | 5;
   /** Shows 1, 2, 3… beside each item, as in the Make It Happen reference. */
   numbered?: boolean;
 }

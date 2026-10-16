@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 
 import { useAuth } from '../../auth/authContext';
 import { ButtonLink } from '../../components/Button/Button';
+import { Field, Input } from '../../components/Field/Field';
 import { EmptyState, ErrorState, PermissionState } from '../../components/StatePanel/StatePanel';
 import { LoadingRegion, Skeleton } from '../../components/Skeleton/Skeleton';
 import { ReportsDocument } from '../../graphql/generated/graphql';
@@ -20,6 +21,7 @@ export default function ReportsPage() {
   const auth = useAuth();
   const session = usePlanningSession();
   const [showArchived, setShowArchived] = useState(false);
+  const [search, setSearch] = useState('');
   const permanent = auth.status === 'ready' && auth.user?.kind === 'permanent';
   const filter = showArchived ? ARCHIVED_FILTER : ACTIVE_FILTER;
   const variables = { filter, ...PAGE };
@@ -27,13 +29,28 @@ export default function ReportsPage() {
     enabled: permanent,
   });
   const current = session.state.status === 'ready' ? session.view : null;
+  const reports = query.data?.reports.nodes ?? [];
+  const term = search.trim().toLocaleLowerCase();
+  const filteredReports = term
+    ? reports.filter((report) =>
+        [report.title, report.area?.name, report.goal.description, report.planName]
+          .filter(Boolean)
+          .some((value) => value?.toLocaleLowerCase().includes(term)),
+      )
+    : reports;
 
   return (
     <main className={styles.page}>
       <PageHeader
-        title="Review and reports"
-        subtitle="Check a plan before finalizing, then return to its immutable report."
+        title="Your water planning workspace"
+        subtitle="Review saved reports and continue planning with your community."
       />
+      <nav className={styles.reportNav} aria-label="Planning workspace">
+        <Link to="/reports" aria-current="page">
+          Reports
+        </Link>
+        <Link to="/communities">Communities</Link>
+      </nav>
       <div className={styles.actions}>
         <ButtonLink to="/start" endIcon="arrow-right">
           New report
@@ -57,6 +74,21 @@ export default function ReportsPage() {
             </button>
           )}
         </div>
+        {permanent && (
+          <Field
+            label="Search reports"
+            hint="Search the reports loaded on this page by title, location, goal or plan."
+          >
+            {(control) => (
+              <Input
+                {...control}
+                type="search"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+              />
+            )}
+          </Field>
+        )}
         {auth.status === 'loading' ? (
           <LoadingRegion label="Loading reports">
             <Skeleton />
@@ -90,7 +122,7 @@ export default function ReportsPage() {
           >
             Check your connection and retry. Your planning session is unchanged.
           </ErrorState>
-        ) : query.data.reports.nodes.length === 0 ? (
+        ) : reports.length === 0 ? (
           <EmptyState
             icon="file"
             title={showArchived ? 'No archived reports' : 'No finalized reports yet'}
@@ -99,9 +131,13 @@ export default function ReportsPage() {
               ? 'Archived reports will appear here.'
               : 'Finalize a reviewed plan to save its location, goal, impact assessment and exact economics as an immutable snapshot.'}
           </EmptyState>
+        ) : filteredReports.length === 0 ? (
+          <EmptyState icon="file" title="No reports match this search">
+            Try another title, location, goal or plan name, or clear the search text.
+          </EmptyState>
         ) : (
           <ul className={styles.list}>
-            {query.data.reports.nodes.map((report) => (
+            {filteredReports.map((report) => (
               <li key={report.id} className={styles.card}>
                 <div>
                   <p className={styles.meta}>
@@ -111,6 +147,10 @@ export default function ReportsPage() {
                   <h3>
                     <Link to={`/reports/${report.id}`}>{report.title}</Link>
                   </h3>
+                  <p>
+                    {report.area?.name ?? 'Location unavailable'} ·{' '}
+                    {report.goal.description || report.goal.kind.replaceAll('_', ' ').toLowerCase()}
+                  </p>
                   <p>
                     {report.planName ?? 'Plan snapshot'} ·{' '}
                     {report.economics?.currency ?? 'economics unavailable'}

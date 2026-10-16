@@ -78,6 +78,18 @@
   }
 }
 
+.drawer .sm {
+  width: min(28rem, 100%);
+}
+
+.drawer .md {
+  width: min(40rem, 100%);
+}
+
+.drawer .lg {
+  width: min(56rem, 92vw);
+}
+
 .header {
   display: flex;
   align-items: flex-start;

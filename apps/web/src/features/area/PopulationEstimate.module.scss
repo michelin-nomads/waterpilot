@@ -1,0 +1,53 @@
+@use 'mixins' as *;
+
+.form {
+  display: grid;
+  gap: var(--wl-card-section-gap);
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--wl-card-body-gap) var(--wl-space-4);
+}
+
+.method,
+.result {
+  @include card;
+
+  display: grid;
+  gap: var(--wl-space-2);
+}
+
+.method summary {
+  min-height: var(--wl-tap-target);
+  align-content: center;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.method p,
+.result p {
+  margin: 0;
+  color: var(--wl-color-text-muted);
+}
+
+.result h2 {
+  margin: 0;
+  font-size: var(--wl-text-lg);
+}
+
+.error {
+  margin: 0;
+  color: var(--wl-color-danger-text);
+}
+
+@media (max-width: 48rem) {
+  .fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

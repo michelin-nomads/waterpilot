@@ -74,7 +74,7 @@ export function DisplayMenu() {
           </div>
         </fieldset>
         <fieldset className={styles.group}>
-          <legend className={styles.legend}>Palette (provisional)</legend>
+          <legend className={styles.legend}>Palette</legend>
           <div className={styles.options}>
             {PALETTES.map((palette) => (
               <label key={palette.id} className={styles.option}>
@@ -96,7 +96,7 @@ export function DisplayMenu() {
           {persisted
             ? 'Saved on this device.'
             : 'This browser blocks storage, so the choice lasts for this tab only.'}{' '}
-          No approved brand palette was supplied; these palettes are provisional.
+          Estuary follows the supplied WaterLens design reference.
         </p>
       </div>
     </div>

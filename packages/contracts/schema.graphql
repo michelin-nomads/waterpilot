@@ -2021,6 +2021,10 @@ type PlanningSessionPayload {
 
 enum PlanningStage {
   UNDERSTAND
+  BASELINE
+  BASELINE_INPUTS
+  BASELINE_OVERVIEW
+  REVIEW
   GOAL
   COMPARE
   MAKE_IT_HAPPEN

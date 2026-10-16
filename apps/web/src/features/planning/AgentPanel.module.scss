@@ -17,6 +17,12 @@
   color: var(--wl-color-text);
 }
 
+.guidance {
+  margin: 0;
+  color: var(--wl-color-text-muted);
+  font-size: var(--wl-text-sm);
+}
+
 .conversation {
   display: grid;
   gap: var(--wl-card-body-gap);
@@ -39,6 +45,29 @@
     border-radius: var(--wl-radius-md);
     background: var(--wl-color-surface-sunken);
   }
+}
+
+.messages > .userMessage {
+  justify-self: end;
+  max-width: 92%;
+  border-color: var(--wl-color-accent);
+  background: var(--wl-color-accent-soft);
+  color: var(--wl-color-text);
+}
+
+.messages > .assistantMessage {
+  justify-self: start;
+  max-width: 100%;
+  background: var(--wl-color-surface);
+}
+
+.composer {
+  position: sticky;
+  z-index: 1;
+  bottom: 0;
+  padding-block: var(--wl-space-3);
+  border-top: 1px solid var(--wl-color-border);
+  background: var(--wl-color-bg);
 }
 .result {
   border: 1px solid var(--wl-color-border);

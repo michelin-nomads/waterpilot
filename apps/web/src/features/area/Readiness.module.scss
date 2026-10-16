@@ -33,6 +33,29 @@
   list-style: none;
 }
 
+.accordion {
+  display: grid;
+  gap: var(--wl-card-body-gap);
+  padding-block-start: var(--wl-space-3);
+  border-block-start: 1px solid var(--wl-color-border);
+}
+
+.accordionSummary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wl-space-2);
+  min-height: var(--wl-tap-target);
+  color: var(--wl-color-text);
+  font-weight: 700;
+  cursor: pointer;
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
 .row {
   display: grid;
   gap: var(--wl-space-2);

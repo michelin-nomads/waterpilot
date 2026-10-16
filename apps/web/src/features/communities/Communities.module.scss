@@ -98,6 +98,13 @@
   gap: 1rem;
 }
 
+.formGrid > h3 {
+  margin: var(--wl-space-2) 0 0;
+  padding-bottom: var(--wl-space-2);
+  border-bottom: 1px solid var(--wl-color-border);
+  font-size: var(--wl-text-md);
+}
+
 .wide {
   grid-column: 1 / -1;
 }

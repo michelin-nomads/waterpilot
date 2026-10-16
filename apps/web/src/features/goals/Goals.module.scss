@@ -28,6 +28,51 @@
   gap: var(--wl-space-4);
 }
 
+.locationContext {
+  @include card;
+
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wl-space-4);
+
+  > div {
+    display: grid;
+    gap: var(--wl-space-1);
+  }
+}
+
+.goalLimits {
+  display: grid;
+  gap: var(--wl-space-3);
+  padding: var(--wl-space-4);
+  border: 1px solid var(--wl-color-border);
+  border-radius: var(--wl-radius-lg);
+  background: var(--wl-color-surface-raised);
+
+  @include tablet-up {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.otherGoals {
+  display: grid;
+  gap: var(--wl-space-3);
+  padding: var(--wl-space-3) var(--wl-space-4);
+  border: 1px solid var(--wl-color-border);
+  border-radius: var(--wl-radius-lg);
+  background: var(--wl-color-surface-raised);
+
+  summary {
+    @include tap-target;
+
+    align-content: center;
+    font-weight: 650;
+    cursor: pointer;
+  }
+}
+
 .grid {
   display: grid;
   gap: var(--wl-space-3);

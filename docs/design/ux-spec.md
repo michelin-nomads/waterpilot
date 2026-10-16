@@ -1,5 +1,23 @@
 # WaterLens — Screen, State and Design-System Specification
 
+> **Desktop refresh R01 (2026-10-16): current navigation supersedes the legacy screen/route tables below.**
+> The planner is **Location → Baseline → Goal → Compare → Review**. Location remains
+> `/area`; Baseline uses `/baseline` (community inputs), `/baseline/inputs` and
+> `/baseline/overview`; Goal/Compare remain `/goals` and `/plans`; Review is
+> `/reports/review` inside the shared planning shell. Funding and implementation retain
+> `/make-it-happen` and `/tracking` as independent branches, without the planner stepper.
+> See [R01 validation and compatibility](../validation/r01-journey.md). This foundation
+> change does not claim completion of the subsequent screen designs.
+
+> **Desktop refresh R02 (2026-10-16): shared planning shell and spacing foundation.**
+> In Copilot, the conversation and editable workspace are separate desktop panes; the
+> five-step navigation sits inside the workspace above its screen content. The header
+> contains the shared mode control, display/theme control and account actions. Shared
+> inset, section-gap, planning-height and field/select/button styles are applied through
+> existing tokens and components. Independent pane scrolling and resize behavior remain.
+> See [R02 desktop shell validation](../validation/r02-desktop-shell.md). Screen-specific
+> content styling is deferred to its own refresh prompt.
+
 ## Owner override — desktop hackathon scope (2026-10-13)
 
 From Prompt 18 onward, this is a **desktop-only hackathon build**. This owner
@@ -39,7 +57,7 @@ same PR.
   - the reference images `docs/design/reference/1.png`–`8.png`;
   - the current styles (`apps/web/src/styles/*`) and components (`apps/web/src/components/*`);
   - the traceability map (`docs/product/traceability.md`) and ADR 0002.
-- **Visual status:** the references define the **flow and layout**, not the palette, logo or scientific values. No approved brand assets exist, so the tokens below stay provisional ([§9](#9-token-system)). Any number in this document is an illustrative placeholder in `{braces}`.
+- **Visual status:** the supplied WaterLens design PDFs define the Welcome flow and the Estuary palette: blue-white light surfaces, navy text and teal actions, with a coordinated deep navy dark theme. The logo and scientific values remain provisional. Any number in this document is an illustrative placeholder in `{braces}`.
 
 Contents:
 
@@ -165,6 +183,12 @@ Same routes and components with the conversation pane absent. Nothing is hidden 
 agent would otherwise provide: every agent tool has a workspace control (the What-if
 panel, goal entry, plan choice, funding add, proposal generation).
 
+The shared planning header uses a compact pair of icon-only Explorer/Copilot radio options:
+adjustment controls for Explorer and a subtle sparkle for Copilot. The active option has a
+teal fill with a contrasting icon. Accessible radio names and hover/focus tooltips explain
+each mode; switching updates the existing session and retains current work. See
+[R05 header mode control validation](../validation/r05-header-mode-control.md).
+
 ### 4.4 Narrow and tablet — tabs, never two columns
 
 - A two-tab `tablist` ("Conversation", "Workspace") sits directly under the stepper toolbar. Both panels stay mounted, so neither the unsent message, the conversation scroll nor the workspace form state is lost.
@@ -179,18 +203,18 @@ Each screen below has a **Primary action** (exactly one) and lists which states 
 
 ### S1 Welcome
 
-- **Purpose:** explain what WaterLens does in one sentence and start planning.
-- **Essentials:** product statement; "What you get": three short items (understand your area, compare plans, track results) with no metrics; the coverage note "Coverage varies by location; we show what is known and what is not."
-- **Primary action:** `Start planning` (creates a guest identity if there is none) → S2. A user who already has an identity sees `Continue planning`. There is **no** `Resume {location} · {stage}` control (removed by owner decision, 2026-10-10): the current session is recovered automatically instead — Firebase restores the identity after a reload, the planning screens load `currentPlanningSession`, and cached queries refetch on reconnect and when the tab regains focus.
-- **Secondary:** `Sign in` (ghost, header) for returning users.
+- **Purpose:** introduce community water planning and let a visitor start in either Explorer or Copilot immediately.
+- **Essentials:** centered eyebrow, headline and short product statement; two equal cards with `Guide me with WaterLensAgent` first (sparkle, filled `Start with agent`) and `Explore on my own` second (exploration icon, outlined `Start exploring`); collapsed `How WaterLens works` disclosure and guest/sign-in explanation below. The header offers sign-in; planning is available as a guest. Local screen previews are a collapsed, local-only disclosure.
+- **Primary action:** `Start with agent` or `Start exploring` creates a guest identity if there is none and opens the first planning stage in the chosen mode. A user who already has a session sees `Continue planning` and `New report`. There is **no** `Resume {location} · {stage}` control (removed by owner decision, 2026-10-10): the current session is recovered automatically instead — Firebase restores the identity after a reload, the planning screens load `currentPlanningSession`, and cached queries refetch on reconnect and when the tab regains focus.
+- **Secondary:** `Sign in` in the header for returning users; sign-in is required only when saving the first report.
 - **States:** loading (identity check), offline, retry (session creation failed), auth-cancel (if sign-in was cancelled from here), budget-blocked (guest creation over quota: "New guest sessions are paused right now. Try again later or sign in.").
-- **Agent mode:** not applicable (before mode choice).
+- **Agent mode:** the first card starts the same planning session with Copilot enabled.
 - **Built in Phase 05:** `features/welcome`. The Welcome body also has a ghost `Sign in to your account`
   beside the header `Sign in`, so a cancelled sign-in started here can be reported here.
   Budget-blocked appears when anonymous sign-in is disabled or rate-limited.
-- **Prompt 05 (session coordinator):** when there is no current session, Welcome embeds
-  the shared S2 `ModeChooser` above `Start planning`, so a new person makes one choice and
-  lands on the session's step (S2 is not a separate step on first start). A guest with a
+- **Prompt 05 (session coordinator):** when there is no current session, Welcome shows the
+  two mode cards as direct start choices, so a new person lands on the session's first step
+  (S2 is not a separate step on first start). A guest with a
   current session sees `Continue planning` (opens the step the session records, in the
   mode it records) and `New report` (→ `/start`). Signed-in accounts are redirected to
   S10 `/dashboard`. A session-creation failure shows its own message ("Your plan could not
@@ -198,15 +222,13 @@ Each screen below has a **Primary action** (exactly one) and lists which states 
 
 ### S2 Mode chooser
 
-- **Purpose:** choose how to plan; can be changed any time.
-- **Essentials:** `ChoiceCards` with two options:
-  - **Traditional:** "Work through each step yourself."
-  - **With the assistant:** "Ask questions and let the assistant fill in the same steps. Every number still comes from the same calculations." When the agent is unavailable or budget-blocked, this option is disabled with the reason.
-- **Primary action:** `Continue` → S3. Defaults to the last choice, else Traditional.
-- **States:** budget-blocked (assistant option disabled), offline.
-- **Note:** the toolbar toggle ([§4](#4-layout-system)) remains the way to switch later; this screen never reappears for a session.
-- **Built in Prompt 05:** one `features/planning/ModeChooser` used on Welcome and on
-  `/start` (New report). The mode is saved **on the session** (`PlanningSession.mode`), so
+- **Purpose:** start a new report in Explorer or Copilot; mode can change later without losing work.
+- **Essentials:** the `/start` page retains the distinct `New report` title and uses the same two featured Explorer/Copilot cards as Welcome, with a clear selected treatment and concise descriptions. Selecting a card does not create a session.
+- **Primary action:** `Start new report`, disabled until a mode is selected. If a current plan exists, the action first asks for confirmation before replacing it; `Continue current plan` remains available.
+- **States:** no selection, selected mode, session loading, offline, creation error/retry, and replacement confirmation/cancellation.
+- **Note:** the header mode control can switch mode later without losing the session or work.
+- **Built in Prompt 05:** `features/planning/ModeChooser` is used on `/start` (New report).
+  Welcome starts directly from its Explorer/Copilot cards. The mode is saved **on the session** (`PlanningSession.mode`), so
   every tab and device resumes the same mode; the device remembers the last choice only
   as the default for the next session. The assistant option stays selectable with a "Not
   connected yet" badge (the agent pane explains it and offers Traditional) rather than
@@ -216,32 +238,25 @@ Each screen below has a **Primary action** (exactly one) and lists which states 
 
 ### S3 Location
 
-- **Purpose:** choose any place and see what is known there.
-- **Essentials:** a location search combobox (`role="combobox"`, listbox suggestions, ↑/↓/Enter/Escape) with recent places, plus a bounded map preview after selection.
-- **Coverage panel** (shown on selection, before any metric): one row per capability from `capability-matrix.json` with an availability badge (Available / Provisional / Unavailable) and the evidence badge. Example row: "Groundwater level · Unavailable · No source onboarded for this location."
-- **Primary action:** `Use this location` → S4 (disabled until a location is selected; the reason is shown under the button).
-- **States:** empty (no query yet: show recent places, or "Search for a city, district or neighbourhood"); loading (suggestions; coverage); partial-data (some capabilities unavailable: normal, not an error); validation ("No places match '{q}'. Check the spelling or try a larger area."); offline; retry.
-- **Boundaries:** drawn only from sourced geometry. Otherwise, show a point and the text "Boundary not available for this place".
+- **Purpose:** confirm the selected place and area treatment before the Baseline step.
+- **Essentials:** `Confirm your location` heading and short explanation; global place search beside explicit `Use my location` and manual-entry actions; dominant sourced map or clearly labeled unavailable-map state; selected-place facts and area extent with validation; bottom `Change area` and `Confirm location` actions.
+- **Primary action:** `Confirm location` persists the validated selection and opens Baseline community setup. Returning to this step allows `Change area` without creating a report or session.
+- **States:** search loading/no-result/error/retry, ambiguous result, geolocation permission denial/timeout/inaccuracy, custom global coordinates, boundary/map unavailable, validation and save failure.
+- **Boundaries:** boundaries appear only from sourced geometry. Otherwise the selected point/radius stays explicitly user-defined; a place label is not treated as a catchment. Local fixture data is labeled synthetic.
+- **Built in R07:** preserves bounded queries, permissions and the existing map/place adapters. See [R07 validation](../validation/r07-location.md).
 
-### S4 Baseline (Understand Your Area)
+### S4 Baseline
 
-- **Purpose:** current water situation for the selected location.
-- **Essentials:**
-  - Location summary card: name, one-line description from sourced facts, `View details`.
-  - Up to four `MetricCard`s: Water stress, Shortage days, Reliable supply, Current deficit. Each shows unit, period, evidence badge and a definition tooltip, and unavailable values carry their reason.
-  - Map: bounded GeoJSON; legend only for rendered layers; text alternative "Map summary" disclosure.
-- **Disclosed:**
-  - **Source details dialog** (8.png): Summary / Data sources / Assumptions tabs. It also has a "Show table" for the contribution chart.
-  - **What-if panel:** collapsed by default. It holds quick adjustments (sliders with explicit ranges and units) and "Ask your own question", which the system interprets and the user confirms before anything runs. Results show beside the baseline as "Adjusted" with deltas. The panel has `Reset adjustments` (secondary).
-  - "How this is calculated" link to method and metric definitions.
-- **Primary action:** `Set a goal` → S5, at the foot of the results column. It is enabled when at least one headline value is available. Otherwise it is replaced by an EmptyState (see partial-data) explaining that planning needs data.
-- **States:**
-  - Loading: skeleton matching four cards and the map.
-  - Partial-data: a notice above the cards reads "{2} of {4} measures are available here", and the remaining cards show unavailable reasons.
-  - Stale: a notice if inputs or sources changed since the calculation; the primary action becomes `Recalculate`.
-  - Offline, retry, and empty (no location: redirect to S3).
-  - Budget-blocked: only affects the AI summary. The insight card shows "Summary unavailable right now. The numbers above are unaffected."
-- **Agent mode:** the agent may explain values ("Why is shortage days unavailable?") and run What-if adjustments, which appear in the same panel, marked "Set by the assistant".
+- **Purpose:** collect community and water inputs, then review the authoritative baseline for the confirmed location.
+- **Community setup (`/baseline`):** compact location context with Change; supported population and demand inputs with source/date; an expandable Water sources and supply section with each input's real readiness and completion status. No missing value is shown as zero.
+- **Estimate helper (`/baseline/estimate`):** optional household assumptions for when population is unknown. It calculates whole residents and daily domestic demand using exact supported values, shows the formula and limitations, and saves population plus per-person need as user-entered values with an explicit estimate/source note. Back returns without saving. No additional planner stage is added.
+- **Water inputs (`/baseline/inputs`):** delivered/tanker supply and other currently supported inputs, exact unit, source and date; unknown remains unknown. Back returns to community setup.
+- **Overview (`/baseline/overview`):** current backend-backed baseline, provenance, unknown/partial reasons, data coverage and assumptions; Edit returns to the relevant inputs. Continue opens Goal.
+- **Overview presentation (R11):** three KPI cards show demand, delivered supply and supply gap. Supply composition is derived only when the authoritative tanker-share and delivered-supply metrics are both compatible; otherwise it remains unavailable. Data-source details and key assumptions are separate accordions. The location context card is editable. The current `AreaLocation` contract has no boundary geometry, so the overview does not draw a fabricated map.
+- **Navigation:** Baseline stays active across the three substates and optional estimate helper. Community Continue opens water inputs; water Continue opens overview; Back follows Location → community → water → overview in reverse. The estimate helper is reached from the missing population row and returns to community inputs.
+- **Built in R08:** shared expandable readiness rows and truthful completion badge. The current domain persists population, per-person need, non-domestic demand, delivered supply and tanker supply. Occupied homes/resident count, primary concern and optional community details have no authoritative session fields yet and are not presented as saved controls. See [R08 validation](../validation/r08-community-baseline.md).
+- **Built in R10:** household/resident assumptions calculate the accepted population and demand exactly. Homes × residents/home must be a whole person count; fractional people are rejected. The two authoritative fields use idempotent manual-input mutations with the same estimate note. If a later mutation fails, retry reuses its request keys while this helper remains open; the operation is not a server-side atomic batch.
+- **Coverage drawer (R12):** inputs and overview open a right-side evidence drawer over the current page, not a new planning stage. Its table shows Dataset, Source, Date, Resolution, Coverage and Status from current baseline evidence; absent values stay “Not reported” or “Source not recorded.” Resolution is the evidence method or an explicitly named record/summary form, not a geographic-resolution claim. Limitations, reasons and assumptions remain visible in a separate expandable section. The drawer uses contained table scrolling and the shared modal focus trap/Escape/restore behavior.
 
 ### S5 Goal
 
@@ -252,6 +267,7 @@ Each screen below has a **Primary action** (exactly one) and lists which states 
   - Selected-goal summary: target, scope.
   - Constraints: Budget (INR; exact precision shown), Timeline (days), Priority.
 - **Primary action:** `Compare plans` → S6, at the foot of the selected-goal summary.
+- **Goal screen refresh (R13):** the page is titled “Set your goal and constraints,” shows the selected location with an Edit action, and prioritizes the three supported goal cards for shortage availability, tanker dependence and water-bill efficiency. Other supported goals remain available in an expandable section. Optional Budget and Timeframe inputs share a row; horizon, currency, priority and site constraints remain available without dropping persisted fields. Amounts retain their exact currency and unknown economics stay unknown.
 - **States:**
   - Validation: inline field errors plus an `ErrorSummary` on submit. Example: "Budget: enter an amount in rupees, e.g. 10,00,000".
   - Interpretation needs input: "We need one more detail: is 50% a reduction from today, or a target level?"
@@ -260,6 +276,10 @@ Each screen below has a **Primary action** (exactly one) and lists which states 
 - **Feasibility** is shown only after the engine evaluates it, at the top of S6, never here.
 
 ### S6 Plan comparison
+
+- **R14 screen refresh:** heading “Compare plan options,” selected area context and Edit action, then aligned API-driven option cards with exact cost/build/impact values, explicit selection state, and progressive assumptions/details. No unsupported recommendation badge or invented saving/payback is displayed. Continue to Review requires a backend-current selection that remains in the current comparison. The existing scenario result is shown on this same stage.
+- **R15 scenario refresh:** Compare offers scenario controls through the existing Agent workspace without creating another stage or session. A pending agent scenario has an explicit Apply action; an applied scenario shows exact metric rows against the unchanged original baseline and a Return to baseline action. The API returns summary rows, not a monthly time series, so the UI does not fabricate chart points. The same input revision, deterministic engine and session version guards remain authoritative.
+- **R16 selected-plan details:** each current option opens a shared right-side drawer with an outcome/cost/time/benefit KPI strip, measures and their recurring costs, available economics/payback, assumptions, ranking basis and wider-system evidence. “Ranked first” is shown only when the server supplies a stable ranking rule and rank 1. The endpoint contains no month-by-month option series, so the drawer explains that no monthly chart is available. Back closes the drawer; Select this plan uses the existing session mutation and returns to Compare. It does not finalize a report.
 
 - **Purpose:** choose one feasible plan.
 - **Essentials:**
@@ -281,20 +301,26 @@ Each screen below has a **Primary action** (exactly one) and lists which states 
 
 ### S7 Review (Make It Happen · review)
 
-- **Purpose:** check the selected plan, then finalize a report.
-- **Essentials:**
-  - Selected-plan summary strip (1.png top): plan, cost range, time, first benefit.
-  - Numbered accordions, all collapsed except the first: 1 What's included · 2 Expected return and impact · 3 Funding options (S8) · 4 Implementation timeline · 5 Assumptions and confidence.
-- **Primary action:** `Finalize report`, at the end of the review, after the assumptions accordion header and its "I have reviewed the assumptions" checkbox.
-  - **As a guest,** finalizing opens the sign-in dialog first ("Finalizing creates a permanent report. Sign in to keep it; your current session stays as it is."). After linking, finalize continues automatically.
-  - **On success,** the user goes to S11 with a toast "Report v{1} finalized".
-- **Secondary:** `Generate proposal` (outline, in the strip; requires a finalized report, otherwise disabled with the reason).
-- **States:**
-  - Auth-cancel: "Sign-in was cancelled. Nothing was finalized and your session is unchanged." with `Try again` and `Use email instead`.
-  - Validation: assumptions not acknowledged.
-  - Stale: the plan was recalculated after the review opened.
-  - Permission-denied: in a community session without the finalize role, "Only {coordinators} can finalize reports in {community}. You can share this review with them."
-  - Offline, retry (idempotent finalize: retry reuses the same key, so no duplicate report is created).
+- **Purpose:** review current inputs and save a versioned immutable report snapshot.
+- **Essentials:** selected location context with Edit; community goal; current comparison's human-readable plan name and exact supported cost, outcome and benefit values; comparison assumptions and uncertainty; a modestly placed editable report title.
+- **Primary action:** `Save report`. The server rechecks the plan and impact version. Guest planning remains intact until this action invokes the permanent sign-in/linking flow. On success the existing report/job route handles exports.
+- **Edit actions:** return to Location, Baseline overview, Goal or Compare in the same session. Missing information repairs the current session. Unavailable map geometry is stated rather than fabricated.
+- **States:** loading/refresh recovery, incomplete inputs, stale selection, query error with retry, sign-in cancellation, finalization failure and busy/idempotent submission. No draft or resume feature is added.
+- **R17 screen refresh:** the planning shell and Copilot pane remain around Review. Internal option IDs are never used as plan names. Save stays disabled until the current comparison confirms the selected option for this input revision.
+- **R18 sign-in/linking:** a guest sees the shared sign-in dialog only after choosing Save report; it explains that finalizing creates a permanent report and the planning session remains in place. Closing/canceling returns to Review. Guest linking completes before the finalize mutation; permanent users skip the dialog. The existing claim/retry and idempotency flow is reused.
+- **R19 report-created:** successful finalization returns to the authoritative report detail with a one-time “Report created” confirmation and Open report anchor; refreshing retains the saved report but does not repeat finalization. Proposal artifact jobs expose their existing durable job status and private download when ready. A standalone report PDF export is not implemented in the current API/schema and is disclosed inline rather than simulated.
+- **R20 Reports home:** `/reports` is titled “Your water planning workspace” and provides Reports/Communities navigation, New report, current-plan review where available, search across the bounded loaded page, and a finalized/archived visibility toggle. Cards show report title, location, goal, plan, date and status; no Drafts or Resume affordance is introduced.
+- **R21 saved report detail:** detail is organized into keyboard-accessible Overview, Evidence and Implementation tabs, preserving the immutable report version. Overview links to proposal creation and consent-based community creation; Implementation preselects this finalized report in project creation. The current API has no standalone report PDF export, so Download PDF is disabled with an explanation; private proposal job/download states remain authoritative.
+- **R22 community discovery:** `/communities` has My communities, Discover nearby and All communities controls, bounded search/radius, immediate Join and active/archive filtering. The current community API returns area names/distance but no map coordinates, so discovery keeps the list and explicitly explains why it cannot safely draw pins.
+- **R23 community detail:** Overview, Shared reports and Members tabs use existing authorized community queries. Membership actions remain immediate and idempotent; shared summaries stay sanitized and separately consented contact fields are the only public contacts. The current membership API has no display names, so the member tab shows roles without inventing identities.
+- **R24 create community:** the form is grouped into Community details, Location/goal/report, and Coordinator contact/consent. Opening it from a report preselects that report; only an owned, finalized report can be submitted. Contact fields remain private until their individual consent checkboxes are selected.
+- **R25 community management:** Settings is visible only to coordinators and exposes only already-consented public contact values. A sole coordinator is told to archive rather than leave. The current API has no detail-edit, consent-update, or coordinator-transfer mutations; the page says those operations are unsupported rather than reporting a fake save or transfer.
+- **R26 funding opportunities:** eligibility and source evidence remain server-backed. The screen now shows the selected plan’s exact comparison funding gap, locally filters the bounded results without rerunning matching, and only exposes Prepare proposal for a current matching finalized report plus an active official scheme with source hash. Synthetic and ineligible schemes never get that action.
+- **R27 proposal preparation:** proposal input is grouped into Summary, Budget and Documents tabs. Report cost, annual net return and funding gap are rendered from the immutable snapshot in exact minor-unit integers. The scheme and document checklist stay sourced from the curated catalogue; the existing durable job, HTML/PDF private artifacts, version regeneration and manual submission boundary remain unchanged.
+- **R28 implementation tracking:** source report creates are preselected when opened from report detail, with an idempotency key scoped to the actual project form payload. Project detail presents forecast ranges beside observed evidence and retains task, expense, permission, archive and concurrency behavior. Incompatible/missing evidence continues to show unknown.
+- **R29 recovery:** shared offline/stale/budget/partial-data notices, query loading/error/retry states and durable job status pages remain the supported recovery language. Failed service responses stay inline; Retry reuses current selection and existing run/job identifiers. No false offline-save, Drafts or Resume claims are added.
+- **R30 supporting screens:** dashboard, admin catalogue and durable job pages keep their existing authorization, private data and error/loading states. Dashboard has distinct Start a Project and View Reports actions. The admin importer remains explicit-review and local-only; job progress restores by its existing job ID.
+- **R31 final verification:** desktop-only visual acceptance is recorded separately from implementation and build completion. The current run has no Playwright Chromium binary; `/reports` was inspected through the open in-app browser as guest, while `/communities` returned the generic app error boundary. Other themes, viewports and journeys remain unverified.
 
 ### S8 Funding (Make It Happen · funding)
 
@@ -512,7 +538,8 @@ Target: WCAG 2.2 AA.
 
 Tokens are CSS custom properties emitted by `apps/web/src/styles/tokens.scss` from the raw maps in
 `_token-values.scss`. Modules use tokens only (no raw hex); Sass helpers come from
-`_mixins.scss` via `@use 'mixins' as *`. All colour values are **provisional**.
+`_mixins.scss` via `@use 'mixins' as *`. Estuary follows the supplied design reference; Monsoon
+and Grove remain optional palettes.
 
 | Group              | Tokens                                                                                                                     | Notes                                                                                       |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
@@ -541,36 +568,36 @@ React + strict TypeScript; one folder per component with a `.module.scss`; expor
 `apps/web/src/components/index.ts`. APIs are content-driven: props carry text and data,
 not layout knobs.
 
-| Component                                               | Status          | Purpose / key API                                                                                                                                                                         | Used by             |
-| ------------------------------------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
-| `Button`, `ButtonLink`                                  | Built           | `variant` primary/secondary/ghost/danger, `loading`, icons                                                                                                                                | All                 |
-| `StepActions`                                           | **Built (new)** | Exactly one `primary` element + optional `secondary`, `back`, `note`; renders at the foot of the result it acts on                                                                        | S1–S16              |
-| `Field`, `Input`, `Select`, `Textarea`                  | Built           | Label/hint/error wiring through a render prop                                                                                                                                             | Forms               |
-| `ErrorSummary`                                          | **Built (new)** | `errors: {fieldId, message}[]`; focuses itself when shown; links focus fields                                                                                                             | S5, S14, S16        |
-| `ChoiceCards`                                           | **Built (new)** | Native radio group as cards: `legend`, `options {value,title,description,icon,badge,disabledReason}`, `value`, `onChange`                                                                 | S2, S5, S6          |
-| `MetricCard`                                            | Built           | Discriminated `metric` (available/provisional/unavailable + reason), evidence, definition, delta, tone                                                                                    | S4, S6, S11, S15    |
-| `Badge`, `EvidenceBadge`                                | Built           | Status and evidence labels                                                                                                                                                                | All                 |
-| `Tooltip`                                               | Built           | Definitions behind an info button                                                                                                                                                         | Metrics             |
-| `Accordion`                                             | Built           | Numbered disclosure                                                                                                                                                                       | S7, S8              |
-| `Tabs`                                                  | Built           | Details dialog tabs only (never a What-if tab)                                                                                                                                            | S4 details          |
-| `Dialog`, `Drawer`                                      | Built           | Shared modal layer; full-screen sheet below 640 px                                                                                                                                        | S4, S6, S8, S9, S16 |
-| `Toast`                                                 | Built           | Action outcomes, undo                                                                                                                                                                     | All                 |
-| `Skeleton`, `LoadingRegion`                             | Built           | Shaped loading with 150 ms delay                                                                                                                                                          | All                 |
-| `EmptyState`, `ErrorState`, `PermissionState`           | Built           | Region states                                                                                                                                                                             | All                 |
-| `Notice`                                                | **Built (new)** | `kind`: stale, offline, partial, archived, budget, auth-cancelled, restored, info; optional `title`, `action`. `StaleBanner` remains as a wrapper                                         | All                 |
-| `OfflineNotice` (`shell/`) + `useOnlineStatus` (`lib/`) | **Built (new)** | Global offline banner under the header with a persistent live region ("Back online."); hook for disabling server actions                                                                  | Shell               |
-| `ResizeHandle`                                          | **Built (new)** | Accessible separator for the agent split; `value`, `min`, `max`, `onChange`, `label`, `controls`                                                                                          | Planning layout     |
-| `SuggestionChips`                                       | Built           | Fill-only suggestions; unavailable chips explain why                                                                                                                                      | S4 What-if, S5      |
-| `BarChart`, `LineChart`, `ChartFrame`                   | Built           | SVG charts with "Show table"                                                                                                                                                              | S4, S6, S15         |
-| `Logo`, `Icon`, `Spinner`, `VisuallyHidden`             | Built           | Provisional mark; inline SVG icons                                                                                                                                                        | Shell               |
-| `LocationCombobox`                                      | Planned (08)    | WAI-ARIA combobox with bounded suggestions                                                                                                                                                | S3, S14             |
-| `CoverageList`                                          | Planned (08)    | Capability rows with availability + evidence                                                                                                                                              | S3, S4              |
-| `WhatIfPanel`                                           | Planned (09)    | Collapsible panel; sliders with units/ranges; confirm-before-run                                                                                                                          | S4, S6              |
-| `PlanCard`                                              | Planned (12)    | `ChoiceCards` variant with four facts and ranges                                                                                                                                          | S6                  |
-| `JobProgress`                                           | Planned (06)    | Real job stages, cancel, resume-from-stage retry                                                                                                                                          | S6, S9              |
-| `Conversation`                                          | Planned (10/13) | `log` message list, composer, tool-result cards linking to workspace regions                                                                                                              | Agent pane          |
-| `DataTable`                                             | Planned (14)    | Caption, sortable headers (`aria-sort`), bounded pagination                                                                                                                               | S11, S16            |
-| `AccountMenu`, `SignInDialog`                           | **Built (05)**  | Google + email/password; guests are linked (uid kept) or claimed into an existing account; popup cancelled/blocked, duplicate signup, provider conflict, network and pending-claim states | Shell, S1, S7, S14  |
+| Component                                               | Status          | Purpose / key API                                                                                                                                                                               | Used by             |
+| ------------------------------------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| `Button`, `ButtonLink`                                  | Built           | `variant` primary/secondary/ghost/danger, `loading`, icons                                                                                                                                      | All                 |
+| `StepActions`                                           | **Built (new)** | Exactly one `primary` element + optional `secondary`, `back`, `note`; renders at the foot of the result it acts on                                                                              | S1–S16              |
+| `Field`, `Input`, `Select`, `Textarea`                  | Built           | Label/hint/error wiring through a render prop                                                                                                                                                   | Forms               |
+| `ErrorSummary`                                          | **Built (new)** | `errors: {fieldId, message}[]`; focuses itself when shown; links focus fields                                                                                                                   | S5, S14, S16        |
+| `ChoiceCards`                                           | **Built (new)** | Native radio group as cards: `legend`, `options {value,title,description,icon,badge,disabledReason}`, `value`, `onChange`                                                                       | S2, S5, S6          |
+| `MetricCard`                                            | Built           | Discriminated `metric` (available/provisional/unavailable + reason), evidence, definition, delta, tone                                                                                          | S4, S6, S11, S15    |
+| `Badge`, `EvidenceBadge`                                | Built           | Status and evidence labels                                                                                                                                                                      | All                 |
+| `Tooltip`                                               | Built           | Definitions behind an info button                                                                                                                                                               | Metrics             |
+| `Accordion`                                             | Built           | Numbered disclosure                                                                                                                                                                             | S7, S8              |
+| `Tabs`                                                  | Built           | Details dialog tabs only (never a What-if tab)                                                                                                                                                  | S4 details          |
+| `Dialog`, `Drawer`                                      | Built           | Shared modal layer; full-screen sheet below 640 px                                                                                                                                              | S4, S6, S8, S9, S16 |
+| `Toast`                                                 | Built           | Action outcomes, undo                                                                                                                                                                           | All                 |
+| `Skeleton`, `LoadingRegion`                             | Built           | Shaped loading with 150 ms delay                                                                                                                                                                | All                 |
+| `EmptyState`, `ErrorState`, `PermissionState`           | Built           | Region states                                                                                                                                                                                   | All                 |
+| `Notice`                                                | **Built (new)** | `kind`: stale, offline, partial, archived, budget, auth-cancelled, restored, info; optional `title`, `action`. `StaleBanner` remains as a wrapper                                               | All                 |
+| `OfflineNotice` (`shell/`) + `useOnlineStatus` (`lib/`) | **Built (new)** | Global offline banner under the header with a persistent live region ("Back online."); hook for disabling server actions                                                                        | Shell               |
+| `ResizeHandle`                                          | **Built (new)** | Accessible separator for the agent split; `value`, `min`, `max`, `onChange`, `label`, `controls`                                                                                                | Planning layout     |
+| `SuggestionChips`                                       | Built           | Fill-only suggestions; unavailable chips explain why                                                                                                                                            | S4 What-if, S5      |
+| `BarChart`, `LineChart`, `ChartFrame`                   | Built           | SVG charts with "Show table"                                                                                                                                                                    | S4, S6, S15         |
+| `Logo`, `Icon`, `Spinner`, `VisuallyHidden`             | Built           | Provisional mark; inline SVG icons                                                                                                                                                              | Shell               |
+| `LocationCombobox`                                      | Planned (08)    | WAI-ARIA combobox with bounded suggestions                                                                                                                                                      | S3, S14             |
+| `CoverageList`                                          | Planned (08)    | Capability rows with availability + evidence                                                                                                                                                    | S3, S4              |
+| `WhatIfPanel`                                           | Planned (09)    | Collapsible panel; sliders with units/ranges; confirm-before-run                                                                                                                                | S4, S6              |
+| `PlanCard`                                              | Planned (12)    | `ChoiceCards` variant with four facts and ranges                                                                                                                                                | S6                  |
+| `JobProgress`                                           | Planned (06)    | Real job stages, cancel, resume-from-stage retry                                                                                                                                                | S6, S9              |
+| `Conversation`                                          | Built (R06)     | Streamed user-facing messages, progress, structured tool results, explicit confirmations, cancellation/Continue, retry/reconnect and workspace focus actions; private reasoning is not rendered | Agent pane          |
+| `DataTable`                                             | Planned (14)    | Caption, sortable headers (`aria-sort`), bounded pagination                                                                                                                                     | S11, S16            |
+| `AccountMenu`, `SignInDialog`                           | **Built (05)**  | Google + email/password; guests are linked (uid kept) or claimed into an existing account; popup cancelled/blocked, duplicate signup, provider conflict, network and pending-claim states       | Shell, S1, S7, S14  |
 
 ## 11. Verification
 

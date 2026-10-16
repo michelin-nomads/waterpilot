@@ -39,9 +39,7 @@ async function choosePointOnly(page: Page) {
 
 async function startPlanning(page: Page) {
   await page.goto('/');
-  const option = page.getByRole('radio', { name: /traditional/i });
-  await page.locator('label', { has: option }).click();
-  await page.getByRole('button', { name: 'Start planning' }).click();
+  await page.getByRole('button', { name: 'Start exploring' }).click();
   await expect(page).toHaveURL(/\/area$/);
   await expect(page.getByText(/local mode shows no map/i)).toBeVisible();
 }

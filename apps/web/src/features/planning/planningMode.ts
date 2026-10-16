@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 
 import type { PlanningMode as SessionMode } from '../../graphql/generated/graphql';
+import type { IconName } from '../../components/Icon/Icon';
 import { usePlanningSession } from '../../session/sessionContext';
 import { getPreferenceStorage } from '../../theme/displayPreferences';
 
@@ -11,6 +12,28 @@ import { getPreferenceStorage } from '../../theme/displayPreferences';
  */
 export const PLANNING_MODES = ['traditional', 'agent'] as const;
 export type PlanningMode = (typeof PLANNING_MODES)[number];
+
+export interface PlanningModeOption {
+  id: PlanningMode;
+  label: string;
+  description: string;
+  icon: IconName;
+}
+
+export const PLANNING_MODE_OPTIONS: readonly PlanningModeOption[] = [
+  {
+    id: 'traditional',
+    label: 'Explorer',
+    description: 'Shape your water plan yourself, step by step.',
+    icon: 'adjustments',
+  },
+  {
+    id: 'agent',
+    label: 'Copilot',
+    description: 'Build your plan with AI assistance. Every step stays editable.',
+    icon: 'sparkle',
+  },
+];
 
 export const PLANNING_MODE_STORAGE_KEY = 'waterlens.planningMode.v1';
 export const DEFAULT_PLANNING_MODE: PlanningMode = 'traditional';

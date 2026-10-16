@@ -5,6 +5,7 @@ import { useAuth } from '../auth/authContext';
 import { Badge } from '../components/Badge/Badge';
 import { Button } from '../components/Button/Button';
 import { Dialog } from '../components/Dialog/Dialog';
+import { useToast } from '../components/Toast/toastContext';
 import { usePlanningSession } from '../session/sessionContext';
 import styles from './AccountMenu.module.scss';
 
@@ -14,10 +15,17 @@ import styles from './AccountMenu.module.scss';
  */
 export function AccountMenu() {
   const auth = useAuth();
+  const toast = useToast();
   const session = usePlanningSession();
   const navigate = useNavigate();
   const [signingOut, setSigningOut] = useState(false);
   const [unsaved, setUnsaved] = useState(false);
+
+  const signIn = async () => {
+    if (!(await auth.openSignIn())) {
+      toast.show({ message: 'Sign-in was cancelled. You can still start planning as a guest.' });
+    }
+  };
 
   if (auth.status === 'loading') {
     return (
@@ -88,7 +96,7 @@ export function AccountMenu() {
   return (
     <div className={styles.account}>
       {user?.kind === 'guest' && <Badge tone="neutral">Guest</Badge>}
-      <Button variant="ghost" size="sm" startIcon="user" onClick={() => void auth.openSignIn()}>
+      <Button variant="ghost" size="sm" startIcon="user" onClick={() => void signIn()}>
         Sign in
       </Button>
     </div>

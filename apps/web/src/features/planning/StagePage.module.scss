@@ -1,0 +1,21 @@
+.stage {
+  display: grid;
+  gap: var(--wl-space-5);
+}
+
+.content {
+  display: grid;
+  gap: var(--wl-space-4);
+  min-width: 0;
+}
+
+.sections {
+  display: grid;
+  gap: var(--wl-space-4);
+  min-width: 0;
+}
+
+// The parent grid supplies the heading gap; avoid adding the header's external margin.
+.stage > header {
+  margin-bottom: 0;
+}

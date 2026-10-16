@@ -94,6 +94,18 @@
   }
 }
 
+.shell[data-welcome-flow] {
+  .tagline,
+  .strapline,
+  .primaryNav {
+    display: none;
+  }
+
+  .headerInner > :last-child {
+    margin-left: auto;
+  }
+}
+
 .navLink {
   padding: var(--wl-space-1) var(--wl-space-3);
   border-radius: var(--wl-radius-pill);
@@ -169,4 +181,40 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--wl-space-3);
+}
+
+// Planning is a bounded desktop workspace; utility pages retain their existing flow.
+.shell[data-planning] {
+  .tagline,
+  .strapline {
+    display: none;
+  }
+
+  .headerInner {
+    min-height: 4.5rem;
+    padding-inline: var(--wl-workspace-inset);
+  }
+
+  .primaryNav {
+    margin-left: auto;
+  }
+
+  @include desktop-up {
+    .main {
+      flex: none;
+      height: var(--wl-planning-height);
+      min-height: 28rem;
+      padding: 0;
+    }
+
+    .footer {
+      padding-block: var(--wl-space-2);
+    }
+  }
+}
+
+.modeSlot {
+  width: 6rem;
+  min-height: 2.75rem;
+  flex: none;
 }

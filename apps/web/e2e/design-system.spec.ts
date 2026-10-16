@@ -158,11 +158,11 @@ test('keyboard: skip link, stage navigation focus and dialog focus return', asyn
   await page.goto('/area');
   const goal = page
     .getByRole('navigation', { name: 'Planning stages' })
-    .getByRole('link', { name: /set your goal/i });
+    .getByRole('link', { name: /goal/i });
   await goal.focus();
   await page.keyboard.press('Enter');
-  await expect(page.getByRole('heading', { level: 1, name: 'Set Your Goal' })).toBeFocused();
-  await expect(page).toHaveTitle('Set Your Goal · WaterLens');
+  await expect(page.getByRole('heading', { level: 1, name: 'Goal' })).toBeFocused();
+  await expect(page).toHaveTitle('Goal · WaterLens');
 });
 
 test.describe('motion', () => {
@@ -206,7 +206,7 @@ for (const viewport of VIEWPORTS) {
     await page.setViewportSize(viewport);
     await usePreferences(page, 'light', 'estuary', 'agent');
     await page.goto('/area');
-    const heading = page.getByRole('heading', { level: 1, name: 'Understand Your Area' });
+    const heading = page.getByRole('heading', { level: 1, name: 'Location' });
     await expect(heading).toBeVisible();
 
     const horizontalOverflow = await page.evaluate(
@@ -240,8 +240,8 @@ const pageOverflow = (page: Page) =>
 
 test.describe('320 px reflow', () => {
   const ROUTES = [
-    { path: '/area', heading: 'Understand Your Area', mode: 'traditional' },
-    { path: '/area', heading: 'Understand Your Area', mode: 'agent' },
+    { path: '/area', heading: 'Location', mode: 'traditional' },
+    { path: '/area', heading: 'Location', mode: 'agent' },
     { path: '/make-it-happen', heading: 'Make It Happen', mode: 'agent' },
     { path: '/communities', heading: 'Communities', mode: 'traditional' },
     { path: '/design-system', heading: 'Design system', mode: 'traditional' },
@@ -345,7 +345,7 @@ test('dark theme planning screenshots (traditional mode, desktop)', async ({ pag
   for (const palette of PALETTES) {
     await usePreferences(page, 'dark', palette);
     await page.goto('/plans');
-    await expect(page.getByRole('heading', { level: 1, name: 'Compare Plans' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Compare' })).toBeVisible();
     await capture(page, `plans-dark-${palette}`);
   }
 });

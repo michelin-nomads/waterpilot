@@ -115,7 +115,15 @@ describe('planning session in the app', () => {
     const { id } = sessions.seed('user-1', { areaId: 'area-1', goal: GOAL_A });
     renderApp({ sessions });
     await screen.findByText(GOAL_A.description);
-    fireEvent.click(screen.getByRole('radio', { name: 'Agent' }));
+    const explorer = screen.getByRole('radio', {
+      name: /Explorer: Build your plan yourself, step by step/i,
+    });
+    expect(explorer).toBeChecked();
+    expect(
+      screen.getByText('Plan with AI assistance. You can make changes yourself anytime.'),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('radio', { name: /Copilot: Plan with AI assistance/i }));
+    expect(screen.getByRole('radio', { name: /Copilot: Plan with AI assistance/i })).toBeChecked();
     expect(screen.getByRole('complementary', { name: 'Conversation' })).toBeInTheDocument();
     await vi.waitFor(() => expect(sessions.sessions.get(id)?.mode).toBe('AGENT'));
     expect(screen.getByText(GOAL_A.description)).toBeInTheDocument();
@@ -129,7 +137,7 @@ describe('planning session in the app', () => {
     renderApp({ sessions });
     await vi.waitFor(() => expect(session().state.status).toBe('ready'));
     const stages = await screen.findByRole('navigation', { name: 'Planning stages' });
-    fireEvent.click(within(stages).getByRole('link', { name: /compare plans/i }));
+    fireEvent.click(within(stages).getByRole('link', { name: /compare/i }));
     await vi.waitFor(() => expect(sessions.sessions.get(id)?.stage).toBe('COMPARE'));
   });
 
@@ -188,7 +196,7 @@ describe('planning session in the app', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
     await vi.waitFor(() => expect(backend.calls).toContain('signOut'));
-    expect(await screen.findByRole('button', { name: 'Start planning' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Start exploring' })).toBeInTheDocument();
     await vi.waitFor(async () => expect(await recovery.forUid('user-1')).toEqual([]));
     expect(screen.queryByText(GOAL_A.description)).not.toBeInTheDocument();
   });
@@ -227,13 +235,44 @@ describe('planning session in the app', () => {
     const { id } = sessions.seed('user-1', { stage: 'GOAL' });
     const { router } = renderApp({ sessions, path: '/start' });
     await vi.waitFor(() => expect(session().state.status).toBe('ready'));
-    fireEvent.click(await screen.findByRole('button', { name: 'Start new report' }));
+    const startButton = await screen.findByRole('button', { name: 'Start new report' });
+    expect(startButton).toBeDisabled();
+    fireEvent.click(screen.getByRole('radio', { name: /Explorer/i }));
+    expect(startButton).toBeEnabled();
+    fireEvent.click(startButton);
     const dialog = await screen.findByRole('dialog', { name: 'Replace your current plan?' });
-    expect(within(dialog).getByText(/step 2, set your goal/i)).toBeInTheDocument();
+    expect(within(dialog).getByText(/step 3, goal/i)).toBeInTheDocument();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Start new report' }));
-    await screen.findByRole('heading', { level: 1, name: 'Understand Your Area' });
+    await screen.findByRole('heading', { level: 1, name: 'Confirm your location' });
     expect(router.state.location.pathname).toBe('/area');
     expect(sessions.sessions.get(id)?.status).toBe('CLOSED');
     expect(session().view?.id).not.toBe(id);
+  });
+
+  it('starts the selected mode and reuses the same create intent after a lost response', async () => {
+    const sessions = new FakeSessionServer();
+    const { router } = renderApp({ sessions, path: '/start' });
+    await vi.waitFor(() => expect(session().state.status).not.toBe('loading'));
+
+    const startButton = screen.getByRole('button', { name: 'Start new report' });
+    expect(startButton).toBeDisabled();
+    fireEvent.click(screen.getByRole('radio', { name: /Copilot/i }));
+    expect(startButton).toBeEnabled();
+
+    sessions.dropResponses = 1;
+    await act(async () => fireEvent.click(startButton));
+    expect(
+      await screen.findByText(
+        'A new report could not be started. Check your connection and try again.',
+      ),
+    ).toBeInTheDocument();
+    await act(async () => fireEvent.click(startButton));
+
+    await screen.findByRole('heading', { level: 1, name: 'Confirm your location' });
+    expect(router.state.location.pathname).toBe('/area');
+    expect(sessions.calls.filter((call) => call === 'create:AGENT')).toHaveLength(2);
+    expect([...sessions.sessions.values()].filter((item) => item.status === 'ACTIVE')).toHaveLength(
+      1,
+    );
   });
 });

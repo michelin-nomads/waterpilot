@@ -87,8 +87,8 @@ function panelContent(status: AiStatusValue | undefined): PanelContent {
 }
 
 /**
- * Agent pane. The assistant conversation is not connected in this build; the pane reads the
- * advisory `aiStatus` and explains whether AI help could be offered and, if not, why
+ * Agent pane. The pane reads the advisory `aiStatus` and explains whether AI help could be
+ * offered and, if not, why
  * (disabled, invite-only, no budget, or the daily allowance used up). It never blocks the
  * workspace. The deterministic goal and scenario checks below are the same results the
  * agent's tools return, so Agent mode never shows a different number.
@@ -96,9 +96,11 @@ function panelContent(status: AiStatusValue | undefined): PanelContent {
 export function AgentPanel({
   onUseTraditional,
   onFocusWorkspace,
+  showScenario = true,
 }: {
   onUseTraditional: () => void;
   onFocusWorkspace?: () => void;
+  showScenario?: boolean;
 }) {
   const query = useGraphQLQuery(queryKeys.ai.status(), AiStatusDocument, {});
   const { view } = usePlanningSession();
@@ -111,13 +113,14 @@ export function AgentPanel({
     <div className={styles.agent} data-ai-status={content.state}>
       <div className={styles.header}>
         <Icon name="sparkle" />
-        <h2 className={styles.title}>Conversation</h2>
+        <h2 className={styles.title}>WaterLensAgent</h2>
         <Badge tone={content.badgeTone}>{content.badge}</Badge>
       </div>
       {keepConversation && env.appMode === 'local' ? (
         <>
           <h3>{content.title}</h3>
           <p>{content.body}</p>
+          <p className={styles.guidance}>You can also use the workspace directly.</p>
           <Suspense fallback={<p role="status">Opening conversation…</p>}>
             <AgentConversation
               onUseTraditional={onUseTraditional}
@@ -142,9 +145,11 @@ export function AgentPanel({
       <Suspense fallback={null}>
         <AgentGoalCheck />
       </Suspense>
-      <Suspense fallback={null}>
-        <AgentScenario />
-      </Suspense>
+      {showScenario && (
+        <Suspense fallback={null}>
+          <AgentScenario />
+        </Suspense>
+      )}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import type { AxiosAdapter, InternalAxiosRequestConfig } from 'axios';
 
 import { apiClient } from '../../lib/apiClient';
@@ -211,7 +212,9 @@ function renderStep(places = new FakePlaces()) {
   render(
     <AuthTestProviders backend={new FakeAuthBackend(permanent())} sessions={sessions}>
       <PlacesContext.Provider value={places}>
-        <AreaPage />
+        <MemoryRouter>
+          <AreaPage />
+        </MemoryRouter>
       </PlacesContext.Provider>
     </AuthTestProviders>,
   );
@@ -225,7 +228,7 @@ async function search(text: string) {
 }
 
 async function confirmReview({ chooseExtent = true } = {}) {
-  await screen.findByText('Is this the right location?');
+  await screen.findByRole('form', { name: 'Confirm your location' });
   const radios = screen.getAllByRole('radio');
   if (chooseExtent && !radios.some((r) => (r as HTMLInputElement).checked)) {
     fireEvent.click(screen.getByRole('radio', { name: /just this point/i }));
@@ -238,7 +241,9 @@ describe('location step', () => {
     const { sessions } = renderStep();
     await search('Nairobi');
     fireEvent.click(await screen.findByRole('option', { name: /nairobi/i }));
-    expect(await screen.findByText('Is this the right location?')).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { level: 2, name: 'Confirm your location' }),
+    ).toBeInTheDocument();
     expect(screen.getByText(/this is a city or town/i)).toBeInTheDocument();
     expect(screen.getByText(/not a water catchment/i)).toBeInTheDocument();
     expect(confirms()).toHaveLength(0);
@@ -266,7 +271,9 @@ describe('location step', () => {
     ).toBeInTheDocument();
     const list = screen.getByRole('listbox');
     expect(within(list).getAllByRole('option')).toHaveLength(2);
-    expect(screen.queryByText('Is this the right location?')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { level: 2, name: 'Confirm your location' }),
+    ).not.toBeInTheDocument();
     expect(confirms()).toHaveLength(0);
   });
 
@@ -318,7 +325,7 @@ describe('location step', () => {
       } as GeolocationPositionError),
     );
     await act(async () =>
-      fireEvent.click(screen.getByRole('button', { name: /use my current location/i })),
+      fireEvent.click(screen.getByRole('button', { name: /use my location/i })),
     );
     expect(await screen.findByRole('alert')).toHaveTextContent(/permission was not given/i);
     expect(screen.getByRole('combobox')).toBeEnabled();
@@ -339,7 +346,7 @@ describe('location step', () => {
       } as GeolocationPositionError),
     );
     await act(async () =>
-      fireEvent.click(screen.getByRole('button', { name: /use my current location/i })),
+      fireEvent.click(screen.getByRole('button', { name: /use my location/i })),
     );
     expect(await screen.findByRole('alert')).toHaveTextContent(
       /did not report a location in time/i,
@@ -355,7 +362,7 @@ describe('location step', () => {
       ok({ coords: { latitude: 12.93, longitude: 77.62, accuracy: 4200 } } as GeolocationPosition),
     );
     await act(async () =>
-      fireEvent.click(screen.getByRole('button', { name: /use my current location/i })),
+      fireEvent.click(screen.getByRole('button', { name: /use my location/i })),
     );
     expect(await screen.findByText('This device location is imprecise')).toBeInTheDocument();
     expect(screen.getByText(/stays private to you/i)).toBeInTheDocument();
@@ -376,9 +383,11 @@ describe('location step', () => {
       } as GeolocationPosition),
     );
     await act(async () =>
-      fireEvent.click(screen.getByRole('button', { name: /use my current location/i })),
+      fireEvent.click(screen.getByRole('button', { name: /use my location/i })),
     );
-    expect(await screen.findByText('Is this the right location?')).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { level: 2, name: 'Confirm your location' }),
+    ).toBeInTheDocument();
     expect(screen.queryByText('This device location is imprecise')).not.toBeInTheDocument();
     await confirmReview();
     expect(confirms()[0]).toMatchObject({
@@ -398,7 +407,7 @@ describe('location step', () => {
       ok({ coords: { latitude: -12.04, longitude: -77.04, accuracy: 30 } } as GeolocationPosition),
     );
     await act(async () =>
-      fireEvent.click(screen.getByRole('button', { name: /use my current location/i })),
+      fireEvent.click(screen.getByRole('button', { name: /use my location/i })),
     );
     await confirmReview();
     expect(await screen.findByText('Choose the country this place is in.')).toBeInTheDocument();
@@ -504,7 +513,7 @@ describe('location review (Prompt 08 review)', () => {
     const rendered = renderStep(places);
     await search('Nairobi');
     fireEvent.click(await screen.findByRole('option', { name: /nairobi/i }));
-    await screen.findByText('Is this the right location?');
+    await screen.findByRole('form', { name: 'Confirm your location' });
     return rendered;
   }
 

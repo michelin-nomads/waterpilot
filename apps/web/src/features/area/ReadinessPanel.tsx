@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 
 import {
   Badge,
+  ButtonLink,
   ErrorState,
   LoadingRegion,
   Notice,
@@ -118,15 +119,38 @@ function Capabilities({ readiness }: { readiness: Readiness }) {
   );
 }
 
-function Inputs({ readiness, sessionId }: { readiness: Readiness; sessionId: string | null }) {
+function Inputs({
+  readiness,
+  sessionId,
+  section,
+}: {
+  readiness: Readiness;
+  sessionId: string | null;
+  section?: 'community' | 'inputs' | 'overview';
+}) {
+  const communityInputs = readiness.inputs.filter((i) =>
+    ['POPULATION', 'PER_CAPITA_STANDARD', 'NON_DOMESTIC_DEMAND'].includes(i.input),
+  );
+  const waterInputs = readiness.inputs.filter((i) =>
+    ['DELIVERED_SUPPLY', 'TANKER_SUPPLY', 'FORWARD_SERIES'].includes(i.input),
+  );
+  const completeWaterInputs = waterInputs.filter(
+    (input) => input.state === 'AVAILABLE' || input.state === 'USER_ENTERED',
+  ).length;
+  const visibleInputs = !section
+    ? readiness.inputs
+    : section === 'community'
+      ? communityInputs
+      : readiness.inputs.filter((input) => !communityInputs.includes(input));
+
   return (
     <Section
-      id="readiness-inputs"
+      id={`readiness-inputs-${section ?? 'all'}`}
       title="What you can provide"
       intro="Inputs WaterLens is missing, and how to fill them. Values you enter are labelled as entered by you."
     >
       <ul className={styles.rows}>
-        {readiness.inputs.map((i) => (
+        {visibleInputs.map((i) => (
           <li key={i.input} className={styles.row} data-input={i.input}>
             <div className={styles.rowHead}>
               <span className={styles.rowTitle}>{i.label}</span>
@@ -148,21 +172,69 @@ function Inputs({ readiness, sessionId }: { readiness: Readiness; sessionId: str
                 maxDate={readiness.asOf}
               />
             )}
+            {section === 'community' &&
+              i.input === 'POPULATION' &&
+              i.manualEntryAllowed &&
+              sessionId &&
+              i.state === 'UNAVAILABLE' && (
+                <ButtonLink to="/baseline/estimate">I don’t know yet — estimate</ButtonLink>
+              )}
           </li>
         ))}
       </ul>
+      {section === 'community' && waterInputs.length > 0 && (
+        <details className={styles.accordion}>
+          <summary className={styles.accordionSummary}>
+            <span>Water sources and supply</span>
+            <Badge tone={completeWaterInputs === waterInputs.length ? 'success' : 'neutral'}>
+              {completeWaterInputs} of {waterInputs.length} complete
+            </Badge>
+          </summary>
+          <p className={styles.intro}>
+            Water-source values remain here for review; continue to Water inputs to work through
+            them.
+          </p>
+          <ul className={styles.rows}>
+            {waterInputs.map((i) => (
+              <li key={i.input} className={styles.row} data-input={i.input}>
+                <div className={styles.rowHead}>
+                  <span className={styles.rowTitle}>{i.label}</span>
+                  <StateBadge state={i.state} />
+                </div>
+                {i.manualValue && (
+                  <p className={styles.meta}>
+                    Your value: {i.manualValue} {UNIT_SHORT[i.unit] ?? ''}
+                  </p>
+                )}
+                <Reasons reasons={i.reasons} />
+                {i.action && <p className={styles.action}>{i.action}</p>}
+                {i.ownerPrompt && <p className={styles.meta}>Owner: {i.ownerPrompt}</p>}
+                {i.manualEntryAllowed && sessionId && (
+                  <ManualInputForm
+                    sessionId={sessionId}
+                    input={i.input}
+                    label={i.label}
+                    maxDate={readiness.asOf}
+                  />
+                )}
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
     </Section>
   );
 }
 
 interface ReadinessPanelProps {
+  section?: 'community' | 'inputs' | 'overview';
   areaId: string;
   /** Include this session's own entered values; requires the session's saved area. */
   sessionId: string | null;
 }
 
 /** Data readiness for one area: what can be calculated, coverage and missing inputs. */
-export function ReadinessPanel({ areaId, sessionId }: ReadinessPanelProps) {
+export function ReadinessPanel({ areaId, sessionId, section }: ReadinessPanelProps) {
   const variables = { areaId, sessionId };
   const query = useGraphQLQuery(
     queryKeys.readiness.area(areaId, sessionId),
@@ -240,9 +312,11 @@ export function ReadinessPanel({ areaId, sessionId }: ReadinessPanelProps) {
           works and are not facts about any real place.
         </Notice>
       )}
-      <Metrics readiness={readiness} />
-      <Capabilities readiness={readiness} />
-      <Inputs readiness={readiness} sessionId={sessionId} />
+      {(!section || section === 'overview') && <Metrics readiness={readiness} />}
+      {(!section || section === 'overview') && <Capabilities readiness={readiness} />}
+      {section !== 'overview' && (
+        <Inputs readiness={readiness} sessionId={sessionId} section={section} />
+      )}
     </div>
   );
 }

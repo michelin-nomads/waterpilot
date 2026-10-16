@@ -1882,9 +1882,13 @@ export type PlanningSessionPayload = {
 };
 
 export type PlanningStage =
+  | 'BASELINE'
+  | 'BASELINE_INPUTS'
+  | 'BASELINE_OVERVIEW'
   | 'COMPARE'
   | 'GOAL'
   | 'MAKE_IT_HAPPEN'
+  | 'REVIEW'
   | 'TRACK'
   | 'UNDERSTAND';
 

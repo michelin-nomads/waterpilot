@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useAuth } from '../../auth/authContext';
 import { Button, ButtonLink, Select } from '../../components';
@@ -21,6 +21,7 @@ const filter = { status: 'FINALIZED' as const };
 export default function CreateCommunityPage() {
   const auth = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const permanent = auth.status === 'ready' && auth.user?.kind === 'permanent';
   const reports = useGraphQLQuery(
     ['reports', 'community-source', filter, PAGE],
@@ -31,7 +32,7 @@ export default function CreateCommunityPage() {
   const create = useGraphQLMutation('createCommunity', CreateCommunityDocument);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [reportId, setReportId] = useState('');
+  const [reportId, setReportId] = useState(() => searchParams.get('reportId') ?? '');
   const [contactName, setContactName] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [shareContactName, setShareContactName] = useState(false);
@@ -147,6 +148,7 @@ export default function CreateCommunityPage() {
             title, address, applicant details, source documents or attachments.
           </Notice>
           <div className={styles.formGrid}>
+            <h3 className={styles.wide}>Community details</h3>
             <label className={styles.label} htmlFor="community-name">
               Name
               <input
@@ -157,6 +159,7 @@ export default function CreateCommunityPage() {
                 onChange={(event) => setName(event.target.value)}
               />
             </label>
+            <h3 className={styles.wide}>Location, goal and report</h3>
             <label className={styles.label} htmlFor="source-report">
               Finalized report
               <Select
@@ -175,6 +178,13 @@ export default function CreateCommunityPage() {
                 ))}
               </Select>
             </label>
+            {selectedReport && (
+              <p className={`${styles.meta} ${styles.wide}`}>
+                {selectedReport.area?.name ?? 'Location not shared'} ·{' '}
+                {selectedReport.goal.kind.replaceAll('_', ' ').toLowerCase()} · finalized{' '}
+                {new Date(selectedReport.finalizedAt).toLocaleDateString()}
+              </p>
+            )}
             <label className={`${styles.label} ${styles.wide}`} htmlFor="community-description">
               Description (public)
               <textarea
@@ -186,6 +196,7 @@ export default function CreateCommunityPage() {
                 placeholder="Describe the group. Do not include private addresses or applicant information."
               />
             </label>
+            <h3 className={styles.wide}>Coordinator contact and consent</h3>
             <label className={styles.label} htmlFor="contact-name">
               Your contact name
               <input

@@ -71,9 +71,14 @@ function PlansWorkspace({ session }: { session: SessionState }) {
   );
   const found = query.data?.planningSession ?? null;
   const selectionStatus: SelectedPlanStatus | null = found?.selectedPlanStatus ?? null;
-  const staleSelection = selectionStatus === 'IMPACT_CHANGED' || selectionStatus === 'NOT_CURRENT';
   const selectedId = session.selectedPlanOptionId;
-
+  const staleSelection =
+    selectedId !== null && selectionStatus !== null && selectionStatus !== 'CURRENT';
+  const currentSelection = Boolean(
+    selectedId &&
+    selectionStatus === 'CURRENT' &&
+    found?.planComparison.options.some((option) => option.id === selectedId),
+  );
   if (!session.goal) {
     return (
       <Notice kind="info" title="Set a goal first">
@@ -86,8 +91,19 @@ function PlansWorkspace({ session }: { session: SessionState }) {
     <div className={styles.page}>
       <section className={styles.panel} aria-labelledby="plans-title">
         <h2 id="plans-title" className={styles.title}>
-          Plans for your goal
+          Options for your goal
         </h2>
+        {found?.planComparison.impactContext.areaName && (
+          <section className={styles.locationContext} aria-label="Selected planning location">
+            <div>
+              <span className={styles.muted}>Comparing plans for</span>
+              <strong>{found.planComparison.impactContext.areaName}</strong>
+            </div>
+            <ButtonLink to="/area" variant="secondary" size="sm">
+              Edit location
+            </ButtonLink>
+          </section>
+        )}
         {upstreamPending ? (
           <Notice kind="stale">Saving your change; plans will be recalculated.</Notice>
         ) : found ? (
@@ -100,7 +116,7 @@ function PlansWorkspace({ session }: { session: SessionState }) {
             />
             {selectedId && staleSelection && (
               <StaleSelectionNotice
-                status={selectionStatus as 'IMPACT_CHANGED' | 'NOT_CURRENT'}
+                status={selectionStatus === 'IMPACT_CHANGED' ? 'IMPACT_CHANGED' : 'NOT_CURRENT'}
                 busy={choosing || !coordinator}
                 onRechoose={() => coordinator?.reselectPlanOption(selectedId)}
               />
@@ -127,12 +143,34 @@ function PlansWorkspace({ session }: { session: SessionState }) {
           scenario={session.scenario}
           agentMode={mode === 'agent'}
           onOpenAgent={() => setMode('agent')}
+          onSave={(scenario) => coordinator?.setScenario(scenario)}
+          busy={choosing || !coordinator}
         />
       )}
-      {selectedId && !upstreamPending && !staleSelection && (
+      {found && !upstreamPending && found.scenarioComparison.status === 'none' && (
+        <section className={styles.scenarioPrompt} aria-labelledby="scenario-prompt-title">
+          <div>
+            <h2 id="scenario-prompt-title" className={styles.title}>
+              Explore a scenario
+            </h2>
+            <p className={styles.muted}>
+              Preview a change to demand, supply or rainfall against the same baseline. The
+              comparison engine recalculates plans only after you apply it.
+            </p>
+          </div>
+          {mode === 'agent' ? (
+            <p className={styles.muted}>Scenario controls are available in the Agent workspace.</p>
+          ) : (
+            <Button variant="secondary" onClick={() => setMode('agent')}>
+              Open scenario controls
+            </Button>
+          )}
+        </section>
+      )}
+      {currentSelection && !upstreamPending && (
         <div className={styles.actions}>
-          <ButtonLink to="/funding" endIcon="arrow-right">
-            Continue to funding
+          <ButtonLink to="/reports/review" endIcon="arrow-right">
+            Continue to review
           </ButtonLink>
         </div>
       )}
@@ -159,8 +197,15 @@ function Body() {
 
 export default function PlansPage() {
   return (
-    <StagePage stageId="plans">
+    <StagePage
+      stageId="plans"
+      title="Compare plan options"
+      subtitle="Review current options against your goal, estimates and site constraints."
+    >
       <Body />
+      <ButtonLink to="/goals" variant="ghost">
+        Back to goal
+      </ButtonLink>
     </StagePage>
   );
 }

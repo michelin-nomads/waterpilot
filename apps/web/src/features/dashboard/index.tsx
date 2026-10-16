@@ -18,7 +18,7 @@ import { queryKeys } from '../../graphql/queryKeys';
 import { formatWhen } from '../../session/formatTime';
 import { usePlanningSession } from '../../session/sessionContext';
 import { PageHeader } from '../../shell/PageHeader';
-import { pathForSessionStage, PLANNING_STAGES } from '../../shell/stages';
+import { pathForSessionStage, stageForPath } from '../../shell/stages';
 import styles from './Dashboard.module.scss';
 
 const LATEST = { first: 5 };
@@ -51,7 +51,7 @@ function CurrentPlan() {
       </EmptyState>
     );
   }
-  const stage = PLANNING_STAGES.find((s) => s.sessionStage === view.stage) ?? PLANNING_STAGES[0];
+  const stage = stageForPath(pathForSessionStage(view.stage));
   return (
     <div className={styles.plan}>
       {state.restoredFrom !== null && (
@@ -75,7 +75,7 @@ function CurrentPlan() {
       </dl>
       <div className={styles.actions}>
         <ButtonLink to={pathForSessionStage(view.stage)} endIcon="arrow-right">
-          Resume {stage?.label}
+          Continue {stage?.label ?? (view.stage === 'TRACK' ? 'implementation' : 'funding')}
         </ButtonLink>
         <ButtonLink to="/start" variant="ghost">
           New report
@@ -206,6 +206,12 @@ export default function DashboardPage() {
         title="Dashboard"
         subtitle={`Signed in as ${auth.user?.displayName ?? auth.user?.email ?? 'you'}.`}
       />
+      <div className={styles.actions}>
+        <ButtonLink to="/tracking/new">Start a Project</ButtonLink>
+        <ButtonLink to="/reports" variant="secondary">
+          View Reports
+        </ButtonLink>
+      </div>
       <section aria-labelledby="dashboard-plan" className={styles.section}>
         <h2 id="dashboard-plan" className={styles.sectionTitle}>
           Current plan

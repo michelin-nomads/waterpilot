@@ -7,9 +7,7 @@ test.skip(
 
 async function start(page: Page) {
   await page.goto('/');
-  const radio = page.getByRole('radio', { name: /with the assistant/i });
-  await page.locator('label', { has: radio }).click();
-  await page.getByRole('button', { name: 'Start planning' }).click();
+  await page.getByRole('button', { name: 'Plan with Copilot' }).click();
   await expect(page).toHaveURL(/\/area$/);
 }
 
@@ -41,7 +39,7 @@ test('live events, token headers, reconnect and mode switching keep one run and 
   );
   await page.getByRole('button', { name: 'Open normal mode' }).click();
   await expect(page.getByRole('log')).toBeHidden();
-  const agent = page.getByRole('radio', { name: 'Agent', exact: true });
+  const agent = page.getByRole('radio', { name: 'Copilot', exact: true });
   await page.locator('label', { has: agent }).click();
   await expect(page.getByRole('log')).toContainText('You: Check the rainfall data');
   await page.reload();

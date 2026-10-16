@@ -174,12 +174,28 @@ function GoalEditor({ session, catalogue }: { session: SessionState; catalogue: 
       {!areaId && (
         <Notice kind="info" title="No location yet">
           Targets are compared with your location&apos;s baseline.{' '}
-          <Link to="/area">Choose a location on the Understand page</Link> to check them.
+          <Link to="/area">Choose a location</Link> to check them.
         </Notice>
+      )}
+      {areaId && area.data?.area && (
+        <section className={styles.locationContext} aria-label="Selected planning location">
+          <div>
+            <span className={styles.muted}>Planning for</span>
+            <strong>{area.data.area.name}</strong>
+            <span className={styles.muted}>
+              {areaCurrency
+                ? `Budgets remain in ${areaCurrency}; no currency conversion is applied.`
+                : 'A local currency is not known. Any amount stays in the currency you specify.'}
+            </span>
+          </div>
+          <ButtonLink to="/area" variant="secondary">
+            Edit location
+          </ButtonLink>
+        </section>
       )}
       <section className={styles.panel} aria-labelledby="goal-form-title">
         <h2 id="goal-form-title" className={styles.title}>
-          Set your goal
+          Choose a goal
         </h2>
         <GoalForm
           draft={effective}
@@ -227,7 +243,7 @@ function GoalEditor({ session, catalogue }: { session: SessionState; catalogue: 
       {savedGoal && matchesSaved && !goalPending && (
         <div className={styles.actions}>
           <ButtonLink to="/plans" endIcon="arrow-right">
-            Continue to compare plans
+            Compare plans
           </ButtonLink>
         </div>
       )}
@@ -252,8 +268,15 @@ function Body() {
 
 export default function GoalsPage() {
   return (
-    <StagePage stageId="goals">
+    <StagePage
+      stageId="goals"
+      title="Set your goal and constraints"
+      subtitle="Choose what to improve, then add the limits your community needs plans to respect."
+    >
       <Body />
+      <ButtonLink to="/baseline/overview" variant="ghost">
+        Back to baseline
+      </ButtonLink>
     </StagePage>
   );
 }

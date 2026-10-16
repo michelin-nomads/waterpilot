@@ -33,16 +33,21 @@ export const routes: RouteObject[] = [
             lazy: lazyPage(() => import('./features/planning/PlanningLayout')),
             children: [
               { path: 'area', lazy: lazyPage(() => import('./features/area')) },
+              {
+                path: 'baseline/:section?',
+                lazy: lazyPage(() => import('./features/area/BaselinePage')),
+              },
+              { path: 'reports/review', lazy: lazyPage(() => import('./features/reports/Review')) },
               { path: 'goals', lazy: lazyPage(() => import('./features/goals')) },
               { path: 'plans', lazy: lazyPage(() => import('./features/plans')) },
-              { path: 'make-it-happen', lazy: lazyPage(() => import('./features/funding')) },
-              { path: 'tracking', lazy: lazyPage(() => import('./features/tracking')) },
-              { path: 'tracking/:projectId', lazy: lazyPage(() => import('./features/tracking')) },
             ],
           },
           // What-if is a workspace panel now (ADR 0002); keep old links working.
-          { path: 'scenarios', element: <Navigate to="/area" replace /> },
-          // Stage 4 covers review, funding and proposal (ux-spec §3).
+          { path: 'scenarios', element: <Navigate to="/plans" replace /> },
+          // Optional branches retain their existing public URLs, outside the planner.
+          { path: 'make-it-happen', lazy: lazyPage(() => import('./features/funding')) },
+          { path: 'tracking', lazy: lazyPage(() => import('./features/tracking')) },
+          { path: 'tracking/:projectId', lazy: lazyPage(() => import('./features/tracking')) },
           { path: 'funding', element: <Navigate to="/make-it-happen" replace /> },
           {
             path: 'admin/funding',
@@ -50,7 +55,6 @@ export const routes: RouteObject[] = [
           },
           { path: 'proposals', lazy: lazyPage(() => import('./features/proposals')) },
           { path: 'proposals/new', lazy: lazyPage(() => import('./features/proposals')) },
-          { path: 'reports/review', lazy: lazyPage(() => import('./features/reports/Review')) },
           {
             path: 'reports/:reportId',
             lazy: lazyPage(() => import('./features/reports/ReportDetail')),

@@ -286,20 +286,25 @@ describe('goal draft', () => {
 describe('GoalsPage', () => {
   it('starts from presets and reveals details only when asked', async () => {
     renderGoals();
-    expect(screen.getByText('Step 2 of 5')).toBeInTheDocument();
-    for (const name of [/tanker/i, /shortage/i, /groundwater/i, /bills/i, /flooding/i, /quality/i])
+    expect(screen.getByText('Step 3 of 5')).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Set your goal and constraints' }),
+    ).toBeVisible();
+    expect(await screen.findByText('Planning for')).toBeVisible();
+    for (const name of [/tanker/i, /shortage/i, /bills/i])
+      expect(await screen.findByRole('radio', { name })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /groundwater/i })).not.toBeVisible();
+    fireEvent.click(screen.getByText('More goals and constraints'));
+    for (const name of [/groundwater/i, /flooding/i, /quality/i])
       expect(await screen.findByRole('radio', { name })).toBeInTheDocument();
     expect(screen.queryByLabelText(/target \(%\)/i)).not.toBeInTheDocument();
 
     await choose(/tanker/i);
     expect(screen.getByLabelText(/target \(%\)/i)).toHaveValue('30');
-    const budget = screen.getByRole('button', { name: /budget and time/i });
-    expect(budget).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.getByLabelText(/budget \(INR\)/i)).not.toBeVisible();
-    fireEvent.click(budget);
     expect(screen.getByLabelText(/budget \(INR\)/i)).toBeVisible();
-    expect(screen.getByLabelText(/maximum implementation time/i)).toHaveValue('365');
-    expect(screen.getByLabelText(/planning horizon/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^timeframe/i)).toHaveValue('365');
+    fireEvent.click(screen.getByText('Additional planning constraints'));
+    expect(screen.getByLabelText(/^planning horizon/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^priority$/i)).toBeInTheDocument();
   });
 
@@ -403,7 +408,6 @@ describe('GoalsPage', () => {
   it('never sends a malformed value and says how to write it', async () => {
     renderGoals();
     await choose(/tanker/i);
-    fireEvent.click(screen.getByRole('button', { name: /budget and time/i }));
     fireEvent.change(screen.getByLabelText(/budget \(INR\)/i), { target: { value: '10,00,000' } });
     fireEvent.click(screen.getByRole('button', { name: /save goal/i }));
     expect(await screen.findByRole('link', { name: /without commas/i })).toBeInTheDocument();
@@ -413,7 +417,6 @@ describe('GoalsPage', () => {
   it('saves a checked goal through the session with canonical values', async () => {
     const sessions = renderGoals();
     await choose(/tanker/i);
-    fireEvent.click(screen.getByRole('button', { name: /budget and time/i }));
     fireEvent.change(screen.getByLabelText(/budget \(INR\)/i), { target: { value: '1000000' } });
     fireEvent.click(screen.getByRole('button', { name: /save goal/i }));
     await waitFor(() => expect(sessions.applied).toHaveLength(1));
@@ -425,7 +428,7 @@ describe('GoalsPage', () => {
     await waitFor(() =>
       expect(document.querySelector('[data-assessment-source="saved"]')).not.toBeNull(),
     );
-    expect(screen.getByRole('link', { name: /continue to compare plans/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /compare plans/i })).toBeInTheDocument();
   });
 
   it('points to the location step when there is no baseline to compare with', async () => {

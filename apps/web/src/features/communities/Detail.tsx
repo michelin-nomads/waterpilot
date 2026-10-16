@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 
 import { useAuth } from '../../auth/authContext';
 import { Button, ButtonLink } from '../../components/Button/Button';
@@ -9,6 +9,7 @@ import { LoadingRegion, Skeleton } from '../../components/Skeleton/Skeleton';
 import {
   ArchiveCommunityDocument,
   CommunityDocument,
+  CommunityMembersDocument,
   JoinCommunityDocument,
   LeaveCommunityDocument,
 } from '../../graphql/generated/graphql';
@@ -17,6 +18,8 @@ import { useGraphQLMutation, useGraphQLQuery } from '../../graphql/hooks';
 import { queryKeys } from '../../graphql/queryKeys';
 import { PageHeader } from '../../shell/PageHeader';
 import styles from './Communities.module.scss';
+
+const PAGE = { first: 50 };
 
 export default function CommunityDetailPage() {
   const { communityId = '' } = useParams();
@@ -32,6 +35,14 @@ export default function CommunityDetailPage() {
   const archive = useGraphQLMutation('archiveCommunity', ArchiveCommunityDocument);
   const [optimisticJoined, setOptimisticJoined] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<'overview' | 'reports' | 'members' | 'settings'>('overview');
+  const community = query.data?.community ?? null;
+  const members = useGraphQLQuery(
+    queryKeys.communities.members(community?.id ?? '', PAGE),
+    CommunityMembersDocument,
+    { id: community?.id ?? '', ...PAGE },
+    { enabled: Boolean(community?.viewerMembership) && (tab === 'members' || tab === 'settings') },
+  );
 
   if (query.isPending)
     return (
@@ -54,7 +65,6 @@ export default function CommunityDetailPage() {
         </ErrorState>
       </main>
     );
-  const community = query.data.community;
   if (!community)
     return (
       <main className={styles.page}>
@@ -146,7 +156,7 @@ export default function CommunityDetailPage() {
         subtitle={
           community.status === 'ARCHIVED'
             ? 'Archived community · read-only history'
-            : 'Community details and membership'
+            : `${community.memberCount} ${community.memberCount === 1 ? 'member' : 'members'} · ${community.area ? `${community.area.name}, ${community.area.countryCode}` : 'area not shared'}`
         }
       />
       <div className={styles.actions}>
@@ -181,76 +191,181 @@ export default function CommunityDetailPage() {
           sanitized report summary remains available here.
         </Notice>
       )}
-      <section className={styles.section} aria-labelledby="community-overview">
-        <h2 id="community-overview">Overview</h2>
-        <p>{community.description || 'No description provided.'}</p>
-        <dl className={styles.detailGrid}>
-          <div>
-            <dt>Approximate area</dt>
-            <dd>
-              {community.area
-                ? `${community.area.name}, ${community.area.countryCode}`
-                : 'Not shared'}
-            </dd>
-          </div>
-          <div>
-            <dt>Members</dt>
-            <dd>{community.memberCount}</dd>
-          </div>
-          <div>
-            <dt>Your role</dt>
-            <dd>{community.viewerMembership?.role ?? 'Visitor'}</dd>
-          </div>
-          {community.contactName && (
-            <div>
-              <dt>Consented contact name</dt>
-              <dd>{community.contactName}</dd>
-            </div>
-          )}
-          {community.contactEmail && (
-            <div>
-              <dt>Consented contact email</dt>
-              <dd>
-                <a href={`mailto:${community.contactEmail}`}>{community.contactEmail}</a>
-              </dd>
-            </div>
-          )}
-          {community.sharedReport && (
-            <div>
-              <dt>Sanitized shared report</dt>
-              <dd>
-                {community.sharedReport.goal.replaceAll('_', ' ').toLowerCase()} · finalized{' '}
-                {new Date(community.sharedReport.finalizedAt).toLocaleDateString()}
-              </dd>
-            </div>
-          )}
-        </dl>
-        <p className={styles.meta}>
-          The shared summary contains only the goal category and finalized date. It does not expose
-          the report title, addresses, applicant details, source documents or attachments.
-        </p>
-        {community.area && (
-          <p className={styles.meta}>
-            Approximate area is used for discovery only. Geographic proximity does not establish
-            hydrological connectivity.
-          </p>
+      <div className={styles.filters} role="tablist" aria-label="Community details">
+        {(
+          [
+            ['overview', 'Overview'],
+            ['reports', 'Shared reports'],
+            ['members', 'Members'],
+            ...(isCoordinator ? ([['settings', 'Settings']] as const) : []),
+          ] as const
+        ).map(([value, label]) => (
+          <Button
+            key={value}
+            role="tab"
+            id={`community-tab-${value}`}
+            aria-selected={tab === value}
+            aria-controls="community-tab-panel"
+            variant={tab === value ? 'primary' : 'secondary'}
+            onClick={() => setTab(value)}
+          >
+            {label}
+          </Button>
+        ))}
+      </div>
+      <section
+        className={styles.section}
+        id="community-tab-panel"
+        role="tabpanel"
+        aria-labelledby={`community-tab-${tab}`}
+        tabIndex={0}
+      >
+        {tab === 'overview' && (
+          <>
+            <h2>Overview</h2>
+            <p>{community.description || 'No description provided.'}</p>
+            <dl className={styles.detailGrid}>
+              <div>
+                <dt>Approximate area</dt>
+                <dd>
+                  {community.area
+                    ? `${community.area.name}, ${community.area.countryCode}`
+                    : 'Not shared'}
+                </dd>
+              </div>
+              <div>
+                <dt>Members</dt>
+                <dd>{community.memberCount}</dd>
+              </div>
+              <div>
+                <dt>Your role</dt>
+                <dd>{community.viewerMembership?.role ?? 'Visitor'}</dd>
+              </div>
+              {community.contactName && (
+                <div>
+                  <dt>Consented contact name</dt>
+                  <dd>{community.contactName}</dd>
+                </div>
+              )}
+              {community.contactEmail && (
+                <div>
+                  <dt>Consented contact email</dt>
+                  <dd>
+                    <a href={`mailto:${community.contactEmail}`}>{community.contactEmail}</a>
+                  </dd>
+                </div>
+              )}
+            </dl>
+            {community.area && (
+              <p className={styles.meta}>
+                Area is approximate and used for discovery only. Distance does not establish
+                hydrological connectivity.
+              </p>
+            )}
+            <p className={styles.meta}>
+              Join to access member-only history. The public summary never links to private report
+              files.
+            </p>
+          </>
         )}
-      </section>
-      <section className={styles.section} aria-labelledby="community-history">
-        <h2 id="community-history">Linked history</h2>
-        {community.viewerMembership ? (
-          <p>
-            Existing community-linked reports and projects retain their original member-only
-            permissions. Archiving this group keeps that history read-only; the shared report
-            remains a sanitized summary.
-          </p>
-        ) : (
-          <p>
-            Join to see member-only community history. The public summary does not link to private
-            report files.
-          </p>
+        {tab === 'reports' && (
+          <>
+            <h2>Shared reports</h2>
+            {community.sharedReport ? (
+              <article className={styles.card}>
+                <div>
+                  <h3>{community.sharedReport.goal.replaceAll('_', ' ').toLowerCase()}</h3>
+                  <p>
+                    Finalized {new Date(community.sharedReport.finalizedAt).toLocaleDateString()}
+                  </p>
+                </div>
+              </article>
+            ) : (
+              <p>No report summary has been shared.</p>
+            )}
+            <p className={styles.meta}>
+              Only the goal category and finalized date are shown. Titles, addresses, applicants,
+              source documents and attachments remain private.
+            </p>
+            {isJoined && (
+              <p>Other linked report and project history stays visible only to active members.</p>
+            )}
+          </>
         )}
-        <Link to="/reports">Your reports</Link>
+        {tab === 'members' && (
+          <>
+            <h2>Members</h2>
+            {!isJoined ? (
+              <p>Join this community to view member-only details.</p>
+            ) : members.isPending ? (
+              <LoadingRegion label="Loading community members">
+                <Skeleton />
+              </LoadingRegion>
+            ) : members.isError ? (
+              <ErrorState
+                title="Members could not load"
+                onRetry={() => void members.refetch()}
+                retrying={members.isFetching}
+              >
+                Retry to view the community member list.
+              </ErrorState>
+            ) : members.data.community?.members.nodes.length ? (
+              <ul className={styles.list}>
+                {members.data.community.members.nodes.map((member) => (
+                  <li className={styles.card} key={member.id}>
+                    <span>
+                      {member.isViewer ? 'You' : 'Community member · identity not shared'}
+                    </span>
+                    <span>{member.role === 'COORDINATOR' ? 'Coordinator' : 'Member'}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>No active members were returned.</p>
+            )}
+            <p className={styles.meta}>
+              The member directory contains role and membership status only; private contact details
+              are shown only when separately consented.
+            </p>
+          </>
+        )}
+        {tab === 'settings' && isCoordinator && (
+          <>
+            <h2>Settings</h2>
+            <h3>Community details</h3>
+            <p>{community.name}</p>
+            <p>{community.description || 'No public description.'}</p>
+            <h3>Published contact</h3>
+            <p>
+              {community.contactName || community.contactEmail
+                ? 'Only fields already approved for public sharing are returned here.'
+                : 'No contact field is currently published.'}
+            </p>
+            <p className={styles.meta}>
+              Editing details or consent settings is not supported by the current API, so changes
+              cannot be made on this screen.
+            </p>
+            {members.data?.community &&
+              members.data.community.members.nodes.filter((member) => member.role === 'COORDINATOR')
+                .length <= 1 && (
+                <Notice kind="caution" title="You are the last coordinator">
+                  Coordinator transfer is not supported by the current API. You can archive this
+                  community instead; its memberships and linked history remain read-only.
+                  {community.status === 'ACTIVE' && (
+                    <div className={styles.actions}>
+                      <Button
+                        variant="danger"
+                        loading={archive.isPending}
+                        onClick={() => void runArchive()}
+                      >
+                        Archive instead
+                      </Button>
+                    </div>
+                  )}
+                </Notice>
+              )}
+          </>
+        )}
       </section>
       {community.status === 'ACTIVE' && isCoordinator && (
         <p className={styles.meta}>

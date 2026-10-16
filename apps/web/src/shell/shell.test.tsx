@@ -5,6 +5,7 @@ import { ToastProvider } from '../components/Toast/ToastProvider';
 import { AGENT_WIDTH, AGENT_WIDTH_STORAGE_KEY } from '../features/planning/agentWidth';
 import { PLANNING_MODE_STORAGE_KEY } from '../features/planning/planningMode';
 import { DESKTOP_QUERY } from '../lib/useMediaQuery';
+import { pathForSessionStage, sessionStageForPath, stageForPath } from './stages';
 import { routes } from '../routes';
 import { AuthFailure } from '../auth/authErrors';
 import { AuthTestProviders } from '../test/AuthTestProviders';
@@ -40,8 +41,8 @@ describe('welcome', () => {
     const backend = new FakeAuthBackend();
     const router = await renderAt('/', backend);
     expect(screen.getByText(/coverage varies by location/i)).toBeInTheDocument();
-    fireEvent.click(await screen.findByRole('button', { name: 'Start planning' }));
-    await screen.findByRole('heading', { level: 1, name: 'Understand Your Area' });
+    fireEvent.click(await screen.findByRole('button', { name: 'Start exploring' }));
+    await screen.findByRole('heading', { level: 1, name: 'Confirm your location' });
     expect(router.state.location.pathname).toBe('/area');
     expect(backend.calls).toEqual(['signInAsGuest']);
     expect(screen.getByText('Guest')).toBeInTheDocument();
@@ -51,12 +52,31 @@ describe('welcome', () => {
     setMediaQuery(DESKTOP_QUERY, true);
     const sessions = new FakeSessionServer();
     await renderAt('/', new FakeAuthBackend(), sessions);
-    fireEvent.click(await screen.findByRole('radio', { name: /with the assistant/i }));
-    fireEvent.click(screen.getByRole('button', { name: 'Start planning' }));
-    await screen.findByRole('heading', { level: 1, name: 'Understand Your Area' });
+    fireEvent.click(await screen.findByRole('button', { name: 'Start with agent' }));
+    await screen.findByRole('heading', { level: 1, name: 'Confirm your location' });
     expect(sessions.active('guest-1')?.mode).toBe('AGENT');
     expect(screen.getByRole('complementary', { name: 'Conversation' })).toBeInTheDocument();
     expect(window.localStorage.getItem(PLANNING_MODE_STORAGE_KEY)).toBe('agent');
+  });
+
+  it('presents Copilot first with the primary CTA and keeps local previews secondary', async () => {
+    await renderAt('/');
+    const choices = screen.getByRole('region', { name: 'Choose how to plan' });
+    expect(
+      within(choices)
+        .getAllByRole('heading', { level: 2 })
+        .map((heading) => heading.textContent),
+    ).toEqual(['Guide me with WaterLensAgent', 'Explore on my own']);
+    const agentCard = within(choices)
+      .getByRole('heading', { name: 'Guide me with WaterLensAgent' })
+      .closest('article')!;
+    const explorerCard = within(choices)
+      .getByRole('heading', { name: 'Explore on my own' })
+      .closest('article')!;
+    expect(within(agentCard).getByRole('button', { name: 'Start with agent' }).className).not.toBe(
+      within(explorerCard).getByRole('button', { name: 'Start exploring' }).className,
+    );
+    expect(screen.getByText('Browse other screens').closest('details')).not.toHaveAttribute('open');
   });
 
   it('continues an existing guest at the saved step and mode, without new accounts or sessions', async () => {
@@ -66,9 +86,11 @@ describe('welcome', () => {
     sessions.seed('guest-1', { stage: 'GOAL', mode: 'AGENT' });
     const router = await renderAt('/', backend, sessions);
     fireEvent.click(await screen.findByRole('button', { name: 'Continue planning' }));
-    await screen.findByRole('heading', { level: 1, name: 'Set Your Goal' });
+    await screen.findByRole('heading', { level: 1, name: 'Set your goal and constraints' });
     expect(router.state.location.pathname).toBe('/goals');
-    expect(screen.getByRole('radio', { name: 'Agent' })).toBeChecked();
+    expect(
+      screen.getByRole('radio', { name: /Copilot: Plan with AI assistance/ }),
+    ).toBeInTheDocument();
     expect(backend.calls).toEqual([]);
     expect(sessions.calls.filter((c) => c.startsWith('create'))).toEqual([]);
   });
@@ -79,7 +101,7 @@ describe('welcome', () => {
     const router = await renderAt('/', new FakeAuthBackend(permanent()), sessions);
     await screen.findByRole('heading', { level: 1, name: 'Dashboard' });
     expect(router.state.location.pathname).toBe('/dashboard');
-    expect(await screen.findByRole('link', { name: /resume compare plans/i })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: /continue compare/i })).toHaveAttribute(
       'href',
       '/plans',
     );
@@ -96,28 +118,30 @@ describe('welcome', () => {
     const backend = new FakeAuthBackend();
     backend.failures.set('signInAsGuest', new AuthFailure('method-disabled'));
     await renderAt('/', backend);
-    fireEvent.click(await screen.findByRole('button', { name: 'Start planning' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Start exploring' }));
     expect(await screen.findByText(/new guest sessions are paused/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Sign in to your account' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sign in' })).toBeInTheDocument();
   });
 
   it('offers a retry when starting fails on the network', async () => {
     const backend = new FakeAuthBackend();
     backend.failures.set('signInAsGuest', new AuthFailure('network'));
     await renderAt('/', backend);
-    fireEvent.click(await screen.findByRole('button', { name: 'Start planning' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Start exploring' }));
     expect(await screen.findByText(/could not reach the sign-in service/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
-    await screen.findByRole('heading', { level: 1, name: 'Understand Your Area' });
+    await screen.findByRole('heading', { level: 1, name: 'Confirm your location' });
   });
 
   it('reports a cancelled sign-in and keeps guest start available', async () => {
     await renderAt('/');
-    fireEvent.click(await screen.findByRole('button', { name: 'Sign in to your account' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Sign in' }));
     const dialog = await screen.findByRole('dialog', { name: 'Sign in to WaterLens' });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
-    expect(await screen.findByText(/sign-in was cancelled/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Start planning' })).toBeInTheDocument();
+    expect(
+      await screen.findByText('Sign-in was cancelled. You can still start planning as a guest.'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Start exploring' })).toBeInTheDocument();
   });
 
   it('shows a signed-in account with sign-out in the header', async () => {
@@ -125,7 +149,7 @@ describe('welcome', () => {
     await renderAt('/', backend);
     expect(await screen.findByText('ana@example.org')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
-    expect(await screen.findByRole('button', { name: 'Start planning' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Start exploring' })).toBeInTheDocument();
     expect(backend.calls).toEqual(['signOut']);
   });
 });
@@ -134,32 +158,59 @@ describe('application shell', () => {
   it('marks the first stage as the current step', async () => {
     await renderAt('/area');
     const stages = screen.getByRole('navigation', { name: 'Planning stages' });
+    expect(screen.getByRole('region', { name: 'Workspace' })).toContainElement(stages);
+    expect(
+      within(screen.getByRole('link', { name: 'WaterLens home' }).closest('header')!).getByRole(
+        'group',
+        { name: 'Planning mode' },
+      ),
+    ).toBeInTheDocument();
     const links = within(stages).getAllByRole('link');
     expect(links.map((l) => l.textContent)).toEqual([
-      '1Understand Your Area',
-      '2Set Your Goal',
-      '3Compare Plans',
-      '4Make It Happen',
-      '5Take Action & Track',
+      '1Location',
+      '2Baseline',
+      '3Goal',
+      '4Compare',
+      '5Review',
     ]);
-    expect(within(stages).getByRole('link', { name: /understand your area/i })).toHaveAttribute(
+    expect(within(stages).getByRole('link', { name: /location/i })).toHaveAttribute(
       'aria-current',
       'step',
     );
     expect(screen.getByText('Step 1 of 5', { selector: 'p:not(nav p)' })).toBeInTheDocument();
-    expect(document.title).toBe('Understand Your Area · WaterLens');
+    expect(document.title).toBe('Confirm your location · WaterLens');
+  });
+
+  it('keeps Reports inactive while Review is open inside the planning shell', async () => {
+    await renderAt('/reports/review');
+    const primary = screen.getByRole('navigation', { name: 'Primary' });
+    expect(within(primary).getByRole('link', { name: 'Plan' })).toHaveAttribute(
+      'aria-current',
+      'true',
+    );
+    expect(within(primary).getByRole('link', { name: 'Reports' })).toHaveAttribute(
+      'aria-current',
+      'false',
+    );
+    const stages = screen.getByRole('navigation', { name: 'Planning stages' });
+    expect(within(stages).getByRole('link', { name: 'Review' })).toHaveAttribute(
+      'aria-current',
+      'step',
+    );
   });
 
   it('has no separate What-if page: /scenarios redirects into the workspace', async () => {
     const router = await renderAt('/scenarios');
-    expect(router.state.location.pathname).toBe('/area');
+    expect(router.state.location.pathname).toBe('/plans');
     expect(screen.queryByRole('link', { name: /future scenario/i })).not.toBeInTheDocument();
   });
 
   it('keeps the old /funding link working by redirecting to Make It Happen', async () => {
     const router = await renderAt('/funding');
     expect(router.state.location.pathname).toBe('/make-it-happen');
-    expect(screen.getByRole('heading', { level: 1, name: 'Make It Happen' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Funding opportunities' }),
+    ).toBeInTheDocument();
   });
 
   it('opens the implementation project stage with its guest sign-in state', async () => {
@@ -175,8 +226,11 @@ describe('application shell', () => {
   it('moves focus to the new page heading after navigation', async () => {
     await renderAt('/area');
     const stages = screen.getByRole('navigation', { name: 'Planning stages' });
-    fireEvent.click(within(stages).getByRole('link', { name: /set your goal/i }));
-    const heading = await screen.findByRole('heading', { level: 1, name: 'Set Your Goal' });
+    fireEvent.click(within(stages).getByRole('link', { name: /goal/i }));
+    const heading = await screen.findByRole('heading', {
+      level: 1,
+      name: 'Set your goal and constraints',
+    });
     expect(heading).toHaveFocus();
   });
 
@@ -211,14 +265,20 @@ describe('application shell', () => {
 describe('planning modes', () => {
   it('defaults to Traditional with the workspace only', async () => {
     await renderAt('/area');
-    expect(screen.getByRole('radio', { name: 'Traditional' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /Explorer: Build your plan yourself/ })).toBeChecked();
     expect(screen.queryByRole('complementary', { name: 'Conversation' })).not.toBeInTheDocument();
   });
 
   it('desktop Agent mode shows the agent beside the workspace, and the choice persists', async () => {
     setMediaQuery(DESKTOP_QUERY, true);
-    await renderAt('/area');
-    fireEvent.click(screen.getByRole('radio', { name: 'Agent' }));
+    const sessions = new FakeSessionServer();
+    const { id } = sessions.seed('guest-1', { stage: 'UNDERSTAND', mode: 'TRADITIONAL' });
+    await renderAt('/area', new FakeAuthBackend(guest()), sessions);
+    const workspaceBefore = screen.getByRole('region', { name: 'Workspace' });
+    const explorer = screen.getByRole('radio', { name: /Explorer: Build your plan yourself/ });
+    explorer.focus();
+    fireEvent.keyDown(explorer, { key: 'ArrowRight' });
+    fireEvent.click(screen.getByRole('radio', { name: /Copilot: Plan with AI assistance/ }));
 
     const agent = screen.getByRole('complementary', { name: 'Conversation' });
     const workspace = screen.getByRole('region', { name: 'Workspace' });
@@ -229,6 +289,11 @@ describe('planning modes', () => {
     expect(within(workspace).getByRole('heading', { level: 1 })).toBeVisible();
     expect(screen.queryByRole('tablist', { name: 'Planning panes' })).not.toBeInTheDocument();
     expect(window.localStorage.getItem(PLANNING_MODE_STORAGE_KEY)).toBe('agent');
+    expect(workspace).toBe(workspaceBefore);
+    await waitFor(() => expect(sessions.active('guest-1')?.mode).toBe('AGENT'));
+    expect(sessions.active('guest-1')?.id).toBe(id);
+    expect(sessions.active('guest-1')?.stage).toBe('UNDERSTAND');
+    expect(sessions.calls.filter((call) => call.startsWith('create'))).toEqual([]);
   });
 
   it('desktop conversation pane resizes from the keyboard within bounds and persists', async () => {
@@ -312,7 +377,36 @@ describe('planning modes', () => {
     window.localStorage.setItem(PLANNING_MODE_STORAGE_KEY, 'agent');
     await renderAt('/goals');
     fireEvent.click(screen.getByRole('button', { name: 'Use Traditional mode' }));
-    expect(screen.getByRole('radio', { name: 'Traditional' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /Explorer: Build your plan yourself/ })).toBeChecked();
     expect(screen.queryByRole('complementary', { name: 'Conversation' })).not.toBeInTheDocument();
+  });
+});
+
+describe('corrected journey compatibility', () => {
+  it.each([
+    ['BASELINE', '/baseline'],
+    ['BASELINE_INPUTS', '/baseline/inputs'],
+    ['BASELINE_OVERVIEW', '/baseline/overview'],
+    ['REVIEW', '/reports/review'],
+    ['MAKE_IT_HAPPEN', '/make-it-happen'],
+    ['TRACK', '/tracking'],
+  ] as const)('recovers %s without creating another session', async (stage, path) => {
+    expect(pathForSessionStage(stage)).toBe(path);
+    const sessions = new FakeSessionServer();
+    sessions.seed('guest-1', { stage, mode: 'AGENT' });
+    const router = await renderAt(path, new FakeAuthBackend(guest()), sessions);
+    expect(router.state.location.pathname).toBe(path);
+    const isBranch = stage === 'MAKE_IT_HAPPEN' || stage === 'TRACK';
+    if (isBranch) {
+      expect(screen.queryByRole('navigation', { name: 'Planning stages' })).not.toBeInTheDocument();
+    } else {
+      expect(sessionStageForPath(path)).toBe(stage);
+      expect(screen.getByRole('navigation', { name: 'Planning stages' })).toBeInTheDocument();
+      await screen.findByRole('radio', { name: /Copilot: Plan with AI assistance/ });
+    }
+    expect(sessions.active('guest-1')?.stage).toBe(stage);
+    expect(sessions.calls.filter((call) => call.startsWith('create'))).toEqual([]);
+    expect(stageForPath('/reports/reviewer')).toBeNull();
+    expect(stageForPath('/area-other')).toBeNull();
   });
 });

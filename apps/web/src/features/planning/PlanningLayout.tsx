@@ -1,14 +1,13 @@
 import { useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useOutletContext } from 'react-router-dom';
 
 import { ResizeHandle } from '../../components/ResizeHandle/ResizeHandle';
 import { DESKTOP_QUERY, useMediaQuery } from '../../lib/useMediaQuery';
 import { usePlanningSession } from '../../session/sessionContext';
-import { stageForPath } from '../../shell/stages';
+import { sessionStageForPath } from '../../shell/stages';
 import { AgentPanel } from './AgentPanel';
 import { AGENT_WIDTH, useAgentMaxWidth, useAgentWidth } from './agentWidth';
-import { PlanningModeToggle } from './PlanningModeToggle';
-import { usePlanningMode } from './planningMode';
+import type { PlanningMode } from './planningMode';
 import styles from './PlanningLayout.module.scss';
 import { SessionBar } from './SessionBar';
 import { StageNav } from './StageNav';
@@ -24,14 +23,17 @@ const PANE_LABEL: Record<Pane, string> = { conversation: 'Conversation', workspa
  * modes and breakpoints, so the workspace never remounts and loses state.
  */
 export default function PlanningLayout() {
-  const [mode, setMode] = usePlanningMode();
+  const { planningMode: mode, setPlanningMode: setMode } = useOutletContext<{
+    planningMode: PlanningMode;
+    setPlanningMode: (mode: PlanningMode) => void;
+  }>();
   const isDesktop = useMediaQuery(DESKTOP_QUERY);
   const { pathname } = useLocation();
   const { coordinator, state, view } = usePlanningSession();
 
   // The session remembers the step the user is on, so Continue resumes it anywhere. Only
   // this tab's navigation writes it; a step saved by another tab never pulls this one back.
-  const routeStage = stageForPath(pathname)?.sessionStage;
+  const routeStage = sessionStageForPath(pathname);
   const syncedRoute = useRef<string | null>(null);
   const sessionId = view?.id;
   const sessionStage = view?.stage;
@@ -91,12 +93,6 @@ export default function PlanningLayout() {
 
   return (
     <div className={styles.planning}>
-      <div className={styles.toolbar}>
-        <StageNav />
-        <PlanningModeToggle mode={mode} onChange={setMode} />
-      </div>
-      <SessionBar />
-
       {tabbed && (
         <div
           role="tablist"
@@ -129,6 +125,7 @@ export default function PlanningLayout() {
           hidden={!agentMode || (tabbed && pane !== 'conversation')}
         >
           <AgentPanel
+            showScenario={routeStage === 'COMPARE'}
             onUseTraditional={() => setMode('traditional')}
             onFocusWorkspace={() => setPane('workspace')}
           />
@@ -146,7 +143,13 @@ export default function PlanningLayout() {
           />
         ) : null}
         <section className={styles.workspace} {...paneProps('workspace')}>
-          <Outlet />
+          <div className={styles.workspaceNav}>
+            <StageNav />
+          </div>
+          <div className={styles.workspaceBody}>
+            <SessionBar />
+            <Outlet />
+          </div>
         </section>
       </div>
     </div>

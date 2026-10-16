@@ -120,6 +120,11 @@ query Reports($filter: ReportFilter, $first: Int, $after: String) {
   reports(filter: $filter, first: $first, after: $after) {
     nodes {
       ...ReportFields
+      area {
+        id
+        name
+        countryCode
+      }
     }
     pageInfo {
       ...PageInfoFields
@@ -163,8 +168,46 @@ query Report($id: ID!) {
       countryCode
     }
     impact {
+      metrics {
+        metricId
+        baseline {
+          availability
+          quantity {
+            value
+            unit
+          }
+          reason
+        }
+        projectedLow {
+          availability
+          quantity {
+            value
+            unit
+          }
+          reason
+        }
+        projectedHigh {
+          availability
+          quantity {
+            value
+            unit
+          }
+          reason
+        }
+      }
+      neighbourEffect {
+        availability
+        quantity {
+          value
+          unit
+        }
+        reason
+      }
+      assumptions
       provenance {
         evidence
+        sourceIds
+        asOf
       }
     }
     proposals(first: 10) {

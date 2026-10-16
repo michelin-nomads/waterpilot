@@ -1,6 +1,10 @@
 .bar {
   display: grid;
   gap: var(--wl-space-2);
+
+  &:empty {
+    display: none;
+  }
 }
 
 .status {
