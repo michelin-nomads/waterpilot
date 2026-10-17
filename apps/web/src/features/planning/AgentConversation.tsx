@@ -56,15 +56,33 @@ export default function AgentConversation({
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const apply = (value: AgentRun | null, preserveHistory = false) => {
+  const apply = (value: AgentRun | null) => {
     loadEpoch.current++;
-    if (preserveHistory && runRef.current && value && runRef.current.id !== value.id) {
-      const pastEvents = runRef.current.events;
-      const newKeys = new Set(value.events.map((e) => `${e.type}:${e.id}:${e.text ?? ''}`));
-      const nonOverlapping = pastEvents.filter(
-        (e) => !newKeys.has(`${e.type}:${e.id}:${e.text ?? ''}`)
+    if (value && runRef.current) {
+      const incomingRunId = value.id;
+      const pastFromOtherRuns = runRef.current.events.filter(
+        (e) => e.run_id && e.run_id !== incomingRunId
       );
-      value = { ...value, events: [...nonOverlapping, ...value.events] };
+      const stampedIncoming = value.events.map((e) => ({
+        ...e,
+        run_id: e.run_id ?? incomingRunId,
+      }));
+
+      if (pastFromOtherRuns.length > 0) {
+        value = { ...value, events: [...pastFromOtherRuns, ...stampedIncoming] };
+      } else if (runRef.current.id !== value.id) {
+        const newKeys = new Set(stampedIncoming.map((e) => `${e.type}:${e.id}:${e.text ?? ''}`));
+        const nonOverlapping = runRef.current.events.filter(
+          (e) => !newKeys.has(`${e.type}:${e.id}:${e.text ?? ''}`)
+        );
+        value = { ...value, events: [...nonOverlapping, ...stampedIncoming] };
+      }
+    } else if (value) {
+      const runId = value.id;
+      value = {
+        ...value,
+        events: value.events.map((e) => ({ ...e, run_id: e.run_id ?? runId })),
+      };
     }
     runRef.current = value;
     cursor.current = value?.cursor ?? 0;
@@ -124,7 +142,7 @@ export default function AgentConversation({
               await client.invalidateQueries({ queryKey: ['ai', 'status'] });
               return;
             }
-            const event = frame.data as AgentEvent;
+            const event = { ...(frame.data as AgentEvent), run_id: rid };
             if (frame.id === null || frame.id <= cursor.current) return;
             if (frame.id !== cursor.current + 1)
               throw new Error('Event gap; reconnecting to saved results');
@@ -191,7 +209,7 @@ export default function AgentConversation({
     setError(null);
     try {
       const nextRun = await action();
-      apply(nextRun, true);
+      apply(nextRun);
       setRetry((n) => n + 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Conversation failed');
@@ -205,7 +223,11 @@ export default function AgentConversation({
   const displayed: AgentEvent[] = [];
   for (const event of events) {
     const previous = displayed.at(-1);
-    if (event.type === 'text' && previous?.type === 'text')
+    if (
+      event.type === 'text' &&
+      previous?.type === 'text' &&
+      (event.run_id && previous.run_id ? event.run_id === previous.run_id : true)
+    )
       previous.text = (previous.text ?? '') + (event.text ?? '');
     else displayed.push({ ...event });
   }
@@ -259,11 +281,12 @@ export default function AgentConversation({
             </p>
           </div>
         )}
-        {displayed.map((event) => {
+        {displayed.map((event, idx) => {
+          const itemKey = `${event.run_id ?? rid ?? 'run'}_${event.id}_${idx}`;
           if (event.type === 'message' || event.type === 'text')
             return (
               <div
-                key={event.id}
+                key={itemKey}
                 className={event.role === 'user' ? styles.userBubbleWrapper : styles.assistantBubbleWrapper}
               >
                 {event.role !== 'user' && (
@@ -289,7 +312,7 @@ export default function AgentConversation({
           const data = event.result?.result ?? {};
           const prepared = data.requiresConfirmation === true;
           return (
-            <article key={event.id} className={styles.result}>
+            <article key={itemKey} className={styles.result}>
               <div className={styles.resultHeader}>
                 <div className={styles.toolBadge}>
                   <Icon name="sparkle" size="sm" />

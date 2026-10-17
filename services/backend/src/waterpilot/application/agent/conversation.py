@@ -87,8 +87,11 @@ class ConversationAgent:
             return None
         latest_run = self.get(ctx, rows.items[0].id)
         all_events: list[dict[str, Any]] = []
+        global_seq = 0
         for r in reversed(rows.items):
-            all_events.extend(r.events)
+            for e in r.events:
+                global_seq += 1
+                all_events.append({**e, "id": global_seq, "run_id": e.get("run_id") or r.id})
         retained = all_events[-200:]
         return latest_run.model_copy(update={"events": retained})
 
@@ -118,7 +121,7 @@ class ConversationAgent:
             }:
                 return run
             seq = run.event_seq + 1
-            event = {"id": seq, "type": kind, **data}
+            event = {"id": seq, "run_id": rid, "type": kind, **data}
             retained = [*run.events, event][-200:]
             while len(retained) > 1 and len(json.dumps(retained).encode()) > 200_000:
                 retained.pop(0)
@@ -231,7 +234,22 @@ class ConversationAgent:
         if run.status is not AgentRunStatus.RUNNING:
             raise DomainError(ErrorCode.PRECONDITION_FAILED, "run cancelled")
         session = self.services.sessions.get(ctx, run.session_id)
-        return session.model_dump_json()
+        data = session.model_dump(mode="json")
+        if session.area_id:
+            try:
+                area = self.services.areas.get(
+                    session.area_id, ctx.principal.uid if ctx.principal else None
+                )
+                data["confirmed_area"] = {
+                    "id": area.id,
+                    "name": area.name,
+                    "formatted_address": area.formatted_address,
+                    "centroid_lat": str(area.centroid_lat),
+                    "centroid_lon": str(area.centroid_lon),
+                }
+            except Exception:
+                pass
+        return json.dumps(data, separators=(",", ":"))
 
     async def drive(self, ctx: RequestContext, rid: str) -> None:
         uid = ctx.require_principal().uid
@@ -319,12 +337,18 @@ class ConversationAgent:
                     "   - Feasible water interventions (recharge wells, storage tanks, aeration fixtures, greywater recycling);\n"
                     "   - Financial ROI, payback periods, and matched funding/grant opportunities.\n"
                     "3. Workspace & Session Context: Always inspect current workspace values using authorized tools. "
-                    "If a location is already confirmed on the session, acknowledge its name and details. "
+                    "If a location is already confirmed on the session (`confirmed_area` in workspace), acknowledge its name and details. "
                     "Never say 'I have no information' or 'I cannot find this location in my database' if a location is already confirmed. "
                     "When external sensor datasets are unreviewed for that specific location, explain that WaterPilot operates in "
                     "'User-input assessment' mode: baseline metrics and harvesting yields are derived accurately from community-provided "
                     "inputs (roof area, open ground, occupants).\n"
-                    "4. Professional, Human Communication & Formatting: Always reply directly in natural, human-understandable English using clean structured Markdown:\n"
+                    "4. Multi-turn Continuity, References & Affirmations: Always maintain context from previous turns in the conversation. "
+                    "When the user says 'that area', 'this location', 'there', 'it', or refers to a previously discussed place, resolve it from "
+                    "earlier turns or from `confirmed_area` in the workspace. Never give generic refusals like 'I can't help you with that' or ask "
+                    "'which area are you referring to' if an area was mentioned previously or is present in the workspace. "
+                    "If the user replies with affirmations like 'confirmed', 'yes', 'confirm', or 'proceed' after a location was discussed or proposed, "
+                    "call `confirm_location` to confirm it, and then proceed with water metrics (`inspect_coverage`, `inspect_baseline`) for that location.\n"
+                    "5. Professional, Human Communication & Formatting: Always reply directly in natural, human-understandable English using clean structured Markdown:\n"
                     "   - Separate paragraphs and questions with blank lines.\n"
                     "   - When presenting candidate places or options, use a clean numbered list with bold place names and full addresses on their own lines.\n"
                     "   - When listing features or capabilities, use bullet points with each item on its own new line.\n"

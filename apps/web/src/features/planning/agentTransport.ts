@@ -4,6 +4,7 @@ import { getAuthToken } from '../../lib/authToken';
 export interface AgentEvent {
   id: number;
   type: string;
+  run_id?: string;
   text?: string;
   role?: string;
   message?: string;
