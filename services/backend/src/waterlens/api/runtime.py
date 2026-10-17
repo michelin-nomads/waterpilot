@@ -56,9 +56,11 @@ def runtime_provider(settings: Settings) -> Callable[[], ApiRuntime]:
 
 
 def runtime_or_503(request: Request, runtime: Callable[[], ApiRuntime]) -> ApiRuntime:
+    from google.auth.exceptions import GoogleAuthError
+
     try:
         return runtime()
-    except ConfigError:
+    except (ConfigError, GoogleAuthError):
         raise http_error(
             DomainError(
                 ErrorCode.SERVICE_UNAVAILABLE,

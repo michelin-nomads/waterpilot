@@ -50,6 +50,7 @@ __pycache__/
 # OS / editor
 .DS_Store
 *.local
+.idea/
 
 # Source-only review archives (npm run archive:source)
 archives/

@@ -63,6 +63,8 @@ VERSIONED = {
     "archiveCommunity",
     "updateMilestone",
     "cancelAccountClaim",
+    "updateProjectStatus",
+    "addProjectExpense",
 }
 # Returns a one-time secret, so a replay must not return the original result; a retry
 # issues a fresh claim and cancels the previous one. Takes no client input at all.
