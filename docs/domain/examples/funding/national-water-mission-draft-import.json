@@ -1,0 +1,68 @@
+{
+  "scheme": {
+    "id": "fsc_DTYT8378WAT92SCK7DMWEJZKP6",
+    "name": "National Water Mission Catch the Rain Community Grant (Candidate)",
+    "funder": "Ministry of Jal Shakti, Government of India",
+    "summary": "Candidate central grant for urban resident welfare associations installing participatory rainwater harvesting and artificial recharge.",
+    "currency": "INR",
+    "max_amount": {
+      "minor_units": "50000000",
+      "currency": "INR"
+    },
+    "opens_on": "2026-06-01",
+    "closes_on": "2027-06-01",
+    "criteria": [],
+    "required_documents": [
+      "RWA Bye-Laws",
+      "Catchment Assessment Report"
+    ],
+    "source_url": "https://jalshakti-dowr.gov.in/schemes/catch-the-rain",
+    "last_verified_at": "2026-10-12T00:00:00Z",
+    "evidence": "unreviewed",
+    "revision": 1,
+    "status": "draft",
+    "geography": [
+      "IN"
+    ],
+    "applicant_categories": [
+      "community",
+      "residential"
+    ],
+    "interventions": [
+      "rooftop_rainwater_harvesting"
+    ],
+    "amount_rules": "Awaits official guideline release on matching fund requirement.",
+    "deadline_at": "2027-05-31T23:59:59+05:30",
+    "deadline_timezone": "Asia/Kolkata",
+    "source_hash": null,
+    "permission_note": "Curator internal review candidate; permitted for internal verification.",
+    "official_source": false,
+    "reviewed_by": null,
+    "unknown_fields": [
+      "co_funding_ratio",
+      "disbursement_milestones"
+    ],
+    "unknown_metadata": {
+      "co_funding_ratio": null,
+      "disbursement_milestones": null
+    },
+    "eligibility_rules": {
+      "country_codes": [
+        "IN"
+      ],
+      "applicant_types": [
+        "community"
+      ],
+      "intervention_ids": [
+        "rooftop_rainwater_harvesting"
+      ],
+      "required_information": [
+        "registration"
+      ]
+    }
+  },
+  "expected_revision": 0,
+  "human_reviewed": false,
+  "source_document_base64": "ewogICJ0aXRsZSI6ICJOYXRpb25hbCBXYXRlciBNaXNzaW9uIENhdGNoIHRoZSBSYWluIENvbW11bml0eSBHcmFudCAoQ2FuZGlkYXRlKSIsCiAgInB1Ymxpc2hlciI6ICJNaW5pc3RyeSBvZiBKYWwgU2hha3RpLCBEZXBhcnRtZW50IG9mIFdhdGVyIFJlc291cmNlcyIsCiAgInN1bW1hcnkiOiAiQ2FuZGlkYXRlIGNlbnRyYWwgZ3JhbnQgZm9yIHBhcnRpY2lwYXRvcnkgcmFpbndhdGVyIGhhcnZlc3RpbmcgYW5kIGFxdWlmZXIgcmVjaGFyZ2UgaW4gd2F0ZXItc3RyZXNzZWQgdXJiYW4gZGlzdHJpY3RzLiIsCiAgImdlb2dyYXBoeSI6IFsKICAgICJJTiIKICBdLAogICJhcHBsaWNhbnRzIjogWwogICAgIlJlZ2lzdGVyZWQgY29tbXVuaXR5IG9yZ2FuaXphdGlvbnMiLAogICAgIlJlc2lkZW50aWFsIFdlbGZhcmUgQXNzb2NpYXRpb25zIgogIF0sCiAgImludGVydmVudGlvbnMiOiBbCiAgICAicm9vZnRvcF9yYWlud2F0ZXJfaGFydmVzdGluZyIKICBdLAogICJhbW91bnRfcnVsZXMiOiAiTWF0Y2hpbmcgZ3JhbnQgc3RydWN0dXJlIGF3YWl0aW5nIGZpbmFsIE1pbmlzdHJ5IGd1aWRlbGluZXMuIiwKICAiZGVhZGxpbmUiOiAiMjAyNy0wNS0zMVQyMzo1OTo1OSswNTozMCIsCiAgInRpbWV6b25lIjogIkFzaWEvS29sa2F0YSIsCiAgInJlcXVpcmVkX2RvY3VtZW50cyI6IFsKICAgICJSV0EgQnllLUxhd3MiLAogICAgIkNhdGNobWVudCBBc3Nlc3NtZW50IFJlcG9ydCIKICBdLAogICJ1bmtub3duX2ZpZWxkcyI6IFsKICAgICJjb19mdW5kaW5nX3JhdGlvIiwKICAgICJkaXNidXJzZW1lbnRfbWlsZXN0b25lcyIKICBdLAogICJub3RpY2UiOiAiRHJhZnQgY2FuZGlkYXRlIHVuZGVyIGN1cmF0b3IgcmV2aWV3LiBOb3QgeWV0IGFwcHJvdmVkIGZvciBhY3RpdmUgbWF0Y2hpbmcuIgp9",
+  "source_content_type": "application/json"
+}

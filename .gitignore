@@ -54,3 +54,5 @@ __pycache__/
 
 # Source-only review archives (npm run archive:source)
 archives/
+
+.wibey-test/

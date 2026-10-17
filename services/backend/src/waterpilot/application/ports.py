@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol
 
+from waterpilot.application.model_content import ModelContent, ModelConversation
 from waterpilot.domain.embeddings import FundingEmbedding
 from waterpilot.domain.location import PlaceCandidate
 
@@ -134,6 +135,7 @@ class ModelRequest:
     response_schema: dict[str, JsonValue] | None = None
     temperature: float = 0.0
     timeout_seconds: float = 30.0
+    conversation: ModelConversation | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -151,6 +153,10 @@ class ModelResponseUsage:
 class ModelResponse:
     text: str
     usage: ModelResponseUsage
+    content: ModelContent | None = None
+    finish_reason: str | None = None
+    error_code: str | None = None
+    error_message: str | None = None
 
 
 class ModelCallError(Exception):

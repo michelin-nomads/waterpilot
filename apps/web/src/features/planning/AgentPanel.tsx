@@ -8,7 +8,6 @@ import { AiStatusDocument, type AiStatusQuery } from '../../graphql/generated/gr
 import { useGraphQLQuery } from '../../graphql/hooks';
 import { queryKeys } from '../../graphql/queryKeys';
 import styles from './AgentPanel.module.scss';
-import { env } from '../../config/env';
 import { usePlanningSession } from '../../session/sessionContext';
 
 const AgentGoalCheck = lazy(() => import('../goals/AgentGoalCheck'));
@@ -116,7 +115,7 @@ export function AgentPanel({
         <h2 className={styles.title}>WaterPilot Agent</h2>
         <Badge tone={content.badgeTone}>{content.badge}</Badge>
       </div>
-      {keepConversation && env.appMode === 'local' ? (
+      {keepConversation ? (
         <>
           <h3>{content.title}</h3>
           <p>{content.body}</p>

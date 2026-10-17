@@ -1,0 +1,26 @@
+{
+  "title": "BWSSB Rainwater Harvesting & Groundwater Recharge Incentive Scheme",
+  "publisher": "Bangalore Water Supply and Sewerage Board (BWSSB)",
+  "notification_number": "BWSSB/EIC/GL-RWH/2026-27/04",
+  "gazette_reference": "Karnataka Gazette Notification No. UDD 42 MBD 2026",
+  "summary": "Financial rebate and tariff incentive for registered Apartment Owners Associations (AOAs) and Resident Welfare Associations (RWAs) in Bengaluru installing compliant rooftop rainwater harvesting, groundwater recharge pits, and dual-piping water efficiency fixtures.",
+  "geography": ["IN", "Karnataka", "Bengaluru Urban"],
+  "applicant_categories": ["community", "residential", "aoa"],
+  "interventions": ["rooftop_rainwater_harvesting", "groundwater_recharge", "efficient_fixtures"],
+  "amount_rules": "Capital subsidy of 50% of audited installation cost, capped at INR 250,000 (25,000,000 paise). Additional 5% water supply cess rebate for two financial years.",
+  "max_grant_inr_paise": "25000000",
+  "min_project_cost_inr_paise": "5000000",
+  "max_project_cost_inr_paise": "500000000",
+  "opens_on": "2026-04-01",
+  "closes_on": "2027-04-01",
+  "deadline": "2027-03-31T23:59:59+05:30",
+  "timezone": "Asia/Kolkata",
+  "required_documents": [
+    "BWSSB Water Connection Bill",
+    "Sanctioned Site and Building Plan",
+    "RWH and Recharge Well Completion Certificate",
+    "Society Registration Certificate"
+  ],
+  "permission": "Government of Karnataka Open Data Initiative; published for public distribution; permitted for offline pilot ingestion.",
+  "official_url": "https://bwssb.karnataka.gov.in/page/Rain+Water+Harvesting/en"
+}

@@ -34,6 +34,7 @@ from pydantic import BaseModel, ValidationError
 from waterpilot.application.deadline import deadline, remaining
 from waterpilot.application.idempotency import run_once
 from waterpilot.application.identity import RequestContext
+from waterpilot.application.model_content import ModelConversation
 from waterpilot.application.pagination import PageArgs
 from waterpilot.application.policies import owned_session
 from waterpilot.application.ports import (
@@ -71,6 +72,20 @@ def estimate_tokens(text: str) -> int:
     fixed overhead). Used only to size the reservation; the real count comes from the
     provider and is reconciled afterwards."""
     return max(1, (len(text) + 3) // 4) + 8
+
+
+def estimate_conversation_tokens(conversation: ModelConversation) -> int:
+    """A deterministic, conservative input token estimate for a structured conversation,
+    including system instructions, contents, tool declarations, and results."""
+    if (
+        not conversation.tools
+        and conversation.system_instruction is None
+        and len(conversation.contents) == 1
+        and len(conversation.contents[0].parts) == 1
+        and conversation.contents[0].parts[0].text is not None
+    ):
+        return estimate_tokens(conversation.contents[0].parts[0].text)
+    return estimate_tokens(conversation.canonical())
 
 
 @dataclass(frozen=True, slots=True)
@@ -467,6 +482,37 @@ class AiGateway:
             retries=dispatched.retries,
         )
 
+    def complete_conversation(
+        self,
+        ctx: RequestContext,
+        *,
+        run_id: str,
+        task: ModelTask,
+        conversation: ModelConversation,
+        call_key: str,
+        is_cancelled: Callable[[], bool] | None = None,
+    ) -> ModelResponse:
+        dispatched = self._dispatch(
+            ctx,
+            run_id=run_id,
+            task=task,
+            prompt="",
+            call_key=call_key,
+            response_schema=None,
+            max_output_tokens=None,
+            is_cancelled=is_cancelled,
+            estimated_input_tokens=None,
+            conversation=conversation,
+        )
+        if dispatched.retries:
+            # Prior failed attempts may have billed tokens absent from the final response.
+            self._settle_estimated(dispatched.reservation, run_id, dispatched.retries)
+        else:
+            self._commit(
+                dispatched.reservation, self._actual_from(dispatched), dispatched.info, run_id
+            )
+        return dispatched.response
+
     @staticmethod
     def _actual_from(dispatched: _Dispatched) -> UsageActual:
         usage = dispatched.response.usage
@@ -490,6 +536,7 @@ class AiGateway:
         max_output_tokens: int | None,
         is_cancelled: Callable[[], bool] | None,
         estimated_input_tokens: int | None,
+        conversation: ModelConversation | None = None,
     ) -> _Dispatched:
         """The shared reserve → dispatch → bounded-retry path, up to a successful provider
         response (not yet settled). Both ``generate`` and ``complete_text`` call it, so the
@@ -521,11 +568,12 @@ class AiGateway:
                     "the assistant paused for you to review; choose Continue to go on",
                 )
         max_out = limits.output_limit(task, max_output_tokens)
-        est_in = (
-            estimated_input_tokens
-            if estimated_input_tokens is not None
-            else estimate_tokens(prompt)
-        )
+        if estimated_input_tokens is not None:
+            est_in = estimated_input_tokens
+        elif conversation is not None:
+            est_in = estimate_conversation_tokens(conversation)
+        else:
+            est_in = estimate_tokens(prompt)
         if est_in > limits.max_input_tokens:
             raise DomainError(
                 ErrorCode.VALIDATION_FAILED, "this request is too long for a single model call"
@@ -561,6 +609,7 @@ class AiGateway:
             response_schema=response_schema,
             temperature=0.0,
             timeout_seconds=limits.request_timeout_seconds,
+            conversation=conversation,
         )
         state = _CallState()
         try:

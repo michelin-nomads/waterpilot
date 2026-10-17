@@ -25,6 +25,7 @@ from google.adk.models.llm_response import LlmResponse
 from google.genai import types
 from pydantic import PrivateAttr
 
+from waterpilot.adapters.model_content import from_adk, to_content
 from waterpilot.application.identity import RequestContext
 from waterpilot.application.services.ai import AiGateway
 from waterpilot.domain.ai import ModelTask
@@ -75,6 +76,52 @@ class GatewayLlm(BaseLlm):
     async def generate_content_async(
         self, llm_request: LlmRequest, stream: bool = False
     ) -> AsyncGenerator[LlmResponse, None]:
+        if not self._fake_tools:
+            try:
+                workspace = await asyncio.to_thread(self._context) if self._context else None
+                conversation = from_adk(llm_request, workspace)
+                key = self._call_key(conversation.canonical())
+                self._step += 1
+                native = await asyncio.to_thread(
+                    self._gateway.complete_conversation,
+                    self._ctx,
+                    run_id=self._run_id,
+                    task=self._task,
+                    conversation=conversation,
+                    call_key=key,
+                    is_cancelled=self._is_cancelled,
+                )
+            except (ValueError, DomainError) as err:
+                yield LlmResponse(
+                    error_code=err.code.value
+                    if isinstance(err, DomainError)
+                    else "VALIDATION_FAILED",
+                    error_message=err.message if isinstance(err, DomainError) else str(err),
+                )
+                return
+            yield LlmResponse(
+                content=to_content(native.content)
+                if native.content
+                else (
+                    types.Content(role="model", parts=[types.Part.from_text(text=native.text)])
+                    if native.text
+                    else None
+                ),
+                finish_reason=types.FinishReason(native.finish_reason)
+                if native.finish_reason
+                else None,
+                error_code=native.error_code,
+                error_message=native.error_message,
+                usage_metadata=types.GenerateContentResponseUsageMetadata(
+                    prompt_token_count=native.usage.input_tokens,
+                    candidates_token_count=native.usage.output_tokens
+                    - native.usage.thinking_tokens,
+                    thoughts_token_count=native.usage.thinking_tokens,
+                    cached_content_token_count=native.usage.cached_input_tokens,
+                    total_token_count=native.usage.input_tokens + native.usage.output_tokens,
+                ),
+            )
+            return
         prompt = _prompt_text(llm_request)
         if self._context:
             prompt += "\nAuthoritative workspace: " + await asyncio.to_thread(self._context)
@@ -121,7 +168,7 @@ class GatewayLlm(BaseLlm):
 
     def _call_key(self, prompt: str) -> str:
         digest = hashlib.sha256(prompt.encode()).hexdigest()[:16]
-        return f"adk:{self._session_id}:{self._task.value}:{self._step}:{digest}"
+        return f"adk:{self._run_id}:{self._session_id}:{self._task.value}:{self._step}:{digest}"
 
 
 def _prompt_text(llm_request: LlmRequest) -> str:

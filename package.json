@@ -25,6 +25,7 @@
     "sources": "cd services/backend && uv run python -m waterpilot.cli.sources",
     "coverage-matrix": "cd services/backend && uv run python -m waterpilot.cli.coverage_matrix ../../docs/data-readiness.md",
     "intervention-catalogue": "cd services/backend && uv run python -m waterpilot.cli.intervention_catalogue ../../docs/domain/interventions.catalogue.json",
+    "funding:backfill": "cd services/backend && uv run python -m waterpilot.cli.backfill_funding_embeddings",
     "contracts": "npm run contracts:export && npm run contracts:gen",
     "contracts:export": "cd services/backend && uv run python -m waterpilot.api.export_openapi ../../packages/contracts/openapi.json && uv run python -m waterpilot.api.export_graphql ../../packages/contracts/schema.graphql",
     "contracts:gen": "npm -w packages/contracts run generate && npm -w apps/web run codegen",

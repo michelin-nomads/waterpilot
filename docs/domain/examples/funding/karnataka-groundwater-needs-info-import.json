@@ -1,0 +1,70 @@
+{
+  "scheme": {
+    "id": "fsc_82K6TAQAB9KS9V6GEJ5F4JCMKP",
+    "name": "Karnataka Ground Water Authority Subsurface Aquifer Recharge Subsidy",
+    "funder": "Karnataka Ground Water Authority",
+    "summary": "Financial assistance for deep borewell recharge and aquifer replenishment structures in notified critical taluks.",
+    "currency": "INR",
+    "max_amount": {
+      "minor_units": "15000000",
+      "currency": "INR"
+    },
+    "opens_on": "2026-04-01",
+    "closes_on": "2027-04-01",
+    "criteria": [],
+    "required_documents": [
+      "Hydrogeological Assessment Report",
+      "Site Plan"
+    ],
+    "source_url": "https://kgwa.karnataka.gov.in/schemes/aquifer-recharge",
+    "last_verified_at": "2026-10-10T00:00:00Z",
+    "evidence": "validated",
+    "revision": 1,
+    "status": "active",
+    "geography": [
+      "IN",
+      "Karnataka"
+    ],
+    "applicant_categories": [
+      "community",
+      "residential"
+    ],
+    "interventions": [
+      "rooftop_rainwater_harvesting",
+      "groundwater_recharge",
+      "efficient_fixtures"
+    ],
+    "amount_rules": "Up to INR 150,000 per society.",
+    "deadline_at": "2027-03-31T23:59:59+05:30",
+    "deadline_timezone": "Asia/Kolkata",
+    "source_hash": "e82bace69187399f8f0ebeb7ac71b2a5ffd14c34449655c0d9b0a0cc6f1d78b9",
+    "permission_note": "Published under Karnataka State Water Policy; permitted for pilot.",
+    "official_source": true,
+    "reviewed_by": "curator-admin-01",
+    "unknown_fields": [],
+    "unknown_metadata": {},
+    "eligibility_rules": {
+      "country_codes": [
+        "IN"
+      ],
+      "applicant_types": [
+        "community",
+        "residential"
+      ],
+      "intervention_ids": [
+        "rooftop_rainwater_harvesting",
+        "groundwater_recharge",
+        "efficient_fixtures"
+      ],
+      "geography_requires_review": true,
+      "required_information": [
+        "hydrogeological_survey_report",
+        "registration"
+      ]
+    }
+  },
+  "expected_revision": 0,
+  "human_reviewed": true,
+  "source_document_base64": "ewogICJ0aXRsZSI6ICJLYXJuYXRha2EgR3JvdW5kIFdhdGVyIEF1dGhvcml0eSBTdWJzdXJmYWNlIEFxdWlmZXIgUmVjaGFyZ2UgU3Vic2lkeSIsCiAgInB1Ymxpc2hlciI6ICJLYXJuYXRha2EgR3JvdW5kIFdhdGVyIEF1dGhvcml0eSIsCiAgInN1bW1hcnkiOiAiRmluYW5jaWFsIGFzc2lzdGFuY2UgZm9yIGRlZXAgYm9yZXdlbGwgcmVjaGFyZ2UgYW5kIGFxdWlmZXIgcmVwbGVuaXNobWVudCBzdHJ1Y3R1cmVzIGluIG5vdGlmaWVkIGNyaXRpY2FsIHRhbHVrcy4iLAogICJnZW9ncmFwaHkiOiBbCiAgICAiSU4iLAogICAgIkthcm5hdGFrYSIKICBdLAogICJhcHBsaWNhbnRzIjogWwogICAgImNvbW11bml0eSIsCiAgICAicmVzaWRlbnRpYWwiCiAgXSwKICAiaW50ZXJ2ZW50aW9ucyI6IFsKICAgICJyb29mdG9wX3JhaW53YXRlcl9oYXJ2ZXN0aW5nIiwKICAgICJncm91bmR3YXRlcl9yZWNoYXJnZSIsCiAgICAiZWZmaWNpZW50X2ZpeHR1cmVzIgogIF0sCiAgImFtb3VudF9ydWxlcyI6ICJVcCB0byBJTlIgMTUwLDAwMCBwZXIgc29jaWV0eS4iLAogICJkZWFkbGluZSI6ICIyMDI3LTAzLTMxVDIzOjU5OjU5KzA1OjMwIiwKICAidGltZXpvbmUiOiAiQXNpYS9Lb2xrYXRhIiwKICAicmVxdWlyZWRfZG9jdW1lbnRzIjogWwogICAgIkh5ZHJvZ2VvbG9naWNhbCBBc3Nlc3NtZW50IFJlcG9ydCIsCiAgICAiU2l0ZSBQbGFuIgogIF0sCiAgInBlcm1pc3Npb24iOiAiUHVibGlzaGVkIHVuZGVyIEthcm5hdGFrYSBTdGF0ZSBXYXRlciBQb2xpY3k7IHBlcm1pdHRlZCBmb3IgcGlsb3QuIgp9",
+  "source_content_type": "application/json"
+}

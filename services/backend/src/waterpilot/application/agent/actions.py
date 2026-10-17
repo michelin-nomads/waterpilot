@@ -29,6 +29,7 @@ class AgentActionKind(StrEnum):
 
     FINALIZE_REPORT = "finalize_report"
     ARCHIVE_REPORT = "archive_report"
+    GENERATE_PROPOSAL = "generate_proposal"
     CREATE_COMMUNITY = "create_community"
     JOIN_COMMUNITY = "join_community"
     LEAVE_COMMUNITY = "leave_community"

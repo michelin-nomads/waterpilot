@@ -21,6 +21,8 @@ Tools fall in three kinds:
 
 from __future__ import annotations
 
+import hashlib
+import re
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date
@@ -44,10 +46,11 @@ from waterpilot.application.tools.options import (
 )
 from waterpilot.domain import baseline as bl
 from waterpilot.domain.errors import DomainError, ErrorCode, not_found
-from waterpilot.domain.planning import PlanningSession
-from waterpilot.domain.reports import ReportStatus
+from waterpilot.domain.funding import ApplicantInformation
+from waterpilot.domain.planning import CommunityType, PlanningSession, SiteProfile
+from waterpilot.domain.reports import ProposalSection, ProposalStatus, ReportStatus
 from waterpilot.domain.tracking import MilestoneStatus
-from waterpilot.domain.values import Frozen
+from waterpilot.domain.values import Frozen, Money
 
 type Json = dict[str, Any]
 
@@ -146,6 +149,16 @@ class ScenarioArgs(Frozen):
 
 class FindFundingArgs(Frozen):
     plan_option_id: str | None = None
+    applicant_type: str | None = None
+    available_documents: tuple[str, ...] = Field(default=(), max_length=50)
+    provided_information: tuple[str, ...] = Field(default=(), max_length=50)
+    requested_amount_minor: str | None = None
+    currency: str | None = None
+    semantic_query: str = Field(default="", max_length=1000)
+
+
+class ProposalArgs(Frozen):
+    proposal_id: str
 
 
 class ReportArgs(Frozen):
@@ -162,6 +175,17 @@ class ProjectArgs(Frozen):
 
 class ProposalPreviewArgs(Frozen):
     report_id: str
+    sections: tuple[str, ...] = Field(default=(), max_length=20)
+
+
+class PrepareGenerateProposalArgs(Frozen):
+    report_id: str
+    scheme_id: str | None = None
+    applicant_name: str | None = None
+    applicant_organization: str | None = None
+    applicant_category: str | None = None
+    applicant_contact_email: str | None = None
+    assumptions: tuple[str, ...] = Field(default=(), max_length=30)
     sections: tuple[str, ...] = Field(default=(), max_length=20)
 
 
@@ -199,7 +223,42 @@ class RecordObservationArgs(Frozen):
     project_id: str
 
 
+class RecordManualInputArgs(Frozen):
+    input: str = Field(
+        min_length=1,
+        max_length=64,
+        description="Input id, e.g. 'delivered_supply', 'population', 'tanker_supply'.",
+    )
+    value: str = Field(
+        min_length=1, max_length=40, description="Decimal value as a string, e.g. '80000'."
+    )
+    unit: str = Field(
+        min_length=1, max_length=40, description="Unit, e.g. 'L/day', 'm3/day', 'MLD', 'count'."
+    )
+    as_of: date = Field(description="Reference date for measurement (YYYY-MM-DD), not future.")
+    note: str = Field(
+        min_length=3, max_length=500, description="Source citation or explanation (3-500 chars)."
+    )
+
+
+class UpdateSiteProfileArgs(Frozen):
+    community_type: str | None = Field(
+        default=None,
+        description="Type of community: 'apartment', 'residential', 'other'.",
+    )
+    occupied_homes: int | None = Field(
+        default=None,
+        ge=1,
+        le=1_000_000,
+        description="Number of occupied homes (1 to 1,000,000).",
+    )
+
+
 # --------------------------------------------------------------------------- READ handlers
+
+
+def _inspect_planning_state(rc: RunContext, _: NoArgs) -> Json:
+    return rc.session().model_dump(mode="json")
 
 
 def _resolve_location(rc: RunContext, a: ResolveLocationArgs) -> Json:
@@ -312,15 +371,92 @@ def _check_impact_summary(rc: RunContext, a: ImpactSummaryArgs) -> Json:
 
 
 def _find_funding(rc: RunContext, a: FindFundingArgs) -> Json:
+    session = rc.session()
+    plan_option_id = a.plan_option_id or session.selected_plan_option_id
     schemes = rc.services.funding.schemes(None, _READ_PAGE)
-    matches = rc.services.funding.matches(rc.ctx, rc.session_id, a.plan_option_id, _READ_PAGE)
+    matches_page = rc.services.funding.matches(rc.ctx, rc.session_id, plan_option_id, _READ_PAGE)
+    matches_list = list(matches_page.items)
+
+    # Recalculate matches if none exist yet, applicant details provided, or semantic query provided
+    if (
+        plan_option_id is not None
+        and session.area_id is not None
+        and (not matches_list or a.applicant_type is not None or bool(a.semantic_query))
+    ):
+        try:
+            req_amount = (
+                Money(minor_units=a.requested_amount_minor, currency=a.currency or "INR")
+                if a.requested_amount_minor
+                else None
+            )
+            info_sig = (
+                f"{a.applicant_type}:{a.requested_amount_minor}:"
+                f"{sorted(a.available_documents)}:{sorted(a.provided_information)}:{a.semantic_query}"
+            )
+            sig_hash = hashlib.sha256(info_sig.encode()).hexdigest()[:16]
+            raw_key = f"{rc.run_id}-funding-match-{plan_option_id}-{sig_hash}"
+            idem_key = raw_key[:128].ljust(16, "-")
+            computed = rc.services.funding.match(
+                rc.ctx,
+                rc.session_id,
+                plan_option_id,
+                idempotency_key=idem_key,
+                information=ApplicantInformation(
+                    applicant_type=a.applicant_type,
+                    available_documents=a.available_documents,
+                    provided_information=a.provided_information,
+                    requested_amount=req_amount,
+                ),
+                semantic_query=a.semantic_query,
+            )
+            matches_list = list(computed)
+        except Exception:
+            pass
+
+    official_sources = [
+        {
+            "id": s.id,
+            "name": s.name,
+            "funder": s.funder,
+            "sourceUrl": s.source_url,
+            "sourceHash": s.source_hash,
+            "officialSource": s.official_source,
+            "evidence": s.evidence.value if hasattr(s.evidence, "value") else str(s.evidence),
+            "status": s.status.value if hasattr(s.status, "value") else str(s.status),
+            "permissionNote": s.permission_note,
+        }
+        for s in schemes.items
+        if s.official_source or s.has_verified_source
+    ]
+
     return {
         "schemes": [s.model_dump(mode="json") for s in schemes.items],
-        "matches": [m.model_dump(mode="json") for m in matches.items],
+        "matches": [m.model_dump(mode="json") for m in matches_list],
+        "officialSources": official_sources,
         "note": (
             "Funding information is read-only. The agent never submits an application or "
             "contacts a funder; applying is a separate action you take yourself."
         ),
+    }
+
+
+def _inspect_proposal(rc: RunContext, a: ProposalArgs) -> Json:
+    proposal = rc.services.proposals.get(rc.ctx, a.proposal_id)
+    ready = proposal.status in {ProposalStatus.NEEDS_REVIEW, ProposalStatus.APPROVED}
+    return {
+        "proposal": proposal.model_dump(mode="json"),
+        "isReady": ready,
+        "downloadUrl": (
+            f"/v1/proposals/{proposal.id}/download"
+            if ready and proposal.artifact_key
+            else None
+        ),
+        "previewUrl": (
+            f"/v1/proposals/{proposal.id}/preview"
+            if ready and proposal.html_artifact_key
+            else None
+        ),
+        "note": "Proposal downloads are private and scoped strictly to the report owner.",
     }
 
 
@@ -410,6 +546,43 @@ def _select_option(rc: RunContext, a: OptionArgs) -> Json:
     return updated.model_dump(mode="json")
 
 
+def _record_manual_input(rc: RunContext, a: RecordManualInputArgs) -> Json:
+    data = {
+        "session_id": rc.session_id,
+        "input": a.input,
+        "value": a.value,
+        "unit": a.unit,
+        "as_of": a.as_of,
+        "note": a.note,
+    }
+    raw_key = re.sub(r"[^A-Za-z0-9_-]", "-", f"{rc.run_id}-manual-{a.input}-{a.as_of.isoformat()}")
+    idempotency_key = raw_key[:128]
+    if len(idempotency_key) < 16:
+        idempotency_key = idempotency_key.ljust(16, "-")
+    item = rc.services.readiness.record_manual_input(rc.ctx, data, idempotency_key)
+    return item.model_dump(mode="json")
+
+
+def _update_site_profile(rc: RunContext, a: UpdateSiteProfileArgs) -> Json:
+    session = rc.session()
+    try:
+        ctype = CommunityType(a.community_type) if a.community_type is not None else None
+    except ValueError:
+        raise DomainError(
+            ErrorCode.VALIDATION_FAILED,
+            f"unknown community_type {a.community_type!r}; "
+            f"expected one of {[e.value for e in CommunityType]}",
+        ) from None
+    profile = SiteProfile(
+        community_type=ctype,
+        occupied_homes=a.occupied_homes,
+    )
+    updated = rc.services.sessions.update(
+        rc.ctx, session.id, session.version, {"site_profile": profile}
+    )
+    return updated.model_dump(mode="json")
+
+
 # --------------------------------------------------------------------------- PREPARE handlers
 # These perform nothing. Each reads the resource's current version through the authorized
 # service (so a forged id fails as not-found) and returns a PreparedAction the product UI
@@ -437,6 +610,60 @@ def _prepare_archive_report(rc: RunContext, a: ReportArgs) -> Json:
         resource_id=report.id,
         expected_version=report.version,
         parameters={},
+    ).to_json()
+
+
+def _prepare_generate_proposal(rc: RunContext, a: PrepareGenerateProposalArgs) -> Json:
+    report = rc.services.reports.get(rc.ctx, a.report_id)
+    if report.status is not ReportStatus.FINALIZED:
+        raise DomainError(
+            ErrorCode.PRECONDITION_FAILED,
+            "only finalized reports can be used to generate a proposal",
+            field="report_id",
+        )
+    scheme = None
+    if a.scheme_id is not None:
+        scheme = rc.services.funding.scheme(a.scheme_id)
+    applicant_dict: dict[str, Any] | None = None
+    if a.applicant_name or a.applicant_organization or a.applicant_category:
+        if not (a.applicant_name and a.applicant_organization and a.applicant_category):
+            raise DomainError(
+                ErrorCode.VALIDATION_FAILED,
+                "applicant name, organization, and category are required when applicant "
+                "details are provided",
+                field="applicant",
+            )
+        applicant_dict = {
+            "name": a.applicant_name,
+            "organization": a.applicant_organization,
+            "category": a.applicant_category,
+            "contact_email": a.applicant_contact_email,
+            "assumptions": list(a.assumptions),
+        }
+    elif a.scheme_id is not None:
+        raise DomainError(
+            ErrorCode.VALIDATION_FAILED,
+            "provide applicant details (name, organization, category) for the selected funding "
+            "scheme",
+            field="applicant",
+        )
+    sections = list(a.sections) if a.sections else [s.value for s in ProposalSection]
+    summary = f"Generate a funding proposal from report “{report.title}”"
+    if scheme:
+        summary += f" for scheme “{scheme.name}”"
+    summary += "."
+    return PreparedAction.build(
+        AgentActionKind.GENERATE_PROPOSAL,
+        summary=summary,
+        resource_kind="report",
+        resource_id=report.id,
+        expected_version=report.version,
+        parameters={
+            "report_id": report.id,
+            "scheme_id": a.scheme_id,
+            "applicant": applicant_dict,
+            "sections": sections,
+        },
     ).to_json()
 
 
@@ -599,6 +826,13 @@ def _spec(
 TOOLS: tuple[ToolSpec, ...] = (
     # read
     _spec(
+        "inspect_planning_state",
+        "Current session state (stage, area, goal, scenario, site profile, inputs revision).",
+        ToolKind.READ,
+        NoArgs,
+        _inspect_planning_state,
+    ),
+    _spec(
         "resolve_location",
         "Turn free text into location candidates (chooses none).",
         ToolKind.READ,
@@ -690,6 +924,13 @@ TOOLS: tuple[ToolSpec, ...] = (
         _proposal_preview,
     ),
     _spec(
+        "inspect_proposal",
+        "Show a proposal's status, review readiness and private download link.",
+        ToolKind.READ,
+        ProposalArgs,
+        _inspect_proposal,
+    ),
+    _spec(
         "view_report",
         "Show a finalized report you may read.",
         ToolKind.READ,
@@ -740,6 +981,20 @@ TOOLS: tuple[ToolSpec, ...] = (
         OptionArgs,
         _select_option,
     ),
+    _spec(
+        "record_manual_input",
+        "Record a manual water measurement or constraint for this plan's location.",
+        ToolKind.EDIT,
+        RecordManualInputArgs,
+        _record_manual_input,
+    ),
+    _spec(
+        "update_site_profile",
+        "Set the planning session's site profile (community type and occupied homes).",
+        ToolKind.EDIT,
+        UpdateSiteProfileArgs,
+        _update_site_profile,
+    ),
     # prepare-only (irreversible / meaningful; require explicit UI confirmation)
     _spec(
         "prepare_finalize_report",
@@ -754,6 +1009,13 @@ TOOLS: tuple[ToolSpec, ...] = (
         ToolKind.PREPARE,
         ReportArgs,
         _prepare_archive_report,
+    ),
+    _spec(
+        "prepare_generate_proposal",
+        "Prepare generating a funding proposal from a finalized report (needs UI confirmation).",
+        ToolKind.PREPARE,
+        PrepareGenerateProposalArgs,
+        _prepare_generate_proposal,
     ),
     _spec(
         "prepare_create_community",

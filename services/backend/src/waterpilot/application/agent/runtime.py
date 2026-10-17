@@ -344,7 +344,11 @@ class AgentActionService:
         match s.kind:
             case AgentActionKind.FINALIZE_REPORT:
                 return self._s.sessions.get(ctx, _req(s.resource_id)).version
-            case AgentActionKind.ARCHIVE_REPORT | AgentActionKind.START_TRACKING_PROJECT:
+            case (
+                AgentActionKind.ARCHIVE_REPORT
+                | AgentActionKind.START_TRACKING_PROJECT
+                | AgentActionKind.GENERATE_PROPOSAL
+            ):
                 return self._s.reports.get(ctx, _req(s.resource_id)).version
             case AgentActionKind.CREATE_COMMUNITY:
                 return None
@@ -380,6 +384,9 @@ class AgentActionService:
             case AgentActionKind.ARCHIVE_REPORT:
                 report = self._s.reports.archive(ctx, _req(s.resource_id), self._ver(s))
                 return report.model_dump(mode="json")
+            case AgentActionKind.GENERATE_PROPOSAL:
+                proposal = self._s.proposals.generate(ctx, params, self._idem(s))
+                return proposal.model_dump(mode="json")
             case AgentActionKind.CREATE_COMMUNITY:
                 community = self._s.communities.create(ctx, params, self._idem(s))
                 return community.model_dump(mode="json")

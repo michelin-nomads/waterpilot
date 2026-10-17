@@ -1,0 +1,24 @@
+{
+  "title": "CPCB Zero Liquid Discharge Subsidy for Industrial Units",
+  "publisher": "Central Pollution Control Board",
+  "summary": "Capital subsidy program for commercial and industrial manufacturing facilities implementing zero liquid discharge effluent treatment plants.",
+  "geography": [
+    "IN"
+  ],
+  "applicants": [
+    "industrial",
+    "commercial"
+  ],
+  "interventions": [
+    "industrial_effluent_treatment"
+  ],
+  "amount_rules": "Up to INR 2,000,000 for verified industrial treatment units.",
+  "deadline": "2027-03-31T23:59:59+05:30",
+  "timezone": "Asia/Kolkata",
+  "required_documents": [
+    "Factory License",
+    "Consent for Operation",
+    "ZLD Technical Audit"
+  ],
+  "permission": "CPCB public notice; permitted for offline cataloging."
+}

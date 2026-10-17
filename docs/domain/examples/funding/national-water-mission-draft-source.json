@@ -1,0 +1,27 @@
+{
+  "title": "National Water Mission Catch the Rain Community Grant (Candidate)",
+  "publisher": "Ministry of Jal Shakti, Department of Water Resources",
+  "summary": "Candidate central grant for participatory rainwater harvesting and aquifer recharge in water-stressed urban districts.",
+  "geography": [
+    "IN"
+  ],
+  "applicants": [
+    "Registered community organizations",
+    "Residential Welfare Associations"
+  ],
+  "interventions": [
+    "rooftop_rainwater_harvesting"
+  ],
+  "amount_rules": "Matching grant structure awaiting final Ministry guidelines.",
+  "deadline": "2027-05-31T23:59:59+05:30",
+  "timezone": "Asia/Kolkata",
+  "required_documents": [
+    "RWA Bye-Laws",
+    "Catchment Assessment Report"
+  ],
+  "unknown_fields": [
+    "co_funding_ratio",
+    "disbursement_milestones"
+  ],
+  "notice": "Draft candidate under curator review. Not yet approved for active matching."
+}

@@ -321,7 +321,7 @@ export interface components {
          *     performed only on explicit UI confirmation (never by the agent).
          * @enum {string}
          */
-        AgentActionKind: "finalize_report" | "archive_report" | "create_community" | "join_community" | "leave_community" | "archive_community" | "start_tracking_project" | "update_milestone" | "record_observation";
+        AgentActionKind: "finalize_report" | "archive_report" | "generate_proposal" | "create_community" | "join_community" | "leave_community" | "archive_community" | "start_tracking_project" | "update_milestone" | "record_observation";
         /** ApiError */
         ApiError: {
             code: components["schemas"]["ErrorCode"];

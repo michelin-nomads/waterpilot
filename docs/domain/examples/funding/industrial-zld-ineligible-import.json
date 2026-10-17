@@ -1,0 +1,64 @@
+{
+  "scheme": {
+    "id": "fsc_ZEYHTZZDZ4SH1FHAFRYJKDRQR9",
+    "name": "CPCB Zero Liquid Discharge Subsidy for Industrial Units",
+    "funder": "Central Pollution Control Board",
+    "summary": "Capital subsidy program for commercial and industrial manufacturing facilities implementing zero liquid discharge effluent treatment plants.",
+    "currency": "INR",
+    "max_amount": {
+      "minor_units": "200000000",
+      "currency": "INR"
+    },
+    "opens_on": "2026-04-01",
+    "closes_on": "2027-04-01",
+    "criteria": [],
+    "required_documents": [
+      "Factory License",
+      "Consent for Operation",
+      "ZLD Technical Audit"
+    ],
+    "source_url": "https://cpcb.nic.in/zld-guidelines",
+    "last_verified_at": "2026-10-10T00:00:00Z",
+    "evidence": "validated",
+    "revision": 1,
+    "status": "active",
+    "geography": [
+      "IN"
+    ],
+    "applicant_categories": [
+      "industrial",
+      "commercial"
+    ],
+    "interventions": [
+      "industrial_effluent_treatment"
+    ],
+    "amount_rules": "Up to INR 2,000,000 for verified industrial treatment units.",
+    "deadline_at": "2027-03-31T23:59:59+05:30",
+    "deadline_timezone": "Asia/Kolkata",
+    "source_hash": "6ea12437dd49758046bad5a8b81e5e3c13de2275b303577be3920a4a4b99f3e2",
+    "permission_note": "CPCB public notice; permitted for offline cataloging.",
+    "official_source": true,
+    "reviewed_by": "curator-admin-01",
+    "unknown_fields": [],
+    "unknown_metadata": {},
+    "eligibility_rules": {
+      "country_codes": [
+        "IN"
+      ],
+      "applicant_types": [
+        "industrial",
+        "commercial"
+      ],
+      "intervention_ids": [
+        "industrial_effluent_treatment"
+      ],
+      "required_information": [
+        "factory_license"
+      ]
+    }
+  },
+  "expected_revision": 0,
+  "human_reviewed": true,
+  "source_document_base64": "ewogICJ0aXRsZSI6ICJDUENCIFplcm8gTGlxdWlkIERpc2NoYXJnZSBTdWJzaWR5IGZvciBJbmR1c3RyaWFsIFVuaXRzIiwKICAicHVibGlzaGVyIjogIkNlbnRyYWwgUG9sbHV0aW9uIENvbnRyb2wgQm9hcmQiLAogICJzdW1tYXJ5IjogIkNhcGl0YWwgc3Vic2lkeSBwcm9ncmFtIGZvciBjb21tZXJjaWFsIGFuZCBpbmR1c3RyaWFsIG1hbnVmYWN0dXJpbmcgZmFjaWxpdGllcyBpbXBsZW1lbnRpbmcgemVybyBsaXF1aWQgZGlzY2hhcmdlIGVmZmx1ZW50IHRyZWF0bWVudCBwbGFudHMuIiwKICAiZ2VvZ3JhcGh5IjogWwogICAgIklOIgogIF0sCiAgImFwcGxpY2FudHMiOiBbCiAgICAiaW5kdXN0cmlhbCIsCiAgICAiY29tbWVyY2lhbCIKICBdLAogICJpbnRlcnZlbnRpb25zIjogWwogICAgImluZHVzdHJpYWxfZWZmbHVlbnRfdHJlYXRtZW50IgogIF0sCiAgImFtb3VudF9ydWxlcyI6ICJVcCB0byBJTlIgMiwwMDAsMDAwIGZvciB2ZXJpZmllZCBpbmR1c3RyaWFsIHRyZWF0bWVudCB1bml0cy4iLAogICJkZWFkbGluZSI6ICIyMDI3LTAzLTMxVDIzOjU5OjU5KzA1OjMwIiwKICAidGltZXpvbmUiOiAiQXNpYS9Lb2xrYXRhIiwKICAicmVxdWlyZWRfZG9jdW1lbnRzIjogWwogICAgIkZhY3RvcnkgTGljZW5zZSIsCiAgICAiQ29uc2VudCBmb3IgT3BlcmF0aW9uIiwKICAgICJaTEQgVGVjaG5pY2FsIEF1ZGl0IgogIF0sCiAgInBlcm1pc3Npb24iOiAiQ1BDQiBwdWJsaWMgbm90aWNlOyBwZXJtaXR0ZWQgZm9yIG9mZmxpbmUgY2F0YWxvZ2luZy4iCn0=",
+  "source_content_type": "application/json"
+}

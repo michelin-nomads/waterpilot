@@ -180,6 +180,10 @@ def build_model_provider(settings: Settings) -> ModelProvider:
 
             return LocalAgentProvider(settings.ai_model)
         return NoModelProvider(settings.ai_model)
+    if settings.agent_fake_inference or (not settings.is_pilot and settings.area_assumptions_fake):
+        from waterpilot.adapters.model_agent_fake import LocalAgentProvider
+
+        return LocalAgentProvider(settings.ai_model)
     if settings.ai_kill_switch or not settings.ai_enabled:
         return NoModelProvider(settings.ai_model)
     if settings.ai_limits.daily_budget_micro_usd is None:
@@ -302,13 +306,19 @@ def build_api_runtime(settings: Settings, clock: Callable[[], datetime] = _utc_n
         if isinstance(store, FirestoreStore)
         else MemoryConversationStore()
     )
+    can_run_agent = (
+        (not settings.is_pilot and settings.agent_fake_inference)
+        or (
+            settings.ai_enabled
+            and not settings.ai_kill_switch
+            and settings.ai_limits.daily_budget_micro_usd is not None
+        )
+    )
     return ApiRuntime(
         services=services,
         verifier=build_identity_verifier(settings, clock),
         artifacts=artifacts,
-        agent=ConversationAgent(services, conversations)
-        if not settings.is_pilot and settings.agent_fake_inference
-        else None,
+        agent=ConversationAgent(services, conversations) if can_run_agent else None,
     )
 
 

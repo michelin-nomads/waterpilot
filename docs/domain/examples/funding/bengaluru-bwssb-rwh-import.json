@@ -1,0 +1,83 @@
+{
+  "scheme": {
+    "id": "fsc_68K4TTSR0BCVM18YQ256SX7R7B",
+    "name": "BWSSB Rainwater Harvesting & Groundwater Recharge Incentive",
+    "funder": "Bangalore Water Supply and Sewerage Board (BWSSB)",
+    "summary": "Official capital rebate and tariff linkage incentive for apartment communities and RWAs in Bengaluru implementing rooftop rainwater harvesting, recharge wells, and water-efficiency measures.",
+    "currency": "INR",
+    "max_amount": {
+      "minor_units": "25000000",
+      "currency": "INR"
+    },
+    "opens_on": "2026-04-01",
+    "closes_on": "2027-04-01",
+    "criteria": [],
+    "required_documents": [
+      "BWSSB Water Connection Bill",
+      "Sanctioned Site and Building Plan",
+      "RWH and Recharge Well Completion Certificate",
+      "Society Registration Certificate"
+    ],
+    "source_url": "https://bwssb.karnataka.gov.in/page/Rain+Water+Harvesting/en",
+    "last_verified_at": "2026-10-10T00:00:00Z",
+    "evidence": "validated",
+    "revision": 1,
+    "status": "active",
+    "geography": [
+      "IN",
+      "Karnataka",
+      "Bengaluru Urban"
+    ],
+    "applicant_categories": [
+      "community",
+      "residential",
+      "aoa"
+    ],
+    "interventions": [
+      "rooftop_rainwater_harvesting",
+      "groundwater_recharge",
+      "efficient_fixtures"
+    ],
+    "amount_rules": "Up to 50% of verified capital expenditure capped at INR 250,000 (25,000,000 paise).",
+    "deadline_at": "2027-03-31T23:59:59+05:30",
+    "deadline_timezone": "Asia/Kolkata",
+    "source_hash": "1b3189b821470c67055742a3ada1c190dc62fc2feb134989414f977af6d77bdb",
+    "permission_note": "Government of Karnataka Open Data Initiative; published for public distribution; permitted for offline pilot ingestion.",
+    "official_source": true,
+    "reviewed_by": "curator-admin-01",
+    "unknown_fields": [],
+    "unknown_metadata": {},
+    "eligibility_rules": {
+      "country_codes": [
+        "IN"
+      ],
+      "applicant_types": [
+        "community",
+        "residential",
+        "aoa"
+      ],
+      "intervention_ids": [
+        "rooftop_rainwater_harvesting",
+        "groundwater_recharge",
+        "efficient_fixtures"
+      ],
+      "min_project_cost": {
+        "minor_units": "5000000",
+        "currency": "INR"
+      },
+      "max_project_cost": {
+        "minor_units": "500000000",
+        "currency": "INR"
+      },
+      "rolling_open": false,
+      "required_information": [
+        "registration"
+      ],
+      "geography_requires_review": false
+    }
+  },
+  "expected_revision": 0,
+  "human_reviewed": true,
+  "source_document_base64": "ewogICJ0aXRsZSI6ICJCV1NTQiBSYWlud2F0ZXIgSGFydmVzdGluZyAmIEdyb3VuZHdhdGVyIFJlY2hhcmdlIEluY2VudGl2ZSBTY2hlbWUiLAogICJwdWJsaXNoZXIiOiAiQmFuZ2Fsb3JlIFdhdGVyIFN1cHBseSBhbmQgU2V3ZXJhZ2UgQm9hcmQgKEJXU1NCKSIsCiAgIm5vdGlmaWNhdGlvbl9udW1iZXIiOiAiQldTU0IvRUlDL0dMLVJXSC8yMDI2LTI3LzA0IiwKICAiZ2F6ZXR0ZV9yZWZlcmVuY2UiOiAiS2FybmF0YWthIEdhemV0dGUgTm90aWZpY2F0aW9uIE5vLiBVREQgNDIgTUJEIDIwMjYiLAogICJzdW1tYXJ5IjogIkZpbmFuY2lhbCByZWJhdGUgYW5kIHRhcmlmZiBpbmNlbnRpdmUgZm9yIHJlZ2lzdGVyZWQgQXBhcnRtZW50IE93bmVycyBBc3NvY2lhdGlvbnMgKEFPQXMpIGFuZCBSZXNpZGVudCBXZWxmYXJlIEFzc29jaWF0aW9ucyAoUldBcykgaW4gQmVuZ2FsdXJ1IGluc3RhbGxpbmcgY29tcGxpYW50IHJvb2Z0b3AgcmFpbndhdGVyIGhhcnZlc3RpbmcsIGdyb3VuZHdhdGVyIHJlY2hhcmdlIHBpdHMsIGFuZCBkdWFsLXBpcGluZyB3YXRlciBlZmZpY2llbmN5IGZpeHR1cmVzLiIsCiAgImdlb2dyYXBoeSI6IFsiSU4iLCAiS2FybmF0YWthIiwgIkJlbmdhbHVydSBVcmJhbiJdLAogICJhcHBsaWNhbnRfY2F0ZWdvcmllcyI6IFsiY29tbXVuaXR5IiwgInJlc2lkZW50aWFsIiwgImFvYSJdLAogICJpbnRlcnZlbnRpb25zIjogWyJyb29mdG9wX3JhaW53YXRlcl9oYXJ2ZXN0aW5nIiwgImdyb3VuZHdhdGVyX3JlY2hhcmdlIiwgImVmZmljaWVudF9maXh0dXJlcyJdLAogICJhbW91bnRfcnVsZXMiOiAiQ2FwaXRhbCBzdWJzaWR5IG9mIDUwJSBvZiBhdWRpdGVkIGluc3RhbGxhdGlvbiBjb3N0LCBjYXBwZWQgYXQgSU5SIDI1MCwwMDAgKDI1LDAwMCwwMDAgcGFpc2UpLiBBZGRpdGlvbmFsIDUlIHdhdGVyIHN1cHBseSBjZXNzIHJlYmF0ZSBmb3IgdHdvIGZpbmFuY2lhbCB5ZWFycy4iLAogICJtYXhfZ3JhbnRfaW5yX3BhaXNlIjogIjI1MDAwMDAwIiwKICAibWluX3Byb2plY3RfY29zdF9pbnJfcGFpc2UiOiAiNTAwMDAwMCIsCiAgIm1heF9wcm9qZWN0X2Nvc3RfaW5yX3BhaXNlIjogIjUwMDAwMDAwMCIsCiAgIm9wZW5zX29uIjogIjIwMjYtMDQtMDEiLAogICJjbG9zZXNfb24iOiAiMjAyNy0wNC0wMSIsCiAgImRlYWRsaW5lIjogIjIwMjctMDMtMzFUMjM6NTk6NTkrMDU6MzAiLAogICJ0aW1lem9uZSI6ICJBc2lhL0tvbGthdGEiLAogICJyZXF1aXJlZF9kb2N1bWVudHMiOiBbCiAgICAiQldTU0IgV2F0ZXIgQ29ubmVjdGlvbiBCaWxsIiwKICAgICJTYW5jdGlvbmVkIFNpdGUgYW5kIEJ1aWxkaW5nIFBsYW4iLAogICAgIlJXSCBhbmQgUmVjaGFyZ2UgV2VsbCBDb21wbGV0aW9uIENlcnRpZmljYXRlIiwKICAgICJTb2NpZXR5IFJlZ2lzdHJhdGlvbiBDZXJ0aWZpY2F0ZSIKICBdLAogICJwZXJtaXNzaW9uIjogIkdvdmVybm1lbnQgb2YgS2FybmF0YWthIE9wZW4gRGF0YSBJbml0aWF0aXZlOyBwdWJsaXNoZWQgZm9yIHB1YmxpYyBkaXN0cmlidXRpb247IHBlcm1pdHRlZCBmb3Igb2ZmbGluZSBwaWxvdCBpbmdlc3Rpb24uIiwKICAib2ZmaWNpYWxfdXJsIjogImh0dHBzOi8vYndzc2Iua2FybmF0YWthLmdvdi5pbi9wYWdlL1JhaW4rV2F0ZXIrSGFydmVzdGluZy9lbiIKfQo=",
+  "source_content_type": "application/json"
+}

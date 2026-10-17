@@ -1,0 +1,26 @@
+{
+  "title": "Karnataka Ground Water Authority Subsurface Aquifer Recharge Subsidy",
+  "publisher": "Karnataka Ground Water Authority",
+  "summary": "Financial assistance for deep borewell recharge and aquifer replenishment structures in notified critical taluks.",
+  "geography": [
+    "IN",
+    "Karnataka"
+  ],
+  "applicants": [
+    "community",
+    "residential"
+  ],
+  "interventions": [
+    "rooftop_rainwater_harvesting",
+    "groundwater_recharge",
+    "efficient_fixtures"
+  ],
+  "amount_rules": "Up to INR 150,000 per society.",
+  "deadline": "2027-03-31T23:59:59+05:30",
+  "timezone": "Asia/Kolkata",
+  "required_documents": [
+    "Hydrogeological Assessment Report",
+    "Site Plan"
+  ],
+  "permission": "Published under Karnataka State Water Policy; permitted for pilot."
+}

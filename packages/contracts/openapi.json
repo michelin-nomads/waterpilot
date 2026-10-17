@@ -1320,6 +1320,7 @@
         "enum": [
           "finalize_report",
           "archive_report",
+          "generate_proposal",
           "create_community",
           "join_community",
           "leave_community",

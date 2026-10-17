@@ -1,0 +1,57 @@
+{
+  "scheme": {
+    "id": "fsc_AMY4RRSX53D5AMPNECR7MWKD08",
+    "name": "AMRUT 1.0 Community Water Storage Rebate (Expired)",
+    "funder": "Ministry of Housing and Urban Affairs",
+    "summary": "Historic financial assistance for urban community storage tanks under AMRUT 1.0 window.",
+    "currency": "INR",
+    "max_amount": {
+      "minor_units": "10000000",
+      "currency": "INR"
+    },
+    "opens_on": "2023-04-01",
+    "closes_on": "2024-04-01",
+    "criteria": [],
+    "required_documents": [
+      "Completion Certificate"
+    ],
+    "source_url": "https://mohua.gov.in/amrut-water-window",
+    "last_verified_at": "2024-03-01T00:00:00Z",
+    "evidence": "validated",
+    "revision": 1,
+    "status": "expired",
+    "geography": [
+      "IN"
+    ],
+    "applicant_categories": [
+      "community"
+    ],
+    "interventions": [
+      "rooftop_rainwater_harvesting"
+    ],
+    "amount_rules": "Historic rebate up to INR 100,000.",
+    "deadline_at": "2024-03-31T23:59:59+05:30",
+    "deadline_timezone": "Asia/Kolkata",
+    "source_hash": "74373c07e7d1e16dbedc99d35e8e9ad7e57ebefc0112aeb95340d7938a3ce5d8",
+    "permission_note": "Public circular; retained for historical reference.",
+    "official_source": true,
+    "reviewed_by": "curator-admin-01",
+    "unknown_fields": [],
+    "unknown_metadata": {},
+    "eligibility_rules": {
+      "country_codes": [
+        "IN"
+      ],
+      "applicant_types": [
+        "community"
+      ],
+      "intervention_ids": [
+        "rooftop_rainwater_harvesting"
+      ]
+    }
+  },
+  "expected_revision": 0,
+  "human_reviewed": true,
+  "source_document_base64": "ewogICJ0aXRsZSI6ICJBTVJVVCAxLjAgQ29tbXVuaXR5IFdhdGVyIFN0b3JhZ2UgUmViYXRlIChFeHBpcmVkKSIsCiAgInB1Ymxpc2hlciI6ICJNaW5pc3RyeSBvZiBIb3VzaW5nIGFuZCBVcmJhbiBBZmZhaXJzIiwKICAic3VtbWFyeSI6ICJIaXN0b3JpYyBmaW5hbmNpYWwgYXNzaXN0YW5jZSBmb3IgdXJiYW4gY29tbXVuaXR5IHN0b3JhZ2UgdGFua3MuIiwKICAiZGVhZGxpbmUiOiAiMjAyNC0wMy0zMVQyMzo1OTo1OSswNTozMCIsCiAgInRpbWV6b25lIjogIkFzaWEvS29sa2F0YSIKfQ==",
+  "source_content_type": "application/json"
+}
