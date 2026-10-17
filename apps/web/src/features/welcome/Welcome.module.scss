@@ -91,22 +91,6 @@
   margin-top: var(--wp-space-1);
 }
 
-.howItWorks {
-  width: min(100%, 48rem);
-  color: var(--wp-color-text-muted);
-  font-size: var(--wp-text-sm);
-  text-align: start;
-
-  summary {
-    width: fit-content;
-    margin: 0 auto;
-    color: var(--wp-color-accent-strong);
-    font-weight: 600;
-    cursor: pointer;
-    text-align: center;
-  }
-}
-
 .previewPages {
   width: min(100%, 48rem);
   color: var(--wp-color-text-muted);
@@ -162,32 +146,6 @@
   }
 }
 
-.benefits {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--wp-space-3);
-  margin: var(--wp-space-3) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.benefit {
-  display: flex;
-  gap: var(--wp-space-2);
-  align-items: flex-start;
-  padding: var(--wp-space-3);
-  border-radius: var(--wp-radius-md);
-  background: var(--wp-color-surface-sunken);
-}
-
-.benefitIcon {
-  color: var(--wp-color-accent-strong);
-}
-
-.benefitText {
-  color: var(--wp-color-text);
-}
-
 .coverage {
   color: var(--wp-color-text-muted);
   font-size: var(--wp-text-sm);
@@ -222,8 +180,7 @@
 }
 
 @media (max-width: 44rem) {
-  .choices,
-  .benefits {
+  .choices {
     grid-template-columns: 1fr;
   }
 

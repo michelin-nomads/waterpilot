@@ -46,7 +46,7 @@ test('a failed guest start keeps the main screen and allows retry', async ({ pag
   await expect(page).toHaveURL(/\/$/);
 });
 
-for (const width of [390, 768, 1440, 1920, 2560]) {
+for (const width of [320, 390, 768, 1440, 1920, 2560]) {
   test(`home fits a ${width}px viewport`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto('/');
@@ -57,6 +57,33 @@ for (const width of [390, 768, 1440, 1920, 2560]) {
     );
     const main = await page.getByRole('main').boundingBox();
     expect(main!.width).toBeGreaterThan(width * 0.95);
+    const guide = page.getByRole('region', { name: 'About planning with WaterPilot' });
+    const disclosure = guide.locator('summary');
+    await disclosure.focus();
+    await page.keyboard.press('Enter');
+    await expect(guide.getByRole('heading', { name: 'Compare your options' })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      width,
+    );
+    await disclosure.blur();
+    for (const colorScheme of ['light', 'dark'] as const) {
+      await page.emulateMedia({ colorScheme });
+      await expect(page.locator('html')).toHaveAttribute('data-theme', colorScheme);
+      if (width === 1440 && colorScheme === 'light') {
+        await page.screenshot({
+          path: test.info().outputPath('home-expanded.png'),
+          fullPage: true,
+          animations: 'disabled',
+        });
+      }
+      await guide.screenshot({
+        animations: 'disabled',
+        path: test.info().outputPath(`planning-guide-${colorScheme}.png`),
+      });
+    }
+    await disclosure.focus();
+    await page.keyboard.press('Enter');
+    await expect(guide.getByRole('heading', { name: 'Compare your options' })).toBeHidden();
   });
 }
 

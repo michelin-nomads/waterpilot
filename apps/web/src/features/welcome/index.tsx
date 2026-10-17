@@ -4,29 +4,15 @@ import { useNavigate } from 'react-router-dom';
 import { AuthFailure } from '../../auth/authErrors';
 import { useAuth } from '../../auth/authContext';
 import { Button } from '../../components/Button/Button';
-import { Icon, type IconName } from '../../components/Icon/Icon';
+import { Icon } from '../../components/Icon/Icon';
 import { LoadingRegion, Skeleton } from '../../components/Skeleton/Skeleton';
 import { ErrorState } from '../../components/StatePanel/StatePanel';
 import { useOnlineStatus } from '../../lib/useOnlineStatus';
 import { usePlanningSession } from '../../session/sessionContext';
 import { pathForSessionStage } from '../../shell/stages';
 import { toSessionMode, usePreferredPlanningMode } from '../planning/planningMode';
+import { PlanningGuide } from './PlanningGuide';
 import styles from './Welcome.module.scss';
-
-const BENEFITS: ReadonlyArray<{ icon: IconName; text: string }> = [
-  {
-    icon: 'map',
-    text: 'Understand what is known about water where you live, and what is not.',
-  },
-  {
-    icon: 'layers',
-    text: 'Compare practical plans with the assumptions behind every figure.',
-  },
-  {
-    icon: 'chart',
-    text: 'Track results against the goal you set when work starts.',
-  },
-];
 
 const GUEST_PAUSED = 'New guest sessions are paused right now. Try again later or sign in.';
 const START_FAILED = 'Your plan could not be started. Check your connection and try again.';
@@ -139,21 +125,7 @@ export default function WelcomePage() {
             </div>
           )}
           <>
-            <details className={styles.howItWorks}>
-              <summary>How WaterPilot works</summary>
-              <ul className={styles.benefits}>
-                {BENEFITS.map((benefit) => (
-                  <li key={benefit.text} className={styles.benefit}>
-                    <Icon name={benefit.icon} className={styles.benefitIcon} />
-                    <span className={styles.benefitText}>{benefit.text}</span>
-                  </li>
-                ))}
-              </ul>
-            </details>
-            <p className={styles.coverage}>
-              Coverage varies by location. We show what is known and what is not. No account is
-              needed to plan; sign in is required only to save your first report.
-            </p>
+            <PlanningGuide />
             {!online && (
               <span id={offlineNoteId} className={styles.coverage}>
                 You are offline. Starting needs a connection.

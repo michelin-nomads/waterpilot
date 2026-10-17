@@ -173,12 +173,6 @@ export function SignInForm({ onDone }: { onDone: () => void }) {
 
   return (
     <div className={[styles.body, styles.compact].join(' ')}>
-      {isGuest && (
-        <p className={styles.note}>
-          Your current planning session comes with you. If the account you sign in to already has a
-          session in progress, that session is closed and replaced by this one.
-        </p>
-      )}
       {!online && <Notice kind="offline">You are offline. Sign-in needs a connection.</Notice>}
       {failure && (
         <FailureNotice
