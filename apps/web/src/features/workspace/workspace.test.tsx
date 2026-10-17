@@ -1,6 +1,9 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within, waitFor } from '@testing-library/react';
 import type { AxiosAdapter, InternalAxiosRequestConfig } from 'axios';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
+
+import { PlacesContext } from '../location/placesContext';
+import type { PlacesAdapter } from '../location/types';
 
 import { apiClient } from '../../lib/apiClient';
 import { routes } from '../../routes';
@@ -56,9 +59,30 @@ const SOUTH = report({
 
 const originalAdapter = apiClient.defaults.adapter;
 let nodes: unknown[] = [];
+let nearbyInputs: unknown[] = [];
 const adapter: AxiosAdapter = async (config: InternalAxiosRequestConfig) => {
-  const body = JSON.parse(config.data as string) as { query: string };
+  const body = JSON.parse(config.data as string) as {
+    query: string;
+    variables: { near?: unknown };
+  };
   const op = /(?:query|mutation)\s+(\w+)/.exec(body.query)?.[1] ?? '';
+  if (op === 'NearbyCommunities') nearbyInputs.push(body.variables.near);
+  if (op === 'Communities' || op === 'NearbyCommunities')
+    return {
+      data: {
+        data: {
+          [op === 'Communities' ? 'communities' : 'nearbyCommunities']: {
+            nodes: [],
+            candidatesTruncated: false,
+            pageInfo: { hasNextPage: false, endCursor: null },
+          },
+        },
+      },
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config,
+    };
   if (op !== 'Reports') throw new Error(`unexpected operation ${op}`);
   return {
     data: { data: { reports: { nodes, pageInfo: { hasNextPage: false, endCursor: null } } } },
@@ -76,13 +100,19 @@ afterEach(() => {
   apiClient.defaults.adapter = originalAdapter;
 });
 
-function renderHome(backend = new FakeAuthBackend(permanent())) {
-  const router = createMemoryRouter(routes, { initialEntries: ['/reports'] });
+function renderHome(
+  backend = new FakeAuthBackend(permanent()),
+  entry = '/reports',
+  places: PlacesAdapter | null = null,
+) {
+  const router = createMemoryRouter(routes, { initialEntries: [entry] });
   render(
     <DisplayPreferencesProvider>
       <AuthTestProviders backend={backend}>
         <ToastProvider>
-          <RouterProvider router={router} />
+          <PlacesContext.Provider value={places}>
+            <RouterProvider router={router} />
+          </PlacesContext.Provider>
         </ToastProvider>
       </AuthTestProviders>
     </DisplayPreferencesProvider>,
@@ -169,4 +199,60 @@ describe('signed-in home', () => {
     await screen.findByRole('heading', { level: 1, name: 'Welcome to WaterPilot' });
     expect(router.state.location.pathname).toBe('/signin');
   });
+});
+
+it('searches communities around a selected place without requiring a finalized report', async () => {
+  nodes = [];
+  nearbyInputs = [];
+  const place = {
+    placeId: 'fixture:search',
+    name: 'Bengaluru',
+    latitude: '12.97',
+    longitude: '77.59',
+    countryCode: 'IN',
+    formattedAddress: null,
+    scope: 'LOCALITY' as const,
+    types: [],
+    admin: {
+      countryName: 'India',
+      admin1: null,
+      admin2: null,
+      locality: 'Bengaluru',
+      sublocality: null,
+    },
+  };
+  const places: PlacesAdapter = {
+    provider: 'fixture',
+    attribution: 'Test places',
+    hasMap: false,
+    suggest: async () => [{ id: place.placeId, primary: place.name, secondary: null, place }],
+    select: async () => place,
+    reverse: async () => [],
+    mountMap: async () => {
+      throw new Error('No map');
+    },
+  };
+  renderHome(new FakeAuthBackend(permanent()), '/communities', places);
+  fireEvent.change(await screen.findByRole('combobox', { name: 'Search for a place' }), {
+    target: { value: 'Ben' },
+  });
+  fireEvent.click(await screen.findByRole('option', { name: /Bengaluru/ }));
+  await waitFor(() =>
+    expect(nearbyInputs).toContainEqual({
+      latitude: '12.97',
+      longitude: '77.59',
+      radiusMeters: 5000,
+    }),
+  );
+  fireEvent.change(screen.getByRole('combobox', { name: 'Search radius' }), {
+    target: { value: '10000' },
+  });
+  await waitFor(() =>
+    expect(nearbyInputs).toContainEqual({
+      latitude: '12.97',
+      longitude: '77.59',
+      radiusMeters: 10000,
+    }),
+  );
+  expect(screen.queryByText('No location to search around')).not.toBeInTheDocument();
 });

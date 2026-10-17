@@ -22,6 +22,8 @@ fragment CommunityFields on Community {
     id
     name
     countryCode
+    mapLatitude
+    mapLongitude
   }
   sharedReport {
     goal

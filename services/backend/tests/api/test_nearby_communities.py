@@ -129,3 +129,36 @@ def test_invalid_searches_are_validation_errors(
 ) -> None:
     body = h.gql(NEARBY, {"near": {"latitude": lat, "longitude": lon, "radiusMeters": radius}})
     assert body["errors"][0]["extensions"]["code"] == "VALIDATION_FAILED"
+
+
+@pytest.mark.parametrize("private", [False, True])
+def test_map_reference_is_rounded_and_private_areas_are_never_exposed(
+    h: Harness, private: bool
+) -> None:
+    from waterpilot.domain.location import AreaOrigin
+    from waterpilot.domain.planning import Area
+    from waterpilot.domain.values import EvidenceQuality
+
+    area = Area(
+        id=new_id(IdKind.AREA),
+        name="Synthetic map reference",
+        country_code="IN",
+        timezone="Asia/Kolkata",
+        centroid_lat="12.9352123",
+        centroid_lon="77.6245123",
+        evidence=EvidenceQuality.SYNTHETIC,
+        created_at=NOW,
+        origin=AreaOrigin.CUSTOM if private else AreaOrigin.CATALOGUE,
+        owner_uid="alice" if private else None,
+    )
+    h.store.areas.add(area)
+    cid = place(h, "Synthetic map group", "12.9352123", "77.6245123", area_id=area.id)
+    body = h.gql(
+        "query($id: ID!) { community(id: $id) { area { name mapLatitude mapLongitude } } }",
+        {"id": cid},
+    )
+    assert "errors" not in body, body
+    projected = body["data"]["community"]["area"]
+    assert projected == (
+        None if private else {"name": area.name, "mapLatitude": "12.94", "mapLongitude": "77.62"}
+    )

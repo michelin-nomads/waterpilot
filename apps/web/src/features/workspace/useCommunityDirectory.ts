@@ -39,6 +39,7 @@ export function useCommunityDirectory() {
   const [showArchived, setShowArchived] = useState(false);
   const [radius, setRadius] = useState(5000);
   const [centreId, setCentreId] = useState<string | null>(null);
+  const [selectedCentre, setSelectedCentre] = useState<NearbyCentre | null>(null);
   const [optimistic, setOptimistic] = useState<Record<string, boolean>>({});
   const [actionError, setActionError] = useState<{ id: string; message: string } | null>(null);
 
@@ -60,7 +61,7 @@ export function useCommunityDirectory() {
     queryKeys.reports.list(ALL_REPORTS, PAGE),
     ReportsDocument,
     { filter: ALL_REPORTS, ...PAGE },
-    { enabled: nearbyMode },
+    { enabled: nearbyMode && selectedCentre === null },
   );
 
   const centres = useMemo<NearbyCentre[]>(() => {
@@ -78,7 +79,8 @@ export function useCommunityDirectory() {
     }
     return [...seen.values()];
   }, [reports.data]);
-  const centre = centres.find((item) => item.areaId === centreId) ?? centres[0] ?? null;
+  const centre =
+    selectedCentre ?? centres.find((item) => item.areaId === centreId) ?? centres[0] ?? null;
 
   const near = {
     latitude: centre?.latitude ?? '0',
@@ -104,17 +106,22 @@ export function useCommunityDirectory() {
     const term = search.trim().toLocaleLowerCase();
     return term
       ? source.filter((item) =>
-          `${item.name} ${item.description}`.toLocaleLowerCase().includes(term),
+          `${item.name} ${item.description} ${item.area?.name ?? ''} ${item.area?.countryCode ?? ''}`
+            .toLocaleLowerCase()
+            .includes(term),
         )
       : source;
   }, [all.data, memberships.data, nearby.data, nearbyMode, mineMode, search, showArchived]);
 
   const active = mineMode ? memberships : nearbyMode ? nearby : all;
-  const waitingForCentre = nearbyMode && (reports.isPending || centre === null);
+  const loadingReports = selectedCentre === null && reports.isPending;
+  const waitingForCentre = nearbyMode && (loadingReports || centre === null);
   const pending = nearbyMode
-    ? reports.isPending || (centre !== null && nearby.isPending)
+    ? loadingReports || (centre !== null && nearby.isPending)
     : active.isPending;
-  const failed = nearbyMode ? reports.isError || nearby.isError : active.isError;
+  const failed = nearbyMode
+    ? (selectedCentre === null && reports.isError) || nearby.isError
+    : active.isError;
 
   const distanceMeters = (communityId: string): number | null =>
     nearbyMode
@@ -166,7 +173,13 @@ export function useCommunityDirectory() {
     pending,
     failed,
     waitingForCentre,
-    noCentre: nearbyMode && !reports.isPending && centre === null,
+    noCentre: nearbyMode && !loadingReports && centre === null,
+    selectSearchCentre: (next: NearbyCentre) => {
+      setSelectedCentre(next);
+      setSearch('');
+      setShowArchived(false);
+      setView('nearby');
+    },
     truncated: nearbyMode && Boolean(nearby.data?.nearbyCommunities.candidatesTruncated),
     retry: () =>
       void (nearbyMode ? Promise.all([reports.refetch(), nearby.refetch()]) : active.refetch()),

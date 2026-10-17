@@ -836,7 +836,7 @@ export type PageInfoFieldsFragment = { hasNextPage: boolean, endCursor: string |
 
 export type MembershipFieldsFragment = { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string };
 
-export type CommunityFieldsFragment = { id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, contactName: string | null, contactEmail: string | null, area: { id: string, name: string, countryCode: string } | null, sharedReport: { goal: string, finalizedAt: string } | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null };
+export type CommunityFieldsFragment = { id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, contactName: string | null, contactEmail: string | null, area: { id: string, name: string, countryCode: string, mapLatitude: string, mapLongitude: string } | null, sharedReport: { goal: string, finalizedAt: string } | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null };
 
 export type CommunitiesQueryVariables = Exact<{
   filter?: CommunityFilter | null | undefined;
@@ -845,7 +845,7 @@ export type CommunitiesQueryVariables = Exact<{
 }>;
 
 
-export type CommunitiesQuery = { communities: { nodes: Array<{ id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, contactName: string | null, contactEmail: string | null, area: { id: string, name: string, countryCode: string } | null, sharedReport: { goal: string, finalizedAt: string } | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type CommunitiesQuery = { communities: { nodes: Array<{ id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, contactName: string | null, contactEmail: string | null, area: { id: string, name: string, countryCode: string, mapLatitude: string, mapLongitude: string } | null, sharedReport: { goal: string, finalizedAt: string } | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type NearbyCommunitiesQueryVariables = Exact<{
   near: NearbyCommunitiesInput;
@@ -854,14 +854,14 @@ export type NearbyCommunitiesQueryVariables = Exact<{
 }>;
 
 
-export type NearbyCommunitiesQuery = { nearbyCommunities: { candidatesTruncated: boolean, nodes: Array<{ distanceMeters: number, community: { id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, contactName: string | null, contactEmail: string | null, area: { id: string, name: string, countryCode: string } | null, sharedReport: { goal: string, finalizedAt: string } | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type NearbyCommunitiesQuery = { nearbyCommunities: { candidatesTruncated: boolean, nodes: Array<{ distanceMeters: number, community: { id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, contactName: string | null, contactEmail: string | null, area: { id: string, name: string, countryCode: string, mapLatitude: string, mapLongitude: string } | null, sharedReport: { goal: string, finalizedAt: string } | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type CommunityQueryVariables = Exact<{
   id: string;
 }>;
 
 
-export type CommunityQuery = { community: { id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, contactName: string | null, contactEmail: string | null, area: { id: string, name: string, countryCode: string } | null, sharedReport: { goal: string, finalizedAt: string } | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null } | null };
+export type CommunityQuery = { community: { id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, contactName: string | null, contactEmail: string | null, area: { id: string, name: string, countryCode: string, mapLatitude: string, mapLongitude: string } | null, sharedReport: { goal: string, finalizedAt: string } | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null } | null };
 
 export type CommunityMembersQueryVariables = Exact<{
   id: string;
@@ -878,7 +878,7 @@ export type MyMembershipsQueryVariables = Exact<{
 }>;
 
 
-export type MyMembershipsQuery = { myMemberships: { nodes: Array<{ id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string, community: { id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, contactName: string | null, contactEmail: string | null, area: { id: string, name: string, countryCode: string } | null, sharedReport: { goal: string, finalizedAt: string } | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type MyMembershipsQuery = { myMemberships: { nodes: Array<{ id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string, community: { id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, contactName: string | null, contactEmail: string | null, area: { id: string, name: string, countryCode: string, mapLatitude: string, mapLongitude: string } | null, sharedReport: { goal: string, finalizedAt: string } | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type CommunitySourceReportsQueryVariables = Exact<{
   filter?: ReportFilter | null | undefined;
@@ -894,7 +894,7 @@ export type CreateCommunityMutationVariables = Exact<{
 }>;
 
 
-export type CreateCommunityMutation = { createCommunity: { community: { id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, contactName: string | null, contactEmail: string | null, area: { id: string, name: string, countryCode: string } | null, sharedReport: { goal: string, finalizedAt: string } | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
+export type CreateCommunityMutation = { createCommunity: { community: { id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, contactName: string | null, contactEmail: string | null, area: { id: string, name: string, countryCode: string, mapLatitude: string, mapLongitude: string } | null, sharedReport: { goal: string, finalizedAt: string } | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
 export type JoinCommunityMutationVariables = Exact<{
   input: JoinCommunityInput;
@@ -915,7 +915,7 @@ export type ArchiveCommunityMutationVariables = Exact<{
 }>;
 
 
-export type ArchiveCommunityMutation = { archiveCommunity: { community: { id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, contactName: string | null, contactEmail: string | null, area: { id: string, name: string, countryCode: string } | null, sharedReport: { goal: string, finalizedAt: string } | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
+export type ArchiveCommunityMutation = { archiveCommunity: { community: { id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, contactName: string | null, contactEmail: string | null, area: { id: string, name: string, countryCode: string, mapLatitude: string, mapLongitude: string } | null, sharedReport: { goal: string, finalizedAt: string } | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
 export type FundingMatchFieldsFragment = { id: string, version: number, sessionId: string, planOptionId: string, metCount: number, notMetCount: number, needsCheckCount: number, window: WindowStatus, status: FundingMatchStatus, rulesVersion: string, eligibility: EligibilityStatus, relevanceOrder: number | null, rankingStatus: string, rankingReason: string, eligibilityEvidence: Array<{ criterionId: string, status: CriterionStatus, reason: string }>, results: Array<{ criterionId: string, status: CriterionStatus, reason: string }>, scheme: { id: string, name: string, funder: string, summary: string, currency: string, opensOn: string | null, closesOn: string | null, sourceUrl: string, lastVerifiedAt: string, deadlineAt: string | null, deadlineTimezone: string | null, sourceHash: string | null, status: CatalogueStatus, officialSource: boolean, geography: Array<string>, applicantCategories: Array<string>, interventions: Array<string>, amountRules: string | null, evidence: EvidenceQuality, requiredDocuments: Array<string>, maxAmount: { minorUnits: string, currency: string, exponent: number } | null, criteria: Array<{ id: string, text: string, machineCheckable: boolean }> } };
 
@@ -1462,6 +1462,8 @@ export const CommunityFieldsFragmentDoc = new TypedDocumentString(`
     id
     name
     countryCode
+    mapLatitude
+    mapLongitude
   }
   sharedReport {
     goal
@@ -2934,6 +2936,8 @@ fragment CommunityFields on Community {
     id
     name
     countryCode
+    mapLatitude
+    mapLongitude
   }
   sharedReport {
     goal
@@ -2985,6 +2989,8 @@ fragment CommunityFields on Community {
     id
     name
     countryCode
+    mapLatitude
+    mapLongitude
   }
   sharedReport {
     goal
@@ -3023,6 +3029,8 @@ fragment CommunityFields on Community {
     id
     name
     countryCode
+    mapLatitude
+    mapLongitude
   }
   sharedReport {
     goal
@@ -3099,6 +3107,8 @@ fragment CommunityFields on Community {
     id
     name
     countryCode
+    mapLatitude
+    mapLongitude
   }
   sharedReport {
     goal
@@ -3178,6 +3188,8 @@ fragment CommunityFields on Community {
     id
     name
     countryCode
+    mapLatitude
+    mapLongitude
   }
   sharedReport {
     goal
@@ -3289,6 +3301,8 @@ fragment CommunityFields on Community {
     id
     name
     countryCode
+    mapLatitude
+    mapLongitude
   }
   sharedReport {
     goal

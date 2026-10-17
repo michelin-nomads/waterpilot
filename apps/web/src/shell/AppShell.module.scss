@@ -47,11 +47,10 @@
   margin: 0 auto;
   padding: var(--wp-space-2) var(--wp-space-4);
 
-  // Brand at the start, Reports and Communities in the true centre, the controls at the
-  // right end: the outer columns are equal, so the middle one stays centred.
-  @include desktop-up {
+  // Keep navigation beside the right-hand controls; the brand fills the remaining space.
+  @include tablet-up {
     grid-template-areas: 'start nav end';
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) auto auto;
   }
 }
 
