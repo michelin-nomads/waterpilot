@@ -1,6 +1,7 @@
 """Application configuration with fail-closed startup validation.
 
-Local mode must never fall through to real cloud services; pilot mode must never
+Local mode must never fall through to real cloud services without an explicit
+service-specific opt-in; pilot mode must never
 ship emulator/test settings. Both are enforced here and validated at startup.
 
 Emulator destinations are read from both the WaterPilot names (``WP_*``) and the
@@ -13,6 +14,7 @@ are set they must agree; the resolved values (``firestore_emulator``,
 from __future__ import annotations
 
 import ipaddress
+import re
 from datetime import timedelta
 from decimal import Decimal, InvalidOperation
 from enum import StrEnum
@@ -20,7 +22,7 @@ from functools import lru_cache
 from typing import Literal
 from urllib.parse import urlsplit
 
-from pydantic import AliasChoices, Field, SecretStr, model_validator
+from pydantic import AliasChoices, Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from waterpilot.domain.accounts import ClaimPolicy
@@ -118,16 +120,17 @@ class Settings(BaseSettings):
     # Local worker loop (`npm run dev:worker`).
     local_worker_poll_seconds: float = Field(default=1.0, gt=0, le=60)
     local_worker_reconcile_seconds: float = Field(default=30.0, gt=0, le=3600)
-    # Server-only Vertex AI (ADR 0015). AI is OFF by default and never runs in local mode:
-    # the model provider is only ever the disabled/fake one locally, so no billable call
-    # can happen here. In a pilot the gateway builds the Vertex provider through ADC and a
-    # dedicated runtime service account. Every field below is a proposed, overridable bound.
+    # Server-only Vertex AI. Emulator identity/storage remain on gcp_project.
+    # Local live inference requires a separate explicit opt-in and real Vertex project,
+    # plus the existing gateway enablement, budget, tester and kill-switch controls.
+    local_vertex_enabled: bool = False
+    vertex_project: str | None = None
     ai_enabled: bool = False
     area_assumptions_enabled: bool = False
     area_assumptions_fake: bool = False
     agent_fake_inference: bool = False
-    """Owner opt-in. Even when true, local mode has no live provider, and a budget must be
-    set before any spend is permitted."""
+    """Owner opt-in. Local live inference additionally requires local_vertex_enabled.
+    A budget must be set before any spend is permitted."""
     ai_kill_switch: bool = False
     """Global server kill switch: when true, AI is unavailable to everyone regardless of
     every other setting. Flip this to stop all model use at once."""
@@ -152,6 +155,12 @@ class Settings(BaseSettings):
     ai_max_tool_repeats: int = Field(default=3, ge=1, le=50)
     ai_max_output_tokens: int = Field(default=1024, ge=1, le=32_768)
     ai_max_input_tokens: int = Field(default=48_000, ge=1, le=1_000_000)
+
+    @field_validator("vertex_project", mode="before")
+    @classmethod
+    def _optional_vertex_project(cls, value: object) -> object:
+        # A blank placeholder in .env is safe and does not select a live project.
+        return value.strip() or None if isinstance(value, str) else value
 
     @property
     def is_pilot(self) -> bool:
@@ -187,6 +196,18 @@ class Settings(BaseSettings):
         if self.is_pilot and self.agent_fake_inference:
             return ["WP_AGENT_FAKE_INFERENCE is local-only"]
         problems: list[str] = []
+        if self.vertex_project is not None and (
+            self.vertex_project.startswith("demo-")
+            or not re.fullmatch(r"[a-z][a-z0-9-]{4,28}[a-z0-9]", self.vertex_project)
+        ):
+            problems.append("WP_VERTEX_PROJECT must be a real Google Cloud project ID")
+        if self.local_vertex_enabled:
+            if self.is_pilot:
+                problems.append("WP_LOCAL_VERTEX_ENABLED is local-only")
+            if not self.vertex_project:
+                problems.append("WP_LOCAL_VERTEX_ENABLED requires WP_VERTEX_PROJECT")
+            if self.agent_fake_inference or self.area_assumptions_fake:
+                problems.append("WP_LOCAL_VERTEX_ENABLED cannot be combined with fake inference")
         if self.ai_model not in MODEL_CATALOGUE:
             problems.append(
                 f"WP_AI_MODEL {self.ai_model!r} is not a verified model; one of "

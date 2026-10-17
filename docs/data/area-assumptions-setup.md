@@ -160,3 +160,14 @@ scientific review and automatic adoption of estimates are separate future work.
 Official references: [Vertex quickstart](https://cloud.google.com/vertex-ai/generative-ai/docs/start/quickstart),
 [Google Gen AI SDK](https://github.com/googleapis/python-genai), and
 [structured output](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/samples/generativeaionvertexai-gemini-controlled-generation-response-schema-2).
+
+## One-file local Vertex opt-in (2026-10-17)
+
+The owner-authorized local configuration now supports a separate `WP_VERTEX_PROJECT`
+in the same backend `.env`, alongside emulator `WP_GCP_PROJECT=demo-waterpilot`.
+Default local inference remains disabled/fake. The explicit
+`WP_LOCAL_VERTEX_ENABLED` exception and existing AI enablement, budget, tester and
+kill-switch controls are described in [the current setup guide](local-vertex-setup.md).
+This supersedes earlier blanket statements above that local mode can never select
+Vertex. It does not complete live ADK tool calling or turn illustrative estimates into
+reviewed location data. No live verification was performed for this configuration change.

@@ -168,3 +168,78 @@ def test_explicit_kwargs_validated_like_env() -> None:
 )
 def test_parse_emulator_host(value: str, expected: tuple[str, int]) -> None:
     assert parse_emulator_host(value) == expected
+
+
+@pytest.mark.parametrize(
+    ("overrides", "build_live"),
+    [
+        ({"WP_VERTEX_PROJECT": ""}, False),
+        ({"WP_VERTEX_PROJECT": "waterpilot-models"}, False),
+        ({"WP_LOCAL_VERTEX_ENABLED": "true", "WP_AI_ENABLED": "false"}, False),
+        ({"WP_LOCAL_VERTEX_ENABLED": "true", "WP_AI_KILL_SWITCH": "true"}, False),
+        ({"WP_LOCAL_VERTEX_ENABLED": "true", "WP_AI_DAILY_BUDGET_USD": ""}, False),
+        ({"WP_LOCAL_VERTEX_ENABLED": "true"}, True),
+    ],
+)
+def test_local_vertex_selection_keeps_emulator_identity_and_requires_all_gates(
+    load_settings: LoadSettings,
+    monkeypatch: pytest.MonkeyPatch,
+    overrides: dict[str, str],
+    build_live: bool,
+) -> None:
+    from waterpilot.adapters.factory import build_model_provider
+    from waterpilot.application.ports import NoModelProvider
+
+    calls: list[tuple[str, str, str]] = []
+
+    def vertex(*, project: str, location: str, model_id: str) -> NoModelProvider:
+        calls.append((project, location, model_id))
+        return NoModelProvider(model_id)
+
+    monkeypatch.setattr("waterpilot.adapters.model_vertex.VertexModelProvider", vertex)
+    values = LOCAL_OK | {
+        "WP_VERTEX_PROJECT": "waterpilot-models",
+        "WP_AI_ENABLED": "true",
+        "WP_AI_DAILY_BUDGET_USD": "1",
+        "WP_AI_INVITED_TESTERS": '["tester"]',
+    } | overrides
+    if values.get("WP_AI_DAILY_BUDGET_USD") == "":
+        del values["WP_AI_DAILY_BUDGET_USD"]
+    settings = load_settings(values)
+    build_model_provider(settings)
+    assert settings.gcp_project == "demo-waterpilot"
+    assert settings.use_emulators
+    assert calls == (
+        [("waterpilot-models", settings.ai_location, settings.ai_model)] if build_live else []
+    )
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"WP_LOCAL_VERTEX_ENABLED": "true"},
+        {"WP_VERTEX_PROJECT": "demo-live-project"},
+        {"WP_VERTEX_PROJECT": "not a project id"},
+        PILOT_OK | {
+            "WP_LOCAL_VERTEX_ENABLED": "true",
+            "WP_VERTEX_PROJECT": "waterpilot-models",
+            "WP_AUTH_EMULATOR_HOST": "",
+            "WP_FIRESTORE_EMULATOR_HOST": "",
+        },
+        {
+            "WP_LOCAL_VERTEX_ENABLED": "true",
+            "WP_VERTEX_PROJECT": "waterpilot-models",
+            "WP_AGENT_FAKE_INFERENCE": "true",
+        },
+        {
+            "WP_LOCAL_VERTEX_ENABLED": "true",
+            "WP_VERTEX_PROJECT": "waterpilot-models",
+            "WP_AREA_ASSUMPTIONS_FAKE": "true",
+        },
+    ],
+)
+def test_invalid_local_vertex_opt_ins_fail_closed(
+    load_settings: LoadSettings, overrides: dict[str, str]
+) -> None:
+    with pytest.raises(ConfigError, match="WP_(LOCAL_VERTEX_ENABLED|VERTEX_PROJECT)"):
+        load_settings(LOCAL_OK | overrides)

@@ -1,9 +1,10 @@
 """Server-only Gemini on Vertex AI, through Application Default Credentials (ADR 0015).
 
 This adapter is the ONLY place a live model is called, and it is constructed only in a
-pilot runtime with AI explicitly enabled and a budget configured (see ``adapters.factory``
-and ``config``). It is never built or imported in local or test mode, so no local run can
-make a billable call. The ``google-genai`` SDK is imported lazily for the same reason.
+pilot runtime or explicitly opted-in local runtime with AI enabled, a budget configured
+and the kill switch off (see ``adapters.factory`` and ``config``). Default local mode
+never constructs it; local live inference uses a separate real Vertex project. The
+``google-genai`` SDK is imported lazily for the same reason.
 
 Credentials: the process uses Application Default Credentials for a dedicated runtime
 service account (never a developer's user credentials and never an API key). Vertex is

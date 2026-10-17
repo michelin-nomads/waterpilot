@@ -170,11 +170,11 @@ def build_identity_verifier(
 
 
 def build_model_provider(settings: Settings) -> ModelProvider:
-    """Local mode has NO live model: the provider is always the disabled one, so no local
-    run can make a billable call. In a pilot with AI explicitly enabled, a budget set and
-    the kill switch off, build the Vertex adapter through Application Default Credentials
-    for the dedicated runtime service account."""
-    if not settings.is_pilot:
+    """Disabled/fake by default locally; live Vertex requires the explicit local opt-in.
+    Identity and storage keep the emulator project. Live inference uses dedicated ADC
+    and the separate Vertex project, always through the existing budget gateway.
+    """
+    if not settings.is_pilot and not settings.local_vertex_enabled:
         if settings.agent_fake_inference or settings.area_assumptions_fake:
             from waterpilot.adapters.model_agent_fake import LocalAgentProvider
 
@@ -187,7 +187,7 @@ def build_model_provider(settings: Settings) -> ModelProvider:
     from waterpilot.adapters.model_vertex import VertexModelProvider
 
     return VertexModelProvider(
-        project=settings.gcp_project,
+        project=settings.vertex_project or settings.gcp_project,
         location=settings.ai_location,
         model_id=settings.ai_model,
     )
