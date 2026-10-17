@@ -9,15 +9,15 @@ import pytest
 
 from conftest import LOCAL_OK, PILOT_OK, LoadSettings
 from graphql_harness import NOW, Harness, make_harness
-from waterlens.adapters.catalogue_synthetic import SYNTHETIC_AREA_ID
-from waterlens.adapters.factory import build_model_provider
-from waterlens.adapters.model_agent_fake import LocalAgentProvider
-from waterlens.adapters.model_fake import FakeModelProvider, response
-from waterlens.application.services.common import AiConfig
-from waterlens.config import ConfigError
-from waterlens.domain.ai import AiLimits
-from waterlens.domain.ids import IdKind, new_id
-from waterlens.domain.planning import PlanningMode, PlanningSession
+from waterpilot.adapters.catalogue_synthetic import SYNTHETIC_AREA_ID
+from waterpilot.adapters.factory import build_model_provider
+from waterpilot.adapters.model_agent_fake import LocalAgentProvider
+from waterpilot.adapters.model_fake import FakeModelProvider, response
+from waterpilot.application.services.common import AiConfig
+from waterpilot.config import ConfigError
+from waterpilot.domain.ai import AiLimits
+from waterpilot.domain.ids import IdKind, new_id
+from waterpilot.domain.planning import PlanningMode, PlanningSession
 
 PATH = "/v1/area-assumptions"
 HEADERS = {"authorization": "Bearer t-alice"}
@@ -148,10 +148,10 @@ def test_invalid_model_output_fails_without_applying_or_redispatching(
 
 
 def test_fake_setup_is_explicit_and_rejected_in_pilot(load_settings: LoadSettings) -> None:
-    settings = load_settings({**LOCAL_OK, "WL_AREA_ASSUMPTIONS_FAKE": "true"})
+    settings = load_settings({**LOCAL_OK, "WP_AREA_ASSUMPTIONS_FAKE": "true"})
     assert isinstance(build_model_provider(settings), LocalAgentProvider)
-    with pytest.raises(ConfigError, match="WL_AREA_ASSUMPTIONS_FAKE"):
-        load_settings({**PILOT_OK, "WL_AREA_ASSUMPTIONS_FAKE": "true"})
+    with pytest.raises(ConfigError, match="WP_AREA_ASSUMPTIONS_FAKE"):
+        load_settings({**PILOT_OK, "WP_AREA_ASSUMPTIONS_FAKE": "true"})
 
 
 def test_ambiguous_provider_failure_is_charged_conservatively_and_not_replayed(

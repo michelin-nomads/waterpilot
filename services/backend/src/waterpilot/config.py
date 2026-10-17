@@ -262,7 +262,7 @@ class Settings(BaseSettings):
         if self.local_google_maps_enabled:
             problems.append("WP_LOCAL_GOOGLE_MAPS_ENABLED is local-only")
         if self.area_assumptions_fake:
-            problems.append("WL_AREA_ASSUMPTIONS_FAKE must be false in pilot mode")
+            problems.append("WP_AREA_ASSUMPTIONS_FAKE must be false in pilot mode")
         if self.use_emulators:
             problems.append("WP_USE_EMULATORS must be false")
         for name, value in (

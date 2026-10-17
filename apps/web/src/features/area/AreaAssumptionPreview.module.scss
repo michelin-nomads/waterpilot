@@ -5,7 +5,7 @@
 .result {
   display: grid;
   min-width: 0;
-  gap: var(--wl-card-section-gap);
+  gap: var(--wp-card-section-gap);
 }
 
 .panel {
@@ -19,8 +19,8 @@
 
 .result th,
 .result td {
-  padding: var(--wl-space-3);
+  padding: var(--wp-space-3);
   text-align: left;
-  border-bottom: 1px solid var(--wl-color-border);
+  border-bottom: 1px solid var(--wp-color-border);
   overflow-wrap: anywhere;
 }

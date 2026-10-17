@@ -510,7 +510,7 @@ def test_values_entered_for_a_previous_location_do_not_count_for_the_new_one() -
 def test_explicit_local_maps_accepts_browser_google_without_server_calls(
     load_settings: LoadSettings,
 ) -> None:
-    from waterlens.application.ports import PlaceSearchUnavailable
+    from waterpilot.application.ports import PlaceSearchUnavailable
 
     settings = load_settings({**LOCAL_OK, "WP_LOCAL_GOOGLE_MAPS_ENABLED": "true"})
     provider = build_place_search(settings)

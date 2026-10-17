@@ -6,11 +6,11 @@ from pathlib import Path
 
 import pytest
 
-from waterlens.application.calculations import CalculationInputs, calculate_csv, calculation_json
-from waterlens.cli.calculate import main
-from waterlens.domain.baseline import Reason
-from waterlens.domain.options import Status
-from waterlens.domain.sources import SourceManifest
+from waterpilot.application.calculations import CalculationInputs, calculate_csv, calculation_json
+from waterpilot.cli.calculate import main
+from waterpilot.domain.baseline import Reason
+from waterpilot.domain.options import Status
+from waterpilot.domain.sources import SourceManifest
 
 PACK = Path(__file__).resolve().parents[3] / "docs/data/examples/group1-synthetic"
 

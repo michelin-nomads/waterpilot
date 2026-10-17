@@ -5,8 +5,8 @@ from unittest.mock import patch
 import pytest
 from google.genai import errors
 
-from waterlens.adapters.model_vertex import VertexModelProvider
-from waterlens.application.ports import ModelCallError, ModelRequest
+from waterpilot.adapters.model_vertex import VertexModelProvider
+from waterpilot.application.ports import ModelCallError, ModelRequest
 
 
 def test_sdk_retries_are_disabled_and_sdk_errors_are_translated() -> None:
@@ -15,7 +15,7 @@ def test_sdk_retries_are_disabled_and_sdk_errors_are_translated() -> None:
             429, {"error": {"message": "private provider detail"}}
         )
         provider = VertexModelProvider(
-            project="waterlens-test-project", location="global", model_id="gemini-2.5-flash"
+            project="waterpilot-test-project", location="global", model_id="gemini-2.5-flash"
         )
         with pytest.raises(ModelCallError) as caught:
             provider.generate(

@@ -222,7 +222,7 @@ describe('loadEnv — maps', () => {
     const configured = loadEnv(live);
     expect(configured.maps).toEqual({ provider: 'google', apiKey: KEY, mapId: 'test-map' });
     expect(configured.useEmulators).toBe(true);
-    expect(configured.firebase.projectId).toBe('demo-waterlens');
+    expect(configured.firebase.projectId).toBe('demo-waterpilot');
     expect(() => loadEnv({ ...live, VITE_USE_EMULATORS: 'false' })).toThrow(/requires emulators/);
     expect(() => loadEnv({ ...live, VITE_API_BASE_URL: 'https://api.example.com' })).toThrow(
       /loopback/,

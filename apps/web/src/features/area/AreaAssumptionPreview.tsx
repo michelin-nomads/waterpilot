@@ -40,7 +40,7 @@ export function AreaAssumptionPreview({ session }: { session: SessionState }) {
   const [busy, setBusy] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const storageKey = `waterlens:area-assumption:${session.id}`;
+  const storageKey = `waterpilot:area-assumption:${session.id}`;
   const path = '/v1/area-assumptions';
 
   useEffect(() => {

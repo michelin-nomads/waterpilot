@@ -71,7 +71,6 @@ export function SignInForm({ onDone }: { onDone: () => void }) {
   const [busy, setBusy] = useState<Busy>(null);
   const [failure, setFailure] = useState<AuthFailure | null>(null);
   const emailRef = useRef<HTMLInputElement>(null);
-  const isGuest = auth.user?.kind === 'guest';
 
   const run = async (method: AuthMethod, which: Exclude<Busy, null>) => {
     if (busy) return;
