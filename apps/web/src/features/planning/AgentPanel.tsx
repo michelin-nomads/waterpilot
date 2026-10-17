@@ -12,7 +12,7 @@ import { usePlanningSession } from '../../session/sessionContext';
 
 const AgentGoalCheck = lazy(() => import('../goals/AgentGoalCheck'));
 const AgentScenario = lazy(() => import('../plans/AgentScenario'));
-const AgentConversation = lazy(() => import('./AgentConversation'));
+import AgentConversation from './AgentConversation';
 
 type AiStatusValue = AiStatusQuery['aiStatus'];
 
@@ -107,26 +107,28 @@ export function AgentPanel({
   if (query.data?.aiStatus.available && view?.id && enabledSession !== view.id)
     setEnabledSession(view.id);
   const keepConversation = query.data?.aiStatus.available || (view && enabledSession === view.id);
-  const content = panelContent(query.data?.aiStatus);
+  const aiStatus = query.data?.aiStatus;
+  const content = panelContent(aiStatus);
   return (
     <div className={styles.agent} data-ai-status={content.state}>
       <div className={styles.header}>
-        <Icon name="sparkle" />
-        <h2 className={styles.title}>WaterPilot Agent</h2>
-        <Badge tone={content.badgeTone}>{content.badge}</Badge>
+        <div className={styles.headerTitle}>
+          <Icon name="sparkle" size="md" className={styles.sparkleIcon} />
+          <h2 className={styles.title}>WaterPilot Agent</h2>
+        </div>
+        <div className={styles.headerBadges}>
+          {aiStatus?.modelId && (
+            <span className={styles.modelTag}>{aiStatus.modelId}</span>
+          )}
+          <Badge tone={content.badgeTone}>{content.badge}</Badge>
+        </div>
       </div>
       {keepConversation ? (
-        <>
-          <h3>{content.title}</h3>
-          <p>{content.body}</p>
-          <p className={styles.guidance}>You can also use the workspace directly.</p>
-          <Suspense fallback={<p role="status">Opening conversation…</p>}>
-            <AgentConversation
-              onUseTraditional={onUseTraditional}
-              onFocusWorkspace={onFocusWorkspace}
-            />
-          </Suspense>
-        </>
+        <AgentConversation
+          aiStatus={aiStatus}
+          onUseTraditional={onUseTraditional}
+          onFocusWorkspace={onFocusWorkspace}
+        />
       ) : (
         <EmptyState
           icon="sparkle"
