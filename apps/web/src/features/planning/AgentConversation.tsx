@@ -14,6 +14,22 @@ import {
 import styles from './AgentPanel.module.scss';
 import { AgentResultData } from './AgentResultData';
 
+const friendlyToolTitle = (name?: string) => {
+  if (!name) return 'Activity';
+  const custom: Record<string, string> = {
+    resolve_location: 'Location Search',
+    confirm_location: 'Selected Location',
+    inspect_planning_state: 'Plan Overview',
+    inspect_coverage: 'Rainfall & Coverage',
+    inspect_baseline: 'Water Baseline',
+    record_manual_input: 'Recorded Measurement',
+    update_site_profile: 'Site Profile',
+    compare_options: 'Intervention Options',
+    find_funding: 'Funding Opportunities',
+  };
+  return custom[name] ?? name.replaceAll('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+};
+
 export default function AgentConversation({
   aiStatus,
   onUseTraditional: _onUseTraditional,
@@ -254,7 +270,13 @@ export default function AgentConversation({
           const prepared = data.requiresConfirmation === true;
           return (
             <article key={event.id} className={styles.result}>
-              <h3>{event.name?.replaceAll('_', ' ')}</h3>
+              <div className={styles.resultHeader}>
+                <div className={styles.toolBadge}>
+                  <Icon name="sparkle" size="sm" />
+                  <h3>{friendlyToolTitle(event.name)}</h3>
+                </div>
+                {prepared && <span className={styles.preparedBadge}>Action proposal</span>}
+              </div>
               {event.result?.error ? (
                 <p role="alert">{event.result.error.message}</p>
               ) : (

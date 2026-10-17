@@ -180,12 +180,39 @@
   padding: var(--wp-space-3);
   margin: 0;
 
-  > h3 {
-    font-size: var(--wp-text-sm);
+  .resultHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--wp-space-2);
+  }
+
+  .toolBadge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--wp-color-accent);
+
+    > h3 {
+      font-size: var(--wp-text-xs);
+      font-weight: 600;
+      color: var(--wp-color-text);
+      margin: 0;
+      letter-spacing: 0.01em;
+    }
+  }
+
+  .preparedBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: var(--wp-radius-pill);
+    background: var(--wp-color-accent-soft);
+    color: var(--wp-color-accent);
+    font-size: 11px;
     font-weight: 600;
-    color: var(--wp-color-text);
-    margin: 0;
-    text-transform: capitalize;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
   }
 
   > p {
