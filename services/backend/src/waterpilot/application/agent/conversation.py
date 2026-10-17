@@ -8,8 +8,11 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import time
 import uuid
+
+logger = logging.getLogger(__name__)
 from collections.abc import Callable
 from contextlib import aclosing
 from contextvars import copy_context
@@ -369,7 +372,8 @@ class ConversationAgent:
             await asyncio.to_thread(
                 self.emit, ctx, rid, "checkpoint", message="Continue from the saved results"
             )
-        except Exception:
+        except Exception as err:
+            logger.exception("Agent run %s encountered error: %s", rid, err)
             current = await asyncio.to_thread(self.get, ctx, rid)
             if current.status is AgentRunStatus.RUNNING:
                 # Recovery is explicit. Never replay a dispatched model call automatically.
