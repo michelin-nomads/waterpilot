@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
 import { Button, Icon, VisuallyHidden } from '../../components';
 import { type AiStatusQuery } from '../../graphql/generated/graphql';
 import { usePlanningSession } from '../../session/sessionContext';
@@ -13,6 +12,7 @@ import {
 } from './agentTransport';
 import styles from './AgentPanel.module.scss';
 import { AgentResultData } from './AgentResultData';
+import { FormattedMessage } from './FormattedMessage';
 
 const friendlyToolTitle = (name?: string) => {
   if (!name) return 'Activity';
@@ -33,7 +33,7 @@ const friendlyToolTitle = (name?: string) => {
 export default function AgentConversation({
   aiStatus,
   onUseTraditional: _onUseTraditional,
-  onFocusWorkspace,
+  onFocusWorkspace: _onFocusWorkspace,
 }: {
   aiStatus?: AiStatusQuery['aiStatus'];
   onUseTraditional: () => void;
@@ -41,7 +41,6 @@ export default function AgentConversation({
 }) {
   const { view, coordinator, state } = usePlanningSession();
   const client = useQueryClient();
-  const navigate = useNavigate();
   const sid = view?.id;
   const [run, setRun] = useState<AgentRun | null>(null);
   const [input, setInput] = useState('');
@@ -260,8 +259,14 @@ export default function AgentConversation({
                 <div
                   className={event.role === 'user' ? styles.userMessage : styles.assistantMessage}
                 >
-                  {event.role === 'user' && <span className={styles.userPrefix}>You: </span>}
-                  {event.text}
+                  {event.role === 'user' ? (
+                    <>
+                      <span className={styles.userPrefix}>You: </span>
+                      {event.text}
+                    </>
+                  ) : (
+                    <FormattedMessage text={event.text ?? ''} />
+                  )}
                 </div>
               </div>
             );
@@ -282,20 +287,8 @@ export default function AgentConversation({
               ) : (
                 <AgentResultData value={data} />
               )}
-              <div className={styles.resultActions}>
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    navigate(event.action ?? '/area');
-                    onFocusWorkspace?.();
-                    requestAnimationFrame(() =>
-                      document.querySelector<HTMLElement>('main h1, h1')?.focus(),
-                    );
-                  }}
-                >
-                  Edit in workspace
-                </Button>
-                {prepared && (
+              {prepared && (
+                <div className={styles.resultActions}>
                   <Button
                     disabled={busy}
                     onClick={() => {
@@ -325,8 +318,8 @@ export default function AgentConversation({
                   >
                     Confirm: {String(data.summary ?? data.kind)}
                   </Button>
-                )}
-              </div>
+                </div>
+              )}
             </article>
           );
         })}
@@ -485,6 +478,17 @@ function getContextualSuggestions(events: AgentEvent[]): string[] {
       'Explore intervention options',
       'Search verified government funding schemes',
     ];
+  }
+  if (lastResult.name === 'resolve_location') {
+    const rawCandidates = (lastResult.result?.result as { candidates?: Array<{ name?: string }> })
+      ?.candidates;
+    const candidates = Array.isArray(rawCandidates) ? rawCandidates : [];
+    if (candidates.length > 0) {
+      return candidates
+        .slice(0, 3)
+        .map((c) => (c.name ? `Confirm ${c.name}` : ''))
+        .filter(Boolean);
+    }
   }
   const toolName = (lastResult.name ?? '').toLowerCase();
   if (toolName.includes('baseline') || toolName.includes('location')) {

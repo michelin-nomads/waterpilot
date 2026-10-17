@@ -57,7 +57,7 @@ beforeEach(() => {
 });
 
 it('can send after a saved edit, receives partial results, and focuses the authoritative workspace', async () => {
-  const { focus } = mount();
+  mount();
   await waitFor(() => expect(transport.fetch).toHaveBeenCalled());
   fireEvent.change(screen.getByLabelText('Message'), { target: { value: 'Check rainfall' } });
   expect(screen.getByRole('button', { name: /^Send$/ })).toBeEnabled();
@@ -80,8 +80,8 @@ it('can send after a saved edit, receives partial results, and focuses the autho
       },
     }),
   );
-  fireEvent.click(screen.getByRole('button', { name: 'Edit in workspace' }));
-  expect(focus).toHaveBeenCalledOnce();
+  expect(screen.getByText('Rainfall & Coverage')).toBeInTheDocument();
+  expect(screen.getByText('Rainfall')).toBeInTheDocument();
   expect(transport.command).toHaveBeenCalledOnce();
 });
 

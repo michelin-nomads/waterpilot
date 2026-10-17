@@ -6,7 +6,7 @@ const label = (key: string) =>
     .replace(/\b\w/g, (c) => c.toUpperCase());
 
 const hidden =
-  /^(id|.*Id|.*Ids|.*_id|.*_ids|uid|owner_uid|ownerUid|created_at|createdAt|updated_at|updatedAt|inputs_revision|inputsRevision|revision|version|mode|status|baseline_reviewed|baselineReviewed|confirmation_token|confirmationToken|parameters|requires_confirmation|requiresConfirmation)$/i;
+  /^(id|.*Id|.*Ids|.*_id|.*_ids|uid|owner_uid|ownerUid|created_at|createdAt|updated_at|updatedAt|inputs_revision|inputsRevision|revision|version|mode|status|baseline_reviewed|baselineReviewed|confirmation_token|confirmationToken|parameters|requires_confirmation|requiresConfirmation|needsClarification|needs_clarification|question|query)$/i;
 
 export function AgentResultData({ value, depth = 0 }: { value: unknown; depth?: number }) {
   if (value === null || value === undefined) return <span>Unavailable</span>;
