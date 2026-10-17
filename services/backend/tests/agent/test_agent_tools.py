@@ -560,3 +560,33 @@ def test_a_current_finalize_confirmation_routes_to_the_report_service() -> None:
     )
     with _CodeCheck(ErrorCode.PRECONDITION_FAILED):
         w.actions.confirm(_ctx(OWNER), current)
+
+
+def test_confirm_location_binds_searched_place_and_normalizes_extent() -> None:
+    w = World(with_area=False)
+    assert w.session.area_id is None
+    res = w.runtime.call(
+        "confirm_location",
+        {
+            "name": "Millers The Memoir",
+            "formatted_address": "2358, 24th Main Rd, HSR Layout, Bengaluru",
+            "latitude": "12.9141221",
+            "longitude": "77.6491272",
+            "country_code": "IN",
+            "place_id": f"{w.services.deps.places.provider}:millers",
+            "extent": "reviewed_boundary",  # Must be auto-normalized to reference_point
+            "origin": "place_search",
+        },
+        prior_step=0,
+    )
+    assert res.data["name"] == "Millers The Memoir"
+    assert res.data["extent"] == "reference_point"
+    assert res.data["origin"] == "place_search"
+    session = w.services.sessions.get(_ctx(OWNER), w.session.id)
+    assert session.area_id == res.data["id"]
+
+    # inspect_coverage and inspect_baseline now succeed without needing location setup
+    cov = w.runtime.call("inspect_coverage", {}, prior_step=w.reload_run().step_seq)
+    assert cov.data["location"]["name"] == "Millers The Memoir"
+    base = w.runtime.call("inspect_baseline", {}, prior_step=w.reload_run().step_seq)
+    assert base.data["location"]["name"] == "Millers The Memoir"

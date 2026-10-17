@@ -379,7 +379,12 @@ class FirestoreCatalogue[T: BaseModel](_Collection[T]):
     """Reference data written by trusted importers/engines, read by services."""
 
     def add(self, item: T) -> None:
-        self._client.collection(self.name).document(str(getattr(item, "id"))).set(  # noqa: B009
+        doc_id = str(getattr(item, "id"))  # noqa: B009
+        uow = _active.get()
+        if uow is not None:
+            uow.write((self.name, doc_id), "set", self._encode(item))
+            return
+        self._client.collection(self.name).document(doc_id).set(
             self._encode(item)
         )
 

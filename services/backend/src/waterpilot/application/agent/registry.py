@@ -37,6 +37,7 @@ from waterpilot.application.agent.context import RunContext
 from waterpilot.application.pagination import PageArgs
 from waterpilot.application.services.baseline import Baseline, BaselineMetric
 from waterpilot.application.services.locations import ConfirmLocationInput
+from waterpilot.domain.location import AdminContext, AreaOrigin, DecimalString, ExtentKind
 from waterpilot.application.tools.goals import assessment_json
 from waterpilot.application.tools.options import (
     assessed_json,
@@ -545,11 +546,15 @@ def _inspect_progress(rc: RunContext, a: ProjectArgs) -> Json:
 
 
 def _confirm_location(rc: RunContext, a: Any) -> Json:
+    data = a.model_dump(mode="json", exclude_none=True)
+    if data.get("place_id") or data.get("origin") == "place_search":
+        data["origin"] = "place_search"
+        if data.get("extent") == "reviewed_boundary" or not data.get("extent"):
+            data["extent"] = "reference_point"
     clean_id = rc.run_id.replace("-", "_").replace(":", "_")
-    key = f"confirm_loc_{clean_id}"
-    area = rc.services.locations.confirm(
-        rc.ctx, a.model_dump(mode="json", exclude_none=True), idempotency_key=key[:128]
-    )
+    place_id = str(data.get("place_id") or data.get("name") or "")
+    key = f"confirm_loc_{clean_id[:40]}_{hashlib.sha256(place_id.encode()).hexdigest()[:16]}"
+    area = rc.services.locations.confirm(rc.ctx, data, idempotency_key=key[:128])
     session = rc.session()
     rc.services.sessions.update(rc.ctx, session.id, session.version, {"area_id": area.id})
     return area.model_dump(mode="json")
@@ -868,8 +873,25 @@ def _spec(
     return ToolSpec(name=name, description=description, kind=kind, args=args, handler=handler)
 
 
-# The confirm_location tool reuses the service's own input model so the agent cannot pass a
-# location shape the API would refuse.
+class AgentConfirmLocationArgs(Frozen):
+    origin: AreaOrigin = AreaOrigin.PLACE_SEARCH
+    place_id: str | None = None
+    name: str = Field(min_length=1, max_length=200)
+    formatted_address: str | None = Field(default=None, max_length=300)
+    latitude: DecimalString
+    longitude: DecimalString
+    country_code: str = Field(pattern=r"^[A-Z]{2}$")
+    admin: AdminContext = AdminContext()
+    types: tuple[str, ...] = Field(default=(), max_length=30)
+    accuracy_meters: int | None = Field(default=None, ge=0, le=10_000_000)
+    extent: ExtentKind = ExtentKind.REFERENCE_POINT
+    radius_meters: int | None = None
+    timezone: str | None = None
+    currency: str | None = None
+
+
+# The confirm_location tool accepts place search candidates with sensible defaults for
+# extent (reference_point) and origin (place_search).
 TOOLS: tuple[ToolSpec, ...] = (
     # read
     _spec(
@@ -1003,7 +1025,7 @@ TOOLS: tuple[ToolSpec, ...] = (
         "confirm_location",
         "Save a chosen location as this plan's area (reversible).",
         ToolKind.EDIT,
-        ConfirmLocationInput,
+        AgentConfirmLocationArgs,
         _confirm_location,
     ),
     _spec(
