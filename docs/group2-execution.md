@@ -28,16 +28,16 @@ Use interactive login or approved impersonation when needed, never downloaded ke
 | Item                      | Evidence and status                                                                                                                                                                                         |
 | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Confirmed target          | `water-pilot-34685`, name `water-pilot`, number `572852178137`; verified ACTIVE via CLI using `waterpilott@gmail.com`. Billing not linked. Supersedes `water-pilot-e2939`                                   |
-| Local project             | `demo-waterlens`, from `.firebaserc` and allowlisted backend `.env` inspection; emulator-only, not a deploy target                                                                                          |
+| Local project             | `demo-waterpilot`, from `.firebaserc` and allowlisted backend `.env` inspection; emulator-only, not a deploy target                                                                                          |
 | Local modes               | Both actual `.env` files use local mode and emulators; browser API is `http://127.0.0.1:8000`                                                                                                               |
 | Candidate cloud project   | Local gcloud default is `startup-sherlock`; read-only project listing confirms project number `85308161557`, display name `Startup Sherlock`. **Not the target: owner confirmed a new project is required** |
-| Other accessible projects | Read-only listing returned five other projects; none had WaterLens as its display name. Do not choose based on names alone                                                                                  |
+| Other accessible projects | Read-only listing returned five other projects; none had WaterPilot as its display name. Do not choose based on names alone                                                                                  |
 | Region                    | `asia-south1` is an existing proposal in `infra/README.md`, not an approved choice or observed database location                                                                                            |
 | Database                  | Code selects `(default)` Firestore; real edition, mode, location, existing data, indexes and policies are unknown                                                                                           |
 | Auth providers            | Code implements Anonymous, Google and Email/Password. Real provider enablement and authorized domains are unknown                                                                                           |
 | Hosting/API               | Existing design is Firebase Hosting SPA calling public Cloud Run API directly; API data routes verify Firebase tokens                                                                                       |
 | Worker                    | Separate IAM-private Cloud Run service, Google OIDC plus application invoker allowlist                                                                                                                      |
-| AI                        | Remains disabled. Pilot template has `WL_AI_ENABLED=false`, `WL_AI_KILL_SWITCH=true`, empty tester list and no budget. No Vertex API enablement or Vertex IAM is included in Group 2 scope                  |
+| AI                        | Remains disabled. Pilot template has `WP_AI_ENABLED=false`, `WP_AI_KILL_SWITCH=true`, empty tester list and no budget. No Vertex API enablement or Vertex IAM is included in Group 2 scope                  |
 | Secrets                   | No approved secret references yet. `places-server-key:VERSION` in the old guide is an example, not an existing secret                                                                                       |
 | Runtime identifiers       | Real bucket, queue, service accounts, service URLs, web app config, image digest and Hosting site are not yet verified                                                                                      |
 
@@ -83,8 +83,8 @@ that file is not yet a copy-and-run deployment procedure.
 6. Existing Eventarc `--max-retry-attempts=1` is supported by the current official CLI
    reference (it is the only accepted value). Do not remove it based on older knowledge.
    The handler can still return transient failures; scheduled recovery is essential.
-7. The live-test guide contains outdated names (`WL_ENV`, `VITE_WATERLENS_ENV`);
-   actual settings are `WL_APP_MODE` and `VITE_APP_MODE`. Its inline secret examples
+7. The live-test guide contains outdated names (`WP_ENV`, `VITE_WATERPILOT_ENV`);
+   actual settings are `WP_APP_MODE` and `VITE_APP_MODE`. Its inline secret examples
    must not be followed: use secure local entry or Secret Manager, not shell history.
 8. Hosting has basic security headers but no CSP. Review a CSP with actual Auth/API/Maps
    endpoints before adding one; avoid breaking sign-in with guessed domains.
@@ -144,9 +144,9 @@ tests/api/test_http_routes.py -o addopts='' -q`. Only these offline test modules
 
 The existing architecture is the starting proposal, not yet an approved plan:
 Firebase Hosting → public Cloud Run API → Firestore/private bucket; private Cloud Run
-worker invoked by Tasks/Eventarc/Scheduler. Candidate names are `waterlens-api`,
-`waterlens-worker`, `waterlens-jobs`, `waterlens-outbox`, `waterlens-reconcile` and
-Artifact Registry repository `waterlens`. Check collisions and ownership first.
+worker invoked by Tasks/Eventarc/Scheduler. Candidate names are `waterpilot-api`,
+`waterpilot-worker`, `waterpilot-jobs`, `waterpilot-outbox`, `waterpilot-reconcile` and
+Artifact Registry repository `waterpilot`. Check collisions and ownership first.
 Candidate caps: API min 0/max 2/concurrency 10/90-second timeout; worker min 0/max 1/
 concurrency 1/600-second timeout; queue 2 dispatches/second and 2 concurrent dispatches,
 8 attempts; reconciliation every five minutes. These are not hard spending caps.
@@ -273,7 +273,7 @@ saved. Only sanitized resource metadata was retained.
 
 ### Permission evidence and limits
 
-The project permission probes evaluate **the human operator**, not `wl-api`, `wl-worker`
+The project permission probes evaluate **the human operator**, not `wp-api`, `wp-worker`
 or invoker identities. They are read-only even though the method uses HTTP POST.
 Confirmed permissions do not authorize using them in this conversation.
 
@@ -372,7 +372,7 @@ credentials, login codes, Docker config contents or tokens back to chat.
 3. **Correct Firebase's separate CLI login.** From the repository directory run:
 
    ```bash
-   cd /Users/m0s1csy/Downloads/WaterLens
+   cd /Users/m0s1csy/Downloads/WaterPilot
    ./node_modules/.bin/firebase login:add waterpilott@gmail.com
    ./node_modules/.bin/firebase login:use waterpilott@gmail.com
    ./node_modules/.bin/firebase login:list
@@ -453,41 +453,41 @@ in the old runbook. No secret values belong in this record.
 
 ### 1. Repository configuration requirements & master configuration table
 
-WaterLens backend configuration is strictly centralized in `waterlens.config.Settings` (`BaseSettings`) and frontend configuration in `apps/web/src/config/env.ts` (`AppEnv`). Both enforce fail-closed validation:
-- **Local mode (`WL_APP_MODE=local`, `VITE_APP_MODE=local`)**: Enforces `WL_USE_EMULATORS=true`, loopback emulators, project locked to `demo-waterlens`. Forbids real cloud resource names, secret keys, or remote network calls.
-- **Pilot mode (`WL_APP_MODE=pilot`, `VITE_APP_MODE=pilot`)**: Enforces `WL_USE_EMULATORS=false`, rejects `demo-*` projects and emulator hosts. Requires HTTPS origins for CORS and Cloud Tasks, runtime service identity ADC, private GCS bucket enforcing public-access prevention, and valid Cloud Tasks / worker endpoints.
+WaterPilot backend configuration is strictly centralized in `waterpilot.config.Settings` (`BaseSettings`) and frontend configuration in `apps/web/src/config/env.ts` (`AppEnv`). Both enforce fail-closed validation:
+- **Local mode (`WP_APP_MODE=local`, `VITE_APP_MODE=local`)**: Enforces `WP_USE_EMULATORS=true`, loopback emulators, project locked to `demo-waterpilot`. Forbids real cloud resource names, secret keys, or remote network calls.
+- **Pilot mode (`WP_APP_MODE=pilot`, `VITE_APP_MODE=pilot`)**: Enforces `WP_USE_EMULATORS=false`, rejects `demo-*` projects and emulator hosts. Requires HTTPS origins for CORS and Cloud Tasks, runtime service identity ADC, private GCS bucket enforcing public-access prevention, and valid Cloud Tasks / worker endpoints.
 
 #### Master configuration table
 
 | Variable | Purpose | Component | Verified value or status | Public / secret | Storage location | Owner | How it will be obtained |
 |---|---|---|---|---|---|---|---|
-| `WL_APP_MODE` | Target runtime mode (`local` or `pilot`) | Backend (API & Worker) | `pilot` for deployment; currently `local` in `.env` | Public | Container env (`pilot.env.yaml`) | Group 2 | Set to `pilot` in deployment manifest |
-| `WL_USE_EMULATORS` | Whether emulator hosts are active | Backend (API & Worker) | `false` for deployment; currently `true` in `.env` | Public | Container env (`pilot.env.yaml`) | Group 2 | Set to `false` in deployment manifest |
-| `WL_GCP_PROJECT` | Active Google Cloud project ID | Backend (API & Worker) | `water-pilot-34685` (ACTIVE, project number `572852178137`) | Public | Container env (`pilot.env.yaml`) | Owner / Group 2 | Verified via `gcloud projects describe` |
-| `WL_FIRESTORE_EMULATOR_HOST` | Loopback Firestore emulator host | Backend (API & Worker) | Must be UNSET in pilot mode | Public | N/A (must be absent) | Group 2 | Omitted from pilot environment |
-| `WL_AUTH_EMULATOR_HOST` | Loopback Auth emulator host | Backend (API & Worker) | Must be UNSET in pilot mode | Public | N/A (must be absent) | Group 2 | Omitted from pilot environment |
-| `WL_ALLOWED_ORIGINS` | Permitted browser CORS origins | Backend API | Proposed: `["https://water-pilot-34685.web.app", "https://water-pilot-34685.firebaseapp.com"]` | Public | Container env (`pilot.env.yaml`) | Group 2 | Derived from verified Hosting site URL & Firebase domain |
-| `WL_ARTIFACT_BUCKET` | Private Cloud Storage bucket for generated artifacts | Backend (API & Worker) | Proposed: `water-pilot-34685-waterlens-artifacts` (Status: uncreated) | Public | Container env (`pilot.env.yaml`) | Group 2 | Created after approval with public access prevention |
-| `WL_TASKS_QUEUE` | Cloud Tasks queue path for background jobs | Backend API | Proposed: `projects/water-pilot-34685/locations/asia-south1/queues/waterlens-jobs` | Public | Container env (`pilot.env.yaml`) | Group 2 | Created during deployment in target region |
-| `WL_WORKER_URL` | HTTPS origin of the private Cloud Run worker service | Backend API & Worker | Status: Produced during worker deployment | Public | Container env (`pilot.env.yaml`) | Group 2 | Read from `gcloud run services describe waterlens-worker --format='value(status.url)'` |
-| `WL_WORKER_AUDIENCE` | Expected OIDC audience in worker auth verifier | Backend Worker & Tasks | Status: Equals `WL_WORKER_URL` | Public | Container env (`pilot.env.yaml`) | Group 2 | Defaults to worker URL origin |
-| `WL_TASKS_SERVICE_ACCOUNT` | Identity Cloud Tasks mints OIDC tokens for | Backend API (Tasks client) | Proposed: `wl-task-invoker@water-pilot-34685.iam.gserviceaccount.com` | Public | Container env (`pilot.env.yaml`) | Group 2 | Created during service identity provisioning |
-| `WL_WORKER_INVOKERS` | Allowlist of service accounts permitted to call worker | Backend Worker | Proposed: `["wl-task-invoker@water-pilot-34685.iam.gserviceaccount.com", "wl-eventarc-invoker@water-pilot-34685.iam.gserviceaccount.com", "wl-scheduler-invoker@water-pilot-34685.iam.gserviceaccount.com"]` | Public | Container env (`pilot.env.yaml`) | Group 2 | Created during service identity provisioning |
-| `WL_ACCOUNT_CLAIM_TTL_SECONDS` | Guest account claim expiry window | Backend API | Default `600` (10m; valid 60–3600) | Public | Code default / optional env | Group 2 | Reused from tested default |
-| `WL_ACCOUNT_CLAIM_FRESH_SIGN_IN_SECONDS` | Re-authentication fresh window for account upgrade | Backend API | Default `300` (5m; valid 60–900) | Public | Code default / optional env | Group 2 | Reused from tested default |
-| `WL_LOCAL_STORE` | Store selection for local development | Backend | `firestore` in local `.env`; ignored in pilot | Public | N/A in pilot | Group 2 | Pilot always connects to Firestore default DB |
-| `WL_FUNDING_ADMIN_UIDS` | Allowlist of Firebase UIDs permitted to curate funding | Backend API | Proposed: `[]` (pilot default, denies everyone) | Public (UIDs) | Container env (`pilot.env.yaml`) | Owner / Group 3 | Provided by owner if funding curation needed |
-| `WL_PLACES_SERVER_KEY` | Server API key for Places API (New) | Backend API | Status: UNSET (optional fallback search) | Secret | Secret Manager (`places-server-key`) | Owner / Group 1 | Optional; if used, bound via Cloud Run `--set-secrets` |
-| `WL_AI_ENABLED` | Master switch for Vertex AI integration | Backend (API & Worker) | `false` (enforced OFF) | Public | Container env (`pilot.env.yaml`) | Group 2 / 3 | Explicitly set to `'false'` |
-| `WL_AI_KILL_SWITCH` | Global server kill switch for all AI inference | Backend (API & Worker) | `true` (enforced KILL) | Public | Container env (`pilot.env.yaml`) | Group 2 / 3 | Explicitly set to `'true'` |
-| `WL_AI_OPEN_TO_ALL` | Whether AI is open to uninvited users | Backend | `false` (enforced OFF) | Public | Container env (`pilot.env.yaml`) | Group 2 / 3 | Explicitly set to `'false'` |
-| `WL_AI_INVITED_TESTERS` | Allowlist of tester UIDs for AI | Backend | `[]` (empty list) | Public | Container env (`pilot.env.yaml`) | Group 2 / 3 | Explicitly set to `'[]'` |
-| `WL_AI_DAILY_BUDGET_USD` | Daily USD spending ceiling for Vertex AI | Backend | UNSET / `None` (unconfigured budget disables AI) | Public | Container env (`pilot.env.yaml`) | Group 2 / 3 | Kept UNSET to guarantee zero AI spend |
-| `WL_AI_MODEL` | Vertex AI model name | Backend | `gemini-2.5-flash` (dormant catalog default) | Public | Container env (`pilot.env.yaml`) | Group 3 | Kept at default; model never called |
-| `WL_AI_LOCATION` | Vertex AI model location | Backend | `global` (dormant default) | Public | Container env (`pilot.env.yaml`) | Group 3 | Kept at default; model never called |
+| `WP_APP_MODE` | Target runtime mode (`local` or `pilot`) | Backend (API & Worker) | `pilot` for deployment; currently `local` in `.env` | Public | Container env (`pilot.env.yaml`) | Group 2 | Set to `pilot` in deployment manifest |
+| `WP_USE_EMULATORS` | Whether emulator hosts are active | Backend (API & Worker) | `false` for deployment; currently `true` in `.env` | Public | Container env (`pilot.env.yaml`) | Group 2 | Set to `false` in deployment manifest |
+| `WP_GCP_PROJECT` | Active Google Cloud project ID | Backend (API & Worker) | `water-pilot-34685` (ACTIVE, project number `572852178137`) | Public | Container env (`pilot.env.yaml`) | Owner / Group 2 | Verified via `gcloud projects describe` |
+| `WP_FIRESTORE_EMULATOR_HOST` | Loopback Firestore emulator host | Backend (API & Worker) | Must be UNSET in pilot mode | Public | N/A (must be absent) | Group 2 | Omitted from pilot environment |
+| `WP_AUTH_EMULATOR_HOST` | Loopback Auth emulator host | Backend (API & Worker) | Must be UNSET in pilot mode | Public | N/A (must be absent) | Group 2 | Omitted from pilot environment |
+| `WP_ALLOWED_ORIGINS` | Permitted browser CORS origins | Backend API | Proposed: `["https://water-pilot-34685.web.app", "https://water-pilot-34685.firebaseapp.com"]` | Public | Container env (`pilot.env.yaml`) | Group 2 | Derived from verified Hosting site URL & Firebase domain |
+| `WP_ARTIFACT_BUCKET` | Private Cloud Storage bucket for generated artifacts | Backend (API & Worker) | Proposed: `water-pilot-34685-waterpilot-artifacts` (Status: uncreated) | Public | Container env (`pilot.env.yaml`) | Group 2 | Created after approval with public access prevention |
+| `WP_TASKS_QUEUE` | Cloud Tasks queue path for background jobs | Backend API | Proposed: `projects/water-pilot-34685/locations/asia-south1/queues/waterpilot-jobs` | Public | Container env (`pilot.env.yaml`) | Group 2 | Created during deployment in target region |
+| `WP_WORKER_URL` | HTTPS origin of the private Cloud Run worker service | Backend API & Worker | Status: Produced during worker deployment | Public | Container env (`pilot.env.yaml`) | Group 2 | Read from `gcloud run services describe waterpilot-worker --format='value(status.url)'` |
+| `WP_WORKER_AUDIENCE` | Expected OIDC audience in worker auth verifier | Backend Worker & Tasks | Status: Equals `WP_WORKER_URL` | Public | Container env (`pilot.env.yaml`) | Group 2 | Defaults to worker URL origin |
+| `WP_TASKS_SERVICE_ACCOUNT` | Identity Cloud Tasks mints OIDC tokens for | Backend API (Tasks client) | Proposed: `wp-task-invoker@water-pilot-34685.iam.gserviceaccount.com` | Public | Container env (`pilot.env.yaml`) | Group 2 | Created during service identity provisioning |
+| `WP_WORKER_INVOKERS` | Allowlist of service accounts permitted to call worker | Backend Worker | Proposed: `["wp-task-invoker@water-pilot-34685.iam.gserviceaccount.com", "wp-eventarc-invoker@water-pilot-34685.iam.gserviceaccount.com", "wp-scheduler-invoker@water-pilot-34685.iam.gserviceaccount.com"]` | Public | Container env (`pilot.env.yaml`) | Group 2 | Created during service identity provisioning |
+| `WP_ACCOUNT_CLAIM_TTL_SECONDS` | Guest account claim expiry window | Backend API | Default `600` (10m; valid 60–3600) | Public | Code default / optional env | Group 2 | Reused from tested default |
+| `WP_ACCOUNT_CLAIM_FRESH_SIGN_IN_SECONDS` | Re-authentication fresh window for account upgrade | Backend API | Default `300` (5m; valid 60–900) | Public | Code default / optional env | Group 2 | Reused from tested default |
+| `WP_LOCAL_STORE` | Store selection for local development | Backend | `firestore` in local `.env`; ignored in pilot | Public | N/A in pilot | Group 2 | Pilot always connects to Firestore default DB |
+| `WP_FUNDING_ADMIN_UIDS` | Allowlist of Firebase UIDs permitted to curate funding | Backend API | Proposed: `[]` (pilot default, denies everyone) | Public (UIDs) | Container env (`pilot.env.yaml`) | Owner / Group 3 | Provided by owner if funding curation needed |
+| `WP_PLACES_SERVER_KEY` | Server API key for Places API (New) | Backend API | Status: UNSET (optional fallback search) | Secret | Secret Manager (`places-server-key`) | Owner / Group 1 | Optional; if used, bound via Cloud Run `--set-secrets` |
+| `WP_AI_ENABLED` | Master switch for Vertex AI integration | Backend (API & Worker) | `false` (enforced OFF) | Public | Container env (`pilot.env.yaml`) | Group 2 / 3 | Explicitly set to `'false'` |
+| `WP_AI_KILL_SWITCH` | Global server kill switch for all AI inference | Backend (API & Worker) | `true` (enforced KILL) | Public | Container env (`pilot.env.yaml`) | Group 2 / 3 | Explicitly set to `'true'` |
+| `WP_AI_OPEN_TO_ALL` | Whether AI is open to uninvited users | Backend | `false` (enforced OFF) | Public | Container env (`pilot.env.yaml`) | Group 2 / 3 | Explicitly set to `'false'` |
+| `WP_AI_INVITED_TESTERS` | Allowlist of tester UIDs for AI | Backend | `[]` (empty list) | Public | Container env (`pilot.env.yaml`) | Group 2 / 3 | Explicitly set to `'[]'` |
+| `WP_AI_DAILY_BUDGET_USD` | Daily USD spending ceiling for Vertex AI | Backend | UNSET / `None` (unconfigured budget disables AI) | Public | Container env (`pilot.env.yaml`) | Group 2 / 3 | Kept UNSET to guarantee zero AI spend |
+| `WP_AI_MODEL` | Vertex AI model name | Backend | `gemini-2.5-flash` (dormant catalog default) | Public | Container env (`pilot.env.yaml`) | Group 3 | Kept at default; model never called |
+| `WP_AI_LOCATION` | Vertex AI model location | Backend | `global` (dormant default) | Public | Container env (`pilot.env.yaml`) | Group 3 | Kept at default; model never called |
 | `VITE_APP_MODE` | Frontend runtime mode | Frontend (SPA) | `pilot` for deployment; currently `local` | Public | Build-time env (`apps/web/.env`) | Group 2 | Injected during `npm -w apps/web run build` |
 | `VITE_USE_EMULATORS` | Whether frontend connects to auth emulator | Frontend (SPA) | `false` for deployment; currently `true` | Public | Build-time env (`apps/web/.env`) | Group 2 | Set to `false` in production build |
-| `VITE_API_BASE_URL` | HTTPS URL of public Cloud Run API | Frontend (SPA) | Status: Produced during API deployment | Public | Build-time env (`apps/web/.env`) | Group 2 | Read from `gcloud run services describe waterlens-api --format='value(status.url)'` |
+| `VITE_API_BASE_URL` | HTTPS URL of public Cloud Run API | Frontend (SPA) | Status: Produced during API deployment | Public | Build-time env (`apps/web/.env`) | Group 2 | Read from `gcloud run services describe waterpilot-api --format='value(status.url)'` |
 | `VITE_FIREBASE_PROJECT_ID` | Firebase project identifier | Frontend (SPA) | `water-pilot-34685` | Public | Build-time env (`apps/web/.env`) | Group 2 | Verified project ID |
 | `VITE_FIREBASE_API_KEY` | Firebase Web API client key | Frontend (SPA) | Status: Unregistered (zero web apps in project) | Public client ID | Build-time env (`apps/web/.env`) | Owner / Group 2 | Generated upon Firebase Web App registration |
 | `VITE_FIREBASE_AUTH_DOMAIN` | Firebase Authentication domain | Frontend (SPA) | Proposed: `water-pilot-34685.firebaseapp.com` | Public | Build-time env (`apps/web/.env`) | Group 2 | Standard Firebase Auth domain pattern |
@@ -503,7 +503,7 @@ WaterLens backend configuration is strictly centralized in `waterlens.config.Set
 Read-only probes performed during Prompts 2 and 3 established:
 1. **Firebase Web Apps (`projects.webApps.list`)**:
    - HTTP 200 returned empty array `[]`. There are **zero registered web apps** in `water-pilot-34685`.
-   - Result: `VITE_FIREBASE_API_KEY` and `VITE_FIREBASE_APP_ID` cannot be resolved from existing cloud metadata. Registering one web app (`waterlens-web`) is a prerequisite step in the future approved deployment plan.
+   - Result: `VITE_FIREBASE_API_KEY` and `VITE_FIREBASE_APP_ID` cannot be resolved from existing cloud metadata. Registering one web app (`waterpilot-web`) is a prerequisite step in the future approved deployment plan.
 2. **Hosting Sites (`firebasehosting.sites.list`)**:
    - HTTP 200 returned default site `water-pilot-34685` with URL `https://water-pilot-34685.web.app`.
    - Channels list returned only the `live` channel with no previous releases. No custom domains are attached.
@@ -531,23 +531,23 @@ Read-only probes performed during Prompts 2 and 3 established:
   - Local Docker engine: Colima v0.10.1, Docker v29.4.3 / Server 29.2.1, Buildx v0.37.1 (`linux/amd64` supported)
 - **Proposed resource names / settings**:
   - Primary region: `asia-south1` (Mumbai)
-  - Cloud Run services: `waterlens-api`, `waterlens-worker`
-  - Artifact Registry repository: `waterlens` (Docker format)
-  - Private storage bucket: `gs://water-pilot-34685-waterlens-artifacts`
-  - Cloud Tasks queue: `waterlens-jobs`
-  - Eventarc trigger: `waterlens-outbox`
-  - Cloud Scheduler job: `waterlens-reconcile`
+  - Cloud Run services: `waterpilot-api`, `waterpilot-worker`
+  - Artifact Registry repository: `waterpilot` (Docker format)
+  - Private storage bucket: `gs://water-pilot-34685-waterpilot-artifacts`
+  - Cloud Tasks queue: `waterpilot-jobs`
+  - Eventarc trigger: `waterpilot-outbox`
+  - Cloud Scheduler job: `waterpilot-reconcile`
   - Service accounts:
-    - API runtime: `wl-api@water-pilot-34685.iam.gserviceaccount.com`
-    - Worker runtime: `wl-worker@water-pilot-34685.iam.gserviceaccount.com`
-    - Tasks invoker: `wl-task-invoker@water-pilot-34685.iam.gserviceaccount.com`
-    - Eventarc invoker: `wl-eventarc-invoker@water-pilot-34685.iam.gserviceaccount.com`
-    - Scheduler invoker: `wl-scheduler-invoker@water-pilot-34685.iam.gserviceaccount.com`
+    - API runtime: `wp-api@water-pilot-34685.iam.gserviceaccount.com`
+    - Worker runtime: `wp-worker@water-pilot-34685.iam.gserviceaccount.com`
+    - Tasks invoker: `wp-task-invoker@water-pilot-34685.iam.gserviceaccount.com`
+    - Eventarc invoker: `wp-eventarc-invoker@water-pilot-34685.iam.gserviceaccount.com`
+    - Scheduler invoker: `wp-scheduler-invoker@water-pilot-34685.iam.gserviceaccount.com`
 - **Values produced during deployment**:
-  - Worker URL: `https://waterlens-worker-<hash>-el.a.run.app`
-  - API URL: `https://waterlens-api-<hash>-el.a.run.app`
+  - Worker URL: `https://waterpilot-worker-<hash>-el.a.run.app`
+  - API URL: `https://waterpilot-api-<hash>-el.a.run.app`
   - Worker OIDC audience: equals Worker URL
-  - Built image digest: `${REGION}-docker.pkg.dev/water-pilot-34685/waterlens/waterlens-backend@sha256:...`
+  - Built image digest: `${REGION}-docker.pkg.dev/water-pilot-34685/waterpilot/waterpilot-backend@sha256:...`
   - Firebase Web App credentials: App ID (`1:572852178137:web:...`) and API key
 - **Values blocked by API access or permissions**:
   - Firestore database existence, mode (`firestore-native`), edition (`standard`), and location.
@@ -573,7 +573,7 @@ Commands in `infra/README.md` (lines 230–400) were verified against Google Clo
 | `gcloud storage buckets create "gs://$BUCKET" ... --public-access-prevention=enforced` | ❌ Fails (argument parse error) | `--public-access-prevention` is a boolean flag in SDK 539.0.0. Passing `=enforced` raises `ignored explicit argument 'enforced'`. **Corrected:** `gcloud storage buckets create "gs://$BUCKET" --location="$REGION" --uniform-bucket-level-access --public-access-prevention --project="$PROJECT_ID"`. |
 | `gcloud run deploy "$WORKER_SERVICE" ... --min=0 --max=1` | ❌ Fails (unrecognized argument) | `--max=1` does not exist in `gcloud run deploy`. Flag is `--max-instances=1`. **Corrected:** `--min=0 --max-instances=1`. |
 | `gcloud run deploy "$API_SERVICE" ... --min=0 --max=2` | ❌ Fails (unrecognized argument) | `--max=2` does not exist in `gcloud run deploy`. Flag is `--max-instances=2`. **Corrected:** `--min=0 --max-instances=2`. |
-| `gcloud eventarc triggers create waterlens-outbox ... --max-retry-attempts=1` | ❌ Fails (unrecognized argument) | `--max-retry-attempts` is not supported on GA `gcloud eventarc triggers create` in SDK 539.0.0. **Corrected:** Remove `--max-retry-attempts=1`. (Application handler acknowledges 204 immediately and handles retry via scheduled reconciliation). |
+| `gcloud eventarc triggers create waterpilot-outbox ... --max-retry-attempts=1` | ❌ Fails (unrecognized argument) | `--max-retry-attempts` is not supported on GA `gcloud eventarc triggers create` in SDK 539.0.0. **Corrected:** Remove `--max-retry-attempts=1`. (Application handler acknowledges 204 immediately and handles retry via scheduled reconciliation). |
 | `gcloud services enable ... cloudbuild.googleapis.com aiplatform.googleapis.com` | ⚠️ Scope creep | `aiplatform.googleapis.com` must be removed (AI is deferred/disabled). `cloudbuild.googleapis.com` is unnecessary because local Docker Buildx is used. |
 
 #### Deployment-order dependencies
@@ -582,8 +582,8 @@ The architecture has strict sequential dependencies:
 2. **Artifact Registry & Local Image Build**: Repository must exist to receive the pushed `linux/amd64` Docker image.
 3. **Private Storage Bucket**: Must be created before API/Worker boot, because `GcsObjectStorage.check_private()` verifies bucket existence and public access prevention at application startup.
 4. **Worker Deployment before API**:
-   - `waterlens-worker` must be deployed first to generate its deterministic Cloud Run URL (`https://waterlens-worker-...a.run.app`).
-   - The generated worker URL is required to populate `WL_WORKER_URL` and `WL_WORKER_AUDIENCE` in `pilot.env.yaml`.
+   - `waterpilot-worker` must be deployed first to generate its deterministic Cloud Run URL (`https://waterpilot-worker-...a.run.app`).
+   - The generated worker URL is required to populate `WP_WORKER_URL` and `WP_WORKER_AUDIENCE` in `pilot.env.yaml`.
 5. **API Deployment**: Deployed with the populated `pilot.env.yaml` pointing to the real worker URL and task invoker SA.
 6. **Cloud Tasks Queue, Eventarc Trigger, Scheduler Job**: Configured after Worker URL and identities exist.
 7. **Firebase Web App Registration & Hosting Build**:
@@ -601,20 +601,20 @@ The architecture has strict sequential dependencies:
 - **Requirements from Group 1**:
   - `VITE_GOOGLE_MAPS_API_KEY` (Browser key) restricted to HTTP referrers (`https://water-pilot-34685.web.app/*`, `https://water-pilot-34685.firebaseapp.com/*`) with Maps JavaScript, Places (New), and Geocoding APIs enabled.
   - `VITE_GOOGLE_MAPS_MAP_ID` (Optional Map ID for advanced markers).
-  - `WL_PLACES_SERVER_KEY` (Optional server search key stored in Secret Manager).
-  - If keys are not provided by Group 1, WaterLens automatically falls back to typed coordinate entry and built-in gazetteer fixtures without blocking deployment or failing startup (ADR 0009).
+  - `WP_PLACES_SERVER_KEY` (Optional server search key stored in Secret Manager).
+  - If keys are not provided by Group 1, WaterPilot automatically falls back to typed coordinate entry and built-in gazetteer fixtures without blocking deployment or failing startup (ADR 0009).
 
 #### Group 3 (AI, ADK, Vertex, Funding Catalogue)
 - **Status in Group 2 configuration**: Live AI is **strictly disabled**:
-  - `WL_AI_ENABLED=false`
-  - `WL_AI_KILL_SWITCH=true`
-  - `WL_AI_OPEN_TO_ALL=false`
-  - `WL_AI_INVITED_TESTERS=[]`
-  - `WL_AI_DAILY_BUDGET_USD` UNSET (`None`)
+  - `WP_AI_ENABLED=false`
+  - `WP_AI_KILL_SWITCH=true`
+  - `WP_AI_OPEN_TO_ALL=false`
+  - `WP_AI_INVITED_TESTERS=[]`
+  - `WP_AI_DAILY_BUDGET_USD` UNSET (`None`)
 - **Requirements from Group 3**:
   - No Vertex AI API enablement (`aiplatform.googleapis.com`) or Vertex IAM roles (`roles/aiplatform.user`) are permitted in Group 2's deployment plan.
   - Model IDs and provider keys are not invented.
-  - Synthetic funding catalogues remain functional in local mode. If real funding curation is needed later, Group 3 / Owner must supply trusted curator UIDs for `WL_FUNDING_ADMIN_UIDS`.
+  - Synthetic funding catalogues remain functional in local mode. If real funding curation is needed later, Group 3 / Owner must supply trusted curator UIDs for `WP_FUNDING_ADMIN_UIDS`.
 
 ---
 
@@ -622,7 +622,7 @@ The architecture has strict sequential dependencies:
 
 1. **Target Region**: `asia-south1` (Mumbai) approved as primary region for Cloud Run services, Cloud Tasks queue, Cloud Storage bucket, and Artifact Registry repository. (Firestore region discovery gate remains in place before any database mutation).
 2. **Firebase Authentication Setup**: Owner will enable sign-in providers (Anonymous, Email/Password, Google) in Firebase Console under project `water-pilot-34685`.
-3. **Google Maps Platform Integration**: Proceed with Maps keys UNSET for the initial pilot (`VITE_GOOGLE_MAPS_API_KEY`, `VITE_GOOGLE_MAPS_MAP_ID`, and `WL_PLACES_SERVER_KEY` unset). Application uses built-in gazetteer fixtures and typed coordinate entry (ADR 0009).
+3. **Google Maps Platform Integration**: Proceed with Maps keys UNSET for the initial pilot (`VITE_GOOGLE_MAPS_API_KEY`, `VITE_GOOGLE_MAPS_MAP_ID`, and `WP_PLACES_SERVER_KEY` unset). Application uses built-in gazetteer fixtures and typed coordinate entry (ADR 0009).
 
 ### 7. Configuration planning status & local Prompt 4 scope
 
@@ -634,19 +634,19 @@ All environment variables across backend, frontend, container, and infrastructur
 **Status: Local implementation and verification COMPLETE.** All tests and container builds pass offline. No cloud changes performed.
 
 ### 1. Code defect fixes & gap closures
-- **API Runtime Fallback**: In `services/backend/src/waterlens/api/runtime.py`, updated `runtime_or_503` to catch `(ConfigError, GoogleAuthError)` instead of only `ConfigError`. When pilot mode runs without ADC / cloud connectivity, data routes fail closed with HTTP 503 `SERVICE_UNAVAILABLE` while `/healthz` and `/readyz` stay up as specified in the architecture contract.
+- **API Runtime Fallback**: In `services/backend/src/waterpilot/api/runtime.py`, updated `runtime_or_503` to catch `(ConfigError, GoogleAuthError)` instead of only `ConfigError`. When pilot mode runs without ADC / cloud connectivity, data routes fail closed with HTTP 503 `SERVICE_UNAVAILABLE` while `/healthz` and `/readyz` stay up as specified in the architecture contract.
 - **GraphQL Schema Contract**: In `services/backend/tests/api/test_graphql_schema_contract.py`, classified `updateProjectStatus` and `addProjectExpense` in the `VERSIONED` mutations set (both require `expectedVersion: Int!`), resolving test assertion drift.
 
 ### 2. Toolchain verification evidence
 - **Frontend Typecheck**: `npm -w apps/web run typecheck` — **PASSED** (0 errors).
 - **Frontend Production Build**: `npm -w apps/web run build` — **PASSED** (`dist/index.html` and 44 bundled JS/CSS assets compiled in 850ms).
 - **Backend Test Suite**: `.venv/bin/python -m pytest services/backend/tests/` — **1,017 passed**, 0 failures.
-- **Docker Image Build**: `docker buildx build --platform linux/amd64 -f services/backend/Dockerfile services/backend -t waterlens-backend:test` — **PASSED** (multi-stage build finished in 65.2s using local Colima/BuildKit).
-- **Container Execution Verification**: `docker run --rm waterlens-backend:test python -c "import waterlens; print('WaterLens backend container verification SUCCESS')"` — **PASSED** under Colima Linux/amd64 emulation.
+- **Docker Image Build**: `docker buildx build --platform linux/amd64 -f services/backend/Dockerfile services/backend -t waterpilot-backend:test` — **PASSED** (multi-stage build finished in 65.2s using local Colima/BuildKit).
+- **Container Execution Verification**: `docker run --rm waterpilot-backend:test python -c "import waterpilot; print('WaterPilot backend container verification SUCCESS')"` — **PASSED** under Colima Linux/amd64 emulation.
 
 ---
 
-## Prompt 5 — concrete cloud deployment plan (WaterLens Pilot)
+## Prompt 5 — concrete cloud deployment plan (WaterPilot Pilot)
 
 **Status: Plan prepared and presented for execution.**
 
@@ -654,26 +654,26 @@ All environment variables across backend, frontend, container, and infrastructur
 - **Google Cloud Project**: `water-pilot-34685` (Project Number: `572852178137`)
 - **Primary Account**: `waterpilott@gmail.com`
 - **Primary Region**: `asia-south1` (Mumbai)
-- **Artifact Registry Repo**: `waterlens` (`asia-south1-docker.pkg.dev/water-pilot-34685/waterlens`)
-- **Image Target**: `${REGION}-docker.pkg.dev/water-pilot-34685/waterlens/waterlens-backend:pilot`
-- **Private Artifact Bucket**: `gs://water-pilot-34685-waterlens-artifacts`
-- **Cloud Tasks Queue**: `projects/water-pilot-34685/locations/asia-south1/queues/waterlens-jobs`
-- **Cloud Run Worker**: `waterlens-worker` (IAM-private)
-- **Cloud Run API**: `waterlens-api` (Public ingress with Firebase token verification)
-- **Eventarc Trigger**: `waterlens-outbox`
-- **Cloud Scheduler Job**: `waterlens-reconcile`
+- **Artifact Registry Repo**: `waterpilot` (`asia-south1-docker.pkg.dev/water-pilot-34685/waterpilot`)
+- **Image Target**: `${REGION}-docker.pkg.dev/water-pilot-34685/waterpilot/waterpilot-backend:pilot`
+- **Private Artifact Bucket**: `gs://water-pilot-34685-waterpilot-artifacts`
+- **Cloud Tasks Queue**: `projects/water-pilot-34685/locations/asia-south1/queues/waterpilot-jobs`
+- **Cloud Run Worker**: `waterpilot-worker` (IAM-private)
+- **Cloud Run API**: `waterpilot-api` (Public ingress with Firebase token verification)
+- **Eventarc Trigger**: `waterpilot-outbox`
+- **Cloud Scheduler Job**: `waterpilot-reconcile`
 - **Firebase Hosting Default Site**: `water-pilot-34685` (`https://water-pilot-34685.web.app`)
 
 ### 2. Service identities and least-privilege IAM bindings
 
 | Identity | Email | Assigned Roles & Resource Scope |
 |---|---|---|
-| **API Runtime** | `wl-api@water-pilot-34685.iam.gserviceaccount.com` | • `roles/datastore.user` (project-wide)<br>• Custom `WaterLens Firebase Token Revocation Check` (`firebaseauth.users.get` on project)<br>• `roles/cloudtasks.enqueuer` on `waterlens-jobs` queue<br>• Custom `WaterLens API Private Artifact Access` on `gs://water-pilot-34685-waterlens-artifacts` (`get`, `create`, `buckets.get`)<br>• `roles/iam.serviceAccountUser` on `wl-task-invoker` |
-| **Worker Runtime** | `wl-worker@water-pilot-34685.iam.gserviceaccount.com` | • `roles/datastore.user` (project-wide)<br>• `roles/cloudtasks.enqueuer` on `waterlens-jobs` queue (for outbox recovery)<br>• Custom `WaterLens Private Artifact Worker` on artifact bucket (`get`, `create`, `buckets.get`)<br>• `roles/iam.serviceAccountUser` on `wl-task-invoker` |
-| **Tasks Invoker** | `wl-task-invoker@water-pilot-34685.iam.gserviceaccount.com` | • `roles/run.invoker` on `waterlens-worker` service only |
-| **Eventarc Invoker** | `wl-eventarc-invoker@water-pilot-34685.iam.gserviceaccount.com` | • `roles/run.invoker` on `waterlens-worker` service only<br>• `roles/eventarc.eventReceiver` on project |
-| **Scheduler Invoker** | `wl-scheduler-invoker@water-pilot-34685.iam.gserviceaccount.com` | • `roles/run.invoker` on `waterlens-worker` service only |
-| **Tasks Service Agent** | `service-572852178137@gcp-sa-cloudtasks.iam.gserviceaccount.com` | • `roles/iam.serviceAccountUser` on `wl-task-invoker` |
+| **API Runtime** | `wp-api@water-pilot-34685.iam.gserviceaccount.com` | • `roles/datastore.user` (project-wide)<br>• Custom `WaterPilot Firebase Token Revocation Check` (`firebaseauth.users.get` on project)<br>• `roles/cloudtasks.enqueuer` on `waterpilot-jobs` queue<br>• Custom `WaterPilot API Private Artifact Access` on `gs://water-pilot-34685-waterpilot-artifacts` (`get`, `create`, `buckets.get`)<br>• `roles/iam.serviceAccountUser` on `wp-task-invoker` |
+| **Worker Runtime** | `wp-worker@water-pilot-34685.iam.gserviceaccount.com` | • `roles/datastore.user` (project-wide)<br>• `roles/cloudtasks.enqueuer` on `waterpilot-jobs` queue (for outbox recovery)<br>• Custom `WaterPilot Private Artifact Worker` on artifact bucket (`get`, `create`, `buckets.get`)<br>• `roles/iam.serviceAccountUser` on `wp-task-invoker` |
+| **Tasks Invoker** | `wp-task-invoker@water-pilot-34685.iam.gserviceaccount.com` | • `roles/run.invoker` on `waterpilot-worker` service only |
+| **Eventarc Invoker** | `wp-eventarc-invoker@water-pilot-34685.iam.gserviceaccount.com` | • `roles/run.invoker` on `waterpilot-worker` service only<br>• `roles/eventarc.eventReceiver` on project |
+| **Scheduler Invoker** | `wp-scheduler-invoker@water-pilot-34685.iam.gserviceaccount.com` | • `roles/run.invoker` on `waterpilot-worker` service only |
+| **Tasks Service Agent** | `service-572852178137@gcp-sa-cloudtasks.iam.gserviceaccount.com` | • `roles/iam.serviceAccountUser` on `wp-task-invoker` |
 
 ### 3. API enablement list (narrow scope)
 ```bash
@@ -705,7 +705,7 @@ gcloud services enable \
 
 ### 5. Private Cloud Storage bucket
 ```bash
-gcloud storage buckets create "gs://water-pilot-34685-waterlens-artifacts" \
+gcloud storage buckets create "gs://water-pilot-34685-waterpilot-artifacts" \
   --location=asia-south1 \
   --uniform-bucket-level-access \
   --public-access-prevention \
@@ -719,32 +719,32 @@ Bucket enforces Uniform Bucket-Level Access and Public Access Prevention as requ
 3. **Create Custom Roles & Service Accounts**.
 4. **Create Artifact Registry Repo & Storage Bucket**.
 5. **Tag & Push Docker Image** to Artifact Registry.
-6. **Deploy Private Worker Cloud Run** (`waterlens-worker`):
+6. **Deploy Private Worker Cloud Run** (`waterpilot-worker`):
    - Min instances: 0, Max instances: 1, Concurrency: 1, Timeout: 600s.
    - Non-authenticated invocation: **DISABLED** (`--no-allow-unauthenticated`).
-   - Command: `uvicorn`, Args: `waterlens.worker.asgi:app,--host,0.0.0.0,--port,8080`.
-7. **Read Worker URL**: `gcloud run services describe waterlens-worker --format='value(status.url)'`.
-8. **Populate `pilot.env.yaml`**: Set `WL_WORKER_URL` and `WL_WORKER_AUDIENCE` to the real worker URL.
-9. **Deploy Public API Cloud Run** (`waterlens-api`):
+   - Command: `uvicorn`, Args: `waterpilot.worker.asgi:app,--host,0.0.0.0,--port,8080`.
+7. **Read Worker URL**: `gcloud run services describe waterpilot-worker --format='value(status.url)'`.
+8. **Populate `pilot.env.yaml`**: Set `WP_WORKER_URL` and `WP_WORKER_AUDIENCE` to the real worker URL.
+9. **Deploy Public API Cloud Run** (`waterpilot-api`):
    - Min instances: 0, Max instances: 2, Concurrency: 10, Timeout: 90s.
    - Ingress: All, Unauthenticated: **ALLOWED** (Cloud Run layer only; all data routes verify Firebase bearer token).
 10. **Configure Cloud Tasks Queue, Eventarc Trigger, and Cloud Scheduler**:
     - Queue: 2 dispatches/sec, 2 concurrent, max 8 attempts.
     - Trigger: `type=google.cloud.firestore.document.v1.created`, `database=(default)`, path `document=jobOutbox/{outboxId}`.
-    - Scheduler: `*/5 * * * *` POST to `$WORKER_URL/internal/outbox/reconcile` with OIDC token for `wl-scheduler-invoker`.
+    - Scheduler: `*/5 * * * *` POST to `$WORKER_URL/internal/outbox/reconcile` with OIDC token for `wp-scheduler-invoker`.
 11. **Register Firebase Web App & Deploy Hosting**:
-    - Register Web App `waterlens-web` via `firebase apps:create web waterlens-web`.
+    - Register Web App `waterpilot-web` via `firebase apps:create web waterpilot-web`.
     - Inject `VITE_API_BASE_URL`, `VITE_FIREBASE_API_KEY`, and `VITE_FIREBASE_APP_ID`.
     - Run `npm -w apps/web run build`.
     - Deploy via `firebase deploy --only hosting,firestore:rules,firestore:indexes`.
 
 ### 7. Operating limits, costs & AI-disabled guarantees
 - **Estimated Pilot Cost**: Under $1.00 USD total for testing (within GCP Free Tier limits for Cloud Run, Cloud Tasks, and Firestore).
-- **Live AI**: Completely disabled (`WL_AI_ENABLED=false`, `WL_AI_KILL_SWITCH=true`, empty tester list, budget unset). No billable model calls can occur.
+- **Live AI**: Completely disabled (`WP_AI_ENABLED=false`, `WP_AI_KILL_SWITCH=true`, empty tester list, budget unset). No billable model calls can occur.
 - **Rollback Procedure**:
   - Worker/API: Re-route traffic to previous revisions via `gcloud run services update-traffic`.
   - Hosting: Roll back release via `firebase hosting:clone` or previous release ID.
-  - Dispatch: Pause tasks queue (`gcloud tasks queues pause waterlens-jobs`).
+  - Dispatch: Pause tasks queue (`gcloud tasks queues pause waterpilot-jobs`).
   - Data: Never delete Firestore or GCS buckets during rollback.
 
 ### 8. Immediate execution blocker: billing linkage
@@ -779,7 +779,7 @@ All infrastructure provisioning, container deployments, IAM bindings, event trig
 | **Cloud Tasks** | `projects/water-pilot-34685/locations/asia-south1/queues/waterpilot-jobs` | Max dispatches: 5/s, Max concurrent: 1, Max attempts: 3, Backoff: 5s-60s | Active |
 | **Eventarc Trigger** | `waterpilot-outbox` in `asia-south1` | Type: `google.cloud.firestore.document.v1.created`, Document: `jobOutbox/*`<br>Target: `waterpilot-worker` (`/internal/outbox/events`), Encoding: Protobuf<br>Service Account: `wp-eventarc-invoker@water-pilot-34685.iam.gserviceaccount.com` | Active |
 | **Cloud Scheduler** | `waterpilot-reconcile` in `asia-south1` | Schedule: `*/5 * * * *` (Every 5 minutes)<br>Target: `waterpilot-worker` (`/internal/outbox/reconcile`)<br>OIDC Invoker: `wp-scheduler-invoker@water-pilot-34685.iam.gserviceaccount.com` | Active |
-| **Firebase Web App** | `waterlens-web` (App ID: `1:572852178137:web:6bf74acb76e4a37c91c2c8`) | API Key: `AIzaSyBLTGp8ydsChpVPQZ05HtcjiV8K-gcgC8Y`<br>Auth Domain: `water-pilot-34685.firebaseapp.com` | Active |
+| **Firebase Web App** | `waterpilot-web` (App ID: `1:572852178137:web:6bf74acb76e4a37c91c2c8`) | API Key: `AIzaSyBLTGp8ydsChpVPQZ05HtcjiV8K-gcgC8Y`<br>Auth Domain: `water-pilot-34685.firebaseapp.com` | Active |
 | **Firebase Hosting** | `https://waterpilot.web.app` | Version finalized & released to `waterpilot` site (68 assets)<br>Rewrites: `** -> /index.html`<br>Headers: `nosniff`, `DENY`, `strict-origin-when-cross-origin` | 200 OK |
 
 ---
@@ -793,12 +793,12 @@ All infrastructure provisioning, container deployments, IAM bindings, event trig
 | **3** | API and worker use the intended Firestore project/database | **PASS** | Runtime connected natively to `water-pilot-34685` default database. Documents verified directly in Cloud Console and API reads. |
 | **4** | Report finalization handles repeated requests safely | **PASS** | Idempotent replay of `finalizeReport` mutation safely returned identical fail-closed `PRECONDITION_FAILED` guard without duplicating records or corrupting state. |
 | **5** | Real proposal job dispatched and completed by private worker | **BLOCKED** | **Handoff to Group 1 & 3**: Generating a proposal requires an approved report, which requires calculating plan options from Group 1's baseline hydrological series data and Group 3's approved funding scheme. System correctly fails closed without artificial mocks. |
-| **6** | Owner can download private artifact | **BLOCKED** | **Handoff to Group 1 & 3**: Downstream artifact generation requires completion of proposal job in Check 5. Private GCS bucket (`gs://water-pilot-34685-waterlens-artifacts`) is provisioned and verified ready. |
+| **6** | Owner can download private artifact | **BLOCKED** | **Handoff to Group 1 & 3**: Downstream artifact generation requires completion of proposal job in Check 5. Private GCS bucket (`gs://water-pilot-34685-waterpilot-artifacts`) is provisioned and verified ready. |
 | **7** | Another account cannot access report, job or artifact | **PASS** | Account 2 (`qKTx3BcMg3aL3Rtwk9JiqjcmF0l2`) attempted to query Account 1's planning session, report, and artifact preview; API returned `NOT_FOUND` / 403 Forbidden. Multi-tenant isolation verified. |
-| **8** | Unauthenticated direct worker invocation is rejected | **PASS** | Direct HTTP POST to `https://waterlens-worker-572852178137.asia-south1.run.app/internal/jobs/run` returned HTTP 403 Forbidden directly at the Cloud Run IAM edge layer. |
+| **8** | Unauthenticated direct worker invocation is rejected | **PASS** | Direct HTTP POST to `https://waterpilot-worker-572852178137.asia-south1.run.app/internal/jobs/run` returned HTTP 403 Forbidden directly at the Cloud Run IAM edge layer. |
 | **9** | Task retry does not duplicate or corrupt results | **PASS** | Worker deduplication verified: Cloud Tasks dispatch sequence guard and Firestore transaction guards prevent duplicated execution on retry. |
 | **10** | Community and tracking changes persist after reload | **BLOCKED** | **Handoff to Group 1 & 3**: Community creation (`CreateCommunityInput`) and tracking project initialization require a finalized `reportId`. Read paths for communities and memberships verified against Firestore. |
-| **11** | Manual flow remains functional with AI disabled | **PASS** | Live AI strictly disabled (`WL_AI_ENABLED=false`, `WL_AI_KILL_SWITCH=true`). Intervention catalogue retrieved with 9 interventions. Manual goal/location entry functions as expected. |
+| **11** | Manual flow remains functional with AI disabled | **PASS** | Live AI strictly disabled (`WP_AI_ENABLED=false`, `WP_AI_KILL_SWITCH=true`). Intervention catalogue retrieved with 9 interventions. Manual goal/location entry functions as expected. |
 | **12** | Deployed configuration contains no emulator endpoints or silent mocks | **PASS** | `/readyz` endpoint verified: `{"ready": true, "scope": "configuration", "app_mode": "pilot", "using_emulators": false}`. No mocks or synthetic fallback in production containers. |
 
 ---
@@ -812,11 +812,11 @@ If a rollback of the deployed application is ever required:
    ```
 2. **Backend API**: Route traffic to previous revision (or scale to zero):
    ```bash
-   gcloud run services update-traffic waterlens-api --to-revisions=PREVIOUS_REVISION=100 --region=asia-south1 --project=water-pilot-34685
+   gcloud run services update-traffic waterpilot-api --to-revisions=PREVIOUS_REVISION=100 --region=asia-south1 --project=water-pilot-34685
    ```
 3. **Backend Worker**: Route traffic to previous revision or pause queue:
    ```bash
-   gcloud tasks queues pause waterlens-jobs --location=asia-south1 --project=water-pilot-34685
+   gcloud tasks queues pause waterpilot-jobs --location=asia-south1 --project=water-pilot-34685
    ```
 4. **Data Protection Guarantee**: Never delete existing Firestore documents or Cloud Storage buckets during a rollback.
 

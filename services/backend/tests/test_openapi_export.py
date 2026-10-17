@@ -32,7 +32,7 @@ AMBIENTS: dict[str, dict[str, str]] = {
     "garbage": {"WP_APP_MODE": "not-a-mode", "WP_USE_EMULATORS": "maybe"},
 }
 
-BAD_DOTENV = "WP_APP_MODE=pilot\nWL_USE_EMULATORS=true\nWL_GCP_PROJECT=demo-x\n"
+BAD_DOTENV = "WP_APP_MODE=pilot\nWP_USE_EMULATORS=true\nWP_GCP_PROJECT=demo-x\n"
 
 
 def _clean_env() -> dict[str, str]:

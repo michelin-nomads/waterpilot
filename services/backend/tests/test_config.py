@@ -147,7 +147,7 @@ def test_pilot_mode_rejects_http_or_loopback_origins(
 
 
 def test_dotenv_in_working_directory_is_still_validated(tmp_path: Path) -> None:
-    Path(".env").write_text("WP_APP_MODE=local\nWL_GCP_PROJECT=real-prod\n", encoding="utf-8")
+    Path(".env").write_text("WP_APP_MODE=local\nWP_GCP_PROJECT=real-prod\n", encoding="utf-8")
     with pytest.raises(ConfigError):
         Settings()
 
