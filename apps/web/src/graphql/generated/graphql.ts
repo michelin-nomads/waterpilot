@@ -2,12 +2,16 @@
 /** Internal type. DO NOT USE DIRECTLY. */
 type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 /** Internal type. DO NOT USE DIRECTLY. */
-export type Incremental<T> =
-  T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
+export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 import type { DocumentTypeDecoration } from '@graphql-typed-document-node/core';
-export type AccountClaimStatus = 'CANCELLED' | 'COMPLETED' | 'OPEN';
+export type AccountClaimStatus =
+  | 'CANCELLED'
+  | 'COMPLETED'
+  | 'OPEN';
 
-export type AccountKind = 'GUEST' | 'PERMANENT';
+export type AccountKind =
+  | 'GUEST'
+  | 'PERMANENT';
 
 export type AddProjectExpenseInput = {
   amount: MoneyInput;
@@ -18,7 +22,10 @@ export type AddProjectExpenseInput = {
   spentOn: string;
 };
 
-export type AdjustmentChange = 'DECREASE_BY' | 'INCREASE_BY' | 'SET_TO';
+export type AdjustmentChange =
+  | 'DECREASE_BY'
+  | 'INCREASE_BY'
+  | 'SET_TO';
 
 export type AdminContextInput = {
   admin1?: string | null | undefined;
@@ -29,7 +36,10 @@ export type AdminContextInput = {
 };
 
 export type AiUnavailableReason =
-  'BUDGET_EXHAUSTED' | 'DISABLED' | 'NOT_INVITED' | 'NO_BUDGET_CONFIGURED';
+  | 'BUDGET_EXHAUSTED'
+  | 'DISABLED'
+  | 'NOT_INVITED'
+  | 'NO_BUDGET_CONFIGURED';
 
 export type ApplicantInformationInput = {
   applicantType?: string | null | undefined;
@@ -48,11 +58,21 @@ export type ArchiveReportInput = {
   id: string;
 };
 
-export type AreaOrigin = 'CATALOGUE' | 'CUSTOM' | 'GEOLOCATION' | 'PLACE_SEARCH';
+export type AreaOrigin =
+  | 'CATALOGUE'
+  | 'CUSTOM'
+  | 'GEOLOCATION'
+  | 'PLACE_SEARCH';
 
-export type AssessmentBasis = 'LIMITED' | 'SOURCED' | 'USER_INPUT';
+export type AssessmentBasis =
+  | 'LIMITED'
+  | 'SOURCED'
+  | 'USER_INPUT';
 
-export type Availability = 'AVAILABLE' | 'PROVISIONAL' | 'UNAVAILABLE';
+export type Availability =
+  | 'AVAILABLE'
+  | 'PROVISIONAL'
+  | 'UNAVAILABLE';
 
 /** Why a baseline value is unavailable. */
 export type BaselineReason =
@@ -69,9 +89,15 @@ export type BaselineReason =
   | 'ZERO_TOTAL_DEMAND'
   | 'ZERO_TOTAL_SUPPLY';
 
-export type BenefitTiming = 'AFTER_COMMISSIONING' | 'AFTER_RAINFALL' | 'AFTER_WET_SEASONS';
+export type BenefitTiming =
+  | 'AFTER_COMMISSIONING'
+  | 'AFTER_RAINFALL'
+  | 'AFTER_WET_SEASONS';
 
-export type BoundaryLevel = 'AREA' | 'SHARED_SYSTEM' | 'SITE';
+export type BoundaryLevel =
+  | 'AREA'
+  | 'SHARED_SYSTEM'
+  | 'SITE';
 
 export type CancelAccountClaimInput = {
   claimId: string;
@@ -107,10 +133,20 @@ export type Capability =
   | 'UTILITY_SUPPLY'
   | 'WATER_QUALITY';
 
-export type CatalogueStatus = 'ACTIVE' | 'DEMO' | 'DRAFT' | 'EXPIRED' | 'WITHDRAWN';
+export type CatalogueStatus =
+  | 'ACTIVE'
+  | 'DEMO'
+  | 'DRAFT'
+  | 'EXPIRED'
+  | 'WITHDRAWN';
 
 export type CitationKind =
-  'CATALOGUE' | 'COMPARISON' | 'CONNECTIVITY' | 'SITE_FACT' | 'SOURCE' | 'USER_INPUT';
+  | 'CATALOGUE'
+  | 'COMPARISON'
+  | 'CONNECTIVITY'
+  | 'SITE_FACT'
+  | 'SOURCE'
+  | 'USER_INPUT';
 
 export type CommunityFilter = {
   archivedOnly?: boolean;
@@ -118,11 +154,18 @@ export type CommunityFilter = {
   includeArchived?: boolean;
 };
 
-export type CommunityStatus = 'ACTIVE' | 'ARCHIVED';
+export type CommunityStatus =
+  | 'ACTIVE'
+  | 'ARCHIVED';
 
-export type CommunityType = 'APARTMENT' | 'OTHER' | 'RESIDENTIAL';
+export type CommunityType =
+  | 'APARTMENT'
+  | 'OTHER'
+  | 'RESIDENTIAL';
 
-export type ComparisonStatus = 'COMPARABLE' | 'UNKNOWN';
+export type ComparisonStatus =
+  | 'COMPARABLE'
+  | 'UNKNOWN';
 
 export type CompleteAccountClaimInput = {
   claimId: string;
@@ -171,14 +214,20 @@ export type CreatePlanningSessionInput = {
   mode: PlanningMode;
 };
 
-export type CriterionStatus = 'MET' | 'NEEDS_CHECK' | 'NOT_MET';
+export type CriterionStatus =
+  | 'MET'
+  | 'NEEDS_CHECK'
+  | 'NOT_MET';
 
 export type DayRangeInput = {
   high: number;
   low: number;
 };
 
-export type EffectDirection = 'EITHER' | 'POSSIBLE_BENEFIT' | 'POSSIBLE_HARM';
+export type EffectDirection =
+  | 'EITHER'
+  | 'POSSIBLE_BENEFIT'
+  | 'POSSIBLE_HARM';
 
 export type EffectEstimateInput = {
   high: string;
@@ -187,9 +236,15 @@ export type EffectEstimateInput = {
 };
 
 /** Where an effect value came from: USER_ESTIMATE (your range), BASELINE (the sourced baseline value) or SCENARIO (set by the confirmed what-if). The catalogue never supplies effect values. */
-export type EffectOrigin = 'BASELINE' | 'SCENARIO' | 'USER_ESTIMATE';
+export type EffectOrigin =
+  | 'BASELINE'
+  | 'SCENARIO'
+  | 'USER_ESTIMATE';
 
-export type EligibilityStatus = 'ELIGIBLE' | 'INELIGIBLE' | 'NEEDS_INFORMATION';
+export type EligibilityStatus =
+  | 'ELIGIBLE'
+  | 'INELIGIBLE'
+  | 'NEEDS_INFORMATION';
 
 export type ErrorCode =
   | 'ARCHIVED'
@@ -209,12 +264,22 @@ export type ErrorCode =
   | 'VERSION_CONFLICT';
 
 export type EvidenceQuality =
-  'PROVISIONAL' | 'QUARANTINED' | 'SYNTHETIC' | 'UNREVIEWED' | 'VALIDATED';
+  | 'PROVISIONAL'
+  | 'QUARANTINED'
+  | 'SYNTHETIC'
+  | 'UNREVIEWED'
+  | 'VALIDATED';
 
 /** What coverage checks use: a reviewed boundary, a radius you set, or the point. */
-export type ExtentKind = 'REFERENCE_POINT' | 'REVIEWED_BOUNDARY' | 'USER_RADIUS';
+export type ExtentKind =
+  | 'REFERENCE_POINT'
+  | 'REVIEWED_BOUNDARY'
+  | 'USER_RADIUS';
 
-export type Feasibility = 'FEASIBLE' | 'NEEDS_REVIEW' | 'NOT_FEASIBLE';
+export type Feasibility =
+  | 'FEASIBLE'
+  | 'NEEDS_REVIEW'
+  | 'NOT_FEASIBLE';
 
 export type FinalizeReportInput = {
   idempotencyKey: string;
@@ -222,11 +287,22 @@ export type FinalizeReportInput = {
   title: string;
 };
 
-export type FindingBasis = 'DECLARED' | 'ENGINE_ESTIMATE' | 'MECHANISM' | 'SOURCED';
+export type FindingBasis =
+  | 'DECLARED'
+  | 'ENGINE_ESTIMATE'
+  | 'MECHANISM'
+  | 'SOURCED';
 
-export type FindingKind = 'EXTERNALITY' | 'FALSE_RESILIENCE' | 'LOCAL_BENEFIT' | 'TRADEOFF';
+export type FindingKind =
+  | 'EXTERNALITY'
+  | 'FALSE_RESILIENCE'
+  | 'LOCAL_BENEFIT'
+  | 'TRADEOFF';
 
-export type FundingMatchStatus = 'ADDED' | 'CANDIDATE' | 'DISMISSED';
+export type FundingMatchStatus =
+  | 'ADDED'
+  | 'CANDIDATE'
+  | 'DISMISSED';
 
 /** A declared source of money; only approved funding counts. */
 export type FundingSourceInput = {
@@ -236,7 +312,10 @@ export type FundingSourceInput = {
   status: FundingStatus;
 };
 
-export type FundingStatus = 'APPROVED' | 'EXPECTED' | 'PROPOSED';
+export type FundingStatus =
+  | 'APPROVED'
+  | 'EXPECTED'
+  | 'PROPOSED';
 
 export type GenerateProposalInput = {
   applicant?: ProposalApplicantInput | null | undefined;
@@ -248,7 +327,13 @@ export type GenerateProposalInput = {
 
 /** What kind of place a location is. A point or place is not a catchment. */
 export type GeographicScope =
-  'COUNTRY' | 'LOCALITY' | 'NEIGHBOURHOOD' | 'POINT' | 'POSTAL_CODE' | 'REGION' | 'SUBLOCALITY';
+  | 'COUNTRY'
+  | 'LOCALITY'
+  | 'NEIGHBOURHOOD'
+  | 'POINT'
+  | 'POSTAL_CODE'
+  | 'REGION'
+  | 'SUBLOCALITY';
 
 export type GoalInput = {
   also?: Array<GoalKind>;
@@ -278,16 +363,26 @@ export type GoalKind =
   | 'REDUCE_TANKER_DEPENDENCE'
   | 'REDUCE_WATER_BILLS';
 
-export type GoalOutcome = 'FEASIBLE' | 'INFEASIBLE' | 'NOT_ASSESSABLE';
+export type GoalOutcome =
+  | 'FEASIBLE'
+  | 'INFEASIBLE'
+  | 'NOT_ASSESSABLE';
 
 export type GoalTargetInput = {
   mode: TargetMode;
   quantity: QuantityInput;
 };
 
-export type GroundwaterReliance = 'DECLARED' | 'NONE_RECORDED' | 'SOURCED' | 'UNKNOWN';
+export type GroundwaterReliance =
+  | 'DECLARED'
+  | 'NONE_RECORDED'
+  | 'SOURCED'
+  | 'UNKNOWN';
 
-export type IndicatorStatistic = 'LATEST' | 'WINDOW_MEAN' | 'WINDOW_TOTAL';
+export type IndicatorStatistic =
+  | 'LATEST'
+  | 'WINDOW_MEAN'
+  | 'WINDOW_TOTAL';
 
 export type InterventionFamily =
   | 'DEMAND_CONSERVATION'
@@ -298,9 +393,16 @@ export type InterventionFamily =
   | 'STORAGE'
   | 'STORMWATER';
 
-export type JobKind = 'FUNDING_MATCH' | 'PROPOSAL_GENERATION';
+export type JobKind =
+  | 'FUNDING_MATCH'
+  | 'PROPOSAL_GENERATION';
 
-export type JobStatus = 'CANCELLED' | 'FAILED' | 'QUEUED' | 'RUNNING' | 'SUCCEEDED';
+export type JobStatus =
+  | 'CANCELLED'
+  | 'FAILED'
+  | 'QUEUED'
+  | 'RUNNING'
+  | 'SUCCEEDED';
 
 export type JoinCommunityInput = {
   communityId: string;
@@ -314,7 +416,10 @@ export type LeaveCommunityInput = {
 };
 
 /** Whether places share a system, from reviewed evidence only. Unknown unless a record says otherwise; being close never decides it. */
-export type Linkage = 'LINKED' | 'NOT_LINKED' | 'UNKNOWN';
+export type Linkage =
+  | 'LINKED'
+  | 'NOT_LINKED'
+  | 'UNKNOWN';
 
 export type MatchFundingInput = {
   idempotencyKey: string;
@@ -333,7 +438,9 @@ export type MeasureEstimateInput = {
   recurring?: MoneyRangeInput | null | undefined;
 };
 
-export type MembershipRole = 'COORDINATOR' | 'MEMBER';
+export type MembershipRole =
+  | 'COORDINATOR'
+  | 'MEMBER';
 
 export type MilestoneInput = {
   plannedOn: string;
@@ -342,7 +449,11 @@ export type MilestoneInput = {
   title: string;
 };
 
-export type MilestoneStatus = 'DONE' | 'IN_PROGRESS' | 'PLANNED' | 'SKIPPED';
+export type MilestoneStatus =
+  | 'DONE'
+  | 'IN_PROGRESS'
+  | 'PLANNED'
+  | 'SKIPPED';
 
 /** Money as integer minor units; currency must be supported. */
 export type MoneyInput = {
@@ -363,22 +474,43 @@ export type NearbyCommunitiesInput = {
   radiusMeters: number;
 };
 
-export type ObservationEvidence = 'RECORDED' | 'REJECTED' | 'VERIFIED';
+export type ObservationEvidence =
+  | 'RECORDED'
+  | 'REJECTED'
+  | 'VERIFIED';
 
 export type ObservationMethod =
-  'ADMINISTRATIVE_RECORD' | 'IN_SITU_MEASUREMENT' | 'MODEL_OUTPUT' | 'REMOTE_SENSING' | 'SURVEY';
+  | 'ADMINISTRATIVE_RECORD'
+  | 'IN_SITU_MEASUREMENT'
+  | 'MODEL_OUTPUT'
+  | 'REMOTE_SENSING'
+  | 'SURVEY';
 
-export type ObservationSourceType = 'PERMITTED_DOCUMENT' | 'USER_RECORDED';
+export type ObservationSourceType =
+  | 'PERMITTED_DOCUMENT'
+  | 'USER_RECORDED';
 
-export type PaybackOutcome = 'BEYOND_HORIZON' | 'NEVER' | 'UNCERTAIN' | 'WITHIN_HORIZON';
+export type PaybackOutcome =
+  | 'BEYOND_HORIZON'
+  | 'NEVER'
+  | 'UNCERTAIN'
+  | 'WITHIN_HORIZON';
 
 /** OPTIONS, or why there are none: NO_FEASIBLE_PLAN, NEEDS_INPUT, TARGET_ALREADY_MET, NOT_SUPPORTED. */
 export type PlanComparisonStatus =
-  'NEEDS_INPUT' | 'NOT_SUPPORTED' | 'NO_FEASIBLE_PLAN' | 'OPTIONS' | 'TARGET_ALREADY_MET';
+  | 'NEEDS_INPUT'
+  | 'NOT_SUPPORTED'
+  | 'NO_FEASIBLE_PLAN'
+  | 'OPTIONS'
+  | 'TARGET_ALREADY_MET';
 
-export type PlanMetric = 'SHORTAGE_DAYS' | 'TANKER_DEPENDENCE';
+export type PlanMetric =
+  | 'SHORTAGE_DAYS'
+  | 'TANKER_DEPENDENCE';
 
-export type PlanningMode = 'AGENT' | 'TRADITIONAL';
+export type PlanningMode =
+  | 'AGENT'
+  | 'TRADITIONAL';
 
 /** Omitted fields are left unchanged; null clears a field. */
 export type PlanningSessionPatch = {
@@ -403,9 +535,15 @@ export type PlanningStage =
   | 'UNDERSTAND';
 
 export type Priority =
-  'FASTEST_BENEFIT' | 'LARGEST_IMPACT' | 'LOWEST_COST' | 'LOWEST_NEIGHBOUR_EFFECT';
+  | 'FASTEST_BENEFIT'
+  | 'LARGEST_IMPACT'
+  | 'LOWEST_COST'
+  | 'LOWEST_NEIGHBOUR_EFFECT';
 
-export type ProjectStatus = 'ACTIVE' | 'ARCHIVED' | 'COMPLETED';
+export type ProjectStatus =
+  | 'ACTIVE'
+  | 'ARCHIVED'
+  | 'COMPLETED';
 
 export type ProposalApplicantInput = {
   assumptions?: Array<string>;
@@ -425,7 +563,12 @@ export type ProposalSection =
   | 'SOURCES'
   | 'WIDER_IMPACT';
 
-export type ProposalStatus = 'APPROVED' | 'DRAFTING' | 'FAILED' | 'NEEDS_REVIEW' | 'QUEUED';
+export type ProposalStatus =
+  | 'APPROVED'
+  | 'DRAFTING'
+  | 'FAILED'
+  | 'NEEDS_REVIEW'
+  | 'QUEUED';
 
 export type QuantityInput = {
   unit: Unit;
@@ -443,7 +586,12 @@ export type ReadinessInput =
   | 'TANKER_SUPPLY'
   | 'UNIT_PRICE';
 
-export type ReadinessState = 'AVAILABLE' | 'PARTIAL' | 'STALE' | 'UNAVAILABLE' | 'USER_ENTERED';
+export type ReadinessState =
+  | 'AVAILABLE'
+  | 'PARTIAL'
+  | 'STALE'
+  | 'UNAVAILABLE'
+  | 'USER_ENTERED';
 
 export type RecordManualInputInput = {
   asOf: string;
@@ -481,9 +629,14 @@ export type ReportFilter = {
   status?: ReportStatus | null | undefined;
 };
 
-export type ReportStatus = 'ARCHIVED' | 'FINALIZED';
+export type ReportStatus =
+  | 'ARCHIVED'
+  | 'FINALIZED';
 
-export type ReviewKind = 'HYDROGEOLOGICAL' | 'STRUCTURAL' | 'WATER_QUALITY';
+export type ReviewKind =
+  | 'HYDROGEOLOGICAL'
+  | 'STRUCTURAL'
+  | 'WATER_QUALITY';
 
 export type ScenarioAdjustmentInput = {
   change: AdjustmentChange;
@@ -508,12 +661,22 @@ export type ScenarioPreviewInput = {
 };
 
 /** Whether the chosen plan still matches a fresh assessment; only CURRENT or LEGACY can be finalized. */
-export type SelectedPlanStatus = 'CURRENT' | 'IMPACT_CHANGED' | 'LEGACY' | 'NONE' | 'NOT_CURRENT';
+export type SelectedPlanStatus =
+  | 'CURRENT'
+  | 'IMPACT_CHANGED'
+  | 'LEGACY'
+  | 'NONE'
+  | 'NOT_CURRENT';
 
-export type SessionStatus = 'ACTIVE' | 'CLOSED';
+export type SessionStatus =
+  | 'ACTIVE'
+  | 'CLOSED';
 
 /** A system that can carry a measure's effect beyond the site. */
-export type SharedSystem = 'AQUIFER' | 'CATCHMENT' | 'SUPPLY_NETWORK';
+export type SharedSystem =
+  | 'AQUIFER'
+  | 'CATCHMENT'
+  | 'SUPPLY_NETWORK';
 
 export type SiteConstraintsInput = {
   groundwaterUse?: boolean | null | undefined;
@@ -530,7 +693,11 @@ export type SiteProfileInput = {
   occupiedHomes?: number | null | undefined;
 };
 
-export type SiteRequirement = 'OPEN_GROUND' | 'PIPED_SUPPLY' | 'ROOF_AREA' | 'STORAGE_SPACE';
+export type SiteRequirement =
+  | 'OPEN_GROUND'
+  | 'PIPED_SUPPLY'
+  | 'ROOF_AREA'
+  | 'STORAGE_SPACE';
 
 export type SiteRestriction =
   | 'NO_EXCAVATION'
@@ -539,7 +706,11 @@ export type SiteRestriction =
   | 'NO_RECHARGE'
   | 'NO_STRUCTURAL_CHANGES';
 
-export type SiteScale = 'BUILDING' | 'HOUSEHOLD' | 'NEIGHBOURHOOD' | 'UTILITY';
+export type SiteScale =
+  | 'BUILDING'
+  | 'HOUSEHOLD'
+  | 'NEIGHBOURHOOD'
+  | 'UTILITY';
 
 export type StartImplementationProjectInput = {
   idempotencyKey: string;
@@ -549,9 +720,14 @@ export type StartImplementationProjectInput = {
   title: string;
 };
 
-export type TargetMode = 'ABSOLUTE_LEVEL' | 'RELATIVE_REDUCTION';
+export type TargetMode =
+  | 'ABSOLUTE_LEVEL'
+  | 'RELATIVE_REDUCTION';
 
-export type TechnicalSupport = 'PROVISIONAL' | 'SUPPORTED' | 'UNAVAILABLE';
+export type TechnicalSupport =
+  | 'PROVISIONAL'
+  | 'SUPPORTED'
+  | 'UNAVAILABLE';
 
 /** Canonical stored units. Display units such as MLD are not stored. */
 export type Unit =
@@ -569,7 +745,9 @@ export type Unit =
   | 'RATIO'
   | 'SQUARE_METRE';
 
-export type UnitSystem = 'METRIC' | 'US_CUSTOMARY';
+export type UnitSystem =
+  | 'METRIC'
+  | 'US_CUSTOMARY';
 
 export type UpdateMilestoneInput = {
   completedOn?: string | null | undefined;
@@ -591,7 +769,10 @@ export type UpdateProjectStatusInput = {
 };
 
 /** Measured, your estimate or modelled; shown distinctly wherever a value is. */
-export type ValueOrigin = 'MEASURED' | 'MODELED' | 'USER_ESTIMATE';
+export type ValueOrigin =
+  | 'MEASURED'
+  | 'MODELED'
+  | 'USER_ESTIMATE';
 
 /** The tanker-water price you pay now; your estimate, never converted. */
 export type WaterTariffInput = {
@@ -600,361 +781,61 @@ export type WaterTariffInput = {
   volume: QuantityInput;
 };
 
-export type WindowStatus = 'CLOSED' | 'OPEN' | 'UNKNOWN' | 'UPCOMING';
+export type WindowStatus =
+  | 'CLOSED'
+  | 'OPEN'
+  | 'UNKNOWN'
+  | 'UPCOMING';
 
-export type AccountClaimFieldsFragment = {
-  id: string;
-  version: number;
-  status: AccountClaimStatus;
-  expiresAt: string;
-  transferredSessionId: string | null;
-  closedSessionId: string | null;
-};
+export type AccountClaimFieldsFragment = { id: string, version: number, status: AccountClaimStatus, expiresAt: string, transferredSessionId: string | null, closedSessionId: string | null };
 
-export type BeginAccountClaimMutationVariables = Exact<{ [key: string]: never }>;
+export type BeginAccountClaimMutationVariables = Exact<{ [key: string]: never; }>;
 
-export type BeginAccountClaimMutation = {
-  beginAccountClaim: {
-    claimSecret: string | null;
-    claim: {
-      id: string;
-      version: number;
-      status: AccountClaimStatus;
-      expiresAt: string;
-      transferredSessionId: string | null;
-      closedSessionId: string | null;
-    } | null;
-    error: {
-      code: ErrorCode;
-      message: string;
-      currentVersion: number | null;
-      requestId: string;
-      fieldErrors: Array<{ field: string; message: string }>;
-    } | null;
-  };
-};
+
+export type BeginAccountClaimMutation = { beginAccountClaim: { claimSecret: string | null, claim: { id: string, version: number, status: AccountClaimStatus, expiresAt: string, transferredSessionId: string | null, closedSessionId: string | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
 export type CompleteAccountClaimMutationVariables = Exact<{
   input: CompleteAccountClaimInput;
 }>;
 
-export type CompleteAccountClaimMutation = {
-  completeAccountClaim: {
-    claim: {
-      id: string;
-      version: number;
-      status: AccountClaimStatus;
-      expiresAt: string;
-      transferredSessionId: string | null;
-      closedSessionId: string | null;
-    } | null;
-    error: {
-      code: ErrorCode;
-      message: string;
-      currentVersion: number | null;
-      requestId: string;
-      fieldErrors: Array<{ field: string; message: string }>;
-    } | null;
-  };
-};
+
+export type CompleteAccountClaimMutation = { completeAccountClaim: { claim: { id: string, version: number, status: AccountClaimStatus, expiresAt: string, transferredSessionId: string | null, closedSessionId: string | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
 export type CancelAccountClaimMutationVariables = Exact<{
   input: CancelAccountClaimInput;
 }>;
 
-export type CancelAccountClaimMutation = {
-  cancelAccountClaim: {
-    claim: {
-      id: string;
-      version: number;
-      status: AccountClaimStatus;
-      expiresAt: string;
-      transferredSessionId: string | null;
-      closedSessionId: string | null;
-    } | null;
-    error: {
-      code: ErrorCode;
-      message: string;
-      currentVersion: number | null;
-      requestId: string;
-      fieldErrors: Array<{ field: string; message: string }>;
-    } | null;
-  };
-};
 
-export type AiStatusQueryVariables = Exact<{ [key: string]: never }>;
+export type CancelAccountClaimMutation = { cancelAccountClaim: { claim: { id: string, version: number, status: AccountClaimStatus, expiresAt: string, transferredSessionId: string | null, closedSessionId: string | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
-export type AiStatusQuery = {
-  aiStatus: {
-    available: boolean;
-    reason: AiUnavailableReason | null;
-    modelId: string;
-    requestsRemaining: number;
-    dailyRequestLimit: number;
-    budgetConfigured: boolean;
-    suggestedDailyBudgetUsd: string;
-  };
-};
+export type AiStatusQueryVariables = Exact<{ [key: string]: never; }>;
 
-export type EvidenceLinkFieldsFragment = {
-  input: ReadinessInput | null;
-  capability: Capability | null;
-  snapshotId: string | null;
-  manualInputId: string | null;
-  title: string;
-  publisher: string | null;
-  url: string | null;
-  asOf: string | null;
-  quality: EvidenceQuality | null;
-  method: ObservationMethod | null;
-  uncertainty: string;
-  note: string | null;
-  demo: boolean;
-};
 
-export type BaselineFieldsFragment = {
-  id: string;
-  areaId: string;
-  sessionId: string | null;
-  asOf: string;
-  engineVersion: string;
-  exceedanceP: string;
-  windowDays: number;
-  demo: boolean;
-  basis: AssessmentBasis;
-  missingEssentials: Array<ReadinessInput>;
-  missingOptional: Array<ReadinessInput>;
-  notes: Array<string>;
-  window: { start: string; endExclusive: string; days: number } | null;
-  metrics: Array<{
-    metric: string;
-    name: string;
-    formula: string;
-    unit: CanonicalUnit;
-    availability: Availability;
-    exact: string | null;
-    value: string | null;
-    reason: BaselineReason | null;
-    reasons: Array<string>;
-    origin: ValueOrigin | null;
-    daily: boolean;
-    asOf: string | null;
-    assumptions: Array<string>;
-    demo: boolean;
-    recordedDays: number | null;
-    periodDays: number | null;
-    evidence: Array<{
-      input: ReadinessInput | null;
-      capability: Capability | null;
-      snapshotId: string | null;
-      manualInputId: string | null;
-      title: string;
-      publisher: string | null;
-      url: string | null;
-      asOf: string | null;
-      quality: EvidenceQuality | null;
-      method: ObservationMethod | null;
-      uncertainty: string;
-      note: string | null;
-      demo: boolean;
-    }>;
-    supporting: Array<{ key: string; exact: string; value: string; unit: CanonicalUnit }>;
-  }>;
-  indicators: Array<{
-    indicator: string;
-    name: string;
-    capability: Capability;
-    statistic: IndicatorStatistic;
-    variable: string | null;
-    parameter: string | null;
-    unit: CanonicalUnit | null;
-    availability: Availability;
-    exact: string | null;
-    value: string | null;
-    observedOn: string | null;
-    reason: BaselineReason | null;
-    reasons: Array<string>;
-    origin: ValueOrigin | null;
-    demo: boolean;
-    window: { start: string; endExclusive: string; days: number } | null;
-    evidence: Array<{
-      input: ReadinessInput | null;
-      capability: Capability | null;
-      snapshotId: string | null;
-      manualInputId: string | null;
-      title: string;
-      publisher: string | null;
-      url: string | null;
-      asOf: string | null;
-      quality: EvidenceQuality | null;
-      method: ObservationMethod | null;
-      uncertainty: string;
-      note: string | null;
-      demo: boolean;
-    }>;
-  }>;
-  chart: {
-    monthly: boolean;
-    buckets: Array<{ start: string; endExclusive: string; days: number }>;
-    series: Array<{
-      key: string;
-      values: Array<string | null>;
-      origin: ValueOrigin | null;
-      demo: boolean;
-    }>;
-  } | null;
-};
+export type AiStatusQuery = { aiStatus: { available: boolean, reason: AiUnavailableReason | null, modelId: string, requestsRemaining: number, dailyRequestLimit: number, budgetConfigured: boolean, suggestedDailyBudgetUsd: string } };
+
+export type EvidenceLinkFieldsFragment = { input: ReadinessInput | null, capability: Capability | null, snapshotId: string | null, manualInputId: string | null, title: string, publisher: string | null, url: string | null, asOf: string | null, quality: EvidenceQuality | null, method: ObservationMethod | null, uncertainty: string, note: string | null, demo: boolean };
+
+export type BaselineFieldsFragment = { id: string, areaId: string, sessionId: string | null, asOf: string, engineVersion: string, exceedanceP: string, windowDays: number, demo: boolean, basis: AssessmentBasis, missingEssentials: Array<ReadinessInput>, missingOptional: Array<ReadinessInput>, notes: Array<string>, window: { start: string, endExclusive: string, days: number } | null, metrics: Array<{ metric: string, name: string, formula: string, unit: CanonicalUnit, availability: Availability, exact: string | null, value: string | null, reason: BaselineReason | null, reasons: Array<string>, origin: ValueOrigin | null, daily: boolean, asOf: string | null, assumptions: Array<string>, demo: boolean, recordedDays: number | null, periodDays: number | null, evidence: Array<{ input: ReadinessInput | null, capability: Capability | null, snapshotId: string | null, manualInputId: string | null, title: string, publisher: string | null, url: string | null, asOf: string | null, quality: EvidenceQuality | null, method: ObservationMethod | null, uncertainty: string, note: string | null, demo: boolean }>, supporting: Array<{ key: string, exact: string, value: string, unit: CanonicalUnit }> }>, indicators: Array<{ indicator: string, name: string, capability: Capability, statistic: IndicatorStatistic, variable: string | null, parameter: string | null, unit: CanonicalUnit | null, availability: Availability, exact: string | null, value: string | null, observedOn: string | null, reason: BaselineReason | null, reasons: Array<string>, origin: ValueOrigin | null, demo: boolean, window: { start: string, endExclusive: string, days: number } | null, evidence: Array<{ input: ReadinessInput | null, capability: Capability | null, snapshotId: string | null, manualInputId: string | null, title: string, publisher: string | null, url: string | null, asOf: string | null, quality: EvidenceQuality | null, method: ObservationMethod | null, uncertainty: string, note: string | null, demo: boolean }> }>, chart: { monthly: boolean, buckets: Array<{ start: string, endExclusive: string, days: number }>, series: Array<{ key: string, values: Array<string | null>, origin: ValueOrigin | null, demo: boolean }> } | null };
 
 export type AreaBaselineQueryVariables = Exact<{
   areaId: string;
   sessionId?: string | null | undefined;
 }>;
 
-export type AreaBaselineQuery = {
-  area: {
-    id: string;
-    name: string;
-    unitSystem: UnitSystem;
-    baseline: {
-      id: string;
-      areaId: string;
-      sessionId: string | null;
-      asOf: string;
-      engineVersion: string;
-      exceedanceP: string;
-      windowDays: number;
-      demo: boolean;
-      basis: AssessmentBasis;
-      missingEssentials: Array<ReadinessInput>;
-      missingOptional: Array<ReadinessInput>;
-      notes: Array<string>;
-      window: { start: string; endExclusive: string; days: number } | null;
-      metrics: Array<{
-        metric: string;
-        name: string;
-        formula: string;
-        unit: CanonicalUnit;
-        availability: Availability;
-        exact: string | null;
-        value: string | null;
-        reason: BaselineReason | null;
-        reasons: Array<string>;
-        origin: ValueOrigin | null;
-        daily: boolean;
-        asOf: string | null;
-        assumptions: Array<string>;
-        demo: boolean;
-        recordedDays: number | null;
-        periodDays: number | null;
-        evidence: Array<{
-          input: ReadinessInput | null;
-          capability: Capability | null;
-          snapshotId: string | null;
-          manualInputId: string | null;
-          title: string;
-          publisher: string | null;
-          url: string | null;
-          asOf: string | null;
-          quality: EvidenceQuality | null;
-          method: ObservationMethod | null;
-          uncertainty: string;
-          note: string | null;
-          demo: boolean;
-        }>;
-        supporting: Array<{ key: string; exact: string; value: string; unit: CanonicalUnit }>;
-      }>;
-      indicators: Array<{
-        indicator: string;
-        name: string;
-        capability: Capability;
-        statistic: IndicatorStatistic;
-        variable: string | null;
-        parameter: string | null;
-        unit: CanonicalUnit | null;
-        availability: Availability;
-        exact: string | null;
-        value: string | null;
-        observedOn: string | null;
-        reason: BaselineReason | null;
-        reasons: Array<string>;
-        origin: ValueOrigin | null;
-        demo: boolean;
-        window: { start: string; endExclusive: string; days: number } | null;
-        evidence: Array<{
-          input: ReadinessInput | null;
-          capability: Capability | null;
-          snapshotId: string | null;
-          manualInputId: string | null;
-          title: string;
-          publisher: string | null;
-          url: string | null;
-          asOf: string | null;
-          quality: EvidenceQuality | null;
-          method: ObservationMethod | null;
-          uncertainty: string;
-          note: string | null;
-          demo: boolean;
-        }>;
-      }>;
-      chart: {
-        monthly: boolean;
-        buckets: Array<{ start: string; endExclusive: string; days: number }>;
-        series: Array<{
-          key: string;
-          values: Array<string | null>;
-          origin: ValueOrigin | null;
-          demo: boolean;
-        }>;
-      } | null;
-    };
-  } | null;
-};
 
-export type MutationErrorFieldsFragment = {
-  code: ErrorCode;
-  message: string;
-  currentVersion: number | null;
-  requestId: string;
-  fieldErrors: Array<{ field: string; message: string }>;
-};
+export type AreaBaselineQuery = { area: { id: string, name: string, unitSystem: UnitSystem, baseline: { id: string, areaId: string, sessionId: string | null, asOf: string, engineVersion: string, exceedanceP: string, windowDays: number, demo: boolean, basis: AssessmentBasis, missingEssentials: Array<ReadinessInput>, missingOptional: Array<ReadinessInput>, notes: Array<string>, window: { start: string, endExclusive: string, days: number } | null, metrics: Array<{ metric: string, name: string, formula: string, unit: CanonicalUnit, availability: Availability, exact: string | null, value: string | null, reason: BaselineReason | null, reasons: Array<string>, origin: ValueOrigin | null, daily: boolean, asOf: string | null, assumptions: Array<string>, demo: boolean, recordedDays: number | null, periodDays: number | null, evidence: Array<{ input: ReadinessInput | null, capability: Capability | null, snapshotId: string | null, manualInputId: string | null, title: string, publisher: string | null, url: string | null, asOf: string | null, quality: EvidenceQuality | null, method: ObservationMethod | null, uncertainty: string, note: string | null, demo: boolean }>, supporting: Array<{ key: string, exact: string, value: string, unit: CanonicalUnit }> }>, indicators: Array<{ indicator: string, name: string, capability: Capability, statistic: IndicatorStatistic, variable: string | null, parameter: string | null, unit: CanonicalUnit | null, availability: Availability, exact: string | null, value: string | null, observedOn: string | null, reason: BaselineReason | null, reasons: Array<string>, origin: ValueOrigin | null, demo: boolean, window: { start: string, endExclusive: string, days: number } | null, evidence: Array<{ input: ReadinessInput | null, capability: Capability | null, snapshotId: string | null, manualInputId: string | null, title: string, publisher: string | null, url: string | null, asOf: string | null, quality: EvidenceQuality | null, method: ObservationMethod | null, uncertainty: string, note: string | null, demo: boolean }> }>, chart: { monthly: boolean, buckets: Array<{ start: string, endExclusive: string, days: number }>, series: Array<{ key: string, values: Array<string | null>, origin: ValueOrigin | null, demo: boolean }> } | null } } | null };
 
-export type MoneyFieldsFragment = { minorUnits: string; currency: string; exponent: number };
+export type MutationErrorFieldsFragment = { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> };
 
-export type QuantityFieldsFragment = { value: string; unit: Unit };
+export type MoneyFieldsFragment = { minorUnits: string, currency: string, exponent: number };
 
-export type PageInfoFieldsFragment = { hasNextPage: boolean; endCursor: string | null };
+export type QuantityFieldsFragment = { value: string, unit: Unit };
 
-export type MembershipFieldsFragment = {
-  id: string;
-  version: number;
-  communityId: string;
-  role: MembershipRole;
-  isViewer: boolean;
-  joinedAt: string;
-};
+export type PageInfoFieldsFragment = { hasNextPage: boolean, endCursor: string | null };
 
-export type CommunityFieldsFragment = {
-  id: string;
-  version: number;
-  name: string;
-  description: string;
-  areaId: string | null;
-  status: CommunityStatus;
-  memberCount: number;
-  archivedAt: string | null;
-  contactName: string | null;
-  contactEmail: string | null;
-  area: { id: string; name: string; countryCode: string } | null;
-  sharedReport: { goal: string; finalizedAt: string } | null;
-  viewerMembership: {
-    id: string;
-    version: number;
-    communityId: string;
-    role: MembershipRole;
-    isViewer: boolean;
-    joinedAt: string;
-  } | null;
-};
+export type MembershipFieldsFragment = { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string };
+
+export type CommunityFieldsFragment = { id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, contactName: string | null, contactEmail: string | null, area: { id: string, name: string, countryCode: string } | null, sharedReport: { goal: string, finalizedAt: string } | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null };
 
 export type CommunitiesQueryVariables = Exact<{
   filter?: CommunityFilter | null | undefined;
@@ -962,33 +843,8 @@ export type CommunitiesQueryVariables = Exact<{
   after?: string | null | undefined;
 }>;
 
-export type CommunitiesQuery = {
-  communities: {
-    nodes: Array<{
-      id: string;
-      version: number;
-      name: string;
-      description: string;
-      areaId: string | null;
-      status: CommunityStatus;
-      memberCount: number;
-      archivedAt: string | null;
-      contactName: string | null;
-      contactEmail: string | null;
-      area: { id: string; name: string; countryCode: string } | null;
-      sharedReport: { goal: string; finalizedAt: string } | null;
-      viewerMembership: {
-        id: string;
-        version: number;
-        communityId: string;
-        role: MembershipRole;
-        isViewer: boolean;
-        joinedAt: string;
-      } | null;
-    }>;
-    pageInfo: { hasNextPage: boolean; endCursor: string | null };
-  };
-};
+
+export type CommunitiesQuery = { communities: { nodes: Array<{ id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, contactName: string | null, contactEmail: string | null, area: { id: string, name: string, countryCode: string } | null, sharedReport: { goal: string, finalizedAt: string } | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type NearbyCommunitiesQueryVariables = Exact<{
   near: NearbyCommunitiesInput;
@@ -996,66 +852,15 @@ export type NearbyCommunitiesQueryVariables = Exact<{
   after?: string | null | undefined;
 }>;
 
-export type NearbyCommunitiesQuery = {
-  nearbyCommunities: {
-    candidatesTruncated: boolean;
-    nodes: Array<{
-      distanceMeters: number;
-      community: {
-        id: string;
-        version: number;
-        name: string;
-        description: string;
-        areaId: string | null;
-        status: CommunityStatus;
-        memberCount: number;
-        archivedAt: string | null;
-        contactName: string | null;
-        contactEmail: string | null;
-        area: { id: string; name: string; countryCode: string } | null;
-        sharedReport: { goal: string; finalizedAt: string } | null;
-        viewerMembership: {
-          id: string;
-          version: number;
-          communityId: string;
-          role: MembershipRole;
-          isViewer: boolean;
-          joinedAt: string;
-        } | null;
-      };
-    }>;
-    pageInfo: { hasNextPage: boolean; endCursor: string | null };
-  };
-};
+
+export type NearbyCommunitiesQuery = { nearbyCommunities: { candidatesTruncated: boolean, nodes: Array<{ distanceMeters: number, community: { id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, contactName: string | null, contactEmail: string | null, area: { id: string, name: string, countryCode: string } | null, sharedReport: { goal: string, finalizedAt: string } | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type CommunityQueryVariables = Exact<{
   id: string;
 }>;
 
-export type CommunityQuery = {
-  community: {
-    id: string;
-    version: number;
-    name: string;
-    description: string;
-    areaId: string | null;
-    status: CommunityStatus;
-    memberCount: number;
-    archivedAt: string | null;
-    contactName: string | null;
-    contactEmail: string | null;
-    area: { id: string; name: string; countryCode: string } | null;
-    sharedReport: { goal: string; finalizedAt: string } | null;
-    viewerMembership: {
-      id: string;
-      version: number;
-      communityId: string;
-      role: MembershipRole;
-      isViewer: boolean;
-      joinedAt: string;
-    } | null;
-  } | null;
-};
+
+export type CommunityQuery = { community: { id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, contactName: string | null, contactEmail: string | null, area: { id: string, name: string, countryCode: string } | null, sharedReport: { goal: string, finalizedAt: string } | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null } | null };
 
 export type CommunityMembersQueryVariables = Exact<{
   id: string;
@@ -1063,63 +868,16 @@ export type CommunityMembersQueryVariables = Exact<{
   after?: string | null | undefined;
 }>;
 
-export type CommunityMembersQuery = {
-  community: {
-    id: string;
-    members: {
-      nodes: Array<{
-        id: string;
-        version: number;
-        communityId: string;
-        role: MembershipRole;
-        isViewer: boolean;
-        joinedAt: string;
-      }>;
-      pageInfo: { hasNextPage: boolean; endCursor: string | null };
-    };
-  } | null;
-};
+
+export type CommunityMembersQuery = { community: { id: string, members: { nodes: Array<{ id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } } | null };
 
 export type MyMembershipsQueryVariables = Exact<{
   first?: number | null | undefined;
   after?: string | null | undefined;
 }>;
 
-export type MyMembershipsQuery = {
-  myMemberships: {
-    nodes: Array<{
-      id: string;
-      version: number;
-      communityId: string;
-      role: MembershipRole;
-      isViewer: boolean;
-      joinedAt: string;
-      community: {
-        id: string;
-        version: number;
-        name: string;
-        description: string;
-        areaId: string | null;
-        status: CommunityStatus;
-        memberCount: number;
-        archivedAt: string | null;
-        contactName: string | null;
-        contactEmail: string | null;
-        area: { id: string; name: string; countryCode: string } | null;
-        sharedReport: { goal: string; finalizedAt: string } | null;
-        viewerMembership: {
-          id: string;
-          version: number;
-          communityId: string;
-          role: MembershipRole;
-          isViewer: boolean;
-          joinedAt: string;
-        } | null;
-      };
-    }>;
-    pageInfo: { hasNextPage: boolean; endCursor: string | null };
-  };
-};
+
+export type MyMembershipsQuery = { myMemberships: { nodes: Array<{ id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string, community: { id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, contactName: string | null, contactEmail: string | null, area: { id: string, name: string, countryCode: string } | null, sharedReport: { goal: string, finalizedAt: string } | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type CommunitySourceReportsQueryVariables = Exact<{
   filter?: ReportFilter | null | undefined;
@@ -1127,186 +885,38 @@ export type CommunitySourceReportsQueryVariables = Exact<{
   after?: string | null | undefined;
 }>;
 
-export type CommunitySourceReportsQuery = {
-  reports: {
-    nodes: Array<{
-      id: string;
-      title: string;
-      status: ReportStatus;
-      finalizedAt: string;
-      goal: { kind: GoalKind };
-      area: { id: string; name: string; private: boolean } | null;
-    }>;
-    pageInfo: { hasNextPage: boolean; endCursor: string | null };
-  };
-};
+
+export type CommunitySourceReportsQuery = { reports: { nodes: Array<{ id: string, title: string, status: ReportStatus, finalizedAt: string, goal: { kind: GoalKind }, area: { id: string, name: string, private: boolean } | null }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type CreateCommunityMutationVariables = Exact<{
   input: CreateCommunityInput;
 }>;
 
-export type CreateCommunityMutation = {
-  createCommunity: {
-    community: {
-      id: string;
-      version: number;
-      name: string;
-      description: string;
-      areaId: string | null;
-      status: CommunityStatus;
-      memberCount: number;
-      archivedAt: string | null;
-      contactName: string | null;
-      contactEmail: string | null;
-      area: { id: string; name: string; countryCode: string } | null;
-      sharedReport: { goal: string; finalizedAt: string } | null;
-      viewerMembership: {
-        id: string;
-        version: number;
-        communityId: string;
-        role: MembershipRole;
-        isViewer: boolean;
-        joinedAt: string;
-      } | null;
-    } | null;
-    error: {
-      code: ErrorCode;
-      message: string;
-      currentVersion: number | null;
-      requestId: string;
-      fieldErrors: Array<{ field: string; message: string }>;
-    } | null;
-  };
-};
+
+export type CreateCommunityMutation = { createCommunity: { community: { id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, contactName: string | null, contactEmail: string | null, area: { id: string, name: string, countryCode: string } | null, sharedReport: { goal: string, finalizedAt: string } | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
 export type JoinCommunityMutationVariables = Exact<{
   input: JoinCommunityInput;
 }>;
 
-export type JoinCommunityMutation = {
-  joinCommunity: {
-    membership: {
-      id: string;
-      version: number;
-      communityId: string;
-      role: MembershipRole;
-      isViewer: boolean;
-      joinedAt: string;
-    } | null;
-    error: {
-      code: ErrorCode;
-      message: string;
-      currentVersion: number | null;
-      requestId: string;
-      fieldErrors: Array<{ field: string; message: string }>;
-    } | null;
-  };
-};
+
+export type JoinCommunityMutation = { joinCommunity: { membership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
 export type LeaveCommunityMutationVariables = Exact<{
   input: LeaveCommunityInput;
 }>;
 
-export type LeaveCommunityMutation = {
-  leaveCommunity: {
-    membership: {
-      id: string;
-      version: number;
-      communityId: string;
-      role: MembershipRole;
-      isViewer: boolean;
-      joinedAt: string;
-    } | null;
-    error: {
-      code: ErrorCode;
-      message: string;
-      currentVersion: number | null;
-      requestId: string;
-      fieldErrors: Array<{ field: string; message: string }>;
-    } | null;
-  };
-};
+
+export type LeaveCommunityMutation = { leaveCommunity: { membership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
 export type ArchiveCommunityMutationVariables = Exact<{
   input: ArchiveCommunityInput;
 }>;
 
-export type ArchiveCommunityMutation = {
-  archiveCommunity: {
-    community: {
-      id: string;
-      version: number;
-      name: string;
-      description: string;
-      areaId: string | null;
-      status: CommunityStatus;
-      memberCount: number;
-      archivedAt: string | null;
-      contactName: string | null;
-      contactEmail: string | null;
-      area: { id: string; name: string; countryCode: string } | null;
-      sharedReport: { goal: string; finalizedAt: string } | null;
-      viewerMembership: {
-        id: string;
-        version: number;
-        communityId: string;
-        role: MembershipRole;
-        isViewer: boolean;
-        joinedAt: string;
-      } | null;
-    } | null;
-    error: {
-      code: ErrorCode;
-      message: string;
-      currentVersion: number | null;
-      requestId: string;
-      fieldErrors: Array<{ field: string; message: string }>;
-    } | null;
-  };
-};
 
-export type FundingMatchFieldsFragment = {
-  id: string;
-  version: number;
-  sessionId: string;
-  planOptionId: string;
-  metCount: number;
-  notMetCount: number;
-  needsCheckCount: number;
-  window: WindowStatus;
-  status: FundingMatchStatus;
-  rulesVersion: string;
-  eligibility: EligibilityStatus;
-  relevanceOrder: number | null;
-  rankingStatus: string;
-  rankingReason: string;
-  eligibilityEvidence: Array<{ criterionId: string; status: CriterionStatus; reason: string }>;
-  results: Array<{ criterionId: string; status: CriterionStatus; reason: string }>;
-  scheme: {
-    id: string;
-    name: string;
-    funder: string;
-    summary: string;
-    currency: string;
-    opensOn: string | null;
-    closesOn: string | null;
-    sourceUrl: string;
-    lastVerifiedAt: string;
-    deadlineAt: string | null;
-    deadlineTimezone: string | null;
-    sourceHash: string | null;
-    status: CatalogueStatus;
-    officialSource: boolean;
-    geography: Array<string>;
-    applicantCategories: Array<string>;
-    interventions: Array<string>;
-    amountRules: string | null;
-    evidence: EvidenceQuality;
-    requiredDocuments: Array<string>;
-    maxAmount: { minorUnits: string; currency: string; exponent: number } | null;
-    criteria: Array<{ id: string; text: string; machineCheckable: boolean }>;
-  };
-};
+export type ArchiveCommunityMutation = { archiveCommunity: { community: { id: string, version: number, name: string, description: string, areaId: string | null, status: CommunityStatus, memberCount: number, archivedAt: string | null, contactName: string | null, contactEmail: string | null, area: { id: string, name: string, countryCode: string } | null, sharedReport: { goal: string, finalizedAt: string } | null, viewerMembership: { id: string, version: number, communityId: string, role: MembershipRole, isViewer: boolean, joinedAt: string } | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
+
+export type FundingMatchFieldsFragment = { id: string, version: number, sessionId: string, planOptionId: string, metCount: number, notMetCount: number, needsCheckCount: number, window: WindowStatus, status: FundingMatchStatus, rulesVersion: string, eligibility: EligibilityStatus, relevanceOrder: number | null, rankingStatus: string, rankingReason: string, eligibilityEvidence: Array<{ criterionId: string, status: CriterionStatus, reason: string }>, results: Array<{ criterionId: string, status: CriterionStatus, reason: string }>, scheme: { id: string, name: string, funder: string, summary: string, currency: string, opensOn: string | null, closesOn: string | null, sourceUrl: string, lastVerifiedAt: string, deadlineAt: string | null, deadlineTimezone: string | null, sourceHash: string | null, status: CatalogueStatus, officialSource: boolean, geography: Array<string>, applicantCategories: Array<string>, interventions: Array<string>, amountRules: string | null, evidence: EvidenceQuality, requiredDocuments: Array<string>, maxAmount: { minorUnits: string, currency: string, exponent: number } | null, criteria: Array<{ id: string, text: string, machineCheckable: boolean }> } };
 
 export type FundingMatchesQueryVariables = Exact<{
   sessionId: string;
@@ -1315,371 +925,63 @@ export type FundingMatchesQueryVariables = Exact<{
   after?: string | null | undefined;
 }>;
 
-export type FundingMatchesQuery = {
-  fundingMatches: {
-    nodes: Array<{
-      id: string;
-      version: number;
-      sessionId: string;
-      planOptionId: string;
-      metCount: number;
-      notMetCount: number;
-      needsCheckCount: number;
-      window: WindowStatus;
-      status: FundingMatchStatus;
-      rulesVersion: string;
-      eligibility: EligibilityStatus;
-      relevanceOrder: number | null;
-      rankingStatus: string;
-      rankingReason: string;
-      eligibilityEvidence: Array<{ criterionId: string; status: CriterionStatus; reason: string }>;
-      results: Array<{ criterionId: string; status: CriterionStatus; reason: string }>;
-      scheme: {
-        id: string;
-        name: string;
-        funder: string;
-        summary: string;
-        currency: string;
-        opensOn: string | null;
-        closesOn: string | null;
-        sourceUrl: string;
-        lastVerifiedAt: string;
-        deadlineAt: string | null;
-        deadlineTimezone: string | null;
-        sourceHash: string | null;
-        status: CatalogueStatus;
-        officialSource: boolean;
-        geography: Array<string>;
-        applicantCategories: Array<string>;
-        interventions: Array<string>;
-        amountRules: string | null;
-        evidence: EvidenceQuality;
-        requiredDocuments: Array<string>;
-        maxAmount: { minorUnits: string; currency: string; exponent: number } | null;
-        criteria: Array<{ id: string; text: string; machineCheckable: boolean }>;
-      };
-    }>;
-    pageInfo: { hasNextPage: boolean; endCursor: string | null };
-  };
-};
+
+export type FundingMatchesQuery = { fundingMatches: { nodes: Array<{ id: string, version: number, sessionId: string, planOptionId: string, metCount: number, notMetCount: number, needsCheckCount: number, window: WindowStatus, status: FundingMatchStatus, rulesVersion: string, eligibility: EligibilityStatus, relevanceOrder: number | null, rankingStatus: string, rankingReason: string, eligibilityEvidence: Array<{ criterionId: string, status: CriterionStatus, reason: string }>, results: Array<{ criterionId: string, status: CriterionStatus, reason: string }>, scheme: { id: string, name: string, funder: string, summary: string, currency: string, opensOn: string | null, closesOn: string | null, sourceUrl: string, lastVerifiedAt: string, deadlineAt: string | null, deadlineTimezone: string | null, sourceHash: string | null, status: CatalogueStatus, officialSource: boolean, geography: Array<string>, applicantCategories: Array<string>, interventions: Array<string>, amountRules: string | null, evidence: EvidenceQuality, requiredDocuments: Array<string>, maxAmount: { minorUnits: string, currency: string, exponent: number } | null, criteria: Array<{ id: string, text: string, machineCheckable: boolean }> } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type MatchFundingMutationVariables = Exact<{
   input: MatchFundingInput;
 }>;
 
-export type MatchFundingMutation = {
-  matchFunding: {
-    matches: Array<{
-      id: string;
-      version: number;
-      sessionId: string;
-      planOptionId: string;
-      metCount: number;
-      notMetCount: number;
-      needsCheckCount: number;
-      window: WindowStatus;
-      status: FundingMatchStatus;
-      rulesVersion: string;
-      eligibility: EligibilityStatus;
-      relevanceOrder: number | null;
-      rankingStatus: string;
-      rankingReason: string;
-      eligibilityEvidence: Array<{ criterionId: string; status: CriterionStatus; reason: string }>;
-      results: Array<{ criterionId: string; status: CriterionStatus; reason: string }>;
-      scheme: {
-        id: string;
-        name: string;
-        funder: string;
-        summary: string;
-        currency: string;
-        opensOn: string | null;
-        closesOn: string | null;
-        sourceUrl: string;
-        lastVerifiedAt: string;
-        deadlineAt: string | null;
-        deadlineTimezone: string | null;
-        sourceHash: string | null;
-        status: CatalogueStatus;
-        officialSource: boolean;
-        geography: Array<string>;
-        applicantCategories: Array<string>;
-        interventions: Array<string>;
-        amountRules: string | null;
-        evidence: EvidenceQuality;
-        requiredDocuments: Array<string>;
-        maxAmount: { minorUnits: string; currency: string; exponent: number } | null;
-        criteria: Array<{ id: string; text: string; machineCheckable: boolean }>;
-      };
-    }> | null;
-    error: {
-      code: ErrorCode;
-      message: string;
-      currentVersion: number | null;
-      requestId: string;
-      fieldErrors: Array<{ field: string; message: string }>;
-    } | null;
-  };
-};
 
-export type GoalAssessmentFieldsFragment = {
-  outcome: GoalOutcome;
-  summary: string;
-  nextSteps: Array<string>;
-  catalogueVersion: string;
-  baselineId: string | null;
-  target: {
-    outcome: GoalOutcome;
-    message: string;
-    metric: string | null;
-    unit: Unit | null;
-    baseline: string | null;
-    targetLevel: string | null;
-    caveats: Array<string>;
-  };
-  constraints: Array<{ code: string; message: string; outcome: GoalOutcome | null }>;
-  conflicts: Array<{ code: string; message: string; outcome: GoalOutcome | null }>;
-  interventions: Array<{
-    interventionId: string;
-    name: string;
-    family: InterventionFamily;
-    relevant: boolean;
-    outcome: GoalOutcome;
-    benefit: string;
-    preferred: boolean;
-    site: { outcome: GoalOutcome; message: string };
-    cost: { outcome: GoalOutcome; message: string } | null;
-    time: { outcome: GoalOutcome; message: string } | null;
-  }>;
-};
+export type MatchFundingMutation = { matchFunding: { matches: Array<{ id: string, version: number, sessionId: string, planOptionId: string, metCount: number, notMetCount: number, needsCheckCount: number, window: WindowStatus, status: FundingMatchStatus, rulesVersion: string, eligibility: EligibilityStatus, relevanceOrder: number | null, rankingStatus: string, rankingReason: string, eligibilityEvidence: Array<{ criterionId: string, status: CriterionStatus, reason: string }>, results: Array<{ criterionId: string, status: CriterionStatus, reason: string }>, scheme: { id: string, name: string, funder: string, summary: string, currency: string, opensOn: string | null, closesOn: string | null, sourceUrl: string, lastVerifiedAt: string, deadlineAt: string | null, deadlineTimezone: string | null, sourceHash: string | null, status: CatalogueStatus, officialSource: boolean, geography: Array<string>, applicantCategories: Array<string>, interventions: Array<string>, amountRules: string | null, evidence: EvidenceQuality, requiredDocuments: Array<string>, maxAmount: { minorUnits: string, currency: string, exponent: number } | null, criteria: Array<{ id: string, text: string, machineCheckable: boolean }> } }> | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
-export type InterventionCatalogueQueryVariables = Exact<{ [key: string]: never }>;
+export type GoalAssessmentFieldsFragment = { outcome: GoalOutcome, summary: string, nextSteps: Array<string>, catalogueVersion: string, baselineId: string | null, target: { outcome: GoalOutcome, message: string, metric: string | null, unit: Unit | null, baseline: string | null, targetLevel: string | null, caveats: Array<string> }, constraints: Array<{ code: string, message: string, outcome: GoalOutcome | null }>, conflicts: Array<{ code: string, message: string, outcome: GoalOutcome | null }>, interventions: Array<{ interventionId: string, name: string, family: InterventionFamily, relevant: boolean, outcome: GoalOutcome, benefit: string, preferred: boolean, site: { outcome: GoalOutcome, message: string }, cost: { outcome: GoalOutcome, message: string } | null, time: { outcome: GoalOutcome, message: string } | null }> };
 
-export type InterventionCatalogueQuery = {
-  interventionCatalogue: {
-    version: string;
-    interventions: Array<{
-      id: string;
-      family: InterventionFamily;
-      name: string;
-      summary: string;
-      serves: Array<GoalKind>;
-      scales: Array<SiteScale>;
-      requires: Array<SiteRequirement>;
-      blockedBy: Array<SiteRestriction>;
-      permissions: Array<string>;
-      maintenance: Array<string>;
-      costSources: Array<string>;
-      construction: string;
-      benefitTiming: BenefitTiming;
-      benefitNote: string;
-      evidence: Array<string>;
-      effectModel: string | null;
-      cautions: Array<string>;
-      costInputs: Array<{ key: string; label: string }>;
-      effectInputs: Array<{
-        key: string;
-        label: string;
-        unit: Unit;
-        minimum: string;
-        maximum: string;
-        required: boolean;
-        note: string;
-      }>;
-    }>;
-  };
-};
+export type InterventionCatalogueQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type InterventionCatalogueQuery = { interventionCatalogue: { version: string, interventions: Array<{ id: string, family: InterventionFamily, name: string, summary: string, serves: Array<GoalKind>, scales: Array<SiteScale>, requires: Array<SiteRequirement>, blockedBy: Array<SiteRestriction>, permissions: Array<string>, maintenance: Array<string>, costSources: Array<string>, construction: string, benefitTiming: BenefitTiming, benefitNote: string, evidence: Array<string>, effectModel: string | null, cautions: Array<string>, costInputs: Array<{ key: string, label: string }>, effectInputs: Array<{ key: string, label: string, unit: Unit, minimum: string, maximum: string, required: boolean, note: string }> }> } };
 
 export type CheckGoalQueryVariables = Exact<{
   sessionId: string;
   goal: GoalInput;
 }>;
 
-export type CheckGoalQuery = {
-  checkGoal: {
-    errors: Array<{ field: string; message: string }>;
-    assessment: {
-      outcome: GoalOutcome;
-      summary: string;
-      nextSteps: Array<string>;
-      catalogueVersion: string;
-      baselineId: string | null;
-      target: {
-        outcome: GoalOutcome;
-        message: string;
-        metric: string | null;
-        unit: Unit | null;
-        baseline: string | null;
-        targetLevel: string | null;
-        caveats: Array<string>;
-      };
-      constraints: Array<{ code: string; message: string; outcome: GoalOutcome | null }>;
-      conflicts: Array<{ code: string; message: string; outcome: GoalOutcome | null }>;
-      interventions: Array<{
-        interventionId: string;
-        name: string;
-        family: InterventionFamily;
-        relevant: boolean;
-        outcome: GoalOutcome;
-        benefit: string;
-        preferred: boolean;
-        site: { outcome: GoalOutcome; message: string };
-        cost: { outcome: GoalOutcome; message: string } | null;
-        time: { outcome: GoalOutcome; message: string } | null;
-      }>;
-    } | null;
-  };
-};
+
+export type CheckGoalQuery = { checkGoal: { errors: Array<{ field: string, message: string }>, assessment: { outcome: GoalOutcome, summary: string, nextSteps: Array<string>, catalogueVersion: string, baselineId: string | null, target: { outcome: GoalOutcome, message: string, metric: string | null, unit: Unit | null, baseline: string | null, targetLevel: string | null, caveats: Array<string> }, constraints: Array<{ code: string, message: string, outcome: GoalOutcome | null }>, conflicts: Array<{ code: string, message: string, outcome: GoalOutcome | null }>, interventions: Array<{ interventionId: string, name: string, family: InterventionFamily, relevant: boolean, outcome: GoalOutcome, benefit: string, preferred: boolean, site: { outcome: GoalOutcome, message: string }, cost: { outcome: GoalOutcome, message: string } | null, time: { outcome: GoalOutcome, message: string } | null }> } | null } };
 
 export type GoalAssessmentQueryVariables = Exact<{
   sessionId: string;
 }>;
 
-export type GoalAssessmentQuery = {
-  planningSession: {
-    id: string;
-    inputsRevision: number;
-    goalAssessment: {
-      outcome: GoalOutcome;
-      summary: string;
-      nextSteps: Array<string>;
-      catalogueVersion: string;
-      baselineId: string | null;
-      target: {
-        outcome: GoalOutcome;
-        message: string;
-        metric: string | null;
-        unit: Unit | null;
-        baseline: string | null;
-        targetLevel: string | null;
-        caveats: Array<string>;
-      };
-      constraints: Array<{ code: string; message: string; outcome: GoalOutcome | null }>;
-      conflicts: Array<{ code: string; message: string; outcome: GoalOutcome | null }>;
-      interventions: Array<{
-        interventionId: string;
-        name: string;
-        family: InterventionFamily;
-        relevant: boolean;
-        outcome: GoalOutcome;
-        benefit: string;
-        preferred: boolean;
-        site: { outcome: GoalOutcome; message: string };
-        cost: { outcome: GoalOutcome; message: string } | null;
-        time: { outcome: GoalOutcome; message: string } | null;
-      }>;
-    } | null;
-  } | null;
-};
+
+export type GoalAssessmentQuery = { planningSession: { id: string, inputsRevision: number, goalAssessment: { outcome: GoalOutcome, summary: string, nextSteps: Array<string>, catalogueVersion: string, baselineId: string | null, target: { outcome: GoalOutcome, message: string, metric: string | null, unit: Unit | null, baseline: string | null, targetLevel: string | null, caveats: Array<string> }, constraints: Array<{ code: string, message: string, outcome: GoalOutcome | null }>, conflicts: Array<{ code: string, message: string, outcome: GoalOutcome | null }>, interventions: Array<{ interventionId: string, name: string, family: InterventionFamily, relevant: boolean, outcome: GoalOutcome, benefit: string, preferred: boolean, site: { outcome: GoalOutcome, message: string }, cost: { outcome: GoalOutcome, message: string } | null, time: { outcome: GoalOutcome, message: string } | null }> } | null } | null };
 
 export type GoalAreaQueryVariables = Exact<{
   id: string;
 }>;
 
-export type GoalAreaQuery = { area: { id: string; name: string; currency: string | null } | null };
 
-export type PlaceCandidateFieldsFragment = {
-  placeId: string;
-  name: string;
-  formattedAddress: string | null;
-  latitude: string;
-  longitude: string;
-  countryCode: string | null;
-  scope: GeographicScope;
-  types: Array<string>;
-  admin: {
-    countryName: string | null;
-    admin1: string | null;
-    admin2: string | null;
-    locality: string | null;
-    sublocality: string | null;
-  };
-};
+export type GoalAreaQuery = { area: { id: string, name: string, currency: string | null } | null };
 
-export type AreaLocationFieldsFragment = {
-  id: string;
-  name: string;
-  centroidLat: string;
-  centroidLon: string;
-  countryCode: string;
-  timezone: string;
-  currency: string | null;
-  unitSystem: UnitSystem;
-  regionSetByUser: Array<string>;
-  evidence: EvidenceQuality;
-  origin: AreaOrigin;
-  scope: GeographicScope;
-  extent: ExtentKind;
-  radiusMeters: number | null;
-  private: boolean;
-  formattedAddress: string | null;
-  accuracyMeters: number | null;
-  hasBoundary: boolean;
-  providerContentExpired: boolean;
-  admin: {
-    countryName: string | null;
-    admin1: string | null;
-    admin2: string | null;
-    locality: string | null;
-    sublocality: string | null;
-  };
-};
+export type PlaceCandidateFieldsFragment = { placeId: string, name: string, formattedAddress: string | null, latitude: string, longitude: string, countryCode: string | null, scope: GeographicScope, types: Array<string>, admin: { countryName: string | null, admin1: string | null, admin2: string | null, locality: string | null, sublocality: string | null } };
+
+export type AreaLocationFieldsFragment = { id: string, name: string, centroidLat: string, centroidLon: string, countryCode: string, timezone: string, currency: string | null, unitSystem: UnitSystem, regionSetByUser: Array<string>, evidence: EvidenceQuality, origin: AreaOrigin, scope: GeographicScope, extent: ExtentKind, radiusMeters: number | null, private: boolean, formattedAddress: string | null, accuracyMeters: number | null, hasBoundary: boolean, providerContentExpired: boolean, admin: { countryName: string | null, admin1: string | null, admin2: string | null, locality: string | null, sublocality: string | null } };
 
 export type ResolveLocationQueryVariables = Exact<{
   text: string;
 }>;
 
-export type ResolveLocationQuery = {
-  resolveLocation: {
-    query: string;
-    provider: string;
-    needsClarification: boolean;
-    question: string;
-    candidates: Array<{
-      placeId: string;
-      name: string;
-      formattedAddress: string | null;
-      latitude: string;
-      longitude: string;
-      countryCode: string | null;
-      scope: GeographicScope;
-      types: Array<string>;
-      admin: {
-        countryName: string | null;
-        admin1: string | null;
-        admin2: string | null;
-        locality: string | null;
-        sublocality: string | null;
-      };
-    }>;
-  };
-};
+
+export type ResolveLocationQuery = { resolveLocation: { query: string, provider: string, needsClarification: boolean, question: string, candidates: Array<{ placeId: string, name: string, formattedAddress: string | null, latitude: string, longitude: string, countryCode: string | null, scope: GeographicScope, types: Array<string>, admin: { countryName: string | null, admin1: string | null, admin2: string | null, locality: string | null, sublocality: string | null } }> } };
 
 export type ReverseLocationQueryVariables = Exact<{
   latitude: string;
   longitude: string;
 }>;
 
-export type ReverseLocationQuery = {
-  reverseLocation: {
-    candidates: Array<{
-      placeId: string;
-      name: string;
-      formattedAddress: string | null;
-      latitude: string;
-      longitude: string;
-      countryCode: string | null;
-      scope: GeographicScope;
-      types: Array<string>;
-      admin: {
-        countryName: string | null;
-        admin1: string | null;
-        admin2: string | null;
-        locality: string | null;
-        sublocality: string | null;
-      };
-    }>;
-  };
-};
+
+export type ReverseLocationQuery = { reverseLocation: { candidates: Array<{ placeId: string, name: string, formattedAddress: string | null, latitude: string, longitude: string, countryCode: string | null, scope: GeographicScope, types: Array<string>, admin: { countryName: string | null, admin1: string | null, admin2: string | null, locality: string | null, sublocality: string | null } }> } };
 
 export type RegionSettingsQueryVariables = Exact<{
   latitude: string;
@@ -1687,170 +989,36 @@ export type RegionSettingsQueryVariables = Exact<{
   countryCode: string;
 }>;
 
-export type RegionSettingsQuery = {
-  regionSettings: {
-    currency: string | null;
-    currencyOptions: Array<string>;
-    currencyCertain: boolean;
-    timezone: string;
-    timezoneOptions: Array<string>;
-    timezoneCertain: boolean;
-    unitSystem: UnitSystem;
-  };
-};
 
-export type CountriesQueryVariables = Exact<{ [key: string]: never }>;
+export type RegionSettingsQuery = { regionSettings: { currency: string | null, currencyOptions: Array<string>, currencyCertain: boolean, timezone: string, timezoneOptions: Array<string>, timezoneCertain: boolean, unitSystem: UnitSystem } };
 
-export type CountriesQuery = { countries: { countries: Array<{ code: string; name: string }> } };
+export type CountriesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type CountriesQuery = { countries: { countries: Array<{ code: string, name: string }> } };
 
 export type AreaLocationQueryVariables = Exact<{
   id: string;
 }>;
 
-export type AreaLocationQuery = {
-  area: {
-    id: string;
-    name: string;
-    centroidLat: string;
-    centroidLon: string;
-    countryCode: string;
-    timezone: string;
-    currency: string | null;
-    unitSystem: UnitSystem;
-    regionSetByUser: Array<string>;
-    evidence: EvidenceQuality;
-    origin: AreaOrigin;
-    scope: GeographicScope;
-    extent: ExtentKind;
-    radiusMeters: number | null;
-    private: boolean;
-    formattedAddress: string | null;
-    accuracyMeters: number | null;
-    hasBoundary: boolean;
-    providerContentExpired: boolean;
-    admin: {
-      countryName: string | null;
-      admin1: string | null;
-      admin2: string | null;
-      locality: string | null;
-      sublocality: string | null;
-    };
-  } | null;
-};
+
+export type AreaLocationQuery = { area: { id: string, name: string, centroidLat: string, centroidLon: string, countryCode: string, timezone: string, currency: string | null, unitSystem: UnitSystem, regionSetByUser: Array<string>, evidence: EvidenceQuality, origin: AreaOrigin, scope: GeographicScope, extent: ExtentKind, radiusMeters: number | null, private: boolean, formattedAddress: string | null, accuracyMeters: number | null, hasBoundary: boolean, providerContentExpired: boolean, admin: { countryName: string | null, admin1: string | null, admin2: string | null, locality: string | null, sublocality: string | null } } | null };
 
 export type ConfirmLocationMutationVariables = Exact<{
   input: ConfirmLocationInput;
 }>;
 
-export type ConfirmLocationMutation = {
-  confirmLocation: {
-    area: {
-      id: string;
-      name: string;
-      centroidLat: string;
-      centroidLon: string;
-      countryCode: string;
-      timezone: string;
-      currency: string | null;
-      unitSystem: UnitSystem;
-      regionSetByUser: Array<string>;
-      evidence: EvidenceQuality;
-      origin: AreaOrigin;
-      scope: GeographicScope;
-      extent: ExtentKind;
-      radiusMeters: number | null;
-      private: boolean;
-      formattedAddress: string | null;
-      accuracyMeters: number | null;
-      hasBoundary: boolean;
-      providerContentExpired: boolean;
-      admin: {
-        countryName: string | null;
-        admin1: string | null;
-        admin2: string | null;
-        locality: string | null;
-        sublocality: string | null;
-      };
-    } | null;
-    error: {
-      code: ErrorCode;
-      message: string;
-      currentVersion: number | null;
-      requestId: string;
-      fieldErrors: Array<{ field: string; message: string }>;
-    } | null;
-  };
-};
 
-export type AreaFieldsFragment = {
-  id: string;
-  name: string;
-  countryCode: string;
-  timezone: string;
-  evidence: EvidenceQuality;
-};
+export type ConfirmLocationMutation = { confirmLocation: { area: { id: string, name: string, centroidLat: string, centroidLon: string, countryCode: string, timezone: string, currency: string | null, unitSystem: UnitSystem, regionSetByUser: Array<string>, evidence: EvidenceQuality, origin: AreaOrigin, scope: GeographicScope, extent: ExtentKind, radiusMeters: number | null, private: boolean, formattedAddress: string | null, accuracyMeters: number | null, hasBoundary: boolean, providerContentExpired: boolean, admin: { countryName: string | null, admin1: string | null, admin2: string | null, locality: string | null, sublocality: string | null } } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
-export type PlanningSessionFieldsFragment = {
-  id: string;
-  version: number;
-  mode: PlanningMode;
-  stage: PlanningStage;
-  status: SessionStatus;
-  areaId: string | null;
-  communityId: string | null;
-  selectedPlanOptionId: string | null;
-  inputsRevision: number;
-  updatedAt: string;
-  siteProfile: { communityType: CommunityType | null; occupiedHomes: number | null } | null;
-  area: { id: string; name: string } | null;
-  goal: {
-    id: string;
-    kind: GoalKind;
-    description: string;
-    targetParameter: string | null;
-    timelineDays: number | null;
-    horizonDays: number | null;
-    priority: Priority | null;
-    also: Array<GoalKind>;
-    confirmed: boolean;
-    preferredInterventions: Array<string>;
-    budget: { minorUnits: string; currency: string; exponent: number } | null;
-    target: { mode: TargetMode; quantity: { value: string; unit: Unit } } | null;
-    site: {
-      scale: SiteScale | null;
-      storageSpace: boolean | null;
-      pipedSupply: boolean | null;
-      groundwaterUse: boolean | null;
-      restrictions: Array<SiteRestriction>;
-      roofArea: { value: string; unit: Unit } | null;
-      openGround: { value: string; unit: Unit } | null;
-    };
-    estimates: Array<{
-      interventionId: string;
-      note: string;
-      cost: {
-        low: { minorUnits: string; currency: string; exponent: number };
-        high: { minorUnits: string; currency: string; exponent: number };
-      } | null;
-      buildDays: { low: number; high: number } | null;
-      effects: Array<{ key: string; low: string; high: string }>;
-    }>;
-  } | null;
-  scenario: {
-    id: string;
-    confirmed: boolean;
-    interpretedFrom: string | null;
-    adjustments: Array<{
-      parameter: string;
-      change: AdjustmentChange;
-      quantity: { value: string; unit: Unit };
-    }>;
-  } | null;
-};
+export type AreaFieldsFragment = { id: string, name: string, countryCode: string, timezone: string, evidence: EvidenceQuality };
 
-export type ViewerQueryVariables = Exact<{ [key: string]: never }>;
+export type PlanningSessionFieldsFragment = { id: string, version: number, mode: PlanningMode, stage: PlanningStage, status: SessionStatus, areaId: string | null, communityId: string | null, selectedPlanOptionId: string | null, inputsRevision: number, updatedAt: string, siteProfile: { communityType: CommunityType | null, occupiedHomes: number | null } | null, area: { id: string, name: string, extent: ExtentKind, radiusMeters: number | null, hasBoundary: boolean } | null, goal: { id: string, kind: GoalKind, description: string, targetParameter: string | null, timelineDays: number | null, horizonDays: number | null, priority: Priority | null, also: Array<GoalKind>, confirmed: boolean, preferredInterventions: Array<string>, contingencyRatio: string | null, waterTariff: { note: string, price: { minorUnits: string, currency: string, exponent: number }, volume: { value: string, unit: Unit } } | null, funding: Array<{ label: string, status: FundingStatus, note: string, amount: { minorUnits: string, currency: string, exponent: number } }>, budget: { minorUnits: string, currency: string, exponent: number } | null, target: { mode: TargetMode, quantity: { value: string, unit: Unit } } | null, site: { scale: SiteScale | null, storageSpace: boolean | null, pipedSupply: boolean | null, groundwaterUse: boolean | null, restrictions: Array<SiteRestriction>, roofArea: { value: string, unit: Unit } | null, openGround: { value: string, unit: Unit } | null }, estimates: Array<{ interventionId: string, note: string, cost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, recurring: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, buildDays: { low: number, high: number } | null, effects: Array<{ key: string, low: string, high: string }> }> } | null, scenario: { id: string, confirmed: boolean, interpretedFrom: string | null, adjustments: Array<{ parameter: string, change: AdjustmentChange, quantity: { value: string, unit: Unit } }> } | null };
 
-export type ViewerQuery = { viewer: { uid: string; kind: AccountKind } | null };
+export type ViewerQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ViewerQuery = { viewer: { uid: string, kind: AccountKind } | null };
 
 export type SearchAreasQueryVariables = Exact<{
   query: string;
@@ -1858,167 +1026,27 @@ export type SearchAreasQueryVariables = Exact<{
   after?: string | null | undefined;
 }>;
 
-export type SearchAreasQuery = {
-  searchAreas: {
-    nodes: Array<{
-      id: string;
-      name: string;
-      countryCode: string;
-      timezone: string;
-      evidence: EvidenceQuality;
-    }>;
-    pageInfo: { hasNextPage: boolean; endCursor: string | null };
-  };
-};
+
+export type SearchAreasQuery = { searchAreas: { nodes: Array<{ id: string, name: string, countryCode: string, timezone: string, evidence: EvidenceQuality }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type AreaCoverageQueryVariables = Exact<{
   id: string;
 }>;
 
-export type AreaCoverageQuery = {
-  area: {
-    id: string;
-    name: string;
-    countryCode: string;
-    timezone: string;
-    evidence: EvidenceQuality;
-    coverage: {
-      assessedAt: string;
-      items: Array<{
-        capability: Capability;
-        availability: Availability;
-        evidence: EvidenceQuality | null;
-        reason: string | null;
-      }>;
-    };
-  } | null;
-};
 
-export type CurrentPlanningSessionQueryVariables = Exact<{ [key: string]: never }>;
+export type AreaCoverageQuery = { area: { id: string, name: string, countryCode: string, timezone: string, evidence: EvidenceQuality, coverage: { assessedAt: string, items: Array<{ capability: Capability, availability: Availability, evidence: EvidenceQuality | null, reason: string | null }> } } | null };
 
-export type CurrentPlanningSessionQuery = {
-  currentPlanningSession: {
-    id: string;
-    version: number;
-    mode: PlanningMode;
-    stage: PlanningStage;
-    status: SessionStatus;
-    areaId: string | null;
-    communityId: string | null;
-    selectedPlanOptionId: string | null;
-    inputsRevision: number;
-    updatedAt: string;
-    siteProfile: { communityType: CommunityType | null; occupiedHomes: number | null } | null;
-    area: { id: string; name: string } | null;
-    goal: {
-      id: string;
-      kind: GoalKind;
-      description: string;
-      targetParameter: string | null;
-      timelineDays: number | null;
-      horizonDays: number | null;
-      priority: Priority | null;
-      also: Array<GoalKind>;
-      confirmed: boolean;
-      preferredInterventions: Array<string>;
-      budget: { minorUnits: string; currency: string; exponent: number } | null;
-      target: { mode: TargetMode; quantity: { value: string; unit: Unit } } | null;
-      site: {
-        scale: SiteScale | null;
-        storageSpace: boolean | null;
-        pipedSupply: boolean | null;
-        groundwaterUse: boolean | null;
-        restrictions: Array<SiteRestriction>;
-        roofArea: { value: string; unit: Unit } | null;
-        openGround: { value: string; unit: Unit } | null;
-      };
-      estimates: Array<{
-        interventionId: string;
-        note: string;
-        cost: {
-          low: { minorUnits: string; currency: string; exponent: number };
-          high: { minorUnits: string; currency: string; exponent: number };
-        } | null;
-        buildDays: { low: number; high: number } | null;
-        effects: Array<{ key: string; low: string; high: string }>;
-      }>;
-    } | null;
-    scenario: {
-      id: string;
-      confirmed: boolean;
-      interpretedFrom: string | null;
-      adjustments: Array<{
-        parameter: string;
-        change: AdjustmentChange;
-        quantity: { value: string; unit: Unit };
-      }>;
-    } | null;
-  } | null;
-};
+export type CurrentPlanningSessionQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type CurrentPlanningSessionQuery = { currentPlanningSession: { id: string, version: number, mode: PlanningMode, stage: PlanningStage, status: SessionStatus, areaId: string | null, communityId: string | null, selectedPlanOptionId: string | null, inputsRevision: number, updatedAt: string, siteProfile: { communityType: CommunityType | null, occupiedHomes: number | null } | null, area: { id: string, name: string, extent: ExtentKind, radiusMeters: number | null, hasBoundary: boolean } | null, goal: { id: string, kind: GoalKind, description: string, targetParameter: string | null, timelineDays: number | null, horizonDays: number | null, priority: Priority | null, also: Array<GoalKind>, confirmed: boolean, preferredInterventions: Array<string>, contingencyRatio: string | null, waterTariff: { note: string, price: { minorUnits: string, currency: string, exponent: number }, volume: { value: string, unit: Unit } } | null, funding: Array<{ label: string, status: FundingStatus, note: string, amount: { minorUnits: string, currency: string, exponent: number } }>, budget: { minorUnits: string, currency: string, exponent: number } | null, target: { mode: TargetMode, quantity: { value: string, unit: Unit } } | null, site: { scale: SiteScale | null, storageSpace: boolean | null, pipedSupply: boolean | null, groundwaterUse: boolean | null, restrictions: Array<SiteRestriction>, roofArea: { value: string, unit: Unit } | null, openGround: { value: string, unit: Unit } | null }, estimates: Array<{ interventionId: string, note: string, cost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, recurring: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, buildDays: { low: number, high: number } | null, effects: Array<{ key: string, low: string, high: string }> }> } | null, scenario: { id: string, confirmed: boolean, interpretedFrom: string | null, adjustments: Array<{ parameter: string, change: AdjustmentChange, quantity: { value: string, unit: Unit } }> } | null } | null };
 
 export type PlanningSessionQueryVariables = Exact<{
   id: string;
 }>;
 
-export type PlanningSessionQuery = {
-  planningSession: {
-    id: string;
-    version: number;
-    mode: PlanningMode;
-    stage: PlanningStage;
-    status: SessionStatus;
-    areaId: string | null;
-    communityId: string | null;
-    selectedPlanOptionId: string | null;
-    inputsRevision: number;
-    updatedAt: string;
-    siteProfile: { communityType: CommunityType | null; occupiedHomes: number | null } | null;
-    area: { id: string; name: string } | null;
-    goal: {
-      id: string;
-      kind: GoalKind;
-      description: string;
-      targetParameter: string | null;
-      timelineDays: number | null;
-      horizonDays: number | null;
-      priority: Priority | null;
-      also: Array<GoalKind>;
-      confirmed: boolean;
-      preferredInterventions: Array<string>;
-      budget: { minorUnits: string; currency: string; exponent: number } | null;
-      target: { mode: TargetMode; quantity: { value: string; unit: Unit } } | null;
-      site: {
-        scale: SiteScale | null;
-        storageSpace: boolean | null;
-        pipedSupply: boolean | null;
-        groundwaterUse: boolean | null;
-        restrictions: Array<SiteRestriction>;
-        roofArea: { value: string; unit: Unit } | null;
-        openGround: { value: string; unit: Unit } | null;
-      };
-      estimates: Array<{
-        interventionId: string;
-        note: string;
-        cost: {
-          low: { minorUnits: string; currency: string; exponent: number };
-          high: { minorUnits: string; currency: string; exponent: number };
-        } | null;
-        buildDays: { low: number; high: number } | null;
-        effects: Array<{ key: string; low: string; high: string }>;
-      }>;
-    } | null;
-    scenario: {
-      id: string;
-      confirmed: boolean;
-      interpretedFrom: string | null;
-      adjustments: Array<{
-        parameter: string;
-        change: AdjustmentChange;
-        quantity: { value: string; unit: Unit };
-      }>;
-    } | null;
-  } | null;
-};
+
+export type PlanningSessionQuery = { planningSession: { id: string, version: number, mode: PlanningMode, stage: PlanningStage, status: SessionStatus, areaId: string | null, communityId: string | null, selectedPlanOptionId: string | null, inputsRevision: number, updatedAt: string, siteProfile: { communityType: CommunityType | null, occupiedHomes: number | null } | null, area: { id: string, name: string, extent: ExtentKind, radiusMeters: number | null, hasBoundary: boolean } | null, goal: { id: string, kind: GoalKind, description: string, targetParameter: string | null, timelineDays: number | null, horizonDays: number | null, priority: Priority | null, also: Array<GoalKind>, confirmed: boolean, preferredInterventions: Array<string>, contingencyRatio: string | null, waterTariff: { note: string, price: { minorUnits: string, currency: string, exponent: number }, volume: { value: string, unit: Unit } } | null, funding: Array<{ label: string, status: FundingStatus, note: string, amount: { minorUnits: string, currency: string, exponent: number } }>, budget: { minorUnits: string, currency: string, exponent: number } | null, target: { mode: TargetMode, quantity: { value: string, unit: Unit } } | null, site: { scale: SiteScale | null, storageSpace: boolean | null, pipedSupply: boolean | null, groundwaterUse: boolean | null, restrictions: Array<SiteRestriction>, roofArea: { value: string, unit: Unit } | null, openGround: { value: string, unit: Unit } | null }, estimates: Array<{ interventionId: string, note: string, cost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, recurring: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, buildDays: { low: number, high: number } | null, effects: Array<{ key: string, low: string, high: string }> }> } | null, scenario: { id: string, confirmed: boolean, interpretedFrom: string | null, adjustments: Array<{ parameter: string, change: AdjustmentChange, quantity: { value: string, unit: Unit } }> } | null } | null };
 
 export type PlanOptionsQueryVariables = Exact<{
   sessionId: string;
@@ -2026,1282 +1054,83 @@ export type PlanOptionsQueryVariables = Exact<{
   after?: string | null | undefined;
 }>;
 
-export type PlanOptionsQuery = {
-  planOptions: {
-    nodes: Array<{
-      id: string;
-      inputsRevision: number;
-      name: string;
-      summary: string;
-      feasibility: Feasibility;
-      bestFitReason: string | null;
-      costUnavailableReason: string | null;
-      costBasisDate: string | null;
-      cost: {
-        low: { minorUnits: string; currency: string; exponent: number };
-        high: { minorUnits: string; currency: string; exponent: number };
-      } | null;
-      buildDays: { low: number; high: number } | null;
-      impact: {
-        id: string;
-        assumptions: Array<string>;
-        metrics: Array<{
-          metricId: string;
-          baseline: {
-            availability: Availability;
-            reason: string | null;
-            quantity: { value: string; unit: Unit } | null;
-          };
-          projectedLow: {
-            availability: Availability;
-            reason: string | null;
-            quantity: { value: string; unit: Unit } | null;
-          };
-          projectedHigh: {
-            availability: Availability;
-            reason: string | null;
-            quantity: { value: string; unit: Unit } | null;
-          };
-        }>;
-        neighbourEffect: { availability: Availability; reason: string | null };
-      };
-    }>;
-    pageInfo: { hasNextPage: boolean; endCursor: string | null };
-  };
-};
+
+export type PlanOptionsQuery = { planOptions: { nodes: Array<{ id: string, inputsRevision: number, name: string, summary: string, feasibility: Feasibility, bestFitReason: string | null, costUnavailableReason: string | null, costBasisDate: string | null, cost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, buildDays: { low: number, high: number } | null, impact: { id: string, assumptions: Array<string>, metrics: Array<{ metricId: string, baseline: { availability: Availability, reason: string | null, quantity: { value: string, unit: Unit } | null }, projectedLow: { availability: Availability, reason: string | null, quantity: { value: string, unit: Unit } | null }, projectedHigh: { availability: Availability, reason: string | null, quantity: { value: string, unit: Unit } | null } }>, neighbourEffect: { availability: Availability, reason: string | null } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type CreatePlanningSessionMutationVariables = Exact<{
   input: CreatePlanningSessionInput;
 }>;
 
-export type CreatePlanningSessionMutation = {
-  createPlanningSession: {
-    session: {
-      id: string;
-      version: number;
-      mode: PlanningMode;
-      stage: PlanningStage;
-      status: SessionStatus;
-      areaId: string | null;
-      communityId: string | null;
-      selectedPlanOptionId: string | null;
-      inputsRevision: number;
-      updatedAt: string;
-      siteProfile: { communityType: CommunityType | null; occupiedHomes: number | null } | null;
-      area: { id: string; name: string } | null;
-      goal: {
-        id: string;
-        kind: GoalKind;
-        description: string;
-        targetParameter: string | null;
-        timelineDays: number | null;
-        horizonDays: number | null;
-        priority: Priority | null;
-        also: Array<GoalKind>;
-        confirmed: boolean;
-        preferredInterventions: Array<string>;
-        budget: { minorUnits: string; currency: string; exponent: number } | null;
-        target: { mode: TargetMode; quantity: { value: string; unit: Unit } } | null;
-        site: {
-          scale: SiteScale | null;
-          storageSpace: boolean | null;
-          pipedSupply: boolean | null;
-          groundwaterUse: boolean | null;
-          restrictions: Array<SiteRestriction>;
-          roofArea: { value: string; unit: Unit } | null;
-          openGround: { value: string; unit: Unit } | null;
-        };
-        estimates: Array<{
-          interventionId: string;
-          note: string;
-          cost: {
-            low: { minorUnits: string; currency: string; exponent: number };
-            high: { minorUnits: string; currency: string; exponent: number };
-          } | null;
-          buildDays: { low: number; high: number } | null;
-          effects: Array<{ key: string; low: string; high: string }>;
-        }>;
-      } | null;
-      scenario: {
-        id: string;
-        confirmed: boolean;
-        interpretedFrom: string | null;
-        adjustments: Array<{
-          parameter: string;
-          change: AdjustmentChange;
-          quantity: { value: string; unit: Unit };
-        }>;
-      } | null;
-    } | null;
-    error: {
-      code: ErrorCode;
-      message: string;
-      currentVersion: number | null;
-      requestId: string;
-      fieldErrors: Array<{ field: string; message: string }>;
-    } | null;
-  };
-};
+
+export type CreatePlanningSessionMutation = { createPlanningSession: { session: { id: string, version: number, mode: PlanningMode, stage: PlanningStage, status: SessionStatus, areaId: string | null, communityId: string | null, selectedPlanOptionId: string | null, inputsRevision: number, updatedAt: string, siteProfile: { communityType: CommunityType | null, occupiedHomes: number | null } | null, area: { id: string, name: string, extent: ExtentKind, radiusMeters: number | null, hasBoundary: boolean } | null, goal: { id: string, kind: GoalKind, description: string, targetParameter: string | null, timelineDays: number | null, horizonDays: number | null, priority: Priority | null, also: Array<GoalKind>, confirmed: boolean, preferredInterventions: Array<string>, contingencyRatio: string | null, waterTariff: { note: string, price: { minorUnits: string, currency: string, exponent: number }, volume: { value: string, unit: Unit } } | null, funding: Array<{ label: string, status: FundingStatus, note: string, amount: { minorUnits: string, currency: string, exponent: number } }>, budget: { minorUnits: string, currency: string, exponent: number } | null, target: { mode: TargetMode, quantity: { value: string, unit: Unit } } | null, site: { scale: SiteScale | null, storageSpace: boolean | null, pipedSupply: boolean | null, groundwaterUse: boolean | null, restrictions: Array<SiteRestriction>, roofArea: { value: string, unit: Unit } | null, openGround: { value: string, unit: Unit } | null }, estimates: Array<{ interventionId: string, note: string, cost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, recurring: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, buildDays: { low: number, high: number } | null, effects: Array<{ key: string, low: string, high: string }> }> } | null, scenario: { id: string, confirmed: boolean, interpretedFrom: string | null, adjustments: Array<{ parameter: string, change: AdjustmentChange, quantity: { value: string, unit: Unit } }> } | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
 export type UpdatePlanningSessionMutationVariables = Exact<{
   input: UpdatePlanningSessionInput;
 }>;
 
-export type UpdatePlanningSessionMutation = {
-  updatePlanningSession: {
-    session: {
-      id: string;
-      version: number;
-      mode: PlanningMode;
-      stage: PlanningStage;
-      status: SessionStatus;
-      areaId: string | null;
-      communityId: string | null;
-      selectedPlanOptionId: string | null;
-      inputsRevision: number;
-      updatedAt: string;
-      siteProfile: { communityType: CommunityType | null; occupiedHomes: number | null } | null;
-      area: { id: string; name: string } | null;
-      goal: {
-        id: string;
-        kind: GoalKind;
-        description: string;
-        targetParameter: string | null;
-        timelineDays: number | null;
-        horizonDays: number | null;
-        priority: Priority | null;
-        also: Array<GoalKind>;
-        confirmed: boolean;
-        preferredInterventions: Array<string>;
-        budget: { minorUnits: string; currency: string; exponent: number } | null;
-        target: { mode: TargetMode; quantity: { value: string; unit: Unit } } | null;
-        site: {
-          scale: SiteScale | null;
-          storageSpace: boolean | null;
-          pipedSupply: boolean | null;
-          groundwaterUse: boolean | null;
-          restrictions: Array<SiteRestriction>;
-          roofArea: { value: string; unit: Unit } | null;
-          openGround: { value: string; unit: Unit } | null;
-        };
-        estimates: Array<{
-          interventionId: string;
-          note: string;
-          cost: {
-            low: { minorUnits: string; currency: string; exponent: number };
-            high: { minorUnits: string; currency: string; exponent: number };
-          } | null;
-          buildDays: { low: number; high: number } | null;
-          effects: Array<{ key: string; low: string; high: string }>;
-        }>;
-      } | null;
-      scenario: {
-        id: string;
-        confirmed: boolean;
-        interpretedFrom: string | null;
-        adjustments: Array<{
-          parameter: string;
-          change: AdjustmentChange;
-          quantity: { value: string; unit: Unit };
-        }>;
-      } | null;
-    } | null;
-    error: {
-      code: ErrorCode;
-      message: string;
-      currentVersion: number | null;
-      requestId: string;
-      fieldErrors: Array<{ field: string; message: string }>;
-    } | null;
-  };
-};
 
-export type ExactNumberFieldsFragment = { exact: string; value: string };
+export type UpdatePlanningSessionMutation = { updatePlanningSession: { session: { id: string, version: number, mode: PlanningMode, stage: PlanningStage, status: SessionStatus, areaId: string | null, communityId: string | null, selectedPlanOptionId: string | null, inputsRevision: number, updatedAt: string, siteProfile: { communityType: CommunityType | null, occupiedHomes: number | null } | null, area: { id: string, name: string, extent: ExtentKind, radiusMeters: number | null, hasBoundary: boolean } | null, goal: { id: string, kind: GoalKind, description: string, targetParameter: string | null, timelineDays: number | null, horizonDays: number | null, priority: Priority | null, also: Array<GoalKind>, confirmed: boolean, preferredInterventions: Array<string>, contingencyRatio: string | null, waterTariff: { note: string, price: { minorUnits: string, currency: string, exponent: number }, volume: { value: string, unit: Unit } } | null, funding: Array<{ label: string, status: FundingStatus, note: string, amount: { minorUnits: string, currency: string, exponent: number } }>, budget: { minorUnits: string, currency: string, exponent: number } | null, target: { mode: TargetMode, quantity: { value: string, unit: Unit } } | null, site: { scale: SiteScale | null, storageSpace: boolean | null, pipedSupply: boolean | null, groundwaterUse: boolean | null, restrictions: Array<SiteRestriction>, roofArea: { value: string, unit: Unit } | null, openGround: { value: string, unit: Unit } | null }, estimates: Array<{ interventionId: string, note: string, cost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, recurring: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, buildDays: { low: number, high: number } | null, effects: Array<{ key: string, low: string, high: string }> }> } | null, scenario: { id: string, confirmed: boolean, interpretedFrom: string | null, adjustments: Array<{ parameter: string, change: AdjustmentChange, quantity: { value: string, unit: Unit } }> } | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
-export type ScenarioComparisonFieldsFragment = {
-  status: string;
-  notes: Array<string>;
-  baselineId: string | null;
-  engineVersion: string;
-  rows: Array<{
-    key: string;
-    label: string;
-    unit: Unit;
-    reason: string | null;
-    baseline: { exact: string; value: string } | null;
-    scenario: { exact: string; value: string } | null;
-    change: { exact: string; value: string } | null;
-  }>;
-};
+export type ExactNumberFieldsFragment = { exact: string, value: string };
 
-export type ImpactCitationFieldsFragment = {
-  kind: CitationKind;
-  ref: string;
-  label: string;
-  asOf: string | null;
-};
+export type ScenarioComparisonFieldsFragment = { status: string, notes: Array<string>, baselineId: string | null, engineVersion: string, rows: Array<{ key: string, label: string, unit: Unit, reason: string | null, baseline: { exact: string, value: string } | null, scenario: { exact: string, value: string } | null, change: { exact: string, value: string } | null }> };
 
-export type ImpactFindingFieldsFragment = {
-  id: string;
-  kind: FindingKind;
-  statement: string;
-  basis: FindingBasis;
-  uncertainty: string;
-  system: SharedSystem | null;
-  direction: EffectDirection | null;
-  linkage: Linkage | null;
-  interventionIds: Array<string>;
-  related: Array<string>;
-  magnitude: {
-    metricId: string;
-    unit: Unit;
-    baseline: { exact: string; value: string } | null;
-    atLowEstimates: { exact: string; value: string };
-    atHighEstimates: { exact: string; value: string };
-  } | null;
-  citations: Array<{ kind: CitationKind; ref: string; label: string; asOf: string | null }>;
-};
+export type ImpactCitationFieldsFragment = { kind: CitationKind, ref: string, label: string, asOf: string | null };
 
-export type WiderImpactFieldsFragment = {
-  id: string;
-  engineVersion: string;
-  catalogueVersion: string;
-  inputHash: string;
-  localBenefits: Array<{
-    id: string;
-    kind: FindingKind;
-    statement: string;
-    basis: FindingBasis;
-    uncertainty: string;
-    system: SharedSystem | null;
-    direction: EffectDirection | null;
-    linkage: Linkage | null;
-    interventionIds: Array<string>;
-    related: Array<string>;
-    magnitude: {
-      metricId: string;
-      unit: Unit;
-      baseline: { exact: string; value: string } | null;
-      atLowEstimates: { exact: string; value: string };
-      atHighEstimates: { exact: string; value: string };
-    } | null;
-    citations: Array<{ kind: CitationKind; ref: string; label: string; asOf: string | null }>;
-  }>;
-  externalities: Array<{
-    id: string;
-    kind: FindingKind;
-    statement: string;
-    basis: FindingBasis;
-    uncertainty: string;
-    system: SharedSystem | null;
-    direction: EffectDirection | null;
-    linkage: Linkage | null;
-    interventionIds: Array<string>;
-    related: Array<string>;
-    magnitude: {
-      metricId: string;
-      unit: Unit;
-      baseline: { exact: string; value: string } | null;
-      atLowEstimates: { exact: string; value: string };
-      atHighEstimates: { exact: string; value: string };
-    } | null;
-    citations: Array<{ kind: CitationKind; ref: string; label: string; asOf: string | null }>;
-  }>;
-  falseResilience: Array<{
-    id: string;
-    kind: FindingKind;
-    statement: string;
-    basis: FindingBasis;
-    uncertainty: string;
-    system: SharedSystem | null;
-    direction: EffectDirection | null;
-    linkage: Linkage | null;
-    interventionIds: Array<string>;
-    related: Array<string>;
-    magnitude: {
-      metricId: string;
-      unit: Unit;
-      baseline: { exact: string; value: string } | null;
-      atLowEstimates: { exact: string; value: string };
-      atHighEstimates: { exact: string; value: string };
-    } | null;
-    citations: Array<{ kind: CitationKind; ref: string; label: string; asOf: string | null }>;
-  }>;
-  tradeoffs: Array<{
-    id: string;
-    kind: FindingKind;
-    statement: string;
-    basis: FindingBasis;
-    uncertainty: string;
-    system: SharedSystem | null;
-    direction: EffectDirection | null;
-    linkage: Linkage | null;
-    interventionIds: Array<string>;
-    related: Array<string>;
-    magnitude: {
-      metricId: string;
-      unit: Unit;
-      baseline: { exact: string; value: string } | null;
-      atLowEstimates: { exact: string; value: string };
-      atHighEstimates: { exact: string; value: string };
-    } | null;
-    citations: Array<{ kind: CitationKind; ref: string; label: string; asOf: string | null }>;
-  }>;
-  reviews: Array<{
-    kind: ReviewKind;
-    label: string;
-    required: boolean;
-    reasons: Array<string>;
-    interventionIds: Array<string>;
-  }>;
-};
+export type ImpactFindingFieldsFragment = { id: string, kind: FindingKind, statement: string, basis: FindingBasis, uncertainty: string, system: SharedSystem | null, direction: EffectDirection | null, linkage: Linkage | null, interventionIds: Array<string>, related: Array<string>, magnitude: { metricId: string, unit: Unit, baseline: { exact: string, value: string } | null, atLowEstimates: { exact: string, value: string }, atHighEstimates: { exact: string, value: string } } | null, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> };
 
-export type ImpactContextFieldsFragment = {
-  areaName: string | null;
-  nearbyRadiusM: number;
-  groundwater: GroundwaterReliance;
-  waterQualityNote: string;
-  groundwaterCitations: Array<{
-    kind: CitationKind;
-    ref: string;
-    label: string;
-    asOf: string | null;
-  }>;
-  boundaries: Array<{
-    level: BoundaryLevel;
-    label: string;
-    detail: string;
-    system: SharedSystem | null;
-    linkage: Linkage | null;
-    citations: Array<{ kind: CitationKind; ref: string; label: string; asOf: string | null }>;
-  }>;
-  nearby: Array<{
-    name: string;
-    communityId: string;
-    distanceM: number;
-    links: Array<{ system: SharedSystem; linkage: Linkage; evidenceIds: Array<string> }>;
-  }>;
-  waterQuality: Array<{
-    parameter: string | null;
-    unit: Unit;
-    observedOn: string | null;
-    method: string | null;
-    value: { exact: string; value: string };
-    citations: Array<{ kind: CitationKind; ref: string; label: string; asOf: string | null }>;
-  }>;
-  unavailable: Array<{ key: string; label: string; reason: string }>;
-};
+export type WiderImpactFieldsFragment = { id: string, engineVersion: string, catalogueVersion: string, inputHash: string, localBenefits: Array<{ id: string, kind: FindingKind, statement: string, basis: FindingBasis, uncertainty: string, system: SharedSystem | null, direction: EffectDirection | null, linkage: Linkage | null, interventionIds: Array<string>, related: Array<string>, magnitude: { metricId: string, unit: Unit, baseline: { exact: string, value: string } | null, atLowEstimates: { exact: string, value: string }, atHighEstimates: { exact: string, value: string } } | null, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> }>, externalities: Array<{ id: string, kind: FindingKind, statement: string, basis: FindingBasis, uncertainty: string, system: SharedSystem | null, direction: EffectDirection | null, linkage: Linkage | null, interventionIds: Array<string>, related: Array<string>, magnitude: { metricId: string, unit: Unit, baseline: { exact: string, value: string } | null, atLowEstimates: { exact: string, value: string }, atHighEstimates: { exact: string, value: string } } | null, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> }>, falseResilience: Array<{ id: string, kind: FindingKind, statement: string, basis: FindingBasis, uncertainty: string, system: SharedSystem | null, direction: EffectDirection | null, linkage: Linkage | null, interventionIds: Array<string>, related: Array<string>, magnitude: { metricId: string, unit: Unit, baseline: { exact: string, value: string } | null, atLowEstimates: { exact: string, value: string }, atHighEstimates: { exact: string, value: string } } | null, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> }>, tradeoffs: Array<{ id: string, kind: FindingKind, statement: string, basis: FindingBasis, uncertainty: string, system: SharedSystem | null, direction: EffectDirection | null, linkage: Linkage | null, interventionIds: Array<string>, related: Array<string>, magnitude: { metricId: string, unit: Unit, baseline: { exact: string, value: string } | null, atLowEstimates: { exact: string, value: string }, atHighEstimates: { exact: string, value: string } } | null, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> }>, reviews: Array<{ kind: ReviewKind, label: string, required: boolean, reasons: Array<string>, interventionIds: Array<string> }> };
 
-export type EconomicsFieldsFragment = {
-  engineVersion: string;
-  currency: string;
-  recurringReason: string | null;
-  avoidedReason: string | null;
-  assumptions: Array<string>;
-  notes: Array<string>;
-  capex: {
-    low: { minorUnits: string; currency: string; exponent: number };
-    high: { minorUnits: string; currency: string; exponent: number };
-  };
-  contingency: {
-    ratio: string;
-    amount: {
-      low: { minorUnits: string; currency: string; exponent: number };
-      high: { minorUnits: string; currency: string; exponent: number };
-    };
-  } | null;
-  upfrontTotal: {
-    low: { minorUnits: string; currency: string; exponent: number };
-    high: { minorUnits: string; currency: string; exponent: number };
-  };
-  recurringAnnual: {
-    low: { minorUnits: string; currency: string; exponent: number };
-    high: { minorUnits: string; currency: string; exponent: number };
-  } | null;
-  avoidedTankerAnnual: {
-    low: { minorUnits: string; currency: string; exponent: number };
-    high: { minorUnits: string; currency: string; exponent: number };
-  } | null;
-  netAnnual: {
-    low: { minorUnits: string; currency: string; exponent: number };
-    high: { minorUnits: string; currency: string; exponent: number };
-  } | null;
-  payback: {
-    outcome: PaybackOutcome;
-    optimisticDays: number | null;
-    pessimisticDays: number | null;
-    note: string;
-  } | null;
-  horizon: {
-    days: number;
-    netPositive: boolean;
-    reason: string | null;
-    net: {
-      low: { minorUnits: string; currency: string; exponent: number };
-      high: { minorUnits: string; currency: string; exponent: number };
-    } | null;
-    avoided: {
-      low: { minorUnits: string; currency: string; exponent: number };
-      high: { minorUnits: string; currency: string; exponent: number };
-    } | null;
-    recurring: {
-      low: { minorUnits: string; currency: string; exponent: number };
-      high: { minorUnits: string; currency: string; exponent: number };
-    } | null;
-  } | null;
-  funding: {
-    fullyFunded: boolean;
-    note: string;
-    totalCost: {
-      low: { minorUnits: string; currency: string; exponent: number };
-      high: { minorUnits: string; currency: string; exponent: number };
-    };
-    approved: { minorUnits: string; currency: string; exponent: number };
-    candidate: { minorUnits: string; currency: string; exponent: number };
-    gap: {
-      low: { minorUnits: string; currency: string; exponent: number };
-      high: { minorUnits: string; currency: string; exponent: number };
-    };
-    lines: Array<{
-      label: string;
-      status: FundingStatus;
-      counts: boolean;
-      applicable: boolean;
-      amount: { minorUnits: string; currency: string; exponent: number };
-    }>;
-  };
-};
+export type ImpactContextFieldsFragment = { areaName: string | null, nearbyRadiusM: number, groundwater: GroundwaterReliance, waterQualityNote: string, groundwaterCitations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }>, boundaries: Array<{ level: BoundaryLevel, label: string, detail: string, system: SharedSystem | null, linkage: Linkage | null, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> }>, nearby: Array<{ name: string, communityId: string, distanceM: number, links: Array<{ system: SharedSystem, linkage: Linkage, evidenceIds: Array<string> }> }>, waterQuality: Array<{ parameter: string | null, unit: Unit, observedOn: string | null, method: string | null, value: { exact: string, value: string }, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> }>, unavailable: Array<{ key: string, label: string, reason: string }> };
 
-export type ComparedOptionFieldsFragment = {
-  id: string;
-  rank: number;
-  name: string;
-  interventionIds: Array<string>;
-  why: string;
-  tradeoffs: Array<string>;
-  uncertainty: Array<string>;
-  firstBenefit: BenefitTiming;
-  pessimistic: { exact: string; value: string };
-  optimistic: { exact: string; value: string };
-  margin: { exact: string; value: string };
-  waterLow: { exact: string; value: string } | null;
-  waterHigh: { exact: string; value: string } | null;
-  uncountedHigh: { exact: string; value: string } | null;
-  cost: {
-    low: { minorUnits: string; currency: string; exponent: number };
-    high: { minorUnits: string; currency: string; exponent: number };
-  } | null;
-  buildDays: { low: number; high: number } | null;
-  measures: Array<{
-    interventionId: string;
-    name: string;
-    benefitTiming: BenefitTiming;
-    effects: Array<{
-      key: string;
-      label: string;
-      unit: Unit;
-      origin: EffectOrigin;
-      low: { exact: string; value: string };
-      high: { exact: string; value: string };
-    }>;
-    waterLow: { exact: string; value: string } | null;
-    waterHigh: { exact: string; value: string } | null;
-    cost: {
-      low: { minorUnits: string; currency: string; exponent: number };
-      high: { minorUnits: string; currency: string; exponent: number };
-    } | null;
-    recurring: {
-      low: { minorUnits: string; currency: string; exponent: number };
-      high: { minorUnits: string; currency: string; exponent: number };
-    } | null;
-    buildDays: { low: number; high: number } | null;
-  }>;
-  sensitivity: Array<{
-    interventionId: string;
-    key: string;
-    label: string;
-    swing: { exact: string; value: string };
-  }>;
-  stress: Array<{
-    key: string;
-    label: string;
-    meetsTarget: boolean | null;
-    value: { exact: string; value: string } | null;
-  }>;
-  impact: {
-    id: string;
-    engineVersion: string;
-    catalogueVersion: string;
-    inputHash: string;
-    localBenefits: Array<{
-      id: string;
-      kind: FindingKind;
-      statement: string;
-      basis: FindingBasis;
-      uncertainty: string;
-      system: SharedSystem | null;
-      direction: EffectDirection | null;
-      linkage: Linkage | null;
-      interventionIds: Array<string>;
-      related: Array<string>;
-      magnitude: {
-        metricId: string;
-        unit: Unit;
-        baseline: { exact: string; value: string } | null;
-        atLowEstimates: { exact: string; value: string };
-        atHighEstimates: { exact: string; value: string };
-      } | null;
-      citations: Array<{ kind: CitationKind; ref: string; label: string; asOf: string | null }>;
-    }>;
-    externalities: Array<{
-      id: string;
-      kind: FindingKind;
-      statement: string;
-      basis: FindingBasis;
-      uncertainty: string;
-      system: SharedSystem | null;
-      direction: EffectDirection | null;
-      linkage: Linkage | null;
-      interventionIds: Array<string>;
-      related: Array<string>;
-      magnitude: {
-        metricId: string;
-        unit: Unit;
-        baseline: { exact: string; value: string } | null;
-        atLowEstimates: { exact: string; value: string };
-        atHighEstimates: { exact: string; value: string };
-      } | null;
-      citations: Array<{ kind: CitationKind; ref: string; label: string; asOf: string | null }>;
-    }>;
-    falseResilience: Array<{
-      id: string;
-      kind: FindingKind;
-      statement: string;
-      basis: FindingBasis;
-      uncertainty: string;
-      system: SharedSystem | null;
-      direction: EffectDirection | null;
-      linkage: Linkage | null;
-      interventionIds: Array<string>;
-      related: Array<string>;
-      magnitude: {
-        metricId: string;
-        unit: Unit;
-        baseline: { exact: string; value: string } | null;
-        atLowEstimates: { exact: string; value: string };
-        atHighEstimates: { exact: string; value: string };
-      } | null;
-      citations: Array<{ kind: CitationKind; ref: string; label: string; asOf: string | null }>;
-    }>;
-    tradeoffs: Array<{
-      id: string;
-      kind: FindingKind;
-      statement: string;
-      basis: FindingBasis;
-      uncertainty: string;
-      system: SharedSystem | null;
-      direction: EffectDirection | null;
-      linkage: Linkage | null;
-      interventionIds: Array<string>;
-      related: Array<string>;
-      magnitude: {
-        metricId: string;
-        unit: Unit;
-        baseline: { exact: string; value: string } | null;
-        atLowEstimates: { exact: string; value: string };
-        atHighEstimates: { exact: string; value: string };
-      } | null;
-      citations: Array<{ kind: CitationKind; ref: string; label: string; asOf: string | null }>;
-    }>;
-    reviews: Array<{
-      kind: ReviewKind;
-      label: string;
-      required: boolean;
-      reasons: Array<string>;
-      interventionIds: Array<string>;
-    }>;
-  };
-  economics: {
-    engineVersion: string;
-    currency: string;
-    recurringReason: string | null;
-    avoidedReason: string | null;
-    assumptions: Array<string>;
-    notes: Array<string>;
-    capex: {
-      low: { minorUnits: string; currency: string; exponent: number };
-      high: { minorUnits: string; currency: string; exponent: number };
-    };
-    contingency: {
-      ratio: string;
-      amount: {
-        low: { minorUnits: string; currency: string; exponent: number };
-        high: { minorUnits: string; currency: string; exponent: number };
-      };
-    } | null;
-    upfrontTotal: {
-      low: { minorUnits: string; currency: string; exponent: number };
-      high: { minorUnits: string; currency: string; exponent: number };
-    };
-    recurringAnnual: {
-      low: { minorUnits: string; currency: string; exponent: number };
-      high: { minorUnits: string; currency: string; exponent: number };
-    } | null;
-    avoidedTankerAnnual: {
-      low: { minorUnits: string; currency: string; exponent: number };
-      high: { minorUnits: string; currency: string; exponent: number };
-    } | null;
-    netAnnual: {
-      low: { minorUnits: string; currency: string; exponent: number };
-      high: { minorUnits: string; currency: string; exponent: number };
-    } | null;
-    payback: {
-      outcome: PaybackOutcome;
-      optimisticDays: number | null;
-      pessimisticDays: number | null;
-      note: string;
-    } | null;
-    horizon: {
-      days: number;
-      netPositive: boolean;
-      reason: string | null;
-      net: {
-        low: { minorUnits: string; currency: string; exponent: number };
-        high: { minorUnits: string; currency: string; exponent: number };
-      } | null;
-      avoided: {
-        low: { minorUnits: string; currency: string; exponent: number };
-        high: { minorUnits: string; currency: string; exponent: number };
-      } | null;
-      recurring: {
-        low: { minorUnits: string; currency: string; exponent: number };
-        high: { minorUnits: string; currency: string; exponent: number };
-      } | null;
-    } | null;
-    funding: {
-      fullyFunded: boolean;
-      note: string;
-      totalCost: {
-        low: { minorUnits: string; currency: string; exponent: number };
-        high: { minorUnits: string; currency: string; exponent: number };
-      };
-      approved: { minorUnits: string; currency: string; exponent: number };
-      candidate: { minorUnits: string; currency: string; exponent: number };
-      gap: {
-        low: { minorUnits: string; currency: string; exponent: number };
-        high: { minorUnits: string; currency: string; exponent: number };
-      };
-      lines: Array<{
-        label: string;
-        status: FundingStatus;
-        counts: boolean;
-        applicable: boolean;
-        amount: { minorUnits: string; currency: string; exponent: number };
-      }>;
-    };
-  } | null;
-};
+export type EconomicsFieldsFragment = { engineVersion: string, currency: string, recurringReason: string | null, avoidedReason: string | null, assumptions: Array<string>, notes: Array<string>, capex: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, contingency: { ratio: string, amount: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } } | null, upfrontTotal: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, recurringAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, avoidedTankerAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, netAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, payback: { outcome: PaybackOutcome, optimisticDays: number | null, pessimisticDays: number | null, note: string } | null, horizon: { days: number, netPositive: boolean, reason: string | null, net: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, avoided: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, recurring: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null } | null, funding: { fullyFunded: boolean, note: string, totalCost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, approved: { minorUnits: string, currency: string, exponent: number }, candidate: { minorUnits: string, currency: string, exponent: number }, gap: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, lines: Array<{ label: string, status: FundingStatus, counts: boolean, applicable: boolean, amount: { minorUnits: string, currency: string, exponent: number } }> } };
+
+export type ComparedOptionFieldsFragment = { id: string, rank: number, name: string, interventionIds: Array<string>, why: string, tradeoffs: Array<string>, uncertainty: Array<string>, firstBenefit: BenefitTiming, pessimistic: { exact: string, value: string }, optimistic: { exact: string, value: string }, margin: { exact: string, value: string }, waterLow: { exact: string, value: string } | null, waterHigh: { exact: string, value: string } | null, uncountedHigh: { exact: string, value: string } | null, cost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, buildDays: { low: number, high: number } | null, measures: Array<{ interventionId: string, name: string, benefitTiming: BenefitTiming, effects: Array<{ key: string, label: string, unit: Unit, origin: EffectOrigin, low: { exact: string, value: string }, high: { exact: string, value: string } }>, waterLow: { exact: string, value: string } | null, waterHigh: { exact: string, value: string } | null, cost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, recurring: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, buildDays: { low: number, high: number } | null }>, sensitivity: Array<{ interventionId: string, key: string, label: string, swing: { exact: string, value: string } }>, stress: Array<{ key: string, label: string, meetsTarget: boolean | null, value: { exact: string, value: string } | null }>, impact: { id: string, engineVersion: string, catalogueVersion: string, inputHash: string, localBenefits: Array<{ id: string, kind: FindingKind, statement: string, basis: FindingBasis, uncertainty: string, system: SharedSystem | null, direction: EffectDirection | null, linkage: Linkage | null, interventionIds: Array<string>, related: Array<string>, magnitude: { metricId: string, unit: Unit, baseline: { exact: string, value: string } | null, atLowEstimates: { exact: string, value: string }, atHighEstimates: { exact: string, value: string } } | null, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> }>, externalities: Array<{ id: string, kind: FindingKind, statement: string, basis: FindingBasis, uncertainty: string, system: SharedSystem | null, direction: EffectDirection | null, linkage: Linkage | null, interventionIds: Array<string>, related: Array<string>, magnitude: { metricId: string, unit: Unit, baseline: { exact: string, value: string } | null, atLowEstimates: { exact: string, value: string }, atHighEstimates: { exact: string, value: string } } | null, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> }>, falseResilience: Array<{ id: string, kind: FindingKind, statement: string, basis: FindingBasis, uncertainty: string, system: SharedSystem | null, direction: EffectDirection | null, linkage: Linkage | null, interventionIds: Array<string>, related: Array<string>, magnitude: { metricId: string, unit: Unit, baseline: { exact: string, value: string } | null, atLowEstimates: { exact: string, value: string }, atHighEstimates: { exact: string, value: string } } | null, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> }>, tradeoffs: Array<{ id: string, kind: FindingKind, statement: string, basis: FindingBasis, uncertainty: string, system: SharedSystem | null, direction: EffectDirection | null, linkage: Linkage | null, interventionIds: Array<string>, related: Array<string>, magnitude: { metricId: string, unit: Unit, baseline: { exact: string, value: string } | null, atLowEstimates: { exact: string, value: string }, atHighEstimates: { exact: string, value: string } } | null, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> }>, reviews: Array<{ kind: ReviewKind, label: string, required: boolean, reasons: Array<string>, interventionIds: Array<string> }> }, economics: { engineVersion: string, currency: string, recurringReason: string | null, avoidedReason: string | null, assumptions: Array<string>, notes: Array<string>, capex: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, contingency: { ratio: string, amount: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } } | null, upfrontTotal: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, recurringAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, avoidedTankerAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, netAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, payback: { outcome: PaybackOutcome, optimisticDays: number | null, pessimisticDays: number | null, note: string } | null, horizon: { days: number, netPositive: boolean, reason: string | null, net: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, avoided: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, recurring: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null } | null, funding: { fullyFunded: boolean, note: string, totalCost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, approved: { minorUnits: string, currency: string, exponent: number }, candidate: { minorUnits: string, currency: string, exponent: number }, gap: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, lines: Array<{ label: string, status: FundingStatus, counts: boolean, applicable: boolean, amount: { minorUnits: string, currency: string, exponent: number } }> } } | null };
 
 export type PlanComparisonQueryVariables = Exact<{
   id: string;
 }>;
 
-export type PlanComparisonQuery = {
-  planningSession: {
-    id: string;
-    inputsRevision: number;
-    selectedPlanOptionId: string | null;
-    selectedPlanStatus: SelectedPlanStatus;
-    planComparison: {
-      id: string;
-      engineVersion: string;
-      scenarioEngineVersion: string;
-      catalogueVersion: string;
-      baselineId: string | null;
-      status: PlanComparisonStatus;
-      summary: string;
-      metric: PlanMetric | null;
-      unit: Unit | null;
-      needs: Array<string>;
-      excluded: Array<string>;
-      assumptions: Array<string>;
-      ranking: string;
-      maxOptions: number;
-      stressTests: Array<string>;
-      impactEngineVersion: string;
-      baselineValue: { exact: string; value: string } | null;
-      scenarioValue: { exact: string; value: string } | null;
-      targetLevel: { exact: string; value: string } | null;
-      rejections: {
-        evaluated: number;
-        onlyOptimistic: number;
-        missedTarget: number;
-        overBudget: number;
-        budgetUncertain: number;
-        tooSlow: number;
-        timeUncertain: number;
-        notMinimal: number;
-        truncated: boolean;
-      };
-      options: Array<{
-        id: string;
-        rank: number;
-        name: string;
-        interventionIds: Array<string>;
-        why: string;
-        tradeoffs: Array<string>;
-        uncertainty: Array<string>;
-        firstBenefit: BenefitTiming;
-        pessimistic: { exact: string; value: string };
-        optimistic: { exact: string; value: string };
-        margin: { exact: string; value: string };
-        waterLow: { exact: string; value: string } | null;
-        waterHigh: { exact: string; value: string } | null;
-        uncountedHigh: { exact: string; value: string } | null;
-        cost: {
-          low: { minorUnits: string; currency: string; exponent: number };
-          high: { minorUnits: string; currency: string; exponent: number };
-        } | null;
-        buildDays: { low: number; high: number } | null;
-        measures: Array<{
-          interventionId: string;
-          name: string;
-          benefitTiming: BenefitTiming;
-          effects: Array<{
-            key: string;
-            label: string;
-            unit: Unit;
-            origin: EffectOrigin;
-            low: { exact: string; value: string };
-            high: { exact: string; value: string };
-          }>;
-          waterLow: { exact: string; value: string } | null;
-          waterHigh: { exact: string; value: string } | null;
-          cost: {
-            low: { minorUnits: string; currency: string; exponent: number };
-            high: { minorUnits: string; currency: string; exponent: number };
-          } | null;
-          recurring: {
-            low: { minorUnits: string; currency: string; exponent: number };
-            high: { minorUnits: string; currency: string; exponent: number };
-          } | null;
-          buildDays: { low: number; high: number } | null;
-        }>;
-        sensitivity: Array<{
-          interventionId: string;
-          key: string;
-          label: string;
-          swing: { exact: string; value: string };
-        }>;
-        stress: Array<{
-          key: string;
-          label: string;
-          meetsTarget: boolean | null;
-          value: { exact: string; value: string } | null;
-        }>;
-        impact: {
-          id: string;
-          engineVersion: string;
-          catalogueVersion: string;
-          inputHash: string;
-          localBenefits: Array<{
-            id: string;
-            kind: FindingKind;
-            statement: string;
-            basis: FindingBasis;
-            uncertainty: string;
-            system: SharedSystem | null;
-            direction: EffectDirection | null;
-            linkage: Linkage | null;
-            interventionIds: Array<string>;
-            related: Array<string>;
-            magnitude: {
-              metricId: string;
-              unit: Unit;
-              baseline: { exact: string; value: string } | null;
-              atLowEstimates: { exact: string; value: string };
-              atHighEstimates: { exact: string; value: string };
-            } | null;
-            citations: Array<{
-              kind: CitationKind;
-              ref: string;
-              label: string;
-              asOf: string | null;
-            }>;
-          }>;
-          externalities: Array<{
-            id: string;
-            kind: FindingKind;
-            statement: string;
-            basis: FindingBasis;
-            uncertainty: string;
-            system: SharedSystem | null;
-            direction: EffectDirection | null;
-            linkage: Linkage | null;
-            interventionIds: Array<string>;
-            related: Array<string>;
-            magnitude: {
-              metricId: string;
-              unit: Unit;
-              baseline: { exact: string; value: string } | null;
-              atLowEstimates: { exact: string; value: string };
-              atHighEstimates: { exact: string; value: string };
-            } | null;
-            citations: Array<{
-              kind: CitationKind;
-              ref: string;
-              label: string;
-              asOf: string | null;
-            }>;
-          }>;
-          falseResilience: Array<{
-            id: string;
-            kind: FindingKind;
-            statement: string;
-            basis: FindingBasis;
-            uncertainty: string;
-            system: SharedSystem | null;
-            direction: EffectDirection | null;
-            linkage: Linkage | null;
-            interventionIds: Array<string>;
-            related: Array<string>;
-            magnitude: {
-              metricId: string;
-              unit: Unit;
-              baseline: { exact: string; value: string } | null;
-              atLowEstimates: { exact: string; value: string };
-              atHighEstimates: { exact: string; value: string };
-            } | null;
-            citations: Array<{
-              kind: CitationKind;
-              ref: string;
-              label: string;
-              asOf: string | null;
-            }>;
-          }>;
-          tradeoffs: Array<{
-            id: string;
-            kind: FindingKind;
-            statement: string;
-            basis: FindingBasis;
-            uncertainty: string;
-            system: SharedSystem | null;
-            direction: EffectDirection | null;
-            linkage: Linkage | null;
-            interventionIds: Array<string>;
-            related: Array<string>;
-            magnitude: {
-              metricId: string;
-              unit: Unit;
-              baseline: { exact: string; value: string } | null;
-              atLowEstimates: { exact: string; value: string };
-              atHighEstimates: { exact: string; value: string };
-            } | null;
-            citations: Array<{
-              kind: CitationKind;
-              ref: string;
-              label: string;
-              asOf: string | null;
-            }>;
-          }>;
-          reviews: Array<{
-            kind: ReviewKind;
-            label: string;
-            required: boolean;
-            reasons: Array<string>;
-            interventionIds: Array<string>;
-          }>;
-        };
-        economics: {
-          engineVersion: string;
-          currency: string;
-          recurringReason: string | null;
-          avoidedReason: string | null;
-          assumptions: Array<string>;
-          notes: Array<string>;
-          capex: {
-            low: { minorUnits: string; currency: string; exponent: number };
-            high: { minorUnits: string; currency: string; exponent: number };
-          };
-          contingency: {
-            ratio: string;
-            amount: {
-              low: { minorUnits: string; currency: string; exponent: number };
-              high: { minorUnits: string; currency: string; exponent: number };
-            };
-          } | null;
-          upfrontTotal: {
-            low: { minorUnits: string; currency: string; exponent: number };
-            high: { minorUnits: string; currency: string; exponent: number };
-          };
-          recurringAnnual: {
-            low: { minorUnits: string; currency: string; exponent: number };
-            high: { minorUnits: string; currency: string; exponent: number };
-          } | null;
-          avoidedTankerAnnual: {
-            low: { minorUnits: string; currency: string; exponent: number };
-            high: { minorUnits: string; currency: string; exponent: number };
-          } | null;
-          netAnnual: {
-            low: { minorUnits: string; currency: string; exponent: number };
-            high: { minorUnits: string; currency: string; exponent: number };
-          } | null;
-          payback: {
-            outcome: PaybackOutcome;
-            optimisticDays: number | null;
-            pessimisticDays: number | null;
-            note: string;
-          } | null;
-          horizon: {
-            days: number;
-            netPositive: boolean;
-            reason: string | null;
-            net: {
-              low: { minorUnits: string; currency: string; exponent: number };
-              high: { minorUnits: string; currency: string; exponent: number };
-            } | null;
-            avoided: {
-              low: { minorUnits: string; currency: string; exponent: number };
-              high: { minorUnits: string; currency: string; exponent: number };
-            } | null;
-            recurring: {
-              low: { minorUnits: string; currency: string; exponent: number };
-              high: { minorUnits: string; currency: string; exponent: number };
-            } | null;
-          } | null;
-          funding: {
-            fullyFunded: boolean;
-            note: string;
-            totalCost: {
-              low: { minorUnits: string; currency: string; exponent: number };
-              high: { minorUnits: string; currency: string; exponent: number };
-            };
-            approved: { minorUnits: string; currency: string; exponent: number };
-            candidate: { minorUnits: string; currency: string; exponent: number };
-            gap: {
-              low: { minorUnits: string; currency: string; exponent: number };
-              high: { minorUnits: string; currency: string; exponent: number };
-            };
-            lines: Array<{
-              label: string;
-              status: FundingStatus;
-              counts: boolean;
-              applicable: boolean;
-              amount: { minorUnits: string; currency: string; exponent: number };
-            }>;
-          };
-        } | null;
-      }>;
-      impactContext: {
-        areaName: string | null;
-        nearbyRadiusM: number;
-        groundwater: GroundwaterReliance;
-        waterQualityNote: string;
-        groundwaterCitations: Array<{
-          kind: CitationKind;
-          ref: string;
-          label: string;
-          asOf: string | null;
-        }>;
-        boundaries: Array<{
-          level: BoundaryLevel;
-          label: string;
-          detail: string;
-          system: SharedSystem | null;
-          linkage: Linkage | null;
-          citations: Array<{ kind: CitationKind; ref: string; label: string; asOf: string | null }>;
-        }>;
-        nearby: Array<{
-          name: string;
-          communityId: string;
-          distanceM: number;
-          links: Array<{ system: SharedSystem; linkage: Linkage; evidenceIds: Array<string> }>;
-        }>;
-        waterQuality: Array<{
-          parameter: string | null;
-          unit: Unit;
-          observedOn: string | null;
-          method: string | null;
-          value: { exact: string; value: string };
-          citations: Array<{ kind: CitationKind; ref: string; label: string; asOf: string | null }>;
-        }>;
-        unavailable: Array<{ key: string; label: string; reason: string }>;
-      };
-    };
-    scenarioComparison: {
-      status: string;
-      notes: Array<string>;
-      baselineId: string | null;
-      engineVersion: string;
-      rows: Array<{
-        key: string;
-        label: string;
-        unit: Unit;
-        reason: string | null;
-        baseline: { exact: string; value: string } | null;
-        scenario: { exact: string; value: string } | null;
-        change: { exact: string; value: string } | null;
-      }>;
-    };
-  } | null;
-};
+
+export type PlanComparisonQuery = { planningSession: { id: string, inputsRevision: number, selectedPlanOptionId: string | null, selectedPlanStatus: SelectedPlanStatus, planComparison: { id: string, engineVersion: string, scenarioEngineVersion: string, catalogueVersion: string, baselineId: string | null, status: PlanComparisonStatus, summary: string, metric: PlanMetric | null, unit: Unit | null, needs: Array<string>, excluded: Array<string>, assumptions: Array<string>, ranking: string, maxOptions: number, stressTests: Array<string>, impactEngineVersion: string, baselineValue: { exact: string, value: string } | null, scenarioValue: { exact: string, value: string } | null, targetLevel: { exact: string, value: string } | null, rejections: { evaluated: number, onlyOptimistic: number, missedTarget: number, overBudget: number, budgetUncertain: number, tooSlow: number, timeUncertain: number, notMinimal: number, truncated: boolean }, options: Array<{ id: string, rank: number, name: string, interventionIds: Array<string>, why: string, tradeoffs: Array<string>, uncertainty: Array<string>, firstBenefit: BenefitTiming, pessimistic: { exact: string, value: string }, optimistic: { exact: string, value: string }, margin: { exact: string, value: string }, waterLow: { exact: string, value: string } | null, waterHigh: { exact: string, value: string } | null, uncountedHigh: { exact: string, value: string } | null, cost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, buildDays: { low: number, high: number } | null, measures: Array<{ interventionId: string, name: string, benefitTiming: BenefitTiming, effects: Array<{ key: string, label: string, unit: Unit, origin: EffectOrigin, low: { exact: string, value: string }, high: { exact: string, value: string } }>, waterLow: { exact: string, value: string } | null, waterHigh: { exact: string, value: string } | null, cost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, recurring: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, buildDays: { low: number, high: number } | null }>, sensitivity: Array<{ interventionId: string, key: string, label: string, swing: { exact: string, value: string } }>, stress: Array<{ key: string, label: string, meetsTarget: boolean | null, value: { exact: string, value: string } | null }>, impact: { id: string, engineVersion: string, catalogueVersion: string, inputHash: string, localBenefits: Array<{ id: string, kind: FindingKind, statement: string, basis: FindingBasis, uncertainty: string, system: SharedSystem | null, direction: EffectDirection | null, linkage: Linkage | null, interventionIds: Array<string>, related: Array<string>, magnitude: { metricId: string, unit: Unit, baseline: { exact: string, value: string } | null, atLowEstimates: { exact: string, value: string }, atHighEstimates: { exact: string, value: string } } | null, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> }>, externalities: Array<{ id: string, kind: FindingKind, statement: string, basis: FindingBasis, uncertainty: string, system: SharedSystem | null, direction: EffectDirection | null, linkage: Linkage | null, interventionIds: Array<string>, related: Array<string>, magnitude: { metricId: string, unit: Unit, baseline: { exact: string, value: string } | null, atLowEstimates: { exact: string, value: string }, atHighEstimates: { exact: string, value: string } } | null, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> }>, falseResilience: Array<{ id: string, kind: FindingKind, statement: string, basis: FindingBasis, uncertainty: string, system: SharedSystem | null, direction: EffectDirection | null, linkage: Linkage | null, interventionIds: Array<string>, related: Array<string>, magnitude: { metricId: string, unit: Unit, baseline: { exact: string, value: string } | null, atLowEstimates: { exact: string, value: string }, atHighEstimates: { exact: string, value: string } } | null, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> }>, tradeoffs: Array<{ id: string, kind: FindingKind, statement: string, basis: FindingBasis, uncertainty: string, system: SharedSystem | null, direction: EffectDirection | null, linkage: Linkage | null, interventionIds: Array<string>, related: Array<string>, magnitude: { metricId: string, unit: Unit, baseline: { exact: string, value: string } | null, atLowEstimates: { exact: string, value: string }, atHighEstimates: { exact: string, value: string } } | null, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> }>, reviews: Array<{ kind: ReviewKind, label: string, required: boolean, reasons: Array<string>, interventionIds: Array<string> }> }, economics: { engineVersion: string, currency: string, recurringReason: string | null, avoidedReason: string | null, assumptions: Array<string>, notes: Array<string>, capex: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, contingency: { ratio: string, amount: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } } | null, upfrontTotal: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, recurringAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, avoidedTankerAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, netAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, payback: { outcome: PaybackOutcome, optimisticDays: number | null, pessimisticDays: number | null, note: string } | null, horizon: { days: number, netPositive: boolean, reason: string | null, net: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, avoided: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, recurring: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null } | null, funding: { fullyFunded: boolean, note: string, totalCost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, approved: { minorUnits: string, currency: string, exponent: number }, candidate: { minorUnits: string, currency: string, exponent: number }, gap: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, lines: Array<{ label: string, status: FundingStatus, counts: boolean, applicable: boolean, amount: { minorUnits: string, currency: string, exponent: number } }> } } | null }>, impactContext: { areaName: string | null, nearbyRadiusM: number, groundwater: GroundwaterReliance, waterQualityNote: string, groundwaterCitations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }>, boundaries: Array<{ level: BoundaryLevel, label: string, detail: string, system: SharedSystem | null, linkage: Linkage | null, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> }>, nearby: Array<{ name: string, communityId: string, distanceM: number, links: Array<{ system: SharedSystem, linkage: Linkage, evidenceIds: Array<string> }> }>, waterQuality: Array<{ parameter: string | null, unit: Unit, observedOn: string | null, method: string | null, value: { exact: string, value: string }, citations: Array<{ kind: CitationKind, ref: string, label: string, asOf: string | null }> }>, unavailable: Array<{ key: string, label: string, reason: string }> } }, scenarioComparison: { status: string, notes: Array<string>, baselineId: string | null, engineVersion: string, rows: Array<{ key: string, label: string, unit: Unit, reason: string | null, baseline: { exact: string, value: string } | null, scenario: { exact: string, value: string } | null, change: { exact: string, value: string } | null }> } } | null };
 
 export type PreviewScenarioQueryVariables = Exact<{
   sessionId: string;
   scenario: ScenarioPreviewInput;
 }>;
 
-export type PreviewScenarioQuery = {
-  previewScenario: {
-    errors: Array<{ field: string; message: string }>;
-    comparison: {
-      status: string;
-      notes: Array<string>;
-      baselineId: string | null;
-      engineVersion: string;
-      rows: Array<{
-        key: string;
-        label: string;
-        unit: Unit;
-        reason: string | null;
-        baseline: { exact: string; value: string } | null;
-        scenario: { exact: string; value: string } | null;
-        change: { exact: string; value: string } | null;
-      }>;
-    } | null;
-  };
-};
+
+export type PreviewScenarioQuery = { previewScenario: { errors: Array<{ field: string, message: string }>, comparison: { status: string, notes: Array<string>, baselineId: string | null, engineVersion: string, rows: Array<{ key: string, label: string, unit: Unit, reason: string | null, baseline: { exact: string, value: string } | null, scenario: { exact: string, value: string } | null, change: { exact: string, value: string } | null }> } | null } };
 
 export type SessionScenarioQueryVariables = Exact<{
   id: string;
 }>;
 
-export type SessionScenarioQuery = {
-  planningSession: {
-    id: string;
-    inputsRevision: number;
-    scenarioComparison: {
-      status: string;
-      notes: Array<string>;
-      baselineId: string | null;
-      engineVersion: string;
-      rows: Array<{
-        key: string;
-        label: string;
-        unit: Unit;
-        reason: string | null;
-        baseline: { exact: string; value: string } | null;
-        scenario: { exact: string; value: string } | null;
-        change: { exact: string; value: string } | null;
-      }>;
-    };
-  } | null;
-};
 
-export type AreaReadinessFieldsFragment = {
-  areaId: string;
-  sessionId: string | null;
-  assessedAt: string;
-  asOf: string;
-  demo: boolean;
-  basis: AssessmentBasis;
-  capabilities: Array<{
-    capability: Capability;
-    state: ReadinessState;
-    reasons: Array<string>;
-    technicalSupport: TechnicalSupport;
-    requiresLocalMeasurement: boolean;
-    requiresReviewedModel: boolean;
-    registeredSourceIds: Array<string>;
-    demo: boolean;
-  }>;
-  inputs: Array<{
-    input: ReadinessInput;
-    label: string;
-    unit: CanonicalUnit;
-    state: ReadinessState;
-    reasons: Array<string>;
-    action: string;
-    manualEntryAllowed: boolean;
-    ownerPrompt: string | null;
-    manualValue: string | null;
-    demo: boolean;
-  }>;
-  metrics: Array<{
-    metric: string;
-    state: ReadinessState;
-    reasons: Array<string>;
-    blockedInputs: Array<ReadinessInput>;
-    demo: boolean;
-  }>;
-};
+export type SessionScenarioQuery = { planningSession: { id: string, inputsRevision: number, scenarioComparison: { status: string, notes: Array<string>, baselineId: string | null, engineVersion: string, rows: Array<{ key: string, label: string, unit: Unit, reason: string | null, baseline: { exact: string, value: string } | null, scenario: { exact: string, value: string } | null, change: { exact: string, value: string } | null }> } } | null };
+
+export type AreaReadinessFieldsFragment = { areaId: string, sessionId: string | null, assessedAt: string, asOf: string, demo: boolean, basis: AssessmentBasis, capabilities: Array<{ capability: Capability, state: ReadinessState, reasons: Array<string>, technicalSupport: TechnicalSupport, requiresLocalMeasurement: boolean, requiresReviewedModel: boolean, registeredSourceIds: Array<string>, demo: boolean }>, inputs: Array<{ input: ReadinessInput, label: string, unit: CanonicalUnit, state: ReadinessState, reasons: Array<string>, action: string, manualEntryAllowed: boolean, ownerPrompt: string | null, manualValue: string | null, demo: boolean }>, metrics: Array<{ metric: string, state: ReadinessState, reasons: Array<string>, blockedInputs: Array<ReadinessInput>, demo: boolean }> };
 
 export type AreaReadinessQueryVariables = Exact<{
   areaId: string;
   sessionId?: string | null | undefined;
 }>;
 
-export type AreaReadinessQuery = {
-  area: {
-    id: string;
-    name: string;
-    evidence: EvidenceQuality;
-    readiness: {
-      areaId: string;
-      sessionId: string | null;
-      assessedAt: string;
-      asOf: string;
-      demo: boolean;
-      basis: AssessmentBasis;
-      capabilities: Array<{
-        capability: Capability;
-        state: ReadinessState;
-        reasons: Array<string>;
-        technicalSupport: TechnicalSupport;
-        requiresLocalMeasurement: boolean;
-        requiresReviewedModel: boolean;
-        registeredSourceIds: Array<string>;
-        demo: boolean;
-      }>;
-      inputs: Array<{
-        input: ReadinessInput;
-        label: string;
-        unit: CanonicalUnit;
-        state: ReadinessState;
-        reasons: Array<string>;
-        action: string;
-        manualEntryAllowed: boolean;
-        ownerPrompt: string | null;
-        manualValue: string | null;
-        demo: boolean;
-      }>;
-      metrics: Array<{
-        metric: string;
-        state: ReadinessState;
-        reasons: Array<string>;
-        blockedInputs: Array<ReadinessInput>;
-        demo: boolean;
-      }>;
-    };
-  } | null;
-};
+
+export type AreaReadinessQuery = { area: { id: string, name: string, evidence: EvidenceQuality, readiness: { areaId: string, sessionId: string | null, assessedAt: string, asOf: string, demo: boolean, basis: AssessmentBasis, capabilities: Array<{ capability: Capability, state: ReadinessState, reasons: Array<string>, technicalSupport: TechnicalSupport, requiresLocalMeasurement: boolean, requiresReviewedModel: boolean, registeredSourceIds: Array<string>, demo: boolean }>, inputs: Array<{ input: ReadinessInput, label: string, unit: CanonicalUnit, state: ReadinessState, reasons: Array<string>, action: string, manualEntryAllowed: boolean, ownerPrompt: string | null, manualValue: string | null, demo: boolean }>, metrics: Array<{ metric: string, state: ReadinessState, reasons: Array<string>, blockedInputs: Array<ReadinessInput>, demo: boolean }> } } | null };
 
 export type RecordManualInputMutationVariables = Exact<{
   input: RecordManualInputInput;
 }>;
 
-export type RecordManualInputMutation = {
-  recordManualInput: {
-    manualInput: {
-      id: string;
-      input: ReadinessInput;
-      value: string;
-      unit: CanonicalUnit;
-      enteredValue: string;
-      enteredUnit: string;
-      asOf: string;
-      note: string;
-    } | null;
-    error: {
-      code: ErrorCode;
-      message: string;
-      currentVersion: number | null;
-      requestId: string;
-      fieldErrors: Array<{ field: string; message: string }>;
-    } | null;
-  };
-};
 
-export type JobFieldsFragment = {
-  id: string;
-  version: number;
-  kind: JobKind;
-  status: JobStatus;
-  stage: string | null;
-  attempts: number;
-  maxAttempts: number;
-  errorCode: ErrorCode | null;
-  eventsPath: string;
-  updatedAt: string;
-};
+export type RecordManualInputMutation = { recordManualInput: { manualInput: { id: string, input: ReadinessInput, value: string, unit: CanonicalUnit, enteredValue: string, enteredUnit: string, asOf: string, note: string } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
-export type ReportFieldsFragment = {
-  id: string;
-  version: number;
-  title: string;
-  status: ReportStatus;
-  sessionId: string;
-  communityId: string | null;
-  areaId: string;
-  planOptionId: string;
-  planName: string | null;
-  finalizedAt: string;
-  archivedAt: string | null;
-  goal: { id: string; kind: GoalKind; description: string };
-  economics: {
-    engineVersion: string;
-    currency: string;
-    assumptions: Array<string>;
-    notes: Array<string>;
-    capex: {
-      low: { minorUnits: string; currency: string; exponent: number };
-      high: { minorUnits: string; currency: string; exponent: number };
-    };
-    upfrontTotal: {
-      low: { minorUnits: string; currency: string; exponent: number };
-      high: { minorUnits: string; currency: string; exponent: number };
-    };
-    recurringAnnual: {
-      low: { minorUnits: string; currency: string; exponent: number };
-      high: { minorUnits: string; currency: string; exponent: number };
-    } | null;
-    avoidedTankerAnnual: {
-      low: { minorUnits: string; currency: string; exponent: number };
-      high: { minorUnits: string; currency: string; exponent: number };
-    } | null;
-    netAnnual: {
-      low: { minorUnits: string; currency: string; exponent: number };
-      high: { minorUnits: string; currency: string; exponent: number };
-    } | null;
-    funding: {
-      fullyFunded: boolean;
-      note: string;
-      totalCost: {
-        low: { minorUnits: string; currency: string; exponent: number };
-        high: { minorUnits: string; currency: string; exponent: number };
-      };
-      approved: { minorUnits: string; currency: string; exponent: number };
-      gap: {
-        low: { minorUnits: string; currency: string; exponent: number };
-        high: { minorUnits: string; currency: string; exponent: number };
-      };
-      candidate: { minorUnits: string; currency: string; exponent: number };
-    };
-  } | null;
-};
+export type JobFieldsFragment = { id: string, version: number, kind: JobKind, status: JobStatus, stage: string | null, attempts: number, maxAttempts: number, errorCode: ErrorCode | null, eventsPath: string, updatedAt: string };
 
-export type ProposalFieldsFragment = {
-  id: string;
-  version: number;
-  reportId: string;
-  sections: Array<ProposalSection>;
-  status: ProposalStatus;
-  flaggedCount: number;
-  downloadPath: string | null;
-  previewPath: string | null;
-  job: {
-    id: string;
-    version: number;
-    kind: JobKind;
-    status: JobStatus;
-    stage: string | null;
-    attempts: number;
-    maxAttempts: number;
-    errorCode: ErrorCode | null;
-    eventsPath: string;
-    updatedAt: string;
-  } | null;
-};
+export type ReportFieldsFragment = { id: string, version: number, title: string, status: ReportStatus, sessionId: string, communityId: string | null, areaId: string, planOptionId: string, planName: string | null, finalizedAt: string, archivedAt: string | null, goal: { id: string, kind: GoalKind, description: string }, economics: { engineVersion: string, currency: string, assumptions: Array<string>, notes: Array<string>, capex: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, upfrontTotal: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, recurringAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, avoidedTankerAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, netAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, funding: { fullyFunded: boolean, note: string, totalCost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, approved: { minorUnits: string, currency: string, exponent: number }, gap: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, candidate: { minorUnits: string, currency: string, exponent: number } } } | null };
+
+export type ProposalFieldsFragment = { id: string, version: number, reportId: string, sections: Array<ProposalSection>, status: ProposalStatus, flaggedCount: number, downloadPath: string | null, previewPath: string | null, job: { id: string, version: number, kind: JobKind, status: JobStatus, stage: string | null, attempts: number, maxAttempts: number, errorCode: ErrorCode | null, eventsPath: string, updatedAt: string } | null };
 
 export type ReportsQueryVariables = Exact<{
   filter?: ReportFilter | null | undefined;
@@ -3309,631 +1138,94 @@ export type ReportsQueryVariables = Exact<{
   after?: string | null | undefined;
 }>;
 
-export type ReportsQuery = {
-  reports: {
-    nodes: Array<{
-      id: string;
-      version: number;
-      title: string;
-      status: ReportStatus;
-      sessionId: string;
-      communityId: string | null;
-      areaId: string;
-      planOptionId: string;
-      planName: string | null;
-      finalizedAt: string;
-      archivedAt: string | null;
-      siteProfile: { communityType: CommunityType | null; occupiedHomes: number | null } | null;
-      area: {
-        id: string;
-        name: string;
-        countryCode: string;
-        centroidLat: string;
-        centroidLon: string;
-        extent: ExtentKind;
-        radiusMeters: number | null;
-        admin: { locality: string | null };
-        boundaryBox: {
-          minLongitude: string;
-          minLatitude: string;
-          maxLongitude: string;
-          maxLatitude: string;
-        } | null;
-      } | null;
-      goal: { id: string; kind: GoalKind; description: string };
-      economics: {
-        engineVersion: string;
-        currency: string;
-        assumptions: Array<string>;
-        notes: Array<string>;
-        capex: {
-          low: { minorUnits: string; currency: string; exponent: number };
-          high: { minorUnits: string; currency: string; exponent: number };
-        };
-        upfrontTotal: {
-          low: { minorUnits: string; currency: string; exponent: number };
-          high: { minorUnits: string; currency: string; exponent: number };
-        };
-        recurringAnnual: {
-          low: { minorUnits: string; currency: string; exponent: number };
-          high: { minorUnits: string; currency: string; exponent: number };
-        } | null;
-        avoidedTankerAnnual: {
-          low: { minorUnits: string; currency: string; exponent: number };
-          high: { minorUnits: string; currency: string; exponent: number };
-        } | null;
-        netAnnual: {
-          low: { minorUnits: string; currency: string; exponent: number };
-          high: { minorUnits: string; currency: string; exponent: number };
-        } | null;
-        funding: {
-          fullyFunded: boolean;
-          note: string;
-          totalCost: {
-            low: { minorUnits: string; currency: string; exponent: number };
-            high: { minorUnits: string; currency: string; exponent: number };
-          };
-          approved: { minorUnits: string; currency: string; exponent: number };
-          gap: {
-            low: { minorUnits: string; currency: string; exponent: number };
-            high: { minorUnits: string; currency: string; exponent: number };
-          };
-          candidate: { minorUnits: string; currency: string; exponent: number };
-        };
-      } | null;
-    }>;
-    pageInfo: { hasNextPage: boolean; endCursor: string | null };
-  };
-};
+
+export type ReportsQuery = { reports: { nodes: Array<{ id: string, version: number, title: string, status: ReportStatus, sessionId: string, communityId: string | null, areaId: string, planOptionId: string, planName: string | null, finalizedAt: string, archivedAt: string | null, siteProfile: { communityType: CommunityType | null, occupiedHomes: number | null } | null, area: { id: string, name: string, countryCode: string, centroidLat: string, centroidLon: string, extent: ExtentKind, radiusMeters: number | null, admin: { locality: string | null }, boundaryBox: { minLongitude: string, minLatitude: string, maxLongitude: string, maxLatitude: string } | null } | null, goal: { id: string, kind: GoalKind, description: string }, economics: { engineVersion: string, currency: string, assumptions: Array<string>, notes: Array<string>, capex: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, upfrontTotal: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, recurringAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, avoidedTankerAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, netAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, funding: { fullyFunded: boolean, note: string, totalCost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, approved: { minorUnits: string, currency: string, exponent: number }, gap: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, candidate: { minorUnits: string, currency: string, exponent: number } } } | null }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type FundingSchemesQueryVariables = Exact<{
   first?: number | null | undefined;
   after?: string | null | undefined;
 }>;
 
-export type FundingSchemesQuery = {
-  fundingSchemes: {
-    nodes: Array<{
-      id: string;
-      name: string;
-      funder: string;
-      summary: string;
-      status: CatalogueStatus;
-      evidence: EvidenceQuality;
-      officialSource: boolean;
-      sourceUrl: string;
-      sourceHash: string | null;
-      lastVerifiedAt: string;
-      currency: string;
-      deadlineAt: string | null;
-      deadlineTimezone: string | null;
-      requiredDocuments: Array<string>;
-      maxAmount: { minorUnits: string; currency: string; exponent: number } | null;
-    }>;
-    pageInfo: { hasNextPage: boolean; endCursor: string | null };
-  };
-};
+
+export type FundingSchemesQuery = { fundingSchemes: { nodes: Array<{ id: string, name: string, funder: string, summary: string, status: CatalogueStatus, evidence: EvidenceQuality, officialSource: boolean, sourceUrl: string, sourceHash: string | null, lastVerifiedAt: string, currency: string, deadlineAt: string | null, deadlineTimezone: string | null, requiredDocuments: Array<string>, maxAmount: { minorUnits: string, currency: string, exponent: number } | null }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type ReportQueryVariables = Exact<{
   id: string;
 }>;
 
-export type ReportQuery = {
-  report: {
-    id: string;
-    version: number;
-    title: string;
-    status: ReportStatus;
-    sessionId: string;
-    communityId: string | null;
-    areaId: string;
-    planOptionId: string;
-    planName: string | null;
-    finalizedAt: string;
-    archivedAt: string | null;
-    area: { id: string; name: string; countryCode: string } | null;
-    impact: {
-      assumptions: Array<string>;
-      metrics: Array<{
-        metricId: string;
-        baseline: {
-          availability: Availability;
-          reason: string | null;
-          quantity: { value: string; unit: Unit } | null;
-        };
-        projectedLow: {
-          availability: Availability;
-          reason: string | null;
-          quantity: { value: string; unit: Unit } | null;
-        };
-        projectedHigh: {
-          availability: Availability;
-          reason: string | null;
-          quantity: { value: string; unit: Unit } | null;
-        };
-      }>;
-      neighbourEffect: {
-        availability: Availability;
-        reason: string | null;
-        quantity: { value: string; unit: Unit } | null;
-      };
-      provenance: { evidence: EvidenceQuality; sourceIds: Array<string>; asOf: string };
-    } | null;
-    proposals: {
-      nodes: Array<{
-        id: string;
-        version: number;
-        reportId: string;
-        sections: Array<ProposalSection>;
-        status: ProposalStatus;
-        flaggedCount: number;
-        downloadPath: string | null;
-        previewPath: string | null;
-        job: {
-          id: string;
-          version: number;
-          kind: JobKind;
-          status: JobStatus;
-          stage: string | null;
-          attempts: number;
-          maxAttempts: number;
-          errorCode: ErrorCode | null;
-          eventsPath: string;
-          updatedAt: string;
-        } | null;
-      }>;
-      pageInfo: { hasNextPage: boolean; endCursor: string | null };
-    };
-    goal: { id: string; kind: GoalKind; description: string };
-    economics: {
-      engineVersion: string;
-      currency: string;
-      assumptions: Array<string>;
-      notes: Array<string>;
-      capex: {
-        low: { minorUnits: string; currency: string; exponent: number };
-        high: { minorUnits: string; currency: string; exponent: number };
-      };
-      upfrontTotal: {
-        low: { minorUnits: string; currency: string; exponent: number };
-        high: { minorUnits: string; currency: string; exponent: number };
-      };
-      recurringAnnual: {
-        low: { minorUnits: string; currency: string; exponent: number };
-        high: { minorUnits: string; currency: string; exponent: number };
-      } | null;
-      avoidedTankerAnnual: {
-        low: { minorUnits: string; currency: string; exponent: number };
-        high: { minorUnits: string; currency: string; exponent: number };
-      } | null;
-      netAnnual: {
-        low: { minorUnits: string; currency: string; exponent: number };
-        high: { minorUnits: string; currency: string; exponent: number };
-      } | null;
-      funding: {
-        fullyFunded: boolean;
-        note: string;
-        totalCost: {
-          low: { minorUnits: string; currency: string; exponent: number };
-          high: { minorUnits: string; currency: string; exponent: number };
-        };
-        approved: { minorUnits: string; currency: string; exponent: number };
-        gap: {
-          low: { minorUnits: string; currency: string; exponent: number };
-          high: { minorUnits: string; currency: string; exponent: number };
-        };
-        candidate: { minorUnits: string; currency: string; exponent: number };
-      };
-    } | null;
-  } | null;
-};
+
+export type ReportQuery = { report: { id: string, version: number, title: string, status: ReportStatus, sessionId: string, communityId: string | null, areaId: string, planOptionId: string, planName: string | null, finalizedAt: string, archivedAt: string | null, area: { id: string, name: string, countryCode: string } | null, impact: { assumptions: Array<string>, metrics: Array<{ metricId: string, baseline: { availability: Availability, reason: string | null, quantity: { value: string, unit: Unit } | null }, projectedLow: { availability: Availability, reason: string | null, quantity: { value: string, unit: Unit } | null }, projectedHigh: { availability: Availability, reason: string | null, quantity: { value: string, unit: Unit } | null } }>, neighbourEffect: { availability: Availability, reason: string | null, quantity: { value: string, unit: Unit } | null }, provenance: { evidence: EvidenceQuality, sourceIds: Array<string>, asOf: string } } | null, proposals: { nodes: Array<{ id: string, version: number, reportId: string, sections: Array<ProposalSection>, status: ProposalStatus, flaggedCount: number, downloadPath: string | null, previewPath: string | null, job: { id: string, version: number, kind: JobKind, status: JobStatus, stage: string | null, attempts: number, maxAttempts: number, errorCode: ErrorCode | null, eventsPath: string, updatedAt: string } | null }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } }, goal: { id: string, kind: GoalKind, description: string }, economics: { engineVersion: string, currency: string, assumptions: Array<string>, notes: Array<string>, capex: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, upfrontTotal: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, recurringAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, avoidedTankerAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, netAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, funding: { fullyFunded: boolean, note: string, totalCost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, approved: { minorUnits: string, currency: string, exponent: number }, gap: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, candidate: { minorUnits: string, currency: string, exponent: number } } } | null } | null };
 
 export type ProposalQueryVariables = Exact<{
   id: string;
 }>;
 
-export type ProposalQuery = {
-  proposal: {
-    id: string;
-    version: number;
-    reportId: string;
-    sections: Array<ProposalSection>;
-    status: ProposalStatus;
-    flaggedCount: number;
-    downloadPath: string | null;
-    previewPath: string | null;
-    job: {
-      id: string;
-      version: number;
-      kind: JobKind;
-      status: JobStatus;
-      stage: string | null;
-      attempts: number;
-      maxAttempts: number;
-      errorCode: ErrorCode | null;
-      eventsPath: string;
-      updatedAt: string;
-    } | null;
-  } | null;
-};
+
+export type ProposalQuery = { proposal: { id: string, version: number, reportId: string, sections: Array<ProposalSection>, status: ProposalStatus, flaggedCount: number, downloadPath: string | null, previewPath: string | null, job: { id: string, version: number, kind: JobKind, status: JobStatus, stage: string | null, attempts: number, maxAttempts: number, errorCode: ErrorCode | null, eventsPath: string, updatedAt: string } | null } | null };
 
 export type JobQueryVariables = Exact<{
   id: string;
 }>;
 
-export type JobQuery = {
-  job: {
-    id: string;
-    version: number;
-    kind: JobKind;
-    status: JobStatus;
-    stage: string | null;
-    attempts: number;
-    maxAttempts: number;
-    errorCode: ErrorCode | null;
-    eventsPath: string;
-    updatedAt: string;
-  } | null;
-};
+
+export type JobQuery = { job: { id: string, version: number, kind: JobKind, status: JobStatus, stage: string | null, attempts: number, maxAttempts: number, errorCode: ErrorCode | null, eventsPath: string, updatedAt: string } | null };
 
 export type FinalizeReportMutationVariables = Exact<{
   input: FinalizeReportInput;
 }>;
 
-export type FinalizeReportMutation = {
-  finalizeReport: {
-    report: {
-      id: string;
-      version: number;
-      title: string;
-      status: ReportStatus;
-      sessionId: string;
-      communityId: string | null;
-      areaId: string;
-      planOptionId: string;
-      planName: string | null;
-      finalizedAt: string;
-      archivedAt: string | null;
-      goal: { id: string; kind: GoalKind; description: string };
-      economics: {
-        engineVersion: string;
-        currency: string;
-        assumptions: Array<string>;
-        notes: Array<string>;
-        capex: {
-          low: { minorUnits: string; currency: string; exponent: number };
-          high: { minorUnits: string; currency: string; exponent: number };
-        };
-        upfrontTotal: {
-          low: { minorUnits: string; currency: string; exponent: number };
-          high: { minorUnits: string; currency: string; exponent: number };
-        };
-        recurringAnnual: {
-          low: { minorUnits: string; currency: string; exponent: number };
-          high: { minorUnits: string; currency: string; exponent: number };
-        } | null;
-        avoidedTankerAnnual: {
-          low: { minorUnits: string; currency: string; exponent: number };
-          high: { minorUnits: string; currency: string; exponent: number };
-        } | null;
-        netAnnual: {
-          low: { minorUnits: string; currency: string; exponent: number };
-          high: { minorUnits: string; currency: string; exponent: number };
-        } | null;
-        funding: {
-          fullyFunded: boolean;
-          note: string;
-          totalCost: {
-            low: { minorUnits: string; currency: string; exponent: number };
-            high: { minorUnits: string; currency: string; exponent: number };
-          };
-          approved: { minorUnits: string; currency: string; exponent: number };
-          gap: {
-            low: { minorUnits: string; currency: string; exponent: number };
-            high: { minorUnits: string; currency: string; exponent: number };
-          };
-          candidate: { minorUnits: string; currency: string; exponent: number };
-        };
-      } | null;
-    } | null;
-    error: {
-      code: ErrorCode;
-      message: string;
-      currentVersion: number | null;
-      requestId: string;
-      fieldErrors: Array<{ field: string; message: string }>;
-    } | null;
-  };
-};
+
+export type FinalizeReportMutation = { finalizeReport: { report: { id: string, version: number, title: string, status: ReportStatus, sessionId: string, communityId: string | null, areaId: string, planOptionId: string, planName: string | null, finalizedAt: string, archivedAt: string | null, goal: { id: string, kind: GoalKind, description: string }, economics: { engineVersion: string, currency: string, assumptions: Array<string>, notes: Array<string>, capex: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, upfrontTotal: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, recurringAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, avoidedTankerAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, netAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, funding: { fullyFunded: boolean, note: string, totalCost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, approved: { minorUnits: string, currency: string, exponent: number }, gap: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, candidate: { minorUnits: string, currency: string, exponent: number } } } | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
 export type ArchiveReportMutationVariables = Exact<{
   input: ArchiveReportInput;
 }>;
 
-export type ArchiveReportMutation = {
-  archiveReport: {
-    report: {
-      id: string;
-      version: number;
-      title: string;
-      status: ReportStatus;
-      sessionId: string;
-      communityId: string | null;
-      areaId: string;
-      planOptionId: string;
-      planName: string | null;
-      finalizedAt: string;
-      archivedAt: string | null;
-      goal: { id: string; kind: GoalKind; description: string };
-      economics: {
-        engineVersion: string;
-        currency: string;
-        assumptions: Array<string>;
-        notes: Array<string>;
-        capex: {
-          low: { minorUnits: string; currency: string; exponent: number };
-          high: { minorUnits: string; currency: string; exponent: number };
-        };
-        upfrontTotal: {
-          low: { minorUnits: string; currency: string; exponent: number };
-          high: { minorUnits: string; currency: string; exponent: number };
-        };
-        recurringAnnual: {
-          low: { minorUnits: string; currency: string; exponent: number };
-          high: { minorUnits: string; currency: string; exponent: number };
-        } | null;
-        avoidedTankerAnnual: {
-          low: { minorUnits: string; currency: string; exponent: number };
-          high: { minorUnits: string; currency: string; exponent: number };
-        } | null;
-        netAnnual: {
-          low: { minorUnits: string; currency: string; exponent: number };
-          high: { minorUnits: string; currency: string; exponent: number };
-        } | null;
-        funding: {
-          fullyFunded: boolean;
-          note: string;
-          totalCost: {
-            low: { minorUnits: string; currency: string; exponent: number };
-            high: { minorUnits: string; currency: string; exponent: number };
-          };
-          approved: { minorUnits: string; currency: string; exponent: number };
-          gap: {
-            low: { minorUnits: string; currency: string; exponent: number };
-            high: { minorUnits: string; currency: string; exponent: number };
-          };
-          candidate: { minorUnits: string; currency: string; exponent: number };
-        };
-      } | null;
-    } | null;
-    error: {
-      code: ErrorCode;
-      message: string;
-      currentVersion: number | null;
-      requestId: string;
-      fieldErrors: Array<{ field: string; message: string }>;
-    } | null;
-  };
-};
+
+export type ArchiveReportMutation = { archiveReport: { report: { id: string, version: number, title: string, status: ReportStatus, sessionId: string, communityId: string | null, areaId: string, planOptionId: string, planName: string | null, finalizedAt: string, archivedAt: string | null, goal: { id: string, kind: GoalKind, description: string }, economics: { engineVersion: string, currency: string, assumptions: Array<string>, notes: Array<string>, capex: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, upfrontTotal: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, recurringAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, avoidedTankerAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, netAnnual: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, funding: { fullyFunded: boolean, note: string, totalCost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, approved: { minorUnits: string, currency: string, exponent: number }, gap: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } }, candidate: { minorUnits: string, currency: string, exponent: number } } } | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
 export type GenerateProposalMutationVariables = Exact<{
   input: GenerateProposalInput;
 }>;
 
-export type GenerateProposalMutation = {
-  generateProposal: {
-    proposal: {
-      id: string;
-      version: number;
-      reportId: string;
-      sections: Array<ProposalSection>;
-      status: ProposalStatus;
-      flaggedCount: number;
-      downloadPath: string | null;
-      previewPath: string | null;
-      job: {
-        id: string;
-        version: number;
-        kind: JobKind;
-        status: JobStatus;
-        stage: string | null;
-        attempts: number;
-        maxAttempts: number;
-        errorCode: ErrorCode | null;
-        eventsPath: string;
-        updatedAt: string;
-      } | null;
-    } | null;
-    error: {
-      code: ErrorCode;
-      message: string;
-      currentVersion: number | null;
-      requestId: string;
-      fieldErrors: Array<{ field: string; message: string }>;
-    } | null;
-  };
-};
 
-export type ProjectFieldsFragment = {
-  id: string;
-  version: number;
-  reportId: string;
-  reportVersion: number;
-  areaId: string;
-  communityId: string | null;
-  sharedWithCommunity: boolean;
-  title: string;
-  status: ProjectStatus;
-  startedAt: string;
-  expenses: Array<{
-    description: string;
-    spentOn: string;
-    source: string;
-    amount: { minorUnits: string; currency: string; exponent: number };
-  }>;
-};
+export type GenerateProposalMutation = { generateProposal: { proposal: { id: string, version: number, reportId: string, sections: Array<ProposalSection>, status: ProposalStatus, flaggedCount: number, downloadPath: string | null, previewPath: string | null, job: { id: string, version: number, kind: JobKind, status: JobStatus, stage: string | null, attempts: number, maxAttempts: number, errorCode: ErrorCode | null, eventsPath: string, updatedAt: string } | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
-export type MilestoneFieldsFragment = {
-  id: string;
-  version: number;
-  projectId: string;
-  title: string;
-  plannedOn: string;
-  responsibleIdentity: string | null;
-  tasks: Array<string>;
-  status: MilestoneStatus;
-  completedOn: string | null;
-  completedAt: string | null;
-};
+export type ProjectFieldsFragment = { id: string, version: number, reportId: string, reportVersion: number, areaId: string, communityId: string | null, sharedWithCommunity: boolean, title: string, status: ProjectStatus, startedAt: string, expenses: Array<{ description: string, spentOn: string, source: string, amount: { minorUnits: string, currency: string, exponent: number } }> };
 
-export type ObservationFieldsFragment = {
-  id: string;
-  version: number;
-  projectId: string;
-  metricId: string;
-  observedOn: string;
-  method: string;
-  sourceType: ObservationSourceType;
-  source: string;
-  permittedSourceConfirmed: boolean;
-  areaId: string;
-  windowStart: string | null;
-  windowEnd: string | null;
-  coverageObservedDays: number;
-  coverageExpectedDays: number;
-  note: string;
-  evidence: ObservationEvidence;
-  recordedByViewer: boolean;
-  comparison: {
-    status: ComparisonStatus;
-    reason: string;
-    relation: string | null;
-    forecastLow: { value: string; unit: Unit } | null;
-    forecastHigh: { value: string; unit: Unit } | null;
-  };
-  quantity: { value: string; unit: Unit };
-};
+export type MilestoneFieldsFragment = { id: string, version: number, projectId: string, title: string, plannedOn: string, responsibleIdentity: string | null, tasks: Array<string>, status: MilestoneStatus, completedOn: string | null, completedAt: string | null };
+
+export type ObservationFieldsFragment = { id: string, version: number, projectId: string, metricId: string, observedOn: string, method: string, sourceType: ObservationSourceType, source: string, permittedSourceConfirmed: boolean, areaId: string, windowStart: string | null, windowEnd: string | null, coverageObservedDays: number, coverageExpectedDays: number, note: string, evidence: ObservationEvidence, recordedByViewer: boolean, comparison: { status: ComparisonStatus, reason: string, relation: string | null, forecastLow: { value: string, unit: Unit } | null, forecastHigh: { value: string, unit: Unit } | null }, quantity: { value: string, unit: Unit } };
 
 export type MyImplementationProjectsQueryVariables = Exact<{
   first?: number | null | undefined;
   after?: string | null | undefined;
 }>;
 
-export type MyImplementationProjectsQuery = {
-  myImplementationProjects: {
-    nodes: Array<{
-      id: string;
-      version: number;
-      reportId: string;
-      reportVersion: number;
-      areaId: string;
-      communityId: string | null;
-      sharedWithCommunity: boolean;
-      title: string;
-      status: ProjectStatus;
-      startedAt: string;
-      expenses: Array<{
-        description: string;
-        spentOn: string;
-        source: string;
-        amount: { minorUnits: string; currency: string; exponent: number };
-      }>;
-    }>;
-    pageInfo: { hasNextPage: boolean; endCursor: string | null };
-  };
-};
+
+export type MyImplementationProjectsQuery = { myImplementationProjects: { nodes: Array<{ id: string, version: number, reportId: string, reportVersion: number, areaId: string, communityId: string | null, sharedWithCommunity: boolean, title: string, status: ProjectStatus, startedAt: string, expenses: Array<{ description: string, spentOn: string, source: string, amount: { minorUnits: string, currency: string, exponent: number } }> }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type ImplementationProjectQueryVariables = Exact<{
   id: string;
 }>;
 
-export type ImplementationProjectQuery = {
-  implementationProject: {
-    id: string;
-    version: number;
-    reportId: string;
-    reportVersion: number;
-    areaId: string;
-    communityId: string | null;
-    sharedWithCommunity: boolean;
-    title: string;
-    status: ProjectStatus;
-    startedAt: string;
-    milestones: {
-      nodes: Array<{
-        id: string;
-        version: number;
-        projectId: string;
-        title: string;
-        plannedOn: string;
-        responsibleIdentity: string | null;
-        tasks: Array<string>;
-        status: MilestoneStatus;
-        completedOn: string | null;
-        completedAt: string | null;
-      }>;
-      pageInfo: { hasNextPage: boolean; endCursor: string | null };
-    };
-    expenses: Array<{
-      description: string;
-      spentOn: string;
-      source: string;
-      amount: { minorUnits: string; currency: string; exponent: number };
-    }>;
-  } | null;
-};
+
+export type ImplementationProjectQuery = { implementationProject: { id: string, version: number, reportId: string, reportVersion: number, areaId: string, communityId: string | null, sharedWithCommunity: boolean, title: string, status: ProjectStatus, startedAt: string, milestones: { nodes: Array<{ id: string, version: number, projectId: string, title: string, plannedOn: string, responsibleIdentity: string | null, tasks: Array<string>, status: MilestoneStatus, completedOn: string | null, completedAt: string | null }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } }, expenses: Array<{ description: string, spentOn: string, source: string, amount: { minorUnits: string, currency: string, exponent: number } }> } | null };
 
 export type TrackingReportsQueryVariables = Exact<{
   first?: number | null | undefined;
   after?: string | null | undefined;
 }>;
 
-export type TrackingReportsQuery = {
-  reports: {
-    nodes: Array<{
-      id: string;
-      version: number;
-      title: string;
-      status: ReportStatus;
-      communityId: string | null;
-      areaId: string;
-      finalizedAt: string;
-      goal: { horizonDays: number | null };
-      impact: {
-        metrics: Array<{
-          metricId: string;
-          projectedLow: { quantity: { value: string; unit: Unit } | null };
-          projectedHigh: { quantity: { value: string; unit: Unit } | null };
-        }>;
-      } | null;
-    }>;
-    pageInfo: { hasNextPage: boolean; endCursor: string | null };
-  };
-};
+
+export type TrackingReportsQuery = { reports: { nodes: Array<{ id: string, version: number, title: string, status: ReportStatus, communityId: string | null, areaId: string, finalizedAt: string, goal: { horizonDays: number | null }, impact: { metrics: Array<{ metricId: string, projectedLow: { quantity: { value: string, unit: Unit } | null }, projectedHigh: { quantity: { value: string, unit: Unit } | null } }> } | null }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type TrackingReportQueryVariables = Exact<{
   id: string;
 }>;
 
-export type TrackingReportQuery = {
-  report: {
-    id: string;
-    version: number;
-    title: string;
-    status: ReportStatus;
-    communityId: string | null;
-    areaId: string;
-    finalizedAt: string;
-    goal: { horizonDays: number | null };
-    impact: {
-      metrics: Array<{
-        metricId: string;
-        projectedLow: { quantity: { value: string; unit: Unit } | null };
-        projectedHigh: { quantity: { value: string; unit: Unit } | null };
-      }>;
-    } | null;
-  } | null;
-};
+
+export type TrackingReportQuery = { report: { id: string, version: number, title: string, status: ReportStatus, communityId: string | null, areaId: string, finalizedAt: string, goal: { horizonDays: number | null }, impact: { metrics: Array<{ metricId: string, projectedLow: { quantity: { value: string, unit: Unit } | null }, projectedHigh: { quantity: { value: string, unit: Unit } | null } }> } | null } | null };
 
 export type ObservationsQueryVariables = Exact<{
   projectId: string;
@@ -3941,214 +1233,43 @@ export type ObservationsQueryVariables = Exact<{
   after?: string | null | undefined;
 }>;
 
-export type ObservationsQuery = {
-  implementationProject: {
-    id: string;
-    observations: {
-      nodes: Array<{
-        id: string;
-        version: number;
-        projectId: string;
-        metricId: string;
-        observedOn: string;
-        method: string;
-        sourceType: ObservationSourceType;
-        source: string;
-        permittedSourceConfirmed: boolean;
-        areaId: string;
-        windowStart: string | null;
-        windowEnd: string | null;
-        coverageObservedDays: number;
-        coverageExpectedDays: number;
-        note: string;
-        evidence: ObservationEvidence;
-        recordedByViewer: boolean;
-        comparison: {
-          status: ComparisonStatus;
-          reason: string;
-          relation: string | null;
-          forecastLow: { value: string; unit: Unit } | null;
-          forecastHigh: { value: string; unit: Unit } | null;
-        };
-        quantity: { value: string; unit: Unit };
-      }>;
-      pageInfo: { hasNextPage: boolean; endCursor: string | null };
-    };
-  } | null;
-};
+
+export type ObservationsQuery = { implementationProject: { id: string, observations: { nodes: Array<{ id: string, version: number, projectId: string, metricId: string, observedOn: string, method: string, sourceType: ObservationSourceType, source: string, permittedSourceConfirmed: boolean, areaId: string, windowStart: string | null, windowEnd: string | null, coverageObservedDays: number, coverageExpectedDays: number, note: string, evidence: ObservationEvidence, recordedByViewer: boolean, comparison: { status: ComparisonStatus, reason: string, relation: string | null, forecastLow: { value: string, unit: Unit } | null, forecastHigh: { value: string, unit: Unit } | null }, quantity: { value: string, unit: Unit } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } } | null };
 
 export type StartImplementationProjectMutationVariables = Exact<{
   input: StartImplementationProjectInput;
 }>;
 
-export type StartImplementationProjectMutation = {
-  startImplementationProject: {
-    project: {
-      id: string;
-      version: number;
-      reportId: string;
-      reportVersion: number;
-      areaId: string;
-      communityId: string | null;
-      sharedWithCommunity: boolean;
-      title: string;
-      status: ProjectStatus;
-      startedAt: string;
-      expenses: Array<{
-        description: string;
-        spentOn: string;
-        source: string;
-        amount: { minorUnits: string; currency: string; exponent: number };
-      }>;
-    } | null;
-    error: {
-      code: ErrorCode;
-      message: string;
-      currentVersion: number | null;
-      requestId: string;
-      fieldErrors: Array<{ field: string; message: string }>;
-    } | null;
-  };
-};
+
+export type StartImplementationProjectMutation = { startImplementationProject: { project: { id: string, version: number, reportId: string, reportVersion: number, areaId: string, communityId: string | null, sharedWithCommunity: boolean, title: string, status: ProjectStatus, startedAt: string, expenses: Array<{ description: string, spentOn: string, source: string, amount: { minorUnits: string, currency: string, exponent: number } }> } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
 export type UpdateMilestoneMutationVariables = Exact<{
   input: UpdateMilestoneInput;
 }>;
 
-export type UpdateMilestoneMutation = {
-  updateMilestone: {
-    milestone: {
-      id: string;
-      version: number;
-      projectId: string;
-      title: string;
-      plannedOn: string;
-      responsibleIdentity: string | null;
-      tasks: Array<string>;
-      status: MilestoneStatus;
-      completedOn: string | null;
-      completedAt: string | null;
-    } | null;
-    error: {
-      code: ErrorCode;
-      message: string;
-      currentVersion: number | null;
-      requestId: string;
-      fieldErrors: Array<{ field: string; message: string }>;
-    } | null;
-  };
-};
+
+export type UpdateMilestoneMutation = { updateMilestone: { milestone: { id: string, version: number, projectId: string, title: string, plannedOn: string, responsibleIdentity: string | null, tasks: Array<string>, status: MilestoneStatus, completedOn: string | null, completedAt: string | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
 export type RecordObservationMutationVariables = Exact<{
   input: RecordObservationInput;
 }>;
 
-export type RecordObservationMutation = {
-  recordObservation: {
-    observation: {
-      id: string;
-      version: number;
-      projectId: string;
-      metricId: string;
-      observedOn: string;
-      method: string;
-      sourceType: ObservationSourceType;
-      source: string;
-      permittedSourceConfirmed: boolean;
-      areaId: string;
-      windowStart: string | null;
-      windowEnd: string | null;
-      coverageObservedDays: number;
-      coverageExpectedDays: number;
-      note: string;
-      evidence: ObservationEvidence;
-      recordedByViewer: boolean;
-      comparison: {
-        status: ComparisonStatus;
-        reason: string;
-        relation: string | null;
-        forecastLow: { value: string; unit: Unit } | null;
-        forecastHigh: { value: string; unit: Unit } | null;
-      };
-      quantity: { value: string; unit: Unit };
-    } | null;
-    error: {
-      code: ErrorCode;
-      message: string;
-      currentVersion: number | null;
-      requestId: string;
-      fieldErrors: Array<{ field: string; message: string }>;
-    } | null;
-  };
-};
+
+export type RecordObservationMutation = { recordObservation: { observation: { id: string, version: number, projectId: string, metricId: string, observedOn: string, method: string, sourceType: ObservationSourceType, source: string, permittedSourceConfirmed: boolean, areaId: string, windowStart: string | null, windowEnd: string | null, coverageObservedDays: number, coverageExpectedDays: number, note: string, evidence: ObservationEvidence, recordedByViewer: boolean, comparison: { status: ComparisonStatus, reason: string, relation: string | null, forecastLow: { value: string, unit: Unit } | null, forecastHigh: { value: string, unit: Unit } | null }, quantity: { value: string, unit: Unit } } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
 export type AddProjectExpenseMutationVariables = Exact<{
   input: AddProjectExpenseInput;
 }>;
 
-export type AddProjectExpenseMutation = {
-  addProjectExpense: {
-    project: {
-      id: string;
-      version: number;
-      reportId: string;
-      reportVersion: number;
-      areaId: string;
-      communityId: string | null;
-      sharedWithCommunity: boolean;
-      title: string;
-      status: ProjectStatus;
-      startedAt: string;
-      expenses: Array<{
-        description: string;
-        spentOn: string;
-        source: string;
-        amount: { minorUnits: string; currency: string; exponent: number };
-      }>;
-    } | null;
-    error: {
-      code: ErrorCode;
-      message: string;
-      currentVersion: number | null;
-      requestId: string;
-      fieldErrors: Array<{ field: string; message: string }>;
-    } | null;
-  };
-};
+
+export type AddProjectExpenseMutation = { addProjectExpense: { project: { id: string, version: number, reportId: string, reportVersion: number, areaId: string, communityId: string | null, sharedWithCommunity: boolean, title: string, status: ProjectStatus, startedAt: string, expenses: Array<{ description: string, spentOn: string, source: string, amount: { minorUnits: string, currency: string, exponent: number } }> } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
 export type UpdateProjectStatusMutationVariables = Exact<{
   input: UpdateProjectStatusInput;
 }>;
 
-export type UpdateProjectStatusMutation = {
-  updateProjectStatus: {
-    project: {
-      id: string;
-      version: number;
-      reportId: string;
-      reportVersion: number;
-      areaId: string;
-      communityId: string | null;
-      sharedWithCommunity: boolean;
-      title: string;
-      status: ProjectStatus;
-      startedAt: string;
-      expenses: Array<{
-        description: string;
-        spentOn: string;
-        source: string;
-        amount: { minorUnits: string; currency: string; exponent: number };
-      }>;
-    } | null;
-    error: {
-      code: ErrorCode;
-      message: string;
-      currentVersion: number | null;
-      requestId: string;
-      fieldErrors: Array<{ field: string; message: string }>;
-    } | null;
-  };
-};
+
+export type UpdateProjectStatusMutation = { updateProjectStatus: { project: { id: string, version: number, reportId: string, reportVersion: number, areaId: string, communityId: string | null, sharedWithCommunity: boolean, title: string, status: ProjectStatus, startedAt: string, expenses: Array<{ description: string, spentOn: string, source: string, amount: { minorUnits: string, currency: string, exponent: number } }> } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
 export class TypedDocumentString<TResult, TVariables>
   extends String
@@ -4168,8 +1289,7 @@ export class TypedDocumentString<TResult, TVariables>
     return this.value;
   }
 }
-export const AccountClaimFieldsFragmentDoc = new TypedDocumentString(
-  `
+export const AccountClaimFieldsFragmentDoc = new TypedDocumentString(`
     fragment AccountClaimFields on AccountClaim {
   id
   version
@@ -4178,11 +1298,8 @@ export const AccountClaimFieldsFragmentDoc = new TypedDocumentString(
   transferredSessionId
   closedSessionId
 }
-    `,
-  { fragmentName: 'AccountClaimFields' },
-) as unknown as TypedDocumentString<AccountClaimFieldsFragment, unknown>;
-export const EvidenceLinkFieldsFragmentDoc = new TypedDocumentString(
-  `
+    `, {"fragmentName":"AccountClaimFields"}) as unknown as TypedDocumentString<AccountClaimFieldsFragment, unknown>;
+export const EvidenceLinkFieldsFragmentDoc = new TypedDocumentString(`
     fragment EvidenceLinkFields on EvidenceLink {
   input
   capability
@@ -4198,11 +1315,8 @@ export const EvidenceLinkFieldsFragmentDoc = new TypedDocumentString(
   note
   demo
 }
-    `,
-  { fragmentName: 'EvidenceLinkFields' },
-) as unknown as TypedDocumentString<EvidenceLinkFieldsFragment, unknown>;
-export const BaselineFieldsFragmentDoc = new TypedDocumentString(
-  `
+    `, {"fragmentName":"EvidenceLinkFields"}) as unknown as TypedDocumentString<EvidenceLinkFieldsFragment, unknown>;
+export const BaselineFieldsFragmentDoc = new TypedDocumentString(`
     fragment BaselineFields on Baseline {
   id
   areaId
@@ -4302,11 +1416,8 @@ export const BaselineFieldsFragmentDoc = new TypedDocumentString(
   uncertainty
   note
   demo
-}`,
-  { fragmentName: 'BaselineFields' },
-) as unknown as TypedDocumentString<BaselineFieldsFragment, unknown>;
-export const MutationErrorFieldsFragmentDoc = new TypedDocumentString(
-  `
+}`, {"fragmentName":"BaselineFields"}) as unknown as TypedDocumentString<BaselineFieldsFragment, unknown>;
+export const MutationErrorFieldsFragmentDoc = new TypedDocumentString(`
     fragment MutationErrorFields on MutationError {
   code
   message
@@ -4317,20 +1428,14 @@ export const MutationErrorFieldsFragmentDoc = new TypedDocumentString(
   currentVersion
   requestId
 }
-    `,
-  { fragmentName: 'MutationErrorFields' },
-) as unknown as TypedDocumentString<MutationErrorFieldsFragment, unknown>;
-export const PageInfoFieldsFragmentDoc = new TypedDocumentString(
-  `
+    `, {"fragmentName":"MutationErrorFields"}) as unknown as TypedDocumentString<MutationErrorFieldsFragment, unknown>;
+export const PageInfoFieldsFragmentDoc = new TypedDocumentString(`
     fragment PageInfoFields on PageInfo {
   hasNextPage
   endCursor
 }
-    `,
-  { fragmentName: 'PageInfoFields' },
-) as unknown as TypedDocumentString<PageInfoFieldsFragment, unknown>;
-export const MembershipFieldsFragmentDoc = new TypedDocumentString(
-  `
+    `, {"fragmentName":"PageInfoFields"}) as unknown as TypedDocumentString<PageInfoFieldsFragment, unknown>;
+export const MembershipFieldsFragmentDoc = new TypedDocumentString(`
     fragment MembershipFields on Membership {
   id
   version
@@ -4339,11 +1444,8 @@ export const MembershipFieldsFragmentDoc = new TypedDocumentString(
   isViewer
   joinedAt
 }
-    `,
-  { fragmentName: 'MembershipFields' },
-) as unknown as TypedDocumentString<MembershipFieldsFragment, unknown>;
-export const CommunityFieldsFragmentDoc = new TypedDocumentString(
-  `
+    `, {"fragmentName":"MembershipFields"}) as unknown as TypedDocumentString<MembershipFieldsFragment, unknown>;
+export const CommunityFieldsFragmentDoc = new TypedDocumentString(`
     fragment CommunityFields on Community {
   id
   version
@@ -4375,21 +1477,15 @@ export const CommunityFieldsFragmentDoc = new TypedDocumentString(
   role
   isViewer
   joinedAt
-}`,
-  { fragmentName: 'CommunityFields' },
-) as unknown as TypedDocumentString<CommunityFieldsFragment, unknown>;
-export const MoneyFieldsFragmentDoc = new TypedDocumentString(
-  `
+}`, {"fragmentName":"CommunityFields"}) as unknown as TypedDocumentString<CommunityFieldsFragment, unknown>;
+export const MoneyFieldsFragmentDoc = new TypedDocumentString(`
     fragment MoneyFields on Money {
   minorUnits
   currency
   exponent
 }
-    `,
-  { fragmentName: 'MoneyFields' },
-) as unknown as TypedDocumentString<MoneyFieldsFragment, unknown>;
-export const FundingMatchFieldsFragmentDoc = new TypedDocumentString(
-  `
+    `, {"fragmentName":"MoneyFields"}) as unknown as TypedDocumentString<MoneyFieldsFragment, unknown>;
+export const FundingMatchFieldsFragmentDoc = new TypedDocumentString(`
     fragment FundingMatchFields on FundingMatch {
   id
   version
@@ -4450,11 +1546,8 @@ export const FundingMatchFieldsFragmentDoc = new TypedDocumentString(
   minorUnits
   currency
   exponent
-}`,
-  { fragmentName: 'FundingMatchFields' },
-) as unknown as TypedDocumentString<FundingMatchFieldsFragment, unknown>;
-export const GoalAssessmentFieldsFragmentDoc = new TypedDocumentString(
-  `
+}`, {"fragmentName":"FundingMatchFields"}) as unknown as TypedDocumentString<FundingMatchFieldsFragment, unknown>;
+export const GoalAssessmentFieldsFragmentDoc = new TypedDocumentString(`
     fragment GoalAssessmentFields on GoalAssessment {
   outcome
   summary
@@ -4502,11 +1595,8 @@ export const GoalAssessmentFieldsFragmentDoc = new TypedDocumentString(
     }
   }
 }
-    `,
-  { fragmentName: 'GoalAssessmentFields' },
-) as unknown as TypedDocumentString<GoalAssessmentFieldsFragment, unknown>;
-export const PlaceCandidateFieldsFragmentDoc = new TypedDocumentString(
-  `
+    `, {"fragmentName":"GoalAssessmentFields"}) as unknown as TypedDocumentString<GoalAssessmentFieldsFragment, unknown>;
+export const PlaceCandidateFieldsFragmentDoc = new TypedDocumentString(`
     fragment PlaceCandidateFields on PlaceCandidate {
   placeId
   name
@@ -4524,11 +1614,8 @@ export const PlaceCandidateFieldsFragmentDoc = new TypedDocumentString(
     sublocality
   }
 }
-    `,
-  { fragmentName: 'PlaceCandidateFields' },
-) as unknown as TypedDocumentString<PlaceCandidateFieldsFragment, unknown>;
-export const AreaLocationFieldsFragmentDoc = new TypedDocumentString(
-  `
+    `, {"fragmentName":"PlaceCandidateFields"}) as unknown as TypedDocumentString<PlaceCandidateFieldsFragment, unknown>;
+export const AreaLocationFieldsFragmentDoc = new TypedDocumentString(`
     fragment AreaLocationFields on Area {
   id
   name
@@ -4557,11 +1644,8 @@ export const AreaLocationFieldsFragmentDoc = new TypedDocumentString(
     sublocality
   }
 }
-    `,
-  { fragmentName: 'AreaLocationFields' },
-) as unknown as TypedDocumentString<AreaLocationFieldsFragment, unknown>;
-export const AreaFieldsFragmentDoc = new TypedDocumentString(
-  `
+    `, {"fragmentName":"AreaLocationFields"}) as unknown as TypedDocumentString<AreaLocationFieldsFragment, unknown>;
+export const AreaFieldsFragmentDoc = new TypedDocumentString(`
     fragment AreaFields on Area {
   id
   name
@@ -4569,20 +1653,14 @@ export const AreaFieldsFragmentDoc = new TypedDocumentString(
   timezone
   evidence
 }
-    `,
-  { fragmentName: 'AreaFields' },
-) as unknown as TypedDocumentString<AreaFieldsFragment, unknown>;
-export const QuantityFieldsFragmentDoc = new TypedDocumentString(
-  `
+    `, {"fragmentName":"AreaFields"}) as unknown as TypedDocumentString<AreaFieldsFragment, unknown>;
+export const QuantityFieldsFragmentDoc = new TypedDocumentString(`
     fragment QuantityFields on Quantity {
   value
   unit
 }
-    `,
-  { fragmentName: 'QuantityFields' },
-) as unknown as TypedDocumentString<QuantityFieldsFragment, unknown>;
-export const PlanningSessionFieldsFragmentDoc = new TypedDocumentString(
-  `
+    `, {"fragmentName":"QuantityFields"}) as unknown as TypedDocumentString<QuantityFieldsFragment, unknown>;
+export const PlanningSessionFieldsFragmentDoc = new TypedDocumentString(`
     fragment PlanningSessionFields on PlanningSession {
   id
   version
@@ -4601,6 +1679,12 @@ export const PlanningSessionFieldsFragmentDoc = new TypedDocumentString(
   area {
     id
     name
+    extent
+    radiusMeters
+    hasBoundary
+    extent
+    radiusMeters
+    hasBoundary
   }
   goal {
     id
@@ -4613,6 +1697,24 @@ export const PlanningSessionFieldsFragmentDoc = new TypedDocumentString(
     also
     confirmed
     preferredInterventions
+    waterTariff {
+      price {
+        ...MoneyFields
+      }
+      volume {
+        ...QuantityFields
+      }
+      note
+    }
+    contingencyRatio
+    funding {
+      label
+      amount {
+        ...MoneyFields
+      }
+      status
+      note
+    }
     budget {
       ...MoneyFields
     }
@@ -4639,6 +1741,14 @@ export const PlanningSessionFieldsFragmentDoc = new TypedDocumentString(
       interventionId
       note
       cost {
+        low {
+          ...MoneyFields
+        }
+        high {
+          ...MoneyFields
+        }
+      }
+      recurring {
         low {
           ...MoneyFields
         }
@@ -4678,20 +1788,14 @@ export const PlanningSessionFieldsFragmentDoc = new TypedDocumentString(
 fragment QuantityFields on Quantity {
   value
   unit
-}`,
-  { fragmentName: 'PlanningSessionFields' },
-) as unknown as TypedDocumentString<PlanningSessionFieldsFragment, unknown>;
-export const ExactNumberFieldsFragmentDoc = new TypedDocumentString(
-  `
+}`, {"fragmentName":"PlanningSessionFields"}) as unknown as TypedDocumentString<PlanningSessionFieldsFragment, unknown>;
+export const ExactNumberFieldsFragmentDoc = new TypedDocumentString(`
     fragment ExactNumberFields on ExactNumber {
   exact
   value
 }
-    `,
-  { fragmentName: 'ExactNumberFields' },
-) as unknown as TypedDocumentString<ExactNumberFieldsFragment, unknown>;
-export const ScenarioComparisonFieldsFragmentDoc = new TypedDocumentString(
-  `
+    `, {"fragmentName":"ExactNumberFields"}) as unknown as TypedDocumentString<ExactNumberFieldsFragment, unknown>;
+export const ScenarioComparisonFieldsFragmentDoc = new TypedDocumentString(`
     fragment ScenarioComparisonFields on ScenarioComparison {
   status
   notes
@@ -4716,22 +1820,16 @@ export const ScenarioComparisonFieldsFragmentDoc = new TypedDocumentString(
     fragment ExactNumberFields on ExactNumber {
   exact
   value
-}`,
-  { fragmentName: 'ScenarioComparisonFields' },
-) as unknown as TypedDocumentString<ScenarioComparisonFieldsFragment, unknown>;
-export const ImpactCitationFieldsFragmentDoc = new TypedDocumentString(
-  `
+}`, {"fragmentName":"ScenarioComparisonFields"}) as unknown as TypedDocumentString<ScenarioComparisonFieldsFragment, unknown>;
+export const ImpactCitationFieldsFragmentDoc = new TypedDocumentString(`
     fragment ImpactCitationFields on ImpactCitation {
   kind
   ref
   label
   asOf
 }
-    `,
-  { fragmentName: 'ImpactCitationFields' },
-) as unknown as TypedDocumentString<ImpactCitationFieldsFragment, unknown>;
-export const ImpactContextFieldsFragmentDoc = new TypedDocumentString(
-  `
+    `, {"fragmentName":"ImpactCitationFields"}) as unknown as TypedDocumentString<ImpactCitationFieldsFragment, unknown>;
+export const ImpactContextFieldsFragmentDoc = new TypedDocumentString(`
     fragment ImpactContextFields on ImpactContext {
   areaName
   nearbyRadiusM
@@ -4787,11 +1885,8 @@ fragment ImpactCitationFields on ImpactCitation {
   ref
   label
   asOf
-}`,
-  { fragmentName: 'ImpactContextFields' },
-) as unknown as TypedDocumentString<ImpactContextFieldsFragment, unknown>;
-export const ImpactFindingFieldsFragmentDoc = new TypedDocumentString(
-  `
+}`, {"fragmentName":"ImpactContextFields"}) as unknown as TypedDocumentString<ImpactContextFieldsFragment, unknown>;
+export const ImpactFindingFieldsFragmentDoc = new TypedDocumentString(`
     fragment ImpactFindingFields on ImpactFinding {
   id
   kind
@@ -4829,11 +1924,8 @@ fragment ImpactCitationFields on ImpactCitation {
   ref
   label
   asOf
-}`,
-  { fragmentName: 'ImpactFindingFields' },
-) as unknown as TypedDocumentString<ImpactFindingFieldsFragment, unknown>;
-export const WiderImpactFieldsFragmentDoc = new TypedDocumentString(
-  `
+}`, {"fragmentName":"ImpactFindingFields"}) as unknown as TypedDocumentString<ImpactFindingFieldsFragment, unknown>;
+export const WiderImpactFieldsFragmentDoc = new TypedDocumentString(`
     fragment WiderImpactFields on WiderImpact {
   id
   engineVersion
@@ -4896,11 +1988,8 @@ fragment ImpactFindingFields on ImpactFinding {
   citations {
     ...ImpactCitationFields
   }
-}`,
-  { fragmentName: 'WiderImpactFields' },
-) as unknown as TypedDocumentString<WiderImpactFieldsFragment, unknown>;
-export const EconomicsFieldsFragmentDoc = new TypedDocumentString(
-  `
+}`, {"fragmentName":"WiderImpactFields"}) as unknown as TypedDocumentString<WiderImpactFieldsFragment, unknown>;
+export const EconomicsFieldsFragmentDoc = new TypedDocumentString(`
     fragment EconomicsFields on OptionEconomics {
   engineVersion
   currency
@@ -5034,11 +2123,8 @@ export const EconomicsFieldsFragmentDoc = new TypedDocumentString(
   minorUnits
   currency
   exponent
-}`,
-  { fragmentName: 'EconomicsFields' },
-) as unknown as TypedDocumentString<EconomicsFieldsFragment, unknown>;
-export const ComparedOptionFieldsFragmentDoc = new TypedDocumentString(
-  `
+}`, {"fragmentName":"EconomicsFields"}) as unknown as TypedDocumentString<EconomicsFieldsFragment, unknown>;
+export const ComparedOptionFieldsFragmentDoc = new TypedDocumentString(`
     fragment ComparedOptionFields on ComparedOption {
   id
   rank
@@ -5340,11 +2426,8 @@ fragment EconomicsFields on OptionEconomics {
   }
   assumptions
   notes
-}`,
-  { fragmentName: 'ComparedOptionFields' },
-) as unknown as TypedDocumentString<ComparedOptionFieldsFragment, unknown>;
-export const AreaReadinessFieldsFragmentDoc = new TypedDocumentString(
-  `
+}`, {"fragmentName":"ComparedOptionFields"}) as unknown as TypedDocumentString<ComparedOptionFieldsFragment, unknown>;
+export const AreaReadinessFieldsFragmentDoc = new TypedDocumentString(`
     fragment AreaReadinessFields on AreaReadiness {
   areaId
   sessionId
@@ -5382,11 +2465,8 @@ export const AreaReadinessFieldsFragmentDoc = new TypedDocumentString(
     demo
   }
 }
-    `,
-  { fragmentName: 'AreaReadinessFields' },
-) as unknown as TypedDocumentString<AreaReadinessFieldsFragment, unknown>;
-export const ReportFieldsFragmentDoc = new TypedDocumentString(
-  `
+    `, {"fragmentName":"AreaReadinessFields"}) as unknown as TypedDocumentString<AreaReadinessFieldsFragment, unknown>;
+export const ReportFieldsFragmentDoc = new TypedDocumentString(`
     fragment ReportFields on Report {
   id
   version
@@ -5481,11 +2561,8 @@ export const ReportFieldsFragmentDoc = new TypedDocumentString(
   minorUnits
   currency
   exponent
-}`,
-  { fragmentName: 'ReportFields' },
-) as unknown as TypedDocumentString<ReportFieldsFragment, unknown>;
-export const JobFieldsFragmentDoc = new TypedDocumentString(
-  `
+}`, {"fragmentName":"ReportFields"}) as unknown as TypedDocumentString<ReportFieldsFragment, unknown>;
+export const JobFieldsFragmentDoc = new TypedDocumentString(`
     fragment JobFields on Job {
   id
   version
@@ -5498,11 +2575,8 @@ export const JobFieldsFragmentDoc = new TypedDocumentString(
   eventsPath
   updatedAt
 }
-    `,
-  { fragmentName: 'JobFields' },
-) as unknown as TypedDocumentString<JobFieldsFragment, unknown>;
-export const ProposalFieldsFragmentDoc = new TypedDocumentString(
-  `
+    `, {"fragmentName":"JobFields"}) as unknown as TypedDocumentString<JobFieldsFragment, unknown>;
+export const ProposalFieldsFragmentDoc = new TypedDocumentString(`
     fragment ProposalFields on Proposal {
   id
   version
@@ -5527,11 +2601,8 @@ export const ProposalFieldsFragmentDoc = new TypedDocumentString(
   errorCode
   eventsPath
   updatedAt
-}`,
-  { fragmentName: 'ProposalFields' },
-) as unknown as TypedDocumentString<ProposalFieldsFragment, unknown>;
-export const ProjectFieldsFragmentDoc = new TypedDocumentString(
-  `
+}`, {"fragmentName":"ProposalFields"}) as unknown as TypedDocumentString<ProposalFieldsFragment, unknown>;
+export const ProjectFieldsFragmentDoc = new TypedDocumentString(`
     fragment ProjectFields on ImplementationProject {
   id
   version
@@ -5556,11 +2627,8 @@ export const ProjectFieldsFragmentDoc = new TypedDocumentString(
   minorUnits
   currency
   exponent
-}`,
-  { fragmentName: 'ProjectFields' },
-) as unknown as TypedDocumentString<ProjectFieldsFragment, unknown>;
-export const MilestoneFieldsFragmentDoc = new TypedDocumentString(
-  `
+}`, {"fragmentName":"ProjectFields"}) as unknown as TypedDocumentString<ProjectFieldsFragment, unknown>;
+export const MilestoneFieldsFragmentDoc = new TypedDocumentString(`
     fragment MilestoneFields on Milestone {
   id
   version
@@ -5573,11 +2641,8 @@ export const MilestoneFieldsFragmentDoc = new TypedDocumentString(
   completedOn
   completedAt
 }
-    `,
-  { fragmentName: 'MilestoneFields' },
-) as unknown as TypedDocumentString<MilestoneFieldsFragment, unknown>;
-export const ObservationFieldsFragmentDoc = new TypedDocumentString(
-  `
+    `, {"fragmentName":"MilestoneFields"}) as unknown as TypedDocumentString<MilestoneFieldsFragment, unknown>;
+export const ObservationFieldsFragmentDoc = new TypedDocumentString(`
     fragment ObservationFields on Observation {
   id
   version
@@ -5616,9 +2681,7 @@ export const ObservationFieldsFragmentDoc = new TypedDocumentString(
     fragment QuantityFields on Quantity {
   value
   unit
-}`,
-  { fragmentName: 'ObservationFields' },
-) as unknown as TypedDocumentString<ObservationFieldsFragment, unknown>;
+}`, {"fragmentName":"ObservationFields"}) as unknown as TypedDocumentString<ObservationFieldsFragment, unknown>;
 export const BeginAccountClaimDocument = new TypedDocumentString(`
     mutation BeginAccountClaim {
   beginAccountClaim {
@@ -5648,10 +2711,7 @@ fragment MutationErrorFields on MutationError {
   }
   currentVersion
   requestId
-}`) as unknown as TypedDocumentString<
-  BeginAccountClaimMutation,
-  BeginAccountClaimMutationVariables
->;
+}`) as unknown as TypedDocumentString<BeginAccountClaimMutation, BeginAccountClaimMutationVariables>;
 export const CompleteAccountClaimDocument = new TypedDocumentString(`
     mutation CompleteAccountClaim($input: CompleteAccountClaimInput!) {
   completeAccountClaim(input: $input) {
@@ -5680,10 +2740,7 @@ fragment MutationErrorFields on MutationError {
   }
   currentVersion
   requestId
-}`) as unknown as TypedDocumentString<
-  CompleteAccountClaimMutation,
-  CompleteAccountClaimMutationVariables
->;
+}`) as unknown as TypedDocumentString<CompleteAccountClaimMutation, CompleteAccountClaimMutationVariables>;
 export const CancelAccountClaimDocument = new TypedDocumentString(`
     mutation CancelAccountClaim($input: CancelAccountClaimInput!) {
   cancelAccountClaim(input: $input) {
@@ -5712,10 +2769,7 @@ fragment MutationErrorFields on MutationError {
   }
   currentVersion
   requestId
-}`) as unknown as TypedDocumentString<
-  CancelAccountClaimMutation,
-  CancelAccountClaimMutationVariables
->;
+}`) as unknown as TypedDocumentString<CancelAccountClaimMutation, CancelAccountClaimMutationVariables>;
 export const AiStatusDocument = new TypedDocumentString(`
     query AiStatus {
   aiStatus {
@@ -6077,10 +3131,7 @@ export const CommunitySourceReportsDocument = new TypedDocumentString(`
     fragment PageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`) as unknown as TypedDocumentString<
-  CommunitySourceReportsQuery,
-  CommunitySourceReportsQueryVariables
->;
+}`) as unknown as TypedDocumentString<CommunitySourceReportsQuery, CommunitySourceReportsQueryVariables>;
 export const CreateCommunityDocument = new TypedDocumentString(`
     mutation CreateCommunity($input: CreateCommunityInput!) {
   createCommunity(input: $input) {
@@ -6446,10 +3497,7 @@ export const InterventionCatalogueDocument = new TypedDocumentString(`
     }
   }
 }
-    `) as unknown as TypedDocumentString<
-  InterventionCatalogueQuery,
-  InterventionCatalogueQueryVariables
->;
+    `) as unknown as TypedDocumentString<InterventionCatalogueQuery, InterventionCatalogueQueryVariables>;
 export const CheckGoalDocument = new TypedDocumentString(`
     query CheckGoal($sessionId: ID!, $goal: GoalInput!) {
   checkGoal(sessionId: $sessionId, goal: $goal) {
@@ -6824,6 +3872,12 @@ fragment PlanningSessionFields on PlanningSession {
   area {
     id
     name
+    extent
+    radiusMeters
+    hasBoundary
+    extent
+    radiusMeters
+    hasBoundary
   }
   goal {
     id
@@ -6836,6 +3890,24 @@ fragment PlanningSessionFields on PlanningSession {
     also
     confirmed
     preferredInterventions
+    waterTariff {
+      price {
+        ...MoneyFields
+      }
+      volume {
+        ...QuantityFields
+      }
+      note
+    }
+    contingencyRatio
+    funding {
+      label
+      amount {
+        ...MoneyFields
+      }
+      status
+      note
+    }
     budget {
       ...MoneyFields
     }
@@ -6869,6 +3941,14 @@ fragment PlanningSessionFields on PlanningSession {
           ...MoneyFields
         }
       }
+      recurring {
+        low {
+          ...MoneyFields
+        }
+        high {
+          ...MoneyFields
+        }
+      }
       buildDays {
         low
         high
@@ -6892,10 +3972,7 @@ fragment PlanningSessionFields on PlanningSession {
       }
     }
   }
-}`) as unknown as TypedDocumentString<
-  CurrentPlanningSessionQuery,
-  CurrentPlanningSessionQueryVariables
->;
+}`) as unknown as TypedDocumentString<CurrentPlanningSessionQuery, CurrentPlanningSessionQueryVariables>;
 export const PlanningSessionDocument = new TypedDocumentString(`
     query PlanningSession($id: ID!) {
   planningSession(id: $id) {
@@ -6929,6 +4006,12 @@ fragment PlanningSessionFields on PlanningSession {
   area {
     id
     name
+    extent
+    radiusMeters
+    hasBoundary
+    extent
+    radiusMeters
+    hasBoundary
   }
   goal {
     id
@@ -6941,6 +4024,24 @@ fragment PlanningSessionFields on PlanningSession {
     also
     confirmed
     preferredInterventions
+    waterTariff {
+      price {
+        ...MoneyFields
+      }
+      volume {
+        ...QuantityFields
+      }
+      note
+    }
+    contingencyRatio
+    funding {
+      label
+      amount {
+        ...MoneyFields
+      }
+      status
+      note
+    }
     budget {
       ...MoneyFields
     }
@@ -6967,6 +4068,14 @@ fragment PlanningSessionFields on PlanningSession {
       interventionId
       note
       cost {
+        low {
+          ...MoneyFields
+        }
+        high {
+          ...MoneyFields
+        }
+      }
+      recurring {
         low {
           ...MoneyFields
         }
@@ -7121,6 +4230,12 @@ fragment PlanningSessionFields on PlanningSession {
   area {
     id
     name
+    extent
+    radiusMeters
+    hasBoundary
+    extent
+    radiusMeters
+    hasBoundary
   }
   goal {
     id
@@ -7133,6 +4248,24 @@ fragment PlanningSessionFields on PlanningSession {
     also
     confirmed
     preferredInterventions
+    waterTariff {
+      price {
+        ...MoneyFields
+      }
+      volume {
+        ...QuantityFields
+      }
+      note
+    }
+    contingencyRatio
+    funding {
+      label
+      amount {
+        ...MoneyFields
+      }
+      status
+      note
+    }
     budget {
       ...MoneyFields
     }
@@ -7166,6 +4299,14 @@ fragment PlanningSessionFields on PlanningSession {
           ...MoneyFields
         }
       }
+      recurring {
+        low {
+          ...MoneyFields
+        }
+        high {
+          ...MoneyFields
+        }
+      }
       buildDays {
         low
         high
@@ -7189,10 +4330,7 @@ fragment PlanningSessionFields on PlanningSession {
       }
     }
   }
-}`) as unknown as TypedDocumentString<
-  CreatePlanningSessionMutation,
-  CreatePlanningSessionMutationVariables
->;
+}`) as unknown as TypedDocumentString<CreatePlanningSessionMutation, CreatePlanningSessionMutationVariables>;
 export const UpdatePlanningSessionDocument = new TypedDocumentString(`
     mutation UpdatePlanningSession($input: UpdatePlanningSessionInput!) {
   updatePlanningSession(input: $input) {
@@ -7241,6 +4379,12 @@ fragment PlanningSessionFields on PlanningSession {
   area {
     id
     name
+    extent
+    radiusMeters
+    hasBoundary
+    extent
+    radiusMeters
+    hasBoundary
   }
   goal {
     id
@@ -7253,6 +4397,24 @@ fragment PlanningSessionFields on PlanningSession {
     also
     confirmed
     preferredInterventions
+    waterTariff {
+      price {
+        ...MoneyFields
+      }
+      volume {
+        ...QuantityFields
+      }
+      note
+    }
+    contingencyRatio
+    funding {
+      label
+      amount {
+        ...MoneyFields
+      }
+      status
+      note
+    }
     budget {
       ...MoneyFields
     }
@@ -7286,6 +4448,14 @@ fragment PlanningSessionFields on PlanningSession {
           ...MoneyFields
         }
       }
+      recurring {
+        low {
+          ...MoneyFields
+        }
+        high {
+          ...MoneyFields
+        }
+      }
       buildDays {
         low
         high
@@ -7309,10 +4479,7 @@ fragment PlanningSessionFields on PlanningSession {
       }
     }
   }
-}`) as unknown as TypedDocumentString<
-  UpdatePlanningSessionMutation,
-  UpdatePlanningSessionMutationVariables
->;
+}`) as unknown as TypedDocumentString<UpdatePlanningSessionMutation, UpdatePlanningSessionMutationVariables>;
 export const PlanComparisonDocument = new TypedDocumentString(`
     query PlanComparison($id: ID!) {
   planningSession(id: $id) {
@@ -7885,10 +5052,7 @@ export const RecordManualInputDocument = new TypedDocumentString(`
   }
   currentVersion
   requestId
-}`) as unknown as TypedDocumentString<
-  RecordManualInputMutation,
-  RecordManualInputMutationVariables
->;
+}`) as unknown as TypedDocumentString<RecordManualInputMutation, RecordManualInputMutationVariables>;
 export const ReportsDocument = new TypedDocumentString(`
     query Reports($filter: ReportFilter, $first: Int, $after: String) {
   reports(filter: $filter, first: $first, after: $after) {
@@ -8609,10 +5773,7 @@ fragment ProjectFields on ImplementationProject {
       ...MoneyFields
     }
   }
-}`) as unknown as TypedDocumentString<
-  MyImplementationProjectsQuery,
-  MyImplementationProjectsQueryVariables
->;
+}`) as unknown as TypedDocumentString<MyImplementationProjectsQuery, MyImplementationProjectsQueryVariables>;
 export const ImplementationProjectDocument = new TypedDocumentString(`
     query ImplementationProject($id: ID!) {
   implementationProject(id: $id) {
@@ -8667,10 +5828,7 @@ fragment MilestoneFields on Milestone {
   status
   completedOn
   completedAt
-}`) as unknown as TypedDocumentString<
-  ImplementationProjectQuery,
-  ImplementationProjectQueryVariables
->;
+}`) as unknown as TypedDocumentString<ImplementationProjectQuery, ImplementationProjectQueryVariables>;
 export const TrackingReportsDocument = new TypedDocumentString(`
     query TrackingReports($first: Int, $after: String) {
   reports(filter: { status: FINALIZED }, first: $first, after: $after) {
@@ -8847,10 +6005,7 @@ fragment ProjectFields on ImplementationProject {
       ...MoneyFields
     }
   }
-}`) as unknown as TypedDocumentString<
-  StartImplementationProjectMutation,
-  StartImplementationProjectMutationVariables
->;
+}`) as unknown as TypedDocumentString<StartImplementationProjectMutation, StartImplementationProjectMutationVariables>;
 export const UpdateMilestoneDocument = new TypedDocumentString(`
     mutation UpdateMilestone($input: UpdateMilestoneInput!) {
   updateMilestone(input: $input) {
@@ -8943,10 +6098,7 @@ fragment ObservationFields on Observation {
   quantity {
     ...QuantityFields
   }
-}`) as unknown as TypedDocumentString<
-  RecordObservationMutation,
-  RecordObservationMutationVariables
->;
+}`) as unknown as TypedDocumentString<RecordObservationMutation, RecordObservationMutationVariables>;
 export const AddProjectExpenseDocument = new TypedDocumentString(`
     mutation AddProjectExpense($input: AddProjectExpenseInput!) {
   addProjectExpense(input: $input) {
@@ -8992,10 +6144,7 @@ fragment ProjectFields on ImplementationProject {
       ...MoneyFields
     }
   }
-}`) as unknown as TypedDocumentString<
-  AddProjectExpenseMutation,
-  AddProjectExpenseMutationVariables
->;
+}`) as unknown as TypedDocumentString<AddProjectExpenseMutation, AddProjectExpenseMutationVariables>;
 export const UpdateProjectStatusDocument = new TypedDocumentString(`
     mutation UpdateProjectStatus($input: UpdateProjectStatusInput!) {
   updateProjectStatus(input: $input) {
@@ -9041,7 +6190,4 @@ fragment ProjectFields on ImplementationProject {
       ...MoneyFields
     }
   }
-}`) as unknown as TypedDocumentString<
-  UpdateProjectStatusMutation,
-  UpdateProjectStatusMutationVariables
->;
+}`) as unknown as TypedDocumentString<UpdateProjectStatusMutation, UpdateProjectStatusMutationVariables>;

@@ -61,7 +61,10 @@ interface GeocodingLibrary {
 interface MapLike {
   setCenter(point: { lat: number; lng: number }): void;
   setZoom(zoom: number): void;
-  addListener(event: 'click', handler: (event: { latLng: LatLng | null }) => void): unknown;
+  addListener(
+    event: 'click',
+    handler: (event: { latLng: LatLng | null }) => void,
+  ): { remove(): void };
 }
 
 interface Overlay {
@@ -152,10 +155,13 @@ function fromGeocode(result: GeocoderResult): Place {
   };
 }
 
-async function library<T>(load: () => Promise<GoogleMapsApi>, name: string): Promise<T> {
+async function library<T>(
+  load: () => Promise<GoogleMapsApi>,
+  name: Parameters<GoogleMapsApi['importLibrary']>[0],
+): Promise<T> {
   try {
     const api = await load();
-    return (await api.importLibrary(name as 'places')) as T;
+    return (await bounded(api.importLibrary(name))) as T;
   } catch (error) {
     if (error instanceof PlacesUnavailable) throw error;
     throw new PlacesUnavailable();
@@ -271,7 +277,7 @@ export function googlePlaces(
       } catch {
         throw new PlacesUnavailable();
       }
-      map.addListener('click', ({ latLng }) => {
+      const clickListener = map.addListener('click', ({ latLng }) => {
         if (latLng) onPick(decimal(latLng.lat()), decimal(latLng.lng()));
       });
       const unsubscribe = onAuthFailure(onFailure);
@@ -292,6 +298,7 @@ export function googlePlaces(
         },
         destroy() {
           unsubscribe();
+          clickListener.remove();
           clear.forEach((remove) => remove());
           clear = [];
           element.replaceChildren();

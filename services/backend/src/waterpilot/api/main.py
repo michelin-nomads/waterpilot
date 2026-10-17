@@ -23,6 +23,7 @@ from pydantic import BaseModel, Field
 from waterpilot import __version__
 from waterpilot.adapters.factory import ApiRuntime
 from waterpilot.api.agent_routes import build_agent_router
+from waterpilot.api.area_assumption_routes import build_area_assumption_router
 from waterpilot.api.funding_catalogue_routes import build_funding_catalogue_router
 from waterpilot.api.graphql.router import build_graphql_router
 from waterpilot.api.http_routes import build_http_router
@@ -102,6 +103,14 @@ def create_app(
         )
 
     provide = runtime or runtime_provider(settings)
+    app.include_router(
+        build_area_assumption_router(
+            provide,
+            enabled=settings.area_assumptions_enabled,
+            fake=not settings.is_pilot
+            and (settings.area_assumptions_fake or settings.agent_fake_inference),
+        )
+    )
     app.include_router(
         build_funding_catalogue_router(provide, frozenset(settings.funding_admin_uids))
     )

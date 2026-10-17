@@ -384,6 +384,13 @@ def test_google_failures_are_unavailable_not_empty() -> None:
         GooglePlaceSearch("k", httpx.MockTransport(offline)).search("Lima", 5)
 
 
+@pytest.mark.parametrize("body", [b"not-json", b"[]", b'{"places": {}}'])
+def test_google_malformed_responses_use_the_unavailable_fallback(body: bytes) -> None:
+    transport = httpx.MockTransport(lambda _request: httpx.Response(200, content=body))
+    with pytest.raises(PlaceSearchUnavailable, match="invalid response"):
+        GooglePlaceSearch("not-a-real-key", transport).search("Lima", 5)
+
+
 def test_local_mode_uses_the_fixture_and_refuses_a_places_key(load_settings: LoadSettings) -> None:
     assert build_place_search(load_settings(LOCAL_OK)).provider == "fixture"
     with pytest.raises(ConfigError, match="WP_PLACES_SERVER_KEY"):
@@ -498,3 +505,23 @@ def test_values_entered_for_a_previous_location_do_not_count_for_the_new_one() -
         if i.input.value == "population"
     )
     assert population.manual_value is None
+
+
+def test_explicit_local_maps_accepts_browser_google_without_server_calls(
+    load_settings: LoadSettings,
+) -> None:
+    from waterlens.application.ports import PlaceSearchUnavailable
+
+    settings = load_settings({**LOCAL_OK, "WP_LOCAL_GOOGLE_MAPS_ENABLED": "true"})
+    provider = build_place_search(settings)
+    assert isinstance(provider, NoPlaceSearch) and provider.provider == "google"
+    with pytest.raises(PlaceSearchUnavailable):
+        provider.search("Bengaluru", 5)
+    s = services(provider)
+    lima = services().locations.resolve(ctx(), "Lima").candidates[0]
+    area = s.locations.confirm(
+        ctx(), candidate_input(lima, place_id="google:ChIJlocal"), key("localmaps")
+    )
+    assert area.place_id == "google:ChIJlocal" and area.evidence is EvidenceQuality.PROVISIONAL
+    with pytest.raises(ConfigError, match="local-only"):
+        load_settings({**PILOT_OK, "WP_LOCAL_GOOGLE_MAPS_ENABLED": "true"})

@@ -236,3 +236,8 @@
   padding: 0;
   border: 0;
 }
+
+// Each async map mount owns its canvas, including cancelled StrictMode mounts.
+.mapCanvas {
+  min-height: inherit;
+}

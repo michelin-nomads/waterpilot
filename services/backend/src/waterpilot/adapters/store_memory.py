@@ -20,6 +20,7 @@ from waterpilot.application.pagination import Page, PageQuery, Position, paginat
 from waterpilot.application.repositories import IdempotencyRecord, Where
 from waterpilot.domain.accounts import AccountClaim
 from waterpilot.domain.ai import UsageCallKey, UsageDay, UsageReservation
+from waterpilot.domain.area_assumptions import AreaAssumptionPreview
 from waterpilot.domain.communities import Community, CommunityStatus, Membership
 from waterpilot.domain.embeddings import FundingEmbedding
 from waterpilot.domain.errors import DomainError, ErrorCode
@@ -211,6 +212,9 @@ class MemoryStore:
         funding_schemes: MemoryFundingCatalogue | None = None,
     ) -> None:
         self._lock = threading.RLock()
+        self.area_assumptions: MemoryRecordRepository[AreaAssumptionPreview] = (
+            MemoryRecordRepository()
+        )
         self.areas = areas or MemoryAreaCatalogue()
         self.funding_schemes = funding_schemes or MemoryFundingCatalogue()
         self.plan_options: MemoryCatalogue[PlanOption] = MemoryCatalogue(

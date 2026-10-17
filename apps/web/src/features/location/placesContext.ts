@@ -6,7 +6,7 @@ import { googlePlaces } from './googlePlaces';
 import { serverPlaces } from './serverPlaces';
 import type { PlacesAdapter } from './types';
 
-/** Google only in a pilot with a browser key; otherwise the API (fixture locally). */
+/** Google in pilot or explicit local browser opt-in; otherwise the API (fixture locally). */
 export function createPlacesAdapter(maps: MapsConfig): PlacesAdapter {
   if (maps.provider === 'google') {
     return googlePlaces(() => loadGoogleMaps(maps.apiKey), {

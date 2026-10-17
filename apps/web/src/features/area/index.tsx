@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { Button, LoadingRegion, Notice, Skeleton, StepActions } from '../../components';
+import { Button, ButtonLink, LoadingRegion, Notice, Skeleton, StepActions } from '../../components';
 import { env } from '../../config/env';
 import { usePlanningSession } from '../../session/sessionContext';
 import { LocationStep } from '../location/LocationStep';
@@ -75,6 +75,11 @@ export default function AreaPage() {
       subtitle="Choose the area for your water plan. You can change it before confirming."
     >
       <Body />
+      {env.appMode === 'local' && (
+        <ButtonLink to="/simulations/sjr-parkway-homes" variant="ghost">
+          Explore SJR Parkway Homes — synthetic simulation
+        </ButtonLink>
+      )}
     </StagePage>
   );
 }

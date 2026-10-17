@@ -47,6 +47,7 @@ from waterpilot.domain.ai import (
     call_key_expires_at,
     reservation_expires_at,
 )
+from waterpilot.domain.area_assumptions import AreaAssumptionPreview
 from waterpilot.domain.communities import Community, CommunityStatus, Membership
 from waterpilot.domain.embeddings import FundingEmbedding
 from waterpilot.domain.errors import DomainError, ErrorCode
@@ -559,6 +560,7 @@ class FirestoreStore:
         self.ingestion_runs = rec(self, "ingestionRuns", IngestionRun)
         self.connectivity_checks = rec(self, "connectivityChecks", ConnectivityCheck)
         self.manual_inputs = rec(self, "manualInputs", ManualInput)
+        self.area_assumptions = rec(self, "areaAssumptionPreviews", AreaAssumptionPreview)
 
     def require_uow(self) -> _UnitOfWork:
         uow = _active.get()

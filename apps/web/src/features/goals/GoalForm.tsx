@@ -40,6 +40,7 @@ import {
   UNITS,
 } from './goalLabels';
 import styles from './Goals.module.scss';
+import { FinancialInputs } from './FinancialInputs';
 
 type Catalogue = InterventionCatalogueQuery['interventionCatalogue'];
 
@@ -56,12 +57,17 @@ interface GoalFormProps {
 const ESTIMATE_FIELDS = [
   'costLow',
   'costHigh',
+  'costCurrency',
+  'recurringLow',
+  'recurringHigh',
+  'recurringCurrency',
   'buildLow',
   'buildHigh',
 ] as const satisfies readonly (keyof EstimateDraft)[];
 
 const SECTION_FIELDS: Record<string, readonly string[]> = {
   constraints: ['currency', 'horizonDays', 'priority'],
+  finance: ['tariffAmount', 'tariffCurrency', 'tariffLitres', 'tariffNote', 'contingencyPercent'],
   site: [
     'scale',
     'roofArea',
@@ -82,6 +88,7 @@ const YES_NO_LABEL = {
 
 /** Accordion section holding a field, so a field with an error is never left hidden. */
 function sectionOf(field: string): string | null {
+  if (field.startsWith('funding.')) return 'finance';
   if (field.startsWith('estimates.')) return 'estimates';
   return Object.keys(SECTION_FIELDS).find((s) => SECTION_FIELDS[s]?.includes(field)) ?? null;
 }
@@ -302,6 +309,12 @@ export function GoalForm({
           ),
         },
         {
+          id: 'finance',
+          title: 'Prices, maintenance and funding',
+          summary: 'Optional. Record exact prices, contingency and funding status.',
+          content: <FinancialInputs draft={draft} onChange={onChange} errors={errors} fid={fid} />,
+        },
+        {
           id: 'also',
           title: 'Other goals to balance',
           summary:
@@ -342,8 +355,12 @@ export function GoalForm({
                         id={fid(`estimates.${i}.${f}`)}
                         label={
                           {
-                            costLow: `Lowest cost (${draft.currency})`,
-                            costHigh: `Highest cost (${draft.currency})`,
+                            costLow: `Lowest cost (${e.costCurrency || draft.currency})`,
+                            costCurrency: 'Capital cost currency',
+                            recurringLow: `Annual maintenance — low (${e.recurringCurrency || draft.currency})`,
+                            recurringHigh: `Annual maintenance — high (${e.recurringCurrency || draft.currency})`,
+                            recurringCurrency: 'Maintenance currency',
+                            costHigh: `Highest cost (${e.costCurrency || draft.currency})`,
                             buildLow: 'Shortest build (days)',
                             buildHigh: 'Longest build (days)',
                           }[f]
@@ -354,7 +371,12 @@ export function GoalForm({
                           <Input
                             {...p}
                             inputMode="decimal"
-                            value={e[f]}
+                            value={
+                              e[f] ??
+                              (f === 'costCurrency' || f === 'recurringCurrency'
+                                ? draft.currency
+                                : '')
+                            }
                             onChange={(ev) =>
                               set(
                                 'estimates',
