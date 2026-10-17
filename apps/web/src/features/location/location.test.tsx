@@ -307,6 +307,24 @@ describe('location step', () => {
     expect(places.suggestCalls).toEqual(['Nairobi']);
   });
 
+  it('previews a selected search result on the map before confirming it', async () => {
+    const places = new FakePlaces();
+    places.hasMap = true;
+    const show = vi.fn();
+    places.mapView = { show, destroy: vi.fn() };
+    renderStep(places);
+    await search('Nairobi');
+    fireEvent.click(await screen.findByRole('option', { name: /Nairobi/ }));
+    await waitFor(() =>
+      expect(show).toHaveBeenCalledWith({
+        latitude: NAIROBI.latitude,
+        longitude: NAIROBI.longitude,
+        radiusMeters: 1000,
+      }),
+    );
+    expect(confirms()).toHaveLength(0);
+  });
+
   it('keeps device location and retry available when search has no matches or is down', async () => {
     const places = new FakePlaces();
     renderStep(places);

@@ -9,7 +9,7 @@ export type SuggestionsState =
   | { status: 'idle'; suggestions: [] }
   | { status: 'loading'; suggestions: Suggestion[] }
   | { status: 'ready'; suggestions: Suggestion[] }
-  | { status: 'unavailable' | 'error'; suggestions: [] };
+  | { status: 'unavailable' | 'error'; suggestions: []; message: string };
 
 /**
  * Debounced provider suggestions: waits {@link DEBOUNCE_MS} after the last keystroke,
@@ -27,7 +27,7 @@ export function useSuggestions(adapter: PlacesAdapter, text: string, attempt = 0
       return;
     }
     const controller = new AbortController();
-    setState((s) => ({ status: 'loading', suggestions: s.suggestions }));
+    setState({ status: 'loading', suggestions: [] });
     const timer = window.setTimeout(() => {
       adapter.suggest(query, controller.signal).then(
         (suggestions) => {
@@ -38,6 +38,10 @@ export function useSuggestions(adapter: PlacesAdapter, text: string, attempt = 0
           setState({
             status: error instanceof PlacesUnavailable ? 'unavailable' : 'error',
             suggestions: [],
+            message:
+              error instanceof PlacesUnavailable
+                ? error.message
+                : 'Search failed. Check your connection and try again.',
           });
         },
       );

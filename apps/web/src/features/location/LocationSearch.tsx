@@ -66,7 +66,7 @@ export function LocationSearch({ adapter, onSelect, action }: LocationSearchProp
     } catch (error) {
       setSelectError(
         error instanceof PlacesUnavailable
-          ? `${error.message} Try again,.`
+          ? `${error.message} Try again.`
           : 'Could not load that place. Try again.',
       );
     } finally {
@@ -92,7 +92,8 @@ export function LocationSearch({ adapter, onSelect, action }: LocationSearchProp
     }
   }
 
-  const status = statusText(state.status, suggestions.length, query);
+  const status =
+    'message' in state ? state.message : statusText(state.status, suggestions.length, query);
   return (
     <div className={styles.search}>
       <label htmlFor={id} className={styles.label}>

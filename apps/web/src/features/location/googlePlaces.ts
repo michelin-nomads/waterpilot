@@ -127,6 +127,22 @@ function bounded<T>(work: Promise<T>, timeoutMs = CALL_TIMEOUT_MS): Promise<T> {
   return Promise.race([work, timeout]).finally(() => clearTimeout(timer));
 }
 
+/** Show actionable provider failures without exposing raw responses or credentials. */
+function placesFailure(error: unknown): PlacesUnavailable {
+  if (error instanceof PlacesUnavailable) return error;
+  const detail = error instanceof Error ? error.message : String(error);
+  if (
+    /REQUEST_DENIED|PERMISSION_DENIED|not authorized|not enabled|not activated|API_KEY_SERVICE_BLOCKED|disabled/i.test(
+      detail,
+    )
+  ) {
+    return new PlacesUnavailable(
+      'Google Places access was denied. Enable Places API (New) in the Maps project and allow it in the browser key restrictions, including this site’s referrer.',
+    );
+  }
+  return new PlacesUnavailable();
+}
+
 function fromPlace(data: PlaceData): Place {
   if (!data.location) throw new PlacesUnavailable('The place has no location.');
   const types = data.types ?? [];
@@ -222,7 +238,7 @@ export function googlePlaces(
           }),
         );
       } catch (error) {
-        throw error instanceof PlacesUnavailable ? error : new PlacesUnavailable();
+        throw placesFailure(error);
       }
       if (signal.aborted) return [];
       predictions.clear();
@@ -246,7 +262,7 @@ export function googlePlaces(
       try {
         await bounded(place.fetchFields({ fields: [...PLACE_FIELDS] }));
       } catch (error) {
-        throw error instanceof PlacesUnavailable ? error : new PlacesUnavailable();
+        throw placesFailure(error);
       } finally {
         token = null;
         predictions.clear();

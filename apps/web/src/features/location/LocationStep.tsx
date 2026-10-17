@@ -40,6 +40,7 @@ export function LocationStep({ onConfirmed, onCancel }: LocationStepProps) {
   const adapter = usePlaces();
   const { confirm, pending, canSave } = useConfirmLocation();
   const [draft, setDraft] = useState<LocationDraft | null>(null);
+  const [previewPlace, setPreviewPlace] = useState<Place | null>(null);
   const [previewRadius, setPreviewRadius] = useState<number | null>(1000);
   const [resolving, setResolving] = useState(false);
   const [geoOutcome, setGeoOutcome] = useState<Exclude<GeolocationOutcome['kind'], 'fix'> | null>(
@@ -56,6 +57,7 @@ export function LocationStep({ onConfirmed, onCancel }: LocationStepProps) {
 
   const resolveDraft = useCallback(
     async (candidate: LocationDraft, token: number) => {
+      setPreviewPlace(candidate.place);
       try {
         const place = await resolveLocation(adapter, candidate.place, candidate.origin);
         if (!place) throw new Error(LOOKUP_FAILED);
@@ -82,6 +84,7 @@ export function LocationStep({ onConfirmed, onCancel }: LocationStepProps) {
     setFailure(NO_FAILURE);
     setResolving(false);
     setDraft(null);
+    setPreviewPlace(null);
   };
 
   async function locateDevice() {
@@ -136,17 +139,12 @@ export function LocationStep({ onConfirmed, onCancel }: LocationStepProps) {
     }
   }
 
-  const mapPoint = useMemo(
-    () =>
-      draft
-        ? {
-            latitude: draft.place.latitude,
-            longitude: draft.place.longitude,
-            radiusMeters: previewRadius,
-          }
-        : null,
-    [draft, previewRadius],
-  );
+  const mapPoint = useMemo(() => {
+    const place = previewPlace ?? draft?.place;
+    return place
+      ? { latitude: place.latitude, longitude: place.longitude, radiusMeters: previewRadius }
+      : null;
+  }, [draft, previewPlace, previewRadius]);
 
   return (
     <div className={styles.step}>
