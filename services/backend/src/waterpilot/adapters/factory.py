@@ -175,7 +175,7 @@ def build_model_provider(settings: Settings) -> ModelProvider:
     the kill switch off, build the Vertex adapter through Application Default Credentials
     for the dedicated runtime service account."""
     if not settings.is_pilot:
-        if settings.agent_fake_inference:
+        if settings.agent_fake_inference or settings.area_assumptions_fake:
             from waterpilot.adapters.model_agent_fake import LocalAgentProvider
 
             return LocalAgentProvider(settings.ai_model)
@@ -212,13 +212,16 @@ def build_ai_config(settings: Settings) -> AiConfig:
 
 
 def build_place_search(settings: Settings) -> PlaceSearch:
-    """Local: the fixture gazetteer, always (no network). Pilot: Google Places Text Search
+    """Local: fixture or browser-only Google confirmation (no server network).
+    Pilot: Google Places Text Search
     with the server key, or no server-side search. Either way the pilot accepts only Google
     place ids (from the browser), never fixture ids."""
     if not settings.is_pilot:
         from waterpilot.adapters.places_fixture import FixturePlaceSearch
 
-        return FixturePlaceSearch()
+        return (
+            NoPlaceSearch("google") if settings.local_google_maps_enabled else FixturePlaceSearch()
+        )
     if settings.places_server_key is None:
         return NoPlaceSearch("google")
     from waterpilot.adapters.places_google import GooglePlaceSearch

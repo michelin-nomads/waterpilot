@@ -2,21 +2,21 @@ export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: { input: string; output: string };
-  String: { input: string; output: string };
-  Boolean: { input: boolean; output: boolean };
-  Int: { input: number; output: number };
-  Float: { input: number; output: number };
+  ID: { input: string; output: string; }
+  String: { input: string; output: string; }
+  Boolean: { input: boolean; output: boolean; }
+  Int: { input: number; output: number; }
+  Float: { input: number; output: number; }
   /** An exact decimal number as a string (e.g. '1250000.5'). Parse with a decimal library, never as a binary float. */
-  DecimalString: { input: string; output: string };
+  DecimalString: { input: string; output: string; }
   /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf). */
-  JSON: { input: unknown; output: unknown };
+  JSON: { input: unknown; output: unknown; }
   /** A calendar date (YYYY-MM-DD) in the relevant area's IANA timezone. */
-  LocalDate: { input: string; output: string };
+  LocalDate: { input: string; output: string; }
   /** An integer amount of a currency's minor unit (e.g. paise for INR) as a string, to avoid 32-bit/53-bit integer limits. */
-  MinorUnits: { input: string; output: string };
+  MinorUnits: { input: string; output: string; }
   /** An instant in UTC, ISO-8601 with a 'Z' suffix (e.g. 2026-10-07T18:30:00Z). */
-  UtcDateTime: { input: string; output: string };
+  UtcDateTime: { input: string; output: string; }
 };
 
 export type AccountClaim = {
@@ -35,9 +35,14 @@ export type AccountClaimPayload = {
   error?: Maybe<MutationError>;
 };
 
-export type AccountClaimStatus = 'CANCELLED' | 'COMPLETED' | 'OPEN';
+export type AccountClaimStatus =
+  | 'CANCELLED'
+  | 'COMPLETED'
+  | 'OPEN';
 
-export type AccountKind = 'GUEST' | 'PERMANENT';
+export type AccountKind =
+  | 'GUEST'
+  | 'PERMANENT';
 
 export type AddProjectExpenseInput = {
   amount: MoneyInput;
@@ -48,7 +53,10 @@ export type AddProjectExpenseInput = {
   spentOn: Scalars['LocalDate']['input'];
 };
 
-export type AdjustmentChange = 'DECREASE_BY' | 'INCREASE_BY' | 'SET_TO';
+export type AdjustmentChange =
+  | 'DECREASE_BY'
+  | 'INCREASE_BY'
+  | 'SET_TO';
 
 export type AdminContext = {
   /** State, province or region. */
@@ -88,7 +96,11 @@ export type AgentRunConnection = {
   pageInfo: PageInfo;
 };
 
-export type AgentRunStatus = 'COMPLETED' | 'FAILED' | 'RUNNING' | 'STOPPED';
+export type AgentRunStatus =
+  | 'COMPLETED'
+  | 'FAILED'
+  | 'RUNNING'
+  | 'STOPPED';
 
 export type AgentStopReason =
   | 'CANCELLED'
@@ -112,7 +124,10 @@ export type AiStatus = {
 };
 
 export type AiUnavailableReason =
-  'BUDGET_EXHAUSTED' | 'DISABLED' | 'NOT_INVITED' | 'NO_BUDGET_CONFIGURED';
+  | 'BUDGET_EXHAUSTED'
+  | 'DISABLED'
+  | 'NOT_INVITED'
+  | 'NO_BUDGET_CONFIGURED';
 
 export type ApplicantInformationInput = {
   applicantType?: InputMaybe<Scalars['String']['input']>;
@@ -174,9 +189,11 @@ export type Area = {
   unitSystem: UnitSystem;
 };
 
+
 export type AreaBaselineArgs = {
   sessionId?: InputMaybe<Scalars['ID']['input']>;
 };
+
 
 export type AreaReadinessArgs = {
   sessionId?: InputMaybe<Scalars['ID']['input']>;
@@ -187,7 +204,11 @@ export type AreaConnection = {
   pageInfo: PageInfo;
 };
 
-export type AreaOrigin = 'CATALOGUE' | 'CUSTOM' | 'GEOLOCATION' | 'PLACE_SEARCH';
+export type AreaOrigin =
+  | 'CATALOGUE'
+  | 'CUSTOM'
+  | 'GEOLOCATION'
+  | 'PLACE_SEARCH';
 
 export type AreaReadiness = {
   areaId: Scalars['ID']['output'];
@@ -203,9 +224,15 @@ export type AreaReadiness = {
   sessionId?: Maybe<Scalars['ID']['output']>;
 };
 
-export type AssessmentBasis = 'LIMITED' | 'SOURCED' | 'USER_INPUT';
+export type AssessmentBasis =
+  | 'LIMITED'
+  | 'SOURCED'
+  | 'USER_INPUT';
 
-export type Availability = 'AVAILABLE' | 'PROVISIONAL' | 'UNAVAILABLE';
+export type Availability =
+  | 'AVAILABLE'
+  | 'PROVISIONAL'
+  | 'UNAVAILABLE';
 
 /** What is known about this area now, from ready inputs only. Deterministic from stored records: the same inputs give the same id; a new value revises it. */
 export type Baseline = {
@@ -304,9 +331,15 @@ export type BeginAccountClaimPayload = {
   error?: Maybe<MutationError>;
 };
 
-export type BenefitTiming = 'AFTER_COMMISSIONING' | 'AFTER_RAINFALL' | 'AFTER_WET_SEASONS';
+export type BenefitTiming =
+  | 'AFTER_COMMISSIONING'
+  | 'AFTER_RAINFALL'
+  | 'AFTER_WET_SEASONS';
 
-export type BoundaryLevel = 'AREA' | 'SHARED_SYSTEM' | 'SITE';
+export type BoundaryLevel =
+  | 'AREA'
+  | 'SHARED_SYSTEM'
+  | 'SITE';
 
 /** Where the stored extent lies, in WGS 84 degrees. */
 export type BoundingBox = {
@@ -363,7 +396,12 @@ export type CapabilityReadiness = {
   technicalSupport: TechnicalSupport;
 };
 
-export type CatalogueStatus = 'ACTIVE' | 'DEMO' | 'DRAFT' | 'EXPIRED' | 'WITHDRAWN';
+export type CatalogueStatus =
+  | 'ACTIVE'
+  | 'DEMO'
+  | 'DRAFT'
+  | 'EXPIRED'
+  | 'WITHDRAWN';
 
 export type ChartSeries = {
   /** True when the series uses synthetic demo data. */
@@ -377,7 +415,12 @@ export type ChartSeries = {
 };
 
 export type CitationKind =
-  'CATALOGUE' | 'COMPARISON' | 'CONNECTIVITY' | 'SITE_FACT' | 'SOURCE' | 'USER_INPUT';
+  | 'CATALOGUE'
+  | 'COMPARISON'
+  | 'CONNECTIVITY'
+  | 'SITE_FACT'
+  | 'SOURCE'
+  | 'USER_INPUT';
 
 export type Community = {
   archivedAt?: Maybe<Scalars['UtcDateTime']['output']>;
@@ -399,6 +442,7 @@ export type Community = {
   /** The caller's active membership, or null. */
   viewerMembership?: Maybe<Membership>;
 };
+
 
 export type CommunityMembersArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
@@ -427,9 +471,14 @@ export type CommunityPayload = {
   error?: Maybe<MutationError>;
 };
 
-export type CommunityStatus = 'ACTIVE' | 'ARCHIVED';
+export type CommunityStatus =
+  | 'ACTIVE'
+  | 'ARCHIVED';
 
-export type CommunityType = 'APARTMENT' | 'OTHER' | 'RESIDENTIAL';
+export type CommunityType =
+  | 'APARTMENT'
+  | 'OTHER'
+  | 'RESIDENTIAL';
 
 /** A genuinely feasible plan: passes at your low estimates. */
 export type ComparedOption = {
@@ -462,7 +511,9 @@ export type ComparedOption = {
   why: Scalars['String']['output'];
 };
 
-export type ComparisonStatus = 'COMPARABLE' | 'UNKNOWN';
+export type ComparisonStatus =
+  | 'COMPARABLE'
+  | 'UNKNOWN';
 
 export type CompleteAccountClaimInput = {
   claimId: Scalars['ID']['input'];
@@ -558,7 +609,10 @@ export type CriterionResult = {
   status: CriterionStatus;
 };
 
-export type CriterionStatus = 'MET' | 'NEEDS_CHECK' | 'NOT_MET';
+export type CriterionStatus =
+  | 'MET'
+  | 'NEEDS_CHECK'
+  | 'NOT_MET';
 
 /** Half-open local-date window [start, endExclusive). */
 export type DateWindow = {
@@ -577,7 +631,10 @@ export type DayRangeInput = {
   low: Scalars['Int']['input'];
 };
 
-export type EffectDirection = 'EITHER' | 'POSSIBLE_BENEFIT' | 'POSSIBLE_HARM';
+export type EffectDirection =
+  | 'EITHER'
+  | 'POSSIBLE_BENEFIT'
+  | 'POSSIBLE_HARM';
 
 /** Your range for one of a measure's effect inputs. */
 export type EffectEstimate = {
@@ -605,9 +662,15 @@ export type EffectInput = {
 };
 
 /** Where an effect value came from: USER_ESTIMATE (your range), BASELINE (the sourced baseline value) or SCENARIO (set by the confirmed what-if). The catalogue never supplies effect values. */
-export type EffectOrigin = 'BASELINE' | 'SCENARIO' | 'USER_ESTIMATE';
+export type EffectOrigin =
+  | 'BASELINE'
+  | 'SCENARIO'
+  | 'USER_ESTIMATE';
 
-export type EligibilityStatus = 'ELIGIBLE' | 'INELIGIBLE' | 'NEEDS_INFORMATION';
+export type EligibilityStatus =
+  | 'ELIGIBLE'
+  | 'INELIGIBLE'
+  | 'NEEDS_INFORMATION';
 
 export type ErrorCode =
   | 'ARCHIVED'
@@ -645,7 +708,11 @@ export type EvidenceLink = {
 };
 
 export type EvidenceQuality =
-  'PROVISIONAL' | 'QUARANTINED' | 'SYNTHETIC' | 'UNREVIEWED' | 'VALIDATED';
+  | 'PROVISIONAL'
+  | 'QUARANTINED'
+  | 'SYNTHETIC'
+  | 'UNREVIEWED'
+  | 'VALIDATED';
 
 /** An exact rational and its decimal form. */
 export type ExactNumber = {
@@ -656,9 +723,15 @@ export type ExactNumber = {
 };
 
 /** What coverage checks use: a reviewed boundary, a radius you set, or the point. */
-export type ExtentKind = 'REFERENCE_POINT' | 'REVIEWED_BOUNDARY' | 'USER_RADIUS';
+export type ExtentKind =
+  | 'REFERENCE_POINT'
+  | 'REVIEWED_BOUNDARY'
+  | 'USER_RADIUS';
 
-export type Feasibility = 'FEASIBLE' | 'NEEDS_REVIEW' | 'NOT_FEASIBLE';
+export type Feasibility =
+  | 'FEASIBLE'
+  | 'NEEDS_REVIEW'
+  | 'NOT_FEASIBLE';
 
 export type FieldError = {
   /** camelCase input path, e.g. 'goal.budget'. */
@@ -672,9 +745,17 @@ export type FinalizeReportInput = {
   title: Scalars['String']['input'];
 };
 
-export type FindingBasis = 'DECLARED' | 'ENGINE_ESTIMATE' | 'MECHANISM' | 'SOURCED';
+export type FindingBasis =
+  | 'DECLARED'
+  | 'ENGINE_ESTIMATE'
+  | 'MECHANISM'
+  | 'SOURCED';
 
-export type FindingKind = 'EXTERNALITY' | 'FALSE_RESILIENCE' | 'LOCAL_BENEFIT' | 'TRADEOFF';
+export type FindingKind =
+  | 'EXTERNALITY'
+  | 'FALSE_RESILIENCE'
+  | 'LOCAL_BENEFIT'
+  | 'TRADEOFF';
 
 export type FitCheck = {
   message: Scalars['String']['output'];
@@ -710,7 +791,10 @@ export type FundingMatchConnection = {
   pageInfo: PageInfo;
 };
 
-export type FundingMatchStatus = 'ADDED' | 'CANDIDATE' | 'DISMISSED';
+export type FundingMatchStatus =
+  | 'ADDED'
+  | 'CANDIDATE'
+  | 'DISMISSED';
 
 export type FundingScheme = {
   amountRules?: Maybe<Scalars['String']['output']>;
@@ -765,7 +849,10 @@ export type FundingSourceInput = {
   status: FundingStatus;
 };
 
-export type FundingStatus = 'APPROVED' | 'EXPECTED' | 'PROPOSED';
+export type FundingStatus =
+  | 'APPROVED'
+  | 'EXPECTED'
+  | 'PROPOSED';
 
 export type GenerateProposalInput = {
   applicant?: InputMaybe<ProposalApplicantInput>;
@@ -777,7 +864,13 @@ export type GenerateProposalInput = {
 
 /** What kind of place a location is. A point or place is not a catchment. */
 export type GeographicScope =
-  'COUNTRY' | 'LOCALITY' | 'NEIGHBOURHOOD' | 'POINT' | 'POSTAL_CODE' | 'REGION' | 'SUBLOCALITY';
+  | 'COUNTRY'
+  | 'LOCALITY'
+  | 'NEIGHBOURHOOD'
+  | 'POINT'
+  | 'POSTAL_CODE'
+  | 'REGION'
+  | 'SUBLOCALITY';
 
 export type Goal = {
   /** Further objectives checked for conflicts with the main goal. */
@@ -861,7 +954,10 @@ export type GoalKind =
   | 'REDUCE_TANKER_DEPENDENCE'
   | 'REDUCE_WATER_BILLS';
 
-export type GoalOutcome = 'FEASIBLE' | 'INFEASIBLE' | 'NOT_ASSESSABLE';
+export type GoalOutcome =
+  | 'FEASIBLE'
+  | 'INFEASIBLE'
+  | 'NOT_ASSESSABLE';
 
 export type GoalTarget = {
   mode: TargetMode;
@@ -873,7 +969,11 @@ export type GoalTargetInput = {
   quantity: QuantityInput;
 };
 
-export type GroundwaterReliance = 'DECLARED' | 'NONE_RECORDED' | 'SOURCED' | 'UNKNOWN';
+export type GroundwaterReliance =
+  | 'DECLARED'
+  | 'NONE_RECORDED'
+  | 'SOURCED'
+  | 'UNKNOWN';
 
 export type ImpactAssessment = {
   assumptions: Array<Scalars['String']['output']>;
@@ -972,10 +1072,12 @@ export type ImplementationProject = {
   version: Scalars['Int']['output'];
 };
 
+
 export type ImplementationProjectMilestonesArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
 };
+
 
 export type ImplementationProjectObservationsArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
@@ -992,7 +1094,10 @@ export type ImplementationProjectPayload = {
   project?: Maybe<ImplementationProject>;
 };
 
-export type IndicatorStatistic = 'LATEST' | 'WINDOW_MEAN' | 'WINDOW_TOTAL';
+export type IndicatorStatistic =
+  | 'LATEST'
+  | 'WINDOW_MEAN'
+  | 'WINDOW_TOTAL';
 
 /** A declared influence boundary. */
 export type InfluenceBoundary = {
@@ -1097,9 +1202,16 @@ export type Job = {
   version: Scalars['Int']['output'];
 };
 
-export type JobKind = 'FUNDING_MATCH' | 'PROPOSAL_GENERATION';
+export type JobKind =
+  | 'FUNDING_MATCH'
+  | 'PROPOSAL_GENERATION';
 
-export type JobStatus = 'CANCELLED' | 'FAILED' | 'QUEUED' | 'RUNNING' | 'SUCCEEDED';
+export type JobStatus =
+  | 'CANCELLED'
+  | 'FAILED'
+  | 'QUEUED'
+  | 'RUNNING'
+  | 'SUCCEEDED';
 
 export type JoinCommunityInput = {
   communityId: Scalars['ID']['input'];
@@ -1113,7 +1225,10 @@ export type LeaveCommunityInput = {
 };
 
 /** Whether places share a system, from reviewed evidence only. Unknown unless a record says otherwise; being close never decides it. */
-export type Linkage = 'LINKED' | 'NOT_LINKED' | 'UNKNOWN';
+export type Linkage =
+  | 'LINKED'
+  | 'NOT_LINKED'
+  | 'UNKNOWN';
 
 export type LocationResolution = {
   candidates: Array<PlaceCandidate>;
@@ -1207,7 +1322,9 @@ export type MembershipPayload = {
   membership?: Maybe<Membership>;
 };
 
-export type MembershipRole = 'COORDINATOR' | 'MEMBER';
+export type MembershipRole =
+  | 'COORDINATOR'
+  | 'MEMBER';
 
 export type MetricReadiness = {
   blockedInputs: Array<ReadinessInput>;
@@ -1248,7 +1365,11 @@ export type MilestonePayload = {
   milestone?: Maybe<Milestone>;
 };
 
-export type MilestoneStatus = 'DONE' | 'IN_PROGRESS' | 'PLANNED' | 'SKIPPED';
+export type MilestoneStatus =
+  | 'DONE'
+  | 'IN_PROGRESS'
+  | 'PLANNED'
+  | 'SKIPPED';
 
 /** Integer minor units of an explicit ISO 4217 currency. */
 export type Money = {
@@ -1308,77 +1429,96 @@ export type Mutation = {
   updateProjectStatus: ImplementationProjectPayload;
 };
 
+
 export type MutationAddProjectExpenseArgs = {
   input: AddProjectExpenseInput;
 };
+
 
 export type MutationArchiveCommunityArgs = {
   input: ArchiveCommunityInput;
 };
 
+
 export type MutationArchiveReportArgs = {
   input: ArchiveReportInput;
 };
+
 
 export type MutationCancelAccountClaimArgs = {
   input: CancelAccountClaimInput;
 };
 
+
 export type MutationCompleteAccountClaimArgs = {
   input: CompleteAccountClaimInput;
 };
+
 
 export type MutationConfirmLocationArgs = {
   input: ConfirmLocationInput;
 };
 
+
 export type MutationCreateCommunityArgs = {
   input: CreateCommunityInput;
 };
+
 
 export type MutationCreatePlanningSessionArgs = {
   input: CreatePlanningSessionInput;
 };
 
+
 export type MutationFinalizeReportArgs = {
   input: FinalizeReportInput;
 };
+
 
 export type MutationGenerateProposalArgs = {
   input: GenerateProposalInput;
 };
 
+
 export type MutationJoinCommunityArgs = {
   input: JoinCommunityInput;
 };
+
 
 export type MutationLeaveCommunityArgs = {
   input: LeaveCommunityInput;
 };
 
+
 export type MutationMatchFundingArgs = {
   input: MatchFundingInput;
 };
+
 
 export type MutationRecordManualInputArgs = {
   input: RecordManualInputInput;
 };
 
+
 export type MutationRecordObservationArgs = {
   input: RecordObservationInput;
 };
+
 
 export type MutationStartImplementationProjectArgs = {
   input: StartImplementationProjectInput;
 };
 
+
 export type MutationUpdateMilestoneArgs = {
   input: UpdateMilestoneInput;
 };
 
+
 export type MutationUpdatePlanningSessionArgs = {
   input: UpdatePlanningSessionInput;
 };
+
 
 export type MutationUpdateProjectStatusArgs = {
   input: UpdateProjectStatusInput;
@@ -1465,17 +1605,26 @@ export type ObservationConnection = {
   pageInfo: PageInfo;
 };
 
-export type ObservationEvidence = 'RECORDED' | 'REJECTED' | 'VERIFIED';
+export type ObservationEvidence =
+  | 'RECORDED'
+  | 'REJECTED'
+  | 'VERIFIED';
 
 export type ObservationMethod =
-  'ADMINISTRATIVE_RECORD' | 'IN_SITU_MEASUREMENT' | 'MODEL_OUTPUT' | 'REMOTE_SENSING' | 'SURVEY';
+  | 'ADMINISTRATIVE_RECORD'
+  | 'IN_SITU_MEASUREMENT'
+  | 'MODEL_OUTPUT'
+  | 'REMOTE_SENSING'
+  | 'SURVEY';
 
 export type ObservationPayload = {
   error?: Maybe<MutationError>;
   observation?: Maybe<Observation>;
 };
 
-export type ObservationSourceType = 'PERMITTED_DOCUMENT' | 'USER_RECORDED';
+export type ObservationSourceType =
+  | 'PERMITTED_DOCUMENT'
+  | 'USER_RECORDED';
 
 /** A contingency share you added to the cost estimates. */
 export type OptionContingency = {
@@ -1613,7 +1762,11 @@ export type PageInfo = {
   hasNextPage: Scalars['Boolean']['output'];
 };
 
-export type PaybackOutcome = 'BEYOND_HORIZON' | 'NEVER' | 'UNCERTAIN' | 'WITHIN_HORIZON';
+export type PaybackOutcome =
+  | 'BEYOND_HORIZON'
+  | 'NEVER'
+  | 'UNCERTAIN'
+  | 'WITHIN_HORIZON';
 
 export type PlaceCandidate = {
   admin: AdminContext;
@@ -1660,9 +1813,15 @@ export type PlanComparison = {
 
 /** OPTIONS, or why there are none: NO_FEASIBLE_PLAN, NEEDS_INPUT, TARGET_ALREADY_MET, NOT_SUPPORTED. */
 export type PlanComparisonStatus =
-  'NEEDS_INPUT' | 'NOT_SUPPORTED' | 'NO_FEASIBLE_PLAN' | 'OPTIONS' | 'TARGET_ALREADY_MET';
+  | 'NEEDS_INPUT'
+  | 'NOT_SUPPORTED'
+  | 'NO_FEASIBLE_PLAN'
+  | 'OPTIONS'
+  | 'TARGET_ALREADY_MET';
 
-export type PlanMetric = 'SHORTAGE_DAYS' | 'TANKER_DEPENDENCE';
+export type PlanMetric =
+  | 'SHORTAGE_DAYS'
+  | 'TANKER_DEPENDENCE';
 
 export type PlanOption = {
   bestFitReason?: Maybe<Scalars['String']['output']>;
@@ -1692,7 +1851,9 @@ export type PlanOptionConnection = {
   pageInfo: PageInfo;
 };
 
-export type PlanningMode = 'AGENT' | 'TRADITIONAL';
+export type PlanningMode =
+  | 'AGENT'
+  | 'TRADITIONAL';
 
 export type PlanningSession = {
   area?: Maybe<Area>;
@@ -1749,7 +1910,10 @@ export type PlanningStage =
   | 'UNDERSTAND';
 
 export type Priority =
-  'FASTEST_BENEFIT' | 'LARGEST_IMPACT' | 'LOWEST_COST' | 'LOWEST_NEIGHBOUR_EFFECT';
+  | 'FASTEST_BENEFIT'
+  | 'LARGEST_IMPACT'
+  | 'LOWEST_COST'
+  | 'LOWEST_NEIGHBOUR_EFFECT';
 
 export type ProjectExpense = {
   amount: Money;
@@ -1758,7 +1922,10 @@ export type ProjectExpense = {
   spentOn: Scalars['LocalDate']['output'];
 };
 
-export type ProjectStatus = 'ACTIVE' | 'ARCHIVED' | 'COMPLETED';
+export type ProjectStatus =
+  | 'ACTIVE'
+  | 'ARCHIVED'
+  | 'COMPLETED';
 
 export type Proposal = {
   createdAt: Scalars['UtcDateTime']['output'];
@@ -1805,7 +1972,12 @@ export type ProposalSection =
   | 'SOURCES'
   | 'WIDER_IMPACT';
 
-export type ProposalStatus = 'APPROVED' | 'DRAFTING' | 'FAILED' | 'NEEDS_REVIEW' | 'QUEUED';
+export type ProposalStatus =
+  | 'APPROVED'
+  | 'DRAFTING'
+  | 'FAILED'
+  | 'NEEDS_REVIEW'
+  | 'QUEUED';
 
 export type Provenance = {
   asOf: Scalars['UtcDateTime']['output'];
@@ -1879,9 +2051,11 @@ export type Query = {
   viewer?: Maybe<Viewer>;
 };
 
+
 export type QueryAgentRunArgs = {
   id: Scalars['ID']['input'];
 };
+
 
 export type QueryAgentRunsArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
@@ -1889,14 +2063,17 @@ export type QueryAgentRunsArgs = {
   sessionId: Scalars['ID']['input'];
 };
 
+
 export type QueryAreaArgs = {
   id: Scalars['ID']['input'];
 };
+
 
 export type QueryCheckGoalArgs = {
   goal: GoalInput;
   sessionId: Scalars['ID']['input'];
 };
+
 
 export type QueryCommunitiesArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
@@ -1904,9 +2081,11 @@ export type QueryCommunitiesArgs = {
   first?: InputMaybe<Scalars['Int']['input']>;
 };
 
+
 export type QueryCommunityArgs = {
   id: Scalars['ID']['input'];
 };
+
 
 export type QueryFundingMatchesArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
@@ -1915,9 +2094,11 @@ export type QueryFundingMatchesArgs = {
   sessionId: Scalars['ID']['input'];
 };
 
+
 export type QueryFundingSchemeArgs = {
   id: Scalars['ID']['input'];
 };
+
 
 export type QueryFundingSchemesArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
@@ -1925,23 +2106,28 @@ export type QueryFundingSchemesArgs = {
   first?: InputMaybe<Scalars['Int']['input']>;
 };
 
+
 export type QueryImplementationProjectArgs = {
   id: Scalars['ID']['input'];
 };
 
+
 export type QueryJobArgs = {
   id: Scalars['ID']['input'];
 };
+
 
 export type QueryMyImplementationProjectsArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
 };
 
+
 export type QueryMyMembershipsArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
 };
+
 
 export type QueryNearbyCommunitiesArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
@@ -1949,24 +2135,29 @@ export type QueryNearbyCommunitiesArgs = {
   near: NearbyCommunitiesInput;
 };
 
+
 export type QueryPlanOptionsArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   sessionId: Scalars['ID']['input'];
 };
 
+
 export type QueryPlanningSessionArgs = {
   id: Scalars['ID']['input'];
 };
+
 
 export type QueryPreviewScenarioArgs = {
   scenario: ScenarioPreviewInput;
   sessionId: Scalars['ID']['input'];
 };
 
+
 export type QueryProposalArgs = {
   id: Scalars['ID']['input'];
 };
+
 
 export type QueryRegionSettingsArgs = {
   countryCode: Scalars['String']['input'];
@@ -1974,9 +2165,11 @@ export type QueryRegionSettingsArgs = {
   longitude: Scalars['DecimalString']['input'];
 };
 
+
 export type QueryReportArgs = {
   id: Scalars['ID']['input'];
 };
+
 
 export type QueryReportsArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
@@ -1984,14 +2177,17 @@ export type QueryReportsArgs = {
   first?: InputMaybe<Scalars['Int']['input']>;
 };
 
+
 export type QueryResolveLocationArgs = {
   text: Scalars['String']['input'];
 };
+
 
 export type QueryReverseLocationArgs = {
   latitude: Scalars['DecimalString']['input'];
   longitude: Scalars['DecimalString']['input'];
 };
+
 
 export type QuerySearchAreasArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
@@ -2010,7 +2206,12 @@ export type ReadinessInput =
   | 'TANKER_SUPPLY'
   | 'UNIT_PRICE';
 
-export type ReadinessState = 'AVAILABLE' | 'PARTIAL' | 'STALE' | 'UNAVAILABLE' | 'USER_ENTERED';
+export type ReadinessState =
+  | 'AVAILABLE'
+  | 'PARTIAL'
+  | 'STALE'
+  | 'UNAVAILABLE'
+  | 'USER_ENTERED';
 
 export type RecordManualInputInput = {
   asOf: Scalars['LocalDate']['input'];
@@ -2081,6 +2282,7 @@ export type Report = {
   version: Scalars['Int']['output'];
 };
 
+
 export type ReportProposalsArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
@@ -2102,9 +2304,14 @@ export type ReportPayload = {
   report?: Maybe<Report>;
 };
 
-export type ReportStatus = 'ARCHIVED' | 'FINALIZED';
+export type ReportStatus =
+  | 'ARCHIVED'
+  | 'FINALIZED';
 
-export type ReviewKind = 'HYDROGEOLOGICAL' | 'STRUCTURAL' | 'WATER_QUALITY';
+export type ReviewKind =
+  | 'HYDROGEOLOGICAL'
+  | 'STRUCTURAL'
+  | 'WATER_QUALITY';
 
 export type Scenario = {
   adjustments: Array<ScenarioAdjustment>;
@@ -2170,9 +2377,16 @@ export type ScenarioRow = {
 };
 
 /** Whether the chosen plan still matches a fresh assessment; only CURRENT or LEGACY can be finalized. */
-export type SelectedPlanStatus = 'CURRENT' | 'IMPACT_CHANGED' | 'LEGACY' | 'NONE' | 'NOT_CURRENT';
+export type SelectedPlanStatus =
+  | 'CURRENT'
+  | 'IMPACT_CHANGED'
+  | 'LEGACY'
+  | 'NONE'
+  | 'NOT_CURRENT';
 
-export type SessionStatus = 'ACTIVE' | 'CLOSED';
+export type SessionStatus =
+  | 'ACTIVE'
+  | 'CLOSED';
 
 export type SharedReportSummary = {
   finalizedAt: Scalars['UtcDateTime']['output'];
@@ -2180,7 +2394,10 @@ export type SharedReportSummary = {
 };
 
 /** A system that can carry a measure's effect beyond the site. */
-export type SharedSystem = 'AQUIFER' | 'CATCHMENT' | 'SUPPLY_NETWORK';
+export type SharedSystem =
+  | 'AQUIFER'
+  | 'CATCHMENT'
+  | 'SUPPLY_NETWORK';
 
 /** What is known about the site; null means not known. */
 export type SiteConstraints = {
@@ -2217,7 +2434,11 @@ export type SiteProfileInput = {
   occupiedHomes?: InputMaybe<Scalars['Int']['input']>;
 };
 
-export type SiteRequirement = 'OPEN_GROUND' | 'PIPED_SUPPLY' | 'ROOF_AREA' | 'STORAGE_SPACE';
+export type SiteRequirement =
+  | 'OPEN_GROUND'
+  | 'PIPED_SUPPLY'
+  | 'ROOF_AREA'
+  | 'STORAGE_SPACE';
 
 export type SiteRestriction =
   | 'NO_EXCAVATION'
@@ -2226,7 +2447,11 @@ export type SiteRestriction =
   | 'NO_RECHARGE'
   | 'NO_STRUCTURAL_CHANGES';
 
-export type SiteScale = 'BUILDING' | 'HOUSEHOLD' | 'NEIGHBOURHOOD' | 'UTILITY';
+export type SiteScale =
+  | 'BUILDING'
+  | 'HOUSEHOLD'
+  | 'NEIGHBOURHOOD'
+  | 'UTILITY';
 
 export type StartImplementationProjectInput = {
   idempotencyKey: Scalars['String']['input'];
@@ -2263,9 +2488,14 @@ export type TargetCheck = {
   unit?: Maybe<Unit>;
 };
 
-export type TargetMode = 'ABSOLUTE_LEVEL' | 'RELATIVE_REDUCTION';
+export type TargetMode =
+  | 'ABSOLUTE_LEVEL'
+  | 'RELATIVE_REDUCTION';
 
-export type TechnicalSupport = 'PROVISIONAL' | 'SUPPORTED' | 'UNAVAILABLE';
+export type TechnicalSupport =
+  | 'PROVISIONAL'
+  | 'SUPPORTED'
+  | 'UNAVAILABLE';
 
 /** Something not assessed, and why. Never shown as zero or safe. */
 export type UnavailableAssessment = {
@@ -2291,7 +2521,9 @@ export type Unit =
   | 'RATIO'
   | 'SQUARE_METRE';
 
-export type UnitSystem = 'METRIC' | 'US_CUSTOMARY';
+export type UnitSystem =
+  | 'METRIC'
+  | 'US_CUSTOMARY';
 
 export type UpdateMilestoneInput = {
   completedOn?: InputMaybe<Scalars['LocalDate']['input']>;
@@ -2313,7 +2545,10 @@ export type UpdateProjectStatusInput = {
 };
 
 /** Measured, your estimate or modelled; shown distinctly wherever a value is. */
-export type ValueOrigin = 'MEASURED' | 'MODELED' | 'USER_ESTIMATE';
+export type ValueOrigin =
+  | 'MEASURED'
+  | 'MODELED'
+  | 'USER_ESTIMATE';
 
 export type Viewer = {
   kind: AccountKind;
@@ -2351,4 +2586,8 @@ export type WiderImpact = {
   tradeoffs: Array<ImpactFinding>;
 };
 
-export type WindowStatus = 'CLOSED' | 'OPEN' | 'UNKNOWN' | 'UPCOMING';
+export type WindowStatus =
+  | 'CLOSED'
+  | 'OPEN'
+  | 'UNKNOWN'
+  | 'UPCOMING';

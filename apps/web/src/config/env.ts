@@ -7,7 +7,7 @@ import { z } from 'zod';
  * This runtime check does not prove a secret was never bundled; the no-secrets rule
  * still applies.
  *
- * Local mode: emulators required; the API must be a loopback http(s) URL; Firebase is
+ * Local mode: emulators required; browser Maps may be explicitly opted in; the API must be a loopback http(s) URL; Firebase is
  * the `demo-waterpilot` project on a loopback Auth emulator (no real Firebase project).
  * Pilot mode: emulators forbidden; an explicit, non-loopback https API URL and the
  * real project's public Firebase web config are required. The Google Maps browser key,
@@ -23,6 +23,7 @@ const RawSchema = z.object({
   VITE_FIREBASE_PROJECT_ID: z.string().optional(),
   VITE_FIREBASE_APP_ID: z.string().optional(),
   VITE_FIREBASE_AUTH_EMULATOR_HOST: z.string().optional(),
+  VITE_LOCAL_GOOGLE_MAPS_ENABLED: z.enum(['true', 'false']).default('false'),
   VITE_GOOGLE_MAPS_API_KEY: z.string().optional(),
   VITE_GOOGLE_MAPS_MAP_ID: z.string().optional(),
 });
@@ -52,7 +53,7 @@ export interface FirebaseWebConfig {
 /**
  * Maps and Places in the browser (ADR 0009). `fixture`: local mode, places come from the
  * API's test gazetteer and there is no map, so nothing billable is called. `google`:
- * pilot with a browser key restricted by HTTP referrer and API. `none`: pilot without a
+ * pilot or explicit local browser opt-in with a key restricted by HTTP referrer and API. `none`: pilot without a
  * key; people type their location and no map is shown.
  */
 export type MapsConfig =
@@ -183,25 +184,42 @@ export function loadEnv(source: Record<string, unknown> = import.meta.env): AppE
   if (appMode === 'local') {
     if (!useEmulators) {
       fail(
-        'local mode requires emulators (VITE_USE_EMULATORS=true); it must never use real cloud services.',
+        'local mode requires emulators (VITE_USE_EMULATORS=true) for authentication and application data.',
       );
     }
     const api = parseApiUrl(rawApi || LOCAL_DEFAULT_API_BASE_URL);
     if (!isLoopbackHostname(api.hostname)) {
       fail(`local mode requires a loopback VITE_API_BASE_URL, got ${api.hostname}`);
     }
-    if (parsed.VITE_GOOGLE_MAPS_API_KEY || parsed.VITE_GOOGLE_MAPS_MAP_ID) {
-      fail('local mode never calls Google Maps; unset VITE_GOOGLE_MAPS_* (the fixture is used).');
+    if (
+      parsed.VITE_LOCAL_GOOGLE_MAPS_ENABLED === 'true' &&
+      !parsed.VITE_GOOGLE_MAPS_API_KEY?.trim()
+    ) {
+      fail('VITE_LOCAL_GOOGLE_MAPS_ENABLED requires a browser Maps key.');
+    }
+    if (
+      parsed.VITE_LOCAL_GOOGLE_MAPS_ENABLED !== 'true' &&
+      (parsed.VITE_GOOGLE_MAPS_API_KEY || parsed.VITE_GOOGLE_MAPS_MAP_ID)
+    ) {
+      fail(
+        'local mode never calls Google Maps without VITE_LOCAL_GOOGLE_MAPS_ENABLED=true; unset VITE_GOOGLE_MAPS_* for offline fixtures.',
+      );
     }
     return {
       apiBaseUrl: rawApi || LOCAL_DEFAULT_API_BASE_URL,
       appMode,
       useEmulators,
       firebase: localFirebase(parsed),
-      maps: { provider: 'fixture' },
+      maps:
+        parsed.VITE_LOCAL_GOOGLE_MAPS_ENABLED === 'true'
+          ? pilotMaps(parsed)
+          : { provider: 'fixture' },
     };
   }
 
+  if (parsed.VITE_LOCAL_GOOGLE_MAPS_ENABLED === 'true') {
+    fail('VITE_LOCAL_GOOGLE_MAPS_ENABLED is local-only; unset it in pilot mode.');
+  }
   if (useEmulators) {
     fail('pilot mode must not use emulators (set VITE_USE_EMULATORS=false).');
   }

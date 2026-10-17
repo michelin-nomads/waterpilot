@@ -141,6 +141,85 @@ describe('googlePlaces adapter', () => {
     }
   });
 
+  it.each(['places', 'maps'] as const)('bounds a stalled %s library import', async (name) => {
+    const api: GoogleMapsApi = { importLibrary: () => new Promise(() => {}) };
+    const adapter = googlePlaces(async () => api, { mapId: null });
+    vi.useFakeTimers();
+    try {
+      const pending =
+        name === 'places'
+          ? adapter.suggest('Lima', new AbortController().signal)
+          : adapter.mountMap(document.createElement('div'), {
+              onPick: vi.fn(),
+              onFailure: vi.fn(),
+            });
+      const outcome = expect(pending).rejects.toThrow(/too long/);
+      await vi.advanceTimersByTimeAsync(CALL_TIMEOUT_MS + 1);
+      await outcome;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it.each([null, 'test-map-id'])('cleans up the map and overlays with map ID %s', async (mapId) => {
+    const remove = vi.fn();
+    const setCenter = vi.fn();
+    const setMap = vi.fn();
+    const advanced = { map: null as unknown };
+    let pick: ((event: { latLng: ReturnType<typeof latLng> }) => void) | undefined;
+    const api: GoogleMapsApi = {
+      importLibrary: async (name) => {
+        if (name === 'maps') {
+          return {
+            Map: class {
+              setCenter = setCenter;
+              setZoom = vi.fn();
+              addListener = (_event: string, listener: typeof pick) => {
+                pick = listener;
+                return { remove };
+              };
+            },
+            Circle: class {
+              setMap = setMap;
+            },
+          };
+        }
+        if (name === 'marker') {
+          return {
+            Marker: class {
+              setMap = setMap;
+            },
+            AdvancedMarkerElement: class {
+              constructor(options: { map: unknown }) {
+                advanced.map = options.map;
+                return advanced;
+              }
+            },
+          };
+        }
+        throw new Error(`unexpected library ${name}`);
+      },
+    };
+    const element = document.createElement('div');
+    element.append(document.createElement('span'));
+    const unsubscribe = vi.fn();
+    const onPick = vi.fn();
+    const view = await googlePlaces(async () => api, {
+      mapId,
+      onAuthFailure: () => unsubscribe,
+    }).mountMap(element, { onPick, onFailure: vi.fn() });
+    view.show({ latitude: '-12.12', longitude: '-77.03', radiusMeters: 500 });
+    expect(setCenter).toHaveBeenCalledWith({ lat: -12.12, lng: -77.03 });
+    pick?.({ latLng: latLng(-12.12, -77.03) });
+    expect(onPick).toHaveBeenCalledWith('-12.12', '-77.03');
+    view.destroy();
+    expect(remove).toHaveBeenCalledOnce();
+    expect(unsubscribe).toHaveBeenCalledOnce();
+    expect(setMap).toHaveBeenCalledWith(null);
+    if (mapId) expect(advanced.map).toBeNull();
+    expect(element).toBeEmptyDOMElement();
+  });
+
   it('requests only Essentials/Pro place fields', () => {
     expect(PLACE_FIELDS).not.toContain('reviews');
     expect(PLACE_FIELDS).not.toContain('regularOpeningHours');

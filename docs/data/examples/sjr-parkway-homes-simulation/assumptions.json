@@ -1,0 +1,52 @@
+{
+  "generator_version": "sjr-illustrative-1",
+  "csv_sha256": "46050cd657eeb88481f9f5058c2398cddf08a96ad9e98d4916a127ebc343cec8",
+  "evidence": "synthetic",
+  "subject": "SJR Parkway Homes, Rayasandra, Bengaluru",
+  "not_actual_society_records": true,
+  "occupied_homes": 900,
+  "residents_per_home": 4,
+  "population": 3600,
+  "per_capita_lpd": "135",
+  "common_non_domestic_lpd": "14000",
+  "demand_lpd": "500000",
+  "basis": "Invented inputs; occupancy not derived from block count",
+  "window": {
+    "start": "2025-10-17",
+    "end_exclusive": "2026-10-17",
+    "timezone": "Asia/Kolkata"
+  },
+  "regimes": [
+    {
+      "days": 120,
+      "base_delivered_lpd": 430000,
+      "base_tanker_lpd": 210000
+    },
+    {
+      "days": 120,
+      "base_delivered_lpd": 400000,
+      "base_tanker_lpd": 230000
+    },
+    {
+      "days": 125,
+      "base_delivered_lpd": 520000,
+      "base_tanker_lpd": 100000
+    }
+  ],
+  "variation": "i starts at zero; delivered += (i % 7 - 3)*2000; tanker += (i % 7 - 3)*1000",
+  "accounting": "Tanker is included in delivered; do not add it twice. No borewell split inferred.",
+  "completeness": "365 fully invented dates; complete for arithmetic tests, not field evidence",
+  "missing_real_data": [
+    "occupied/total homes",
+    "actual population",
+    "metered supply and tanker invoices",
+    "service polygon and roof catchment",
+    "rainfall observations",
+    "groundwater levels",
+    "borewell pumping",
+    "STP capacity/operating/reuse logs",
+    "water quality",
+    "aquifer/catchment connectivity",
+    "real costs, tariffs and measured intervention effects"
+  ]
+}

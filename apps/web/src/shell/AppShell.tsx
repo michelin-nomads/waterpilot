@@ -7,7 +7,9 @@ import { Logo } from '../components/Logo/Logo';
 import { env } from '../config/env';
 import { AccountMenu } from './AccountMenu';
 import styles from './AppShell.module.scss';
-import { DisplayMenu } from './DisplayMenu';
+const DisplayMenu = lazy(() =>
+  import('./DisplayMenu').then((module) => ({ default: module.DisplayMenu })),
+);
 import { OfflineNotice } from './OfflineNotice';
 import { RouteProgress } from './RouteStatus';
 const PlanningModeToggle = lazy(() =>
@@ -93,7 +95,11 @@ export default function AppShell() {
         <div className={styles.footerMeta}>
           {env.appMode === 'local' && (
             <>
-              <Badge tone="info">Local mode · emulators only</Badge>
+              <Badge tone="info">
+                {env.maps.provider === 'google'
+                  ? 'Local backend · live Google Maps'
+                  : 'Local mode · emulators only'}
+              </Badge>
               <Link to="/design-system">Design system (UI fixtures)</Link>
             </>
           )}

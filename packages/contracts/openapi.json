@@ -48,6 +48,181 @@
         }
       }
     },
+    "/v1/area-assumptions/status": {
+      "get": {
+        "tags": [
+          "area-assumptions"
+        ],
+        "summary": "Status",
+        "operationId": "status_v1_area_assumptions_status_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssumptionStatus"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/area-assumptions": {
+      "post": {
+        "tags": [
+          "area-assumptions"
+        ],
+        "summary": "Generate",
+        "operationId": "generate_v1_area_assumptions_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AreaAssumptionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreviewResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/area-assumptions/{session_id}/{request_key}": {
+      "get": {
+        "tags": [
+          "area-assumptions"
+        ],
+        "summary": "Get",
+        "operationId": "get_v1_area_assumptions__session_id___request_key__get",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "request_key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Request Key"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreviewResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/admin/funding-catalogue": {
       "get": {
         "tags": [
@@ -1184,6 +1359,296 @@
         ],
         "title": "ApiError"
       },
+      "AreaAssumptionPreview": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version",
+            "default": 1
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "owner_uid": {
+            "type": "string",
+            "title": "Owner Uid"
+          },
+          "session_id": {
+            "type": "string",
+            "title": "Session Id"
+          },
+          "area_id": {
+            "type": "string",
+            "title": "Area Id"
+          },
+          "inputs_revision": {
+            "type": "integer",
+            "title": "Inputs Revision"
+          },
+          "households": {
+            "type": "integer",
+            "title": "Households"
+          },
+          "request_hash": {
+            "type": "string",
+            "title": "Request Hash"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "completed",
+              "failed"
+            ],
+            "title": "Status",
+            "default": "pending"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          },
+          "prompt_version": {
+            "type": "string",
+            "title": "Prompt Version",
+            "default": "area-assumptions-1"
+          },
+          "evidence": {
+            "type": "string",
+            "const": "synthetic",
+            "title": "Evidence",
+            "default": "synthetic"
+          },
+          "model_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Id"
+          },
+          "assumptions": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AreaAssumptions"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "population": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Population"
+          },
+          "demand_lpd": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Demand Lpd"
+          },
+          "average_gap_lpd": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Gap Lpd"
+          },
+          "tanker_dependence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tanker Dependence"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "created_at",
+          "updated_at",
+          "owner_uid",
+          "session_id",
+          "area_id",
+          "inputs_revision",
+          "households",
+          "request_hash",
+          "expires_at"
+        ],
+        "title": "AreaAssumptionPreview"
+      },
+      "AreaAssumptionRequest": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "title": "Session Id"
+          },
+          "inputs_revision": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Inputs Revision"
+          },
+          "households": {
+            "type": "integer",
+            "maximum": 100000.0,
+            "minimum": 1.0,
+            "title": "Households"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "title": "Idempotency Key"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "session_id",
+          "inputs_revision",
+          "households",
+          "idempotency_key"
+        ],
+        "title": "AreaAssumptionRequest"
+      },
+      "AreaAssumptions": {
+        "properties": {
+          "residents_per_home": {
+            "type": "integer",
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Residents Per Home"
+          },
+          "per_capita_lpd": {
+            "$ref": "#/components/schemas/AssumedRange"
+          },
+          "delivered_supply_lpd": {
+            "$ref": "#/components/schemas/AssumedRange"
+          },
+          "tanker_supply_lpd": {
+            "$ref": "#/components/schemas/AssumedRange"
+          },
+          "rationale": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Rationale"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "residents_per_home",
+          "per_capita_lpd",
+          "delivered_supply_lpd",
+          "tanker_supply_lpd",
+          "rationale"
+        ],
+        "title": "AreaAssumptions"
+      },
+      "AssumedRange": {
+        "properties": {
+          "low": {
+            "type": "string",
+            "title": "Low"
+          },
+          "value": {
+            "type": "string",
+            "title": "Value"
+          },
+          "high": {
+            "type": "string",
+            "title": "High"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "low",
+          "value",
+          "high"
+        ],
+        "title": "AssumedRange"
+      },
+      "AssumptionStatus": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "available": {
+            "type": "boolean",
+            "title": "Available"
+          },
+          "fake": {
+            "type": "boolean",
+            "title": "Fake"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "enabled",
+          "available",
+          "fake",
+          "reason"
+        ],
+        "title": "AssumptionStatus"
+      },
       "CatalogueStatus": {
         "type": "string",
         "enum": [
@@ -1789,6 +2254,28 @@
         ],
         "title": "Money",
         "description": "Integer minor units of an explicit ISO 4217 currency. No float, no implicit\nconversion, no arithmetic across currencies."
+      },
+      "PreviewResponse": {
+        "properties": {
+          "preview": {
+            "$ref": "#/components/schemas/AreaAssumptionPreview"
+          },
+          "stale": {
+            "type": "boolean",
+            "title": "Stale"
+          },
+          "notice": {
+            "type": "string",
+            "title": "Notice",
+            "default": "Illustrative scenario \u2014 generated assumptions, not measured local data. No web research or verified city records were used. Baseline inputs are unchanged. Groundwater levels, daily history, reliable yield and shortage days remain unknown."
+          }
+        },
+        "type": "object",
+        "required": [
+          "preview",
+          "stale"
+        ],
+        "title": "PreviewResponse"
       },
       "ReadyStatus": {
         "properties": {

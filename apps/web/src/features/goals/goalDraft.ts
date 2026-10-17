@@ -1,5 +1,6 @@
 import type {
   GoalInput,
+  FundingStatus,
   GoalKind,
   Priority,
   SiteRestriction,
@@ -26,6 +27,10 @@ export interface EstimateDraft {
   interventionId: string;
   costLow: string;
   costHigh: string;
+  recurringLow?: string;
+  recurringHigh?: string;
+  recurringCurrency?: string;
+  costCurrency?: string;
   buildLow: string;
   buildHigh: string;
   effects: EffectDraft[];
@@ -37,6 +42,14 @@ export type EffectUnits = Readonly<Record<string, Unit>>;
 
 export type YesNo = 'yes' | 'no' | '';
 
+export interface FundingDraft {
+  label: string;
+  amount: string;
+  currency: string;
+  status: FundingStatus;
+  note: string;
+}
+
 export interface GoalDraft {
   kind: GoalKind | null;
   description: string;
@@ -47,6 +60,12 @@ export interface GoalDraft {
   targetValue: string;
   unit: Unit | null;
   targetParameter: string;
+  tariffAmount: string;
+  tariffLitres: string;
+  tariffCurrency: string;
+  tariffNote: string;
+  contingencyPercent: string;
+  funding: FundingDraft[];
   budgetAmount: string;
   currency: string;
   timelineDays: string;
@@ -93,6 +112,12 @@ export function emptyDraft(currency: string): GoalDraft {
     targetValue: '',
     unit: null,
     targetParameter: '',
+    tariffAmount: '',
+    tariffLitres: '',
+    tariffCurrency: currency,
+    tariffNote: '',
+    contingencyPercent: '',
+    funding: [],
     budgetAmount: '',
     currency,
     timelineDays: '',
@@ -270,24 +295,67 @@ export function toGoalInput(draft: GoalDraft): { input: GoalInput | null; errors
     }
     return { value: canonicalDecimal(v), unit: 'SQUARE_METRE' as const };
   };
+  const amountInput = (value: string, code: string, field: string) => {
+    const digits = currencyExponent(code);
+    if (
+      !/^[A-Z]{3}$/.test(code) ||
+      digits === null ||
+      !DECIMAL.test(value) ||
+      !fitsExponent(value, digits)
+    ) {
+      errors[field] = 'Enter a non-negative amount with the correct currency precision.';
+      return null;
+    }
+    return money(value, code, digits);
+  };
+  let waterTariff: GoalInput['waterTariff'] = null;
+  if (draft.tariffAmount.trim() || draft.tariffLitres.trim()) {
+    const price = amountInput(
+      draft.tariffAmount.trim(),
+      draft.tariffCurrency || draft.currency,
+      'tariffAmount',
+    );
+    if (!DECIMAL.test(draft.tariffLitres.trim()) || Number(draft.tariffLitres) <= 0)
+      errors.tariffLitres = 'Enter a positive volume in litres.';
+    else if (price)
+      waterTariff = {
+        price,
+        volume: { value: canonicalDecimal(draft.tariffLitres), unit: 'LITRE' },
+        note: draft.tariffNote.trim(),
+      };
+  }
+  const cp = draft.contingencyPercent.trim();
+  if (cp && (!DECIMAL.test(cp) || Number(cp) > 100))
+    errors.contingencyPercent = 'Enter a percentage from 0 to 100.';
+  const funding: NonNullable<GoalInput['funding']> = draft.funding.flatMap((f, i) => {
+    const amount = amountInput(f.amount.trim(), f.currency, `funding.${i}.amount`);
+    if (!f.label.trim()) errors[`funding.${i}.label`] = 'Describe this funding source.';
+    return amount ? [{ label: f.label.trim(), amount, status: f.status, note: f.note.trim() }] : [];
+  });
   const estimates: NonNullable<GoalInput['estimates']> = [];
   draft.estimates.forEach((e, i) => {
     const key = (f: keyof EstimateDraft) => `estimates.${i}.${f}`;
     const low = e.costLow.trim();
-    const high = e.costHigh.trim() || low;
-    let cost: NonNullable<GoalInput['estimates']>[number]['cost'] = null;
-    if (low) {
-      if (exponent === null) errors.currency = 'Choose a currency.';
-      else if (!DECIMAL.test(low) || !fitsExponent(low, exponent))
-        errors[key('costLow')] = 'Enter an amount without commas or symbols.';
-      else if (!DECIMAL.test(high) || !fitsExponent(high, exponent))
-        errors[key('costHigh')] = 'Enter an amount without commas or symbols.';
-      else
-        cost = {
-          low: money(low, draft.currency, exponent),
-          high: money(high, draft.currency, exponent),
-        };
-    }
+    const costCode = e.costCurrency || draft.currency;
+    const range = (lo: string, hi: string, code: string, field: string) => {
+      if (!lo.trim() && !hi.trim()) return null;
+      const l = amountInput(lo.trim(), code, key(field as keyof EstimateDraft));
+      const h = amountInput(
+        hi.trim() || lo.trim(),
+        code,
+        key(field === 'costLow' ? 'costHigh' : 'recurringHigh'),
+      );
+      if (l && h && BigInt(l.minorUnits) > BigInt(h.minorUnits))
+        errors[key(field as keyof EstimateDraft)] = 'Give the lower amount first.';
+      return l && h ? { low: l, high: h } : null;
+    };
+    const cost = range(low, e.costHigh, costCode, 'costLow');
+    const recurring = range(
+      e.recurringLow ?? '',
+      e.recurringHigh ?? '',
+      e.recurringCurrency || draft.currency,
+      'recurringLow',
+    );
     const bLow = e.buildLow.trim();
     const bHigh = e.buildHigh.trim() || bLow;
     let buildDays: { low: number; high: number } | null = null;
@@ -315,11 +383,17 @@ export function toGoalInput(draft: GoalDraft): { input: GoalInput | null; errors
         effects.push({ key: x.key, low: canonical(eLow), high: canonical(eHigh) });
       }
     }
-    if (!low && !bLow && !e.effects.some((x) => x.low.trim() || x.high.trim()))
+    if (
+      !low &&
+      !e.recurringLow?.trim() &&
+      !bLow &&
+      !e.effects.some((x) => x.low.trim() || x.high.trim())
+    )
       errors[key('costLow')] = 'Give a cost, a build time or an effect range.';
     estimates.push({
       interventionId: e.interventionId,
       cost,
+      recurring,
       buildDays,
       effects,
       note: e.note.trim(),
@@ -334,6 +408,9 @@ export function toGoalInput(draft: GoalDraft): { input: GoalInput | null; errors
         ? draft.targetParameter.trim() || null
         : null,
     budget,
+    waterTariff,
+    contingencyRatio: cp && !errors.contingencyPercent ? shiftDecimalLeft(cp, 2) : null,
+    funding,
     timelineDays: days('timelineDays'),
     horizonDays: days('horizonDays'),
     priority: draft.priority || null,
@@ -379,6 +456,23 @@ export function fromGoalInput(
       : '',
     unit: goal.target?.quantity.unit ?? null,
     targetParameter: goal.targetParameter ?? '',
+    tariffAmount: goal.waterTariff
+      ? moneyAmount(
+          goal.waterTariff.price.minorUnits,
+          currencyExponent(goal.waterTariff.price.currency),
+        )
+      : '',
+    tariffCurrency: goal.waterTariff?.price.currency ?? currency,
+    tariffLitres: goal.waterTariff?.volume.value ?? '',
+    tariffNote: goal.waterTariff?.note ?? '',
+    contingencyPercent: goal.contingencyRatio ? shiftDecimalRight(goal.contingencyRatio, 2) : '',
+    funding: (goal.funding ?? []).map((f) => ({
+      label: f.label,
+      amount: moneyAmount(f.amount.minorUnits, currencyExponent(f.amount.currency)),
+      currency: f.amount.currency,
+      status: f.status,
+      note: f.note ?? '',
+    })),
     budgetAmount: goal.budget ? moneyAmount(goal.budget.minorUnits, exponent) : '',
     timelineDays: goal.timelineDays ? String(goal.timelineDays) : '',
     horizonDays: goal.horizonDays ? String(goal.horizonDays) : '',
@@ -394,8 +488,20 @@ export function fromGoalInput(
     preferred: [...(goal.preferredInterventions ?? [])],
     estimates: (goal.estimates ?? []).map((e) => ({
       interventionId: e.interventionId,
-      costLow: e.cost ? moneyAmount(e.cost.low.minorUnits, exponent) : '',
-      costHigh: e.cost ? moneyAmount(e.cost.high.minorUnits, exponent) : '',
+      costLow: e.cost
+        ? moneyAmount(e.cost.low.minorUnits, currencyExponent(e.cost.low.currency))
+        : '',
+      costCurrency: e.cost?.low.currency ?? currency,
+      recurringLow: e.recurring
+        ? moneyAmount(e.recurring.low.minorUnits, currencyExponent(e.recurring.low.currency))
+        : '',
+      recurringHigh: e.recurring
+        ? moneyAmount(e.recurring.high.minorUnits, currencyExponent(e.recurring.high.currency))
+        : '',
+      recurringCurrency: e.recurring?.low.currency ?? currency,
+      costHigh: e.cost
+        ? moneyAmount(e.cost.high.minorUnits, currencyExponent(e.cost.high.currency))
+        : '',
       buildLow: e.buildDays ? String(e.buildDays.low) : '',
       buildHigh: e.buildDays ? String(e.buildDays.high) : '',
       effects: (e.effects ?? []).map((x) => {
@@ -411,13 +517,18 @@ export function fromGoalInput(
 /** Server field paths ("goal.site.roofArea") to the draft field that shows the message. */
 export function draftField(path: string): string {
   const p = path.replace(/^goal\.?/, '');
+  const funding = /^funding\.(\d+)\.(\w+)/.exec(p);
+  if (funding) return `funding.${funding[1]}.${funding[2]}`;
   const estimate = /^estimates\.(\d+)\.(\w+)/.exec(p);
   if (estimate) {
     const [, i, f] = estimate;
     if (f === 'effects') return effectsField(Number(i));
-    return `estimates.${i}.${f === 'buildDays' ? 'buildLow' : 'costLow'}`;
+    return `estimates.${i}.${f === 'buildDays' ? 'buildLow' : f === 'recurring' ? 'recurringLow' : 'costLow'}`;
   }
   if (p.startsWith('target.') || p === 'target') return 'targetValue';
+  if (p.startsWith('waterTariff.volume')) return 'tariffLitres';
+  if (p.startsWith('waterTariff')) return 'tariffAmount';
+  if (p === 'contingencyRatio') return 'contingencyPercent';
   if (p.startsWith('budget')) return 'budgetAmount';
   if (p.startsWith('site.')) return p.split('.')[1] ?? 'scale';
   if (p.startsWith('preferredInterventions')) return 'preferred';

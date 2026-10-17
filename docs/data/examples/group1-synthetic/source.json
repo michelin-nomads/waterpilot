@@ -1,0 +1,56 @@
+{
+  "id": "synthetic-group1-utility-pack",
+  "recordKind": "registered_source",
+  "title": "Synthville annual utility and tanker records (SYNTHETIC — not real observations)",
+  "publisher": "WaterLens hand-authored synthetic examples",
+  "sourceUrl": "https://example.invalid/waterlens/group1-synthetic",
+  "licence": {
+    "name": "Project-authored synthetic example; no third-party records",
+    "usageRights": "open",
+    "authorization": {
+      "status": "authorized",
+      "authorizedUses": ["internal_analysis", "derived_metrics", "pilot_display"],
+      "reviewedAt": "2026-10-17",
+      "evidenceRef": "docs/data/examples/group1-synthetic/README.md — synthetic fixture creation only; not a scientific or publisher-data review"
+    }
+  },
+  "capability": "utility_supply",
+  "variables": [
+    {
+      "name": "delivered_supply",
+      "rawUnit": "L/day",
+      "normalizedUnit": "L/day",
+      "bandOrField": "delivered_supply_lpd",
+      "uncertainty": {
+        "kind": "not_quantified",
+        "basis": "Invented constant daily values for software verification; no measurement process."
+      }
+    },
+    {
+      "name": "tanker_supply",
+      "rawUnit": "L/day",
+      "normalizedUnit": "L/day",
+      "bandOrField": "tanker_supply_lpd",
+      "uncertainty": {
+        "kind": "not_quantified",
+        "basis": "Invented constant daily values for software verification; no measurement process."
+      }
+    }
+  ],
+  "temporalCoverage": {
+    "start": "2025-10-17",
+    "endExclusive": "2026-10-17",
+    "boundary": "half_open_start_inclusive_end_exclusive",
+    "timezone": "Asia/Kolkata"
+  },
+  "spatialCoverage": {
+    "type": "bbox",
+    "crs": "EPSG:4326",
+    "bbox": [-0.01, -0.01, 0.01, 0.01]
+  },
+  "qualityStatus": "synthetic",
+  "accessTier": "local_measured",
+  "observationMethod": "administrative_record",
+  "requiresLocalMeasurement": true,
+  "eligibilityNotes": "SYNTHETIC software fixture for the existing Synthville catalogue area only. local_measured and administrative_record exercise the existing schema; these are not measured or official records. Never validate as real evidence or use for any real location."
+}

@@ -1,0 +1,81 @@
+{
+  "start": "2025-10-17",
+  "end_exclusive": "2026-10-17",
+  "population": "1000",
+  "per_capita_lpd": "100",
+  "non_domestic_lpd": "0",
+  "assumptions_note": "SYNTHETIC software fixture. Demand, effects, costs and tariff are invented, not researched reference values. No real location or investment decision.",
+  "goal": {
+    "kind": "reduce_tanker_dependence",
+    "target": {
+      "mode": "absolute_level",
+      "quantity": {
+        "value": "0.2",
+        "unit": "ratio"
+      }
+    },
+    "site": {
+      "scale": "building",
+      "piped_supply": true
+    },
+    "horizon_days": 3650,
+    "water_tariff": {
+      "price": {
+        "minor_units": "100000",
+        "currency": "INR"
+      },
+      "volume": {
+        "value": "10000",
+        "unit": "L"
+      },
+      "note": "SYNTHETIC 1000 INR per 10000 L; no real tariff."
+    },
+    "funding": [
+      {
+        "label": "SYNTHETIC approved contribution",
+        "amount": {
+          "minor_units": "2000000",
+          "currency": "INR"
+        },
+        "status": "approved"
+      }
+    ],
+    "estimates": [
+      {
+        "intervention_id": "efficient_fixtures",
+        "effects": [
+          {
+            "key": "demand_reduction",
+            "low": "0.1",
+            "high": "0.1"
+          }
+        ],
+        "cost": {
+          "low": {
+            "minor_units": "10000000",
+            "currency": "INR"
+          },
+          "high": {
+            "minor_units": "10000000",
+            "currency": "INR"
+          }
+        },
+        "recurring": {
+          "low": {
+            "minor_units": "365000",
+            "currency": "INR"
+          },
+          "high": {
+            "minor_units": "365000",
+            "currency": "INR"
+          }
+        },
+        "note": "SYNTHETIC 10% savings, INR 100000 capex, INR 3650/year maintenance; not empirical performance.",
+        "build_days": {
+          "low": 7,
+          "high": 7
+        }
+      }
+    ]
+  }
+}
