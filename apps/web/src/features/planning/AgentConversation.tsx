@@ -237,13 +237,13 @@ export default function AgentConversation({
   }, [displayed.length]);
 
   const progress =
-    run?.status === 'completed'
-      ? 'Completed'
-      : run?.status === 'stopped'
+    run?.status === 'running'
+      ? [...events].reverse().find((e) => e.message)?.message ?? 'Thinking...'
+      : run?.status === 'stopped' && run.stopReason !== 'completed'
         ? run.stopReason === 'cancelled'
           ? 'Run cancelled'
           : `Run stopped: ${(run.stopReason ?? 'limit reached').replaceAll('_', ' ')}`
-        : [...events].reverse().find((e) => e.message)?.message;
+        : null;
 
   function submitPrompt(promptText: string) {
     if (!sid || !promptText.trim() || active || busy || isSaving) return;
@@ -311,6 +311,8 @@ export default function AgentConversation({
           if (event.type !== 'result') return null;
           const data = event.result?.result ?? {};
           const prepared = data.requiresConfirmation === true;
+          // Hide internal read-tool errors; the assistant explains in natural prose
+          if (event.result?.error && !prepared) return null;
           return (
             <article key={itemKey} className={styles.result}>
               <div className={styles.resultHeader}>
