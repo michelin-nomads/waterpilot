@@ -16,7 +16,7 @@ import { AgentResultData } from './AgentResultData';
 
 export default function AgentConversation({
   aiStatus,
-  onUseTraditional,
+  onUseTraditional: _onUseTraditional,
   onFocusWorkspace,
 }: {
   aiStatus?: AiStatusQuery['aiStatus'];
@@ -448,13 +448,6 @@ export default function AgentConversation({
               Deterministic calculations
             </span>
           </div>
-          <button
-            type="button"
-            className={styles.normalModeLink}
-            onClick={onUseTraditional}
-          >
-            Open normal mode
-          </button>
         </div>
       </form>
     </div>
