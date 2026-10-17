@@ -103,12 +103,16 @@ def _reject_identity_args(value: Any) -> None:
     """Refuse any identity-bearing key anywhere in the arguments (recursively)."""
     if isinstance(value, dict):
         for key, nested in value.items():
-            if isinstance(key, str) and key.lower() in RESERVED_IDENTITY_KEYS:
-                raise DomainError(
-                    ErrorCode.FORBIDDEN,
-                    "tool arguments cannot set an owner, admin, project, session or run "
-                    "identity; identity comes from the signed-in run",
-                )
+            if isinstance(key, str):
+                # "admin" as an AdminContext dict (geographic administrative divisions) is valid location data
+                if key.lower() == "admin" and isinstance(nested, dict):
+                    pass
+                elif key.lower() in RESERVED_IDENTITY_KEYS:
+                    raise DomainError(
+                        ErrorCode.FORBIDDEN,
+                        "tool arguments cannot set an owner, admin, project, session or run "
+                        "identity; identity comes from the signed-in run",
+                    )
             _reject_identity_args(nested)
     elif isinstance(value, list | tuple):
         for item in value:

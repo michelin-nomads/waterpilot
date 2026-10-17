@@ -548,9 +548,13 @@ def _inspect_progress(rc: RunContext, a: ProjectArgs) -> Json:
 
 
 def _confirm_location(rc: RunContext, a: Any) -> Json:
+    clean_id = rc.run_id.replace("-", "_").replace(":", "_")
+    key = f"confirm_loc_{clean_id}"
     area = rc.services.locations.confirm(
-        rc.ctx, a.model_dump(mode="json", exclude_none=True), idempotency_key=f"{rc.run_id}:loc"
+        rc.ctx, a.model_dump(mode="json", exclude_none=True), idempotency_key=key[:128]
     )
+    session = rc.session()
+    rc.services.sessions.update(rc.ctx, session.id, session.version, {"area_id": area.id})
     return area.model_dump(mode="json")
 
 

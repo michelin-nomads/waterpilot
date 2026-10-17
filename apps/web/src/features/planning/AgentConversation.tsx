@@ -54,8 +54,18 @@ export default function AgentConversation({
   const lastVersion = useRef<number | null>(null);
   const isSaving = state.status === 'ready' && !['idle', 'saved'].includes(state.save);
 
-  const apply = (value: AgentRun | null) => {
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const apply = (value: AgentRun | null, preserveHistory = false) => {
     loadEpoch.current++;
+    if (preserveHistory && runRef.current && value && runRef.current.id !== value.id) {
+      const pastEvents = runRef.current.events;
+      const newKeys = new Set(value.events.map((e) => `${e.type}:${e.id}:${e.text ?? ''}`));
+      const nonOverlapping = pastEvents.filter(
+        (e) => !newKeys.has(`${e.type}:${e.id}:${e.text ?? ''}`)
+      );
+      value = { ...value, events: [...nonOverlapping, ...value.events] };
+    }
     runRef.current = value;
     cursor.current = value?.cursor ?? 0;
     setRun(value);
@@ -180,7 +190,8 @@ export default function AgentConversation({
     setBusy(true);
     setError(null);
     try {
-      apply(await action());
+      const nextRun = await action();
+      apply(nextRun, true);
       setRetry((n) => n + 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Conversation failed');
@@ -198,6 +209,10 @@ export default function AgentConversation({
       previous.text = (previous.text ?? '') + (event.text ?? '');
     else displayed.push({ ...event });
   }
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView?.({ behavior: 'smooth' });
+  }, [displayed.length]);
 
   const progress =
     run?.status === 'completed'
@@ -323,6 +338,7 @@ export default function AgentConversation({
             </article>
           );
         })}
+        <div ref={messagesEndRef} />
       </div>
 
       {progress && (

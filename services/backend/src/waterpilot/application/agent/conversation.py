@@ -81,9 +81,16 @@ class ConversationAgent:
 
         rows = self.services.deps.store.agent_runs.page(
             {"owner_uid": ctx.require_principal().uid, "session_id": sid},
-            PageArgs(first=1).bind({"owner_uid": ctx.require_principal().uid, "session_id": sid}),
+            PageArgs(first=50).bind({"owner_uid": ctx.require_principal().uid, "session_id": sid}),
         )
-        return self.get(ctx, rows.items[0].id) if rows.items else None
+        if not rows.items:
+            return None
+        latest_run = self.get(ctx, rows.items[0].id)
+        all_events: list[dict[str, Any]] = []
+        for r in reversed(rows.items):
+            all_events.extend(r.events)
+        retained = all_events[-200:]
+        return latest_run.model_copy(update={"events": retained})
 
     def update(self, ctx: RequestContext, rid: str, **changes: Any) -> AgentRun:
         store = self.services.deps.store
