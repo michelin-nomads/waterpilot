@@ -12,11 +12,13 @@ const MODE_HELP: Record<PlanningMode, string> = {
   agent: 'Plan with AI assistance. You can make changes yourself anytime.',
 };
 
+const TOGGLE_OPTIONS = [...PLANNING_MODE_OPTIONS].reverse();
+
 /** Two compact, keyboard-operable icon radios for switching the current session's view. */
 export function PlanningModeToggle({ mode, onChange }: Props) {
   return (
     <fieldset className={styles.group} aria-label="Planning mode">
-      {PLANNING_MODE_OPTIONS.map((option) => (
+      {TOGGLE_OPTIONS.map((option) => (
         <label
           key={option.id}
           className={styles.option}
