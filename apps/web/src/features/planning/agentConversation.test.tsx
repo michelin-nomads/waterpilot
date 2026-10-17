@@ -57,7 +57,7 @@ beforeEach(() => {
 });
 
 it('can send after a saved edit, receives partial results, and focuses the authoritative workspace', async () => {
-  const { focus } = mount();
+  mount();
   await waitFor(() => expect(transport.fetch).toHaveBeenCalled());
   fireEvent.change(screen.getByLabelText('Message'), { target: { value: 'Check rainfall' } });
   expect(screen.getByRole('button', { name: /^Send$/ })).toBeEnabled();
@@ -80,8 +80,8 @@ it('can send after a saved edit, receives partial results, and focuses the autho
       },
     }),
   );
-  fireEvent.click(screen.getByRole('button', { name: 'Edit in workspace' }));
-  expect(focus).toHaveBeenCalledOnce();
+  expect(screen.getByText('Rainfall & Coverage')).toBeInTheDocument();
+  expect(screen.getByText('Rainfall')).toBeInTheDocument();
   expect(transport.command).toHaveBeenCalledOnce();
 });
 
@@ -119,4 +119,46 @@ it('a delayed initial history load cannot erase a successfully started run', asy
   await act(async () => finishLoad!({ json: async () => null }));
   expect(screen.getByRole('log')).toHaveTextContent('You: Check rainfall');
   expect(transport.command).toHaveBeenCalledOnce();
+});
+
+it('preserves multi-turn conversation history across consecutive runs without overwriting', async () => {
+  const initialRun: AgentRun = {
+    id: 'agr_turn1',
+    sessionId: 'ses_1',
+    version: 1,
+    status: 'completed',
+    checkpoint: false,
+    cursor: 2,
+    events: [
+      { id: 1, run_id: 'agr_turn1', type: 'message', role: 'user', text: 'Question 1: SJR Parkway' },
+      { id: 2, run_id: 'agr_turn1', type: 'text', text: 'Answer 1: Water data for SJR' },
+    ],
+  };
+  transport.fetch.mockResolvedValue({ json: async () => initialRun });
+  const nextRun: AgentRun = {
+    id: 'agr_turn2',
+    sessionId: 'ses_1',
+    version: 2,
+    status: 'running',
+    checkpoint: false,
+    cursor: 1,
+    events: [
+      { id: 1, run_id: 'agr_turn2', type: 'message', role: 'user', text: 'Question 2: that area' },
+    ],
+  };
+  transport.command.mockResolvedValue(nextRun);
+  mount();
+  await waitFor(() => expect(screen.getByRole('log')).toHaveTextContent('Question 1: SJR Parkway'));
+  expect(screen.getByRole('log')).toHaveTextContent('Answer 1: Water data for SJR');
+
+  fireEvent.change(screen.getByLabelText('Message'), { target: { value: 'Question 2: that area' } });
+  fireEvent.click(screen.getByRole('button', { name: /^Send$/ }));
+
+  await waitFor(() => expect(screen.getByRole('log')).toHaveTextContent('Question 2: that area'));
+  const logContent = screen.getByRole('log').textContent ?? '';
+  expect(logContent).toContain('Question 1: SJR Parkway');
+  expect(logContent).toContain('Answer 1: Water data for SJR');
+  expect(logContent).toContain('Question 2: that area');
+  expect(logContent.indexOf('Question 1')).toBeLessThan(logContent.indexOf('Answer 1'));
+  expect(logContent.indexOf('Answer 1')).toBeLessThan(logContent.indexOf('Question 2'));
 });

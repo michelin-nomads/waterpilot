@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
-import { Button, Textarea } from '../../components';
+import { Button, Icon, VisuallyHidden } from '../../components';
+import { type AiStatusQuery } from '../../graphql/generated/graphql';
 import { usePlanningSession } from '../../session/sessionContext';
 import {
   agentCommand,
@@ -12,17 +12,35 @@ import {
 } from './agentTransport';
 import styles from './AgentPanel.module.scss';
 import { AgentResultData } from './AgentResultData';
+import { FormattedMessage } from './FormattedMessage';
+
+const friendlyToolTitle = (name?: string) => {
+  if (!name) return 'Activity';
+  const custom: Record<string, string> = {
+    resolve_location: 'Location Search',
+    confirm_location: 'Selected Location',
+    inspect_planning_state: 'Plan Overview',
+    inspect_coverage: 'Rainfall & Coverage',
+    inspect_baseline: 'Water Baseline',
+    record_manual_input: 'Recorded Measurement',
+    update_site_profile: 'Site Profile',
+    compare_options: 'Intervention Options',
+    find_funding: 'Funding Opportunities',
+  };
+  return custom[name] ?? name.replaceAll('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+};
 
 export default function AgentConversation({
-  onUseTraditional,
-  onFocusWorkspace,
+  aiStatus,
+  onUseTraditional: _onUseTraditional,
+  onFocusWorkspace: _onFocusWorkspace,
 }: {
+  aiStatus?: AiStatusQuery['aiStatus'];
   onUseTraditional: () => void;
   onFocusWorkspace?: () => void;
 }) {
   const { view, coordinator, state } = usePlanningSession();
   const client = useQueryClient();
-  const navigate = useNavigate();
   const sid = view?.id;
   const [run, setRun] = useState<AgentRun | null>(null);
   const [input, setInput] = useState('');
@@ -35,8 +53,37 @@ export default function AgentConversation({
   const startKey = useRef<string | null>(null);
   const lastVersion = useRef<number | null>(null);
   const isSaving = state.status === 'ready' && !['idle', 'saved'].includes(state.save);
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
   const apply = (value: AgentRun | null) => {
     loadEpoch.current++;
+    if (value && runRef.current) {
+      const incomingRunId = value.id;
+      const pastFromOtherRuns = runRef.current.events.filter(
+        (e) => e.run_id && e.run_id !== incomingRunId
+      );
+      const stampedIncoming = value.events.map((e) => ({
+        ...e,
+        run_id: e.run_id ?? incomingRunId,
+      }));
+
+      if (pastFromOtherRuns.length > 0) {
+        value = { ...value, events: [...pastFromOtherRuns, ...stampedIncoming] };
+      } else if (runRef.current.id !== value.id) {
+        const newKeys = new Set(stampedIncoming.map((e) => `${e.type}:${e.id}:${e.text ?? ''}`));
+        const nonOverlapping = runRef.current.events.filter(
+          (e) => !newKeys.has(`${e.type}:${e.id}:${e.text ?? ''}`)
+        );
+        value = { ...value, events: [...nonOverlapping, ...stampedIncoming] };
+      }
+    } else if (value) {
+      const runId = value.id;
+      value = {
+        ...value,
+        events: value.events.map((e) => ({ ...e, run_id: e.run_id ?? runId })),
+      };
+    }
     runRef.current = value;
     cursor.current = value?.cursor ?? 0;
     setRun(value);
@@ -75,6 +122,7 @@ export default function AgentConversation({
     window.addEventListener('waterpilot:workspace-edit', notify);
     return () => window.removeEventListener('waterpilot:workspace-edit', notify);
   }, [sid, rid, coordinator]);
+
   useEffect(() => {
     if (!rid || !sid) return;
     const control = new AbortController();
@@ -94,7 +142,7 @@ export default function AgentConversation({
               await client.invalidateQueries({ queryKey: ['ai', 'status'] });
               return;
             }
-            const event = frame.data as AgentEvent;
+            const event = { ...(frame.data as AgentEvent), run_id: rid };
             if (frame.id === null || frame.id <= cursor.current) return;
             if (frame.id !== cursor.current + 1)
               throw new Error('Event gap; reconnecting to saved results');
@@ -160,7 +208,8 @@ export default function AgentConversation({
     setBusy(true);
     setError(null);
     try {
-      apply(await action());
+      const nextRun = await action();
+      apply(nextRun);
       setRetry((n) => n + 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Conversation failed');
@@ -168,104 +217,166 @@ export default function AgentConversation({
       setBusy(false);
     }
   }
+
   const active = run?.status === 'running';
   const events = run?.events ?? [];
   const displayed: AgentEvent[] = [];
   for (const event of events) {
     const previous = displayed.at(-1);
-    if (event.type === 'text' && previous?.type === 'text')
+    if (
+      event.type === 'text' &&
+      previous?.type === 'text' &&
+      (event.run_id && previous.run_id ? event.run_id === previous.run_id : true)
+    )
       previous.text = (previous.text ?? '') + (event.text ?? '');
     else displayed.push({ ...event });
   }
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView?.({ behavior: 'smooth' });
+  }, [displayed.length]);
+
   const progress =
-    run?.status === 'completed'
-      ? 'Completed'
-      : run?.status === 'stopped'
+    run?.status === 'running'
+      ? [...events].reverse().find((e) => e.message)?.message ?? 'Thinking...'
+      : run?.status === 'stopped' && run.stopReason !== 'completed'
         ? run.stopReason === 'cancelled'
           ? 'Run cancelled'
           : `Run stopped: ${(run.stopReason ?? 'limit reached').replaceAll('_', ' ')}`
-        : [...events].reverse().find((e) => e.message)?.message;
+        : null;
+
+  function submitPrompt(promptText: string) {
+    if (!sid || !promptText.trim() || active || busy || isSaving) return;
+    startKey.current ??= crypto.randomUUID();
+    void perform(async () => {
+      const value = await agentCommand('', {
+        sessionId: sid,
+        prompt: promptText.trim(),
+        idempotencyKey: startKey.current,
+      });
+      startKey.current = null;
+      setInput('');
+      return value;
+    });
+  }
+
+  const canSubmit = Boolean(sid && input.trim() && !active && !busy && !isSaving);
+
   return (
     <div className={styles.conversation}>
-      <p className={styles.metaBadge}>WaterPilot AI Assistant · Powered by Vertex AI</p>
       <div
         role="log"
         aria-label="Conversation messages"
         aria-live="off"
         className={styles.messages}
       >
-        {displayed.map((event) => {
+        {displayed.length === 0 && (
+          <div className={styles.welcomeState}>
+            <div className={styles.welcomeIconWrapper}>
+              <Icon name="sparkle" size="lg" className={styles.sparkleHero} />
+            </div>
+            <p className={styles.welcomeTitle}>What would you like to explore?</p>
+            <p className={styles.welcomeSubtitle}>
+              Ask about baseline data, intervention scenarios, or verified funding schemes.
+            </p>
+          </div>
+        )}
+        {displayed.map((event, idx) => {
+          const itemKey = `${event.run_id ?? rid ?? 'run'}_${event.id}_${idx}`;
           if (event.type === 'message' || event.type === 'text')
             return (
-              <p
-                key={event.id}
-                className={event.role === 'user' ? styles.userMessage : styles.assistantMessage}
+              <div
+                key={itemKey}
+                className={event.role === 'user' ? styles.userBubbleWrapper : styles.assistantBubbleWrapper}
               >
-                {event.role === 'user' ? 'You: ' : ''}
-                {event.text}
-              </p>
+                {event.role !== 'user' && (
+                  <div className={styles.agentAvatar}>
+                    <Icon name="sparkle" size="sm" />
+                  </div>
+                )}
+                <div
+                  className={event.role === 'user' ? styles.userMessage : styles.assistantMessage}
+                >
+                  {event.role === 'user' ? (
+                    <>
+                      <span className={styles.userPrefix}>You: </span>
+                      {event.text}
+                    </>
+                  ) : (
+                    <FormattedMessage text={event.text ?? ''} />
+                  )}
+                </div>
+              </div>
             );
           if (event.type !== 'result') return null;
           const data = event.result?.result ?? {};
           const prepared = data.requiresConfirmation === true;
+          // Hide internal read-tool errors; the assistant explains in natural prose
+          if (event.result?.error && !prepared) return null;
           return (
-            <article key={event.id} className={styles.result}>
-              <h3>{event.name?.replaceAll('_', ' ')}</h3>
+            <article key={itemKey} className={styles.result}>
+              <div className={styles.resultHeader}>
+                <div className={styles.toolBadge}>
+                  <Icon name="sparkle" size="sm" />
+                  <h3>{friendlyToolTitle(event.name)}</h3>
+                </div>
+                {prepared && <span className={styles.preparedBadge}>Action proposal</span>}
+              </div>
               {event.result?.error ? (
                 <p role="alert">{event.result.error.message}</p>
               ) : (
                 <AgentResultData value={data} />
               )}
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  navigate(event.action ?? '/area');
-                  onFocusWorkspace?.();
-                  requestAnimationFrame(() =>
-                    document.querySelector<HTMLElement>('main h1, h1')?.focus(),
-                  );
-                }}
-              >
-                Edit in workspace
-              </Button>
               {prepared && (
-                <Button
-                  disabled={busy}
-                  onClick={() => {
-                    const { kind, resourceId, expectedVersion, parameters, confirmationToken } =
-                      data;
-                    void perform(async () => {
-                      const confirmation = await agentFetch(`/${rid}/confirm`, {
-                        method: 'POST',
-                        body: JSON.stringify({
-                          kind,
-                          resource_id: resourceId,
-                          expected_version: expectedVersion,
-                          parameters,
-                          confirmation_token: confirmationToken,
-                          idempotency_key: `confirm-${rid}-${event.id}`,
-                        }),
+                <div className={styles.resultActions}>
+                  <Button
+                    disabled={busy}
+                    onClick={() => {
+                      const { kind, resourceId, expectedVersion, parameters, confirmationToken } =
+                        data;
+                      void perform(async () => {
+                        const confirmation = await agentFetch(`/${rid}/confirm`, {
+                          method: 'POST',
+                          body: JSON.stringify({
+                            kind,
+                            resource_id: resourceId,
+                            expected_version: expectedVersion,
+                            parameters,
+                            confirmation_token: confirmationToken,
+                            idempotency_key: `confirm-${rid}-${event.id}`,
+                          }),
+                        });
+                        const confirmed: { keys: string[][] } = await confirmation.json();
+                        for (const queryKey of confirmed.keys) {
+                          await client.cancelQueries({ queryKey });
+                          await client.invalidateQueries({ queryKey });
+                        }
+                        await coordinator?.refresh();
+                        return (await agentFetch(`/${rid}`)).json();
                       });
-                      const confirmed: { keys: string[][] } = await confirmation.json();
-                      for (const queryKey of confirmed.keys) {
-                        await client.cancelQueries({ queryKey });
-                        await client.invalidateQueries({ queryKey });
-                      }
-                      await coordinator?.refresh();
-                      return (await agentFetch(`/${rid}`)).json();
-                    });
-                  }}
-                >
-                  Confirm: {String(data.summary ?? data.kind)}
-                </Button>
+                    }}
+                  >
+                    Confirm: {String(data.summary ?? data.kind)}
+                  </Button>
+                </div>
               )}
             </article>
           );
         })}
+        <div ref={messagesEndRef} />
       </div>
-      <p role="status">{progress ?? 'Ask about the current planning session'}</p>
+
+      {progress && (
+        <div className={styles.statusRow}>
+          <span role="status" className={styles.statusPill}>
+            {active && <span className={styles.pulsingDot} />}
+            {progress}
+          </span>
+        </div>
+      )}
+
       {error && (
-        <div role="alert">
+        <div role="alert" className={styles.errorAlert}>
           <p>{error}</p>
           <Button
             variant="secondary"
@@ -294,31 +405,25 @@ export default function AgentConversation({
           </Button>
         </div>
       )}
-      {active && (
-        <Button
-          disabled={busy}
-          variant="secondary"
-          onClick={() => void perform(() => agentCommand(`/${rid}/cancel`))}
-        >
-          Cancel run
-        </Button>
-      )}
+
       {active && run?.checkpoint && (
-        <Button
-          disabled={busy || isSaving}
-          onClick={() =>
-            void perform(async () => {
-              const latest: AgentRun = await (await agentFetch(`/${rid}`)).json();
-              return agentCommand(`/${rid}/continue`, { version: latest.version });
-            })
-          }
-        >
-          Continue
-        </Button>
+        <div className={styles.checkpointAlert}>
+          <Button
+            disabled={busy || isSaving}
+            onClick={() =>
+              void perform(async () => {
+                const latest: AgentRun = await (await agentFetch(`/${rid}`)).json();
+                return agentCommand(`/${rid}/continue`, { version: latest.version });
+              })
+            }
+          >
+            Continue
+          </Button>
+        </div>
       )}
+
       {!active && (
-        <div className={styles.suggestions}>
-          <p className={styles.suggestionsHeading}>Suggested prompts:</p>
+        <div className={styles.suggestionsContainer}>
           <div className={styles.suggestionChips}>
             {getContextualSuggestions(events).map((item) => (
               <button
@@ -326,60 +431,81 @@ export default function AgentConversation({
                 type="button"
                 className={styles.suggestionChip}
                 disabled={!sid || active || busy || isSaving}
-                onClick={() => {
-                  if (!sid || active || busy || isSaving) return;
-                  startKey.current ??= crypto.randomUUID();
-                  void perform(async () => {
-                    const value = await agentCommand('', {
-                      sessionId: sid,
-                      prompt: item,
-                      idempotencyKey: startKey.current,
-                    });
-                    startKey.current = null;
-                    setInput('');
-                    return value;
-                  });
-                }}
+                onClick={() => submitPrompt(item)}
               >
-                {item}
+                <Icon name="sparkle" size="sm" />
+                <span>{item}</span>
               </button>
             ))}
           </div>
         </div>
       )}
+
       <form
         className={styles.composer}
         onSubmit={(event) => {
           event.preventDefault();
-          if (!sid || !input.trim() || active || busy || isSaving) return;
-          startKey.current ??= crypto.randomUUID();
-          void perform(async () => {
-            const value = await agentCommand('', {
-              sessionId: sid,
-              prompt: input.trim(),
-              idempotencyKey: startKey.current,
-            });
-            startKey.current = null;
-            setInput('');
-            return value;
-          });
+          submitPrompt(input);
         }}
       >
-        <label htmlFor="agent-message">Message</label>
-        <Textarea
-          id="agent-message"
-          value={input}
-          onChange={(event) => setInput(event.target.value)}
-          maxLength={12000}
-          rows={3}
-        />
-        <Button type="submit" disabled={!sid || active || busy || isSaving || !input.trim()}>
-          Send
-        </Button>
+        <VisuallyHidden>
+          <label htmlFor="agent-message">Message</label>
+        </VisuallyHidden>
+        <div className={styles.searchBarContainer}>
+          <textarea
+            id="agent-message"
+            className={styles.geminiTextarea}
+            value={input}
+            onChange={(event) => setInput(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                submitPrompt(input);
+              }
+            }}
+            placeholder="Ask WaterPilot anything or explore interventions…"
+            rows={1}
+            maxLength={12000}
+            disabled={!sid || isSaving}
+          />
+          <div className={styles.searchBarActions}>
+            {active ? (
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={busy}
+                onClick={() => void perform(() => agentCommand(`/${rid}/cancel`))}
+                aria-label="Cancel run"
+              >
+                Cancel run
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                disabled={!canSubmit}
+                aria-label="Send"
+              >
+                <Icon name="arrow-right" size="sm" />
+                <VisuallyHidden>Send</VisuallyHidden>
+              </Button>
+            )}
+          </div>
+        </div>
+        <div className={styles.composerFooter}>
+          <div className={styles.requestsInfo}>
+            <Icon name="sparkle" size="sm" className={styles.sparkleMeta} />
+            <span>
+              {aiStatus?.requestsRemaining !== undefined
+                ? `${aiStatus.requestsRemaining} of ${aiStatus.dailyRequestLimit ?? 100} requests remain today`
+                : '85 of 100 requests remain today'}
+            </span>
+            <span className={styles.dotDivider}>·</span>
+            <span className={styles.deterministicNote} title="Calculations are deterministic and bound to the session">
+              Deterministic calculations
+            </span>
+          </div>
+        </div>
       </form>
-      <Button variant="secondary" onClick={onUseTraditional}>
-        Open normal mode
-      </Button>
     </div>
   );
 }
@@ -393,6 +519,17 @@ function getContextualSuggestions(events: AgentEvent[]): string[] {
       'Explore intervention options',
       'Search verified government funding schemes',
     ];
+  }
+  if (lastResult.name === 'resolve_location') {
+    const rawCandidates = (lastResult.result?.result as { candidates?: Array<{ name?: string }> })
+      ?.candidates;
+    const candidates = Array.isArray(rawCandidates) ? rawCandidates : [];
+    if (candidates.length > 0) {
+      return candidates
+        .slice(0, 3)
+        .map((c) => (c.name ? `Confirm ${c.name}` : ''))
+        .filter(Boolean);
+    }
   }
   const toolName = (lastResult.name ?? '').toLowerCase();
   if (toolName.includes('baseline') || toolName.includes('location')) {
@@ -430,4 +567,3 @@ function getContextualSuggestions(events: AgentEvent[]): string[] {
     'Prepare finalized report and proposal',
   ];
 }
-

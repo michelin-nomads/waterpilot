@@ -10,7 +10,7 @@ import { ErrorState } from '../../components/StatePanel/StatePanel';
 import { useOnlineStatus } from '../../lib/useOnlineStatus';
 import { usePlanningSession } from '../../session/sessionContext';
 import { pathForSessionStage } from '../../shell/stages';
-import { toSessionMode, usePreferredPlanningMode } from '../planning/planningMode';
+import { toSessionMode, usePreferredPlanningMode, type PlanningMode } from '../planning/planningMode';
 import { PlanningGuide } from './PlanningGuide';
 import styles from './Welcome.module.scss';
 
@@ -28,12 +28,12 @@ export default function WelcomePage() {
   const online = useOnlineStatus();
   const navigate = useNavigate();
   const [mode, setMode] = usePreferredPlanningMode();
-  const [starting, setStarting] = useState(false);
+  const [startingMode, setStartingMode] = useState<PlanningMode | null>(null);
   const [startError, setStartError] = useState<string | null>(null);
 
   const start = async (selectedMode = mode) => {
     setMode(selectedMode);
-    setStarting(true);
+    setStartingMode(selectedMode);
     setStartError(null);
     try {
       const started = await session.newReport(toSessionMode(selectedMode));
@@ -44,7 +44,7 @@ export default function WelcomePage() {
         (error.kind === 'method-disabled' || error.kind === 'rate-limited');
       setStartError(paused ? GUEST_PAUSED : START_FAILED);
     } finally {
-      setStarting(false);
+      setStartingMode(null);
     }
   };
 
@@ -89,7 +89,8 @@ export default function WelcomePage() {
                 className={styles.choiceButton}
                 size="lg"
                 endIcon="arrow-right"
-                loading={starting}
+                loading={startingMode === 'agent'}
+                disabled={startingMode !== null && startingMode !== 'agent'}
                 aria-disabled={!online || undefined}
                 aria-describedby={!online ? offlineNoteId : undefined}
                 onClick={() => void start('agent')}
@@ -110,7 +111,8 @@ export default function WelcomePage() {
                 variant="secondary"
                 size="lg"
                 endIcon="arrow-right"
-                loading={starting}
+                loading={startingMode === 'traditional'}
+                disabled={startingMode !== null && startingMode !== 'traditional'}
                 aria-disabled={!online || undefined}
                 aria-describedby={!online ? offlineNoteId : undefined}
                 onClick={() => void start('traditional')}

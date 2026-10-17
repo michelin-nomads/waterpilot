@@ -149,22 +149,22 @@ def _usage(result: Any) -> ModelResponseUsage:
     from google.genai import types
 
     meta = getattr(result, "usage_metadata", None)
-    fields = (
-        "prompt_token_count",
-        "candidates_token_count",
-        "thoughts_token_count",
-        "cached_content_token_count",
-    )
-    if meta is None or any(getattr(meta, n, None) is None for n in fields):
+    if (
+        meta is None
+        or getattr(meta, "prompt_token_count", None) is None
+        or getattr(meta, "candidates_token_count", None) is None
+    ):
         raise ModelCallError("incomplete provider usage")
-    counts = [getattr(meta, n) for n in fields]
-    if any(not isinstance(n, int) or n < 0 for n in counts):
+    prompt = int(meta.prompt_token_count)
+    candidates = int(meta.candidates_token_count)
+    thinking = int(getattr(meta, "thoughts_token_count", 0) or 0)
+    cached = int(getattr(meta, "cached_content_token_count", 0) or 0)
+    if any(n < 0 for n in (prompt, candidates, thinking, cached)):
         raise ModelCallError("invalid provider usage")
-    prompt, candidates, thinking, cached = counts
-    if cached > prompt or (meta.tool_use_prompt_token_count or 0) != 0:
+    if cached > prompt or (getattr(meta, "tool_use_prompt_token_count", None) or 0) != 0:
         raise ModelCallError("unsupported provider billing usage")
     for name in ("prompt_tokens_details", "candidates_tokens_details", "cache_tokens_details"):
-        if any(d.modality != types.Modality.TEXT for d in getattr(meta, name, None) or []):
+        if any(getattr(d, "modality", None) != types.Modality.TEXT for d in getattr(meta, name, None) or []):
             raise ModelCallError("non-text billing usage unsupported")
     if (
         meta.total_token_count is not None

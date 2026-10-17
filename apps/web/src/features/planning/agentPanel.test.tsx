@@ -111,8 +111,7 @@ describe('AgentPanel AI status fallback', () => {
       aiStatus({ available: true, reason: null, budgetConfigured: true, requestsRemaining: 42 });
     renderPanel();
     await panel('available');
-    expect(screen.getByText(/AI help is available/i)).toBeInTheDocument();
     expect(screen.getByText(/gemini-2\.5-flash/i)).toBeInTheDocument();
-    expect(screen.getByText(/42 of 100 requests/i)).toBeInTheDocument();
+    expect(await screen.findByText(/42 of 100 requests/i)).toBeInTheDocument();
   });
 });

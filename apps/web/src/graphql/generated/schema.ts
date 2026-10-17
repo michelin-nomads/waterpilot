@@ -452,6 +452,8 @@ export type CommunityMembersArgs = {
 export type CommunityArea = {
   countryCode: Scalars['String']['output'];
   id: Scalars['ID']['output'];
+  mapLatitude: Scalars['DecimalString']['output'];
+  mapLongitude: Scalars['DecimalString']['output'];
   name: Scalars['String']['output'];
 };
 

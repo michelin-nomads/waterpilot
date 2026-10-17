@@ -15,6 +15,7 @@ interface LocationSearchProps {
   adapter: PlacesAdapter;
   onSelect: (place: Place) => void;
   action?: ReactNode;
+  showHint?: boolean;
 }
 
 function statusText(
@@ -42,7 +43,12 @@ function statusText(
  * Accessible place search (WAI-ARIA combobox with a listbox popup). Accepts any country.
  * Choosing a result opens a review; nothing is saved until the person confirms.
  */
-export function LocationSearch({ adapter, onSelect, action }: LocationSearchProps) {
+export function LocationSearch({
+  adapter,
+  onSelect,
+  action,
+  showHint = true,
+}: LocationSearchProps) {
   const id = useId();
   const listId = `${id}-list`;
   const [text, setText] = useState('');
@@ -99,9 +105,11 @@ export function LocationSearch({ adapter, onSelect, action }: LocationSearchProp
       <label htmlFor={id} className={styles.label}>
         Search for a place
       </label>
-      <p id={`${id}-hint`} className={styles.hint}>
-        Type at least {MIN_CHARS} characters, for example a town, district or neighbourhood.
-      </p>
+      {showHint && (
+        <p id={`${id}-hint`} className={styles.hint}>
+          Type at least {MIN_CHARS} characters, for example a town, district or neighbourhood.
+        </p>
+      )}
       <div className={styles.inputRow}>
         <div className={styles.searchControl}>
           <input
@@ -114,7 +122,7 @@ export function LocationSearch({ adapter, onSelect, action }: LocationSearchProp
             aria-autocomplete="list"
             aria-expanded={expanded}
             aria-controls={listId}
-            aria-describedby={`${id}-hint ${id}-status`}
+            aria-describedby={showHint ? `${id}-hint ${id}-status` : `${id}-status`}
             aria-activedescendant={expanded && active >= 0 ? `${listId}-${active}` : undefined}
             value={text}
             onChange={(e) => {

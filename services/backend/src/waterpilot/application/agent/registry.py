@@ -259,7 +259,22 @@ class UpdateSiteProfileArgs(Frozen):
 
 
 def _inspect_planning_state(rc: RunContext, _: NoArgs) -> Json:
-    return rc.session().model_dump(mode="json")
+    session = rc.session()
+    result = session.model_dump(mode="json")
+    if session.area_id:
+        try:
+            area = rc.services.areas.get(session.area_id, rc.ctx.require_principal().uid)
+            result["location"] = {
+                "name": area.name,
+                "country_code": area.country_code,
+                "timezone": area.timezone,
+                "currency": area.currency,
+                "radius_m": area.radius_m,
+                "formatted_address": area.formatted_address,
+            }
+        except Exception:
+            pass
+    return result
 
 
 def _resolve_location(rc: RunContext, a: ResolveLocationArgs) -> Json:
@@ -271,16 +286,39 @@ def _inspect_coverage(rc: RunContext, _: NoArgs) -> Json:
     area_id = _require_area(session)
     coverage = rc.services.readiness.coverage(rc.ctx, area_id)
     readiness = rc.services.readiness.assess(rc.ctx, area_id, session.id)
-    return {
+    result = {
         "coverage": coverage.model_dump(mode="json"),
         "readiness": readiness.model_dump(mode="json"),
     }
+    try:
+        area = rc.services.areas.get(area_id, rc.ctx.require_principal().uid)
+        result["location"] = {
+            "name": area.name,
+            "country_code": area.country_code,
+            "timezone": area.timezone,
+            "currency": area.currency,
+            "radius_m": area.radius_m,
+            "formatted_address": area.formatted_address,
+        }
+    except Exception:
+        pass
+    return result
 
 
 def _inspect_baseline(rc: RunContext, _: NoArgs) -> Json:
     session = rc.session()
     area_id = _require_area(session)
-    return _baseline_json(rc.services.baseline.baseline(rc.ctx, area_id, session.id))
+    baseline_data = _baseline_json(rc.services.baseline.baseline(rc.ctx, area_id, session.id))
+    try:
+        area = rc.services.areas.get(area_id, rc.ctx.require_principal().uid)
+        baseline_data["location"] = {
+            "name": area.name,
+            "country_code": area.country_code,
+            "currency": area.currency,
+        }
+    except Exception:
+        pass
+    return baseline_data
 
 
 def _check_goal(rc: RunContext, a: GoalArgs) -> Json:
@@ -507,9 +545,13 @@ def _inspect_progress(rc: RunContext, a: ProjectArgs) -> Json:
 
 
 def _confirm_location(rc: RunContext, a: Any) -> Json:
+    clean_id = rc.run_id.replace("-", "_").replace(":", "_")
+    key = f"confirm_loc_{clean_id}"
     area = rc.services.locations.confirm(
-        rc.ctx, a.model_dump(mode="json", exclude_none=True), idempotency_key=f"{rc.run_id}:loc"
+        rc.ctx, a.model_dump(mode="json", exclude_none=True), idempotency_key=key[:128]
     )
+    session = rc.session()
+    rc.services.sessions.update(rc.ctx, session.id, session.version, {"area_id": area.id})
     return area.model_dump(mode="json")
 
 

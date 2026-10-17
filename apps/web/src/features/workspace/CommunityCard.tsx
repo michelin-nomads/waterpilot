@@ -4,7 +4,7 @@ import { Badge } from '../../components/Badge/Badge';
 import { Button, ButtonLink } from '../../components/Button/Button';
 import { Icon } from '../../components/Icon/Icon';
 import type { CommunityItem } from './useCommunityDirectory';
-import styles from './Workspace.module.scss';
+import styles from './CommunityDirectory.module.scss';
 
 interface CommunityCardProps {
   community: CommunityItem;
@@ -28,29 +28,39 @@ export function CommunityCard({
   const href = `/communities/${community.id}`;
   return (
     <li className={styles.card}>
-      <h3 className={styles.cardTitle}>
-        <Link to={href}>{community.name}</Link>
-      </h3>
-      <p className={styles.place}>{community.area?.name ?? 'Area not published'}</p>
-      <ul className={styles.facts}>
-        <li>
-          <Icon name="users" size="sm" />
-          {community.memberCount} {community.memberCount === 1 ? 'member' : 'members'}
-        </li>
-        {distanceMeters !== null && (
-          <li>
+      <div className={styles.art} aria-hidden="true">
+        <Icon name="users" size="lg" />
+      </div>
+      <div className={styles.content}>
+        <h3>
+          <Link to={href}>{community.name}</Link>
+        </h3>
+        <p>{community.description || 'No description provided.'}</p>
+        <div className={styles.facts}>
+          {community.sharedReport && (
+            <span>
+              <Icon name="target" size="sm" />
+              {community.sharedReport.goal.replaceAll('_', ' ').toLowerCase()}
+            </span>
+          )}
+          <span>
+            <Icon name="users" size="sm" />
+            {community.memberCount} {community.memberCount === 1 ? 'member' : 'members'}
+          </span>
+          <span>
             <Icon name="map" size="sm" />
-            {distanceMeters.toLocaleString()} m away
-          </li>
+            {distanceMeters !== null
+              ? `${(distanceMeters / 1000).toLocaleString()} km`
+              : (community.area?.name ?? 'Area not published')}
+          </span>
+        </div>
+        {error && (
+          <p className={styles.error} role="alert">
+            {error}
+          </p>
         )}
-      </ul>
-      <p className={styles.description}>{community.description || 'No description provided.'}</p>
-      {error && (
-        <p className={styles.error} role="alert">
-          {error}
-        </p>
-      )}
-      <div className={styles.cardFooter}>
+      </div>
+      <div className={styles.actions}>
         {archived && (
           <Badge tone="neutral" icon="archive">
             Archived
