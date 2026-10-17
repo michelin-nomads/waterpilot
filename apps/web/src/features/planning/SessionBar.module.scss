@@ -1,6 +1,6 @@
 .bar {
   display: grid;
-  gap: var(--wl-space-2);
+  gap: var(--wp-space-2);
 
   &:empty {
     display: none;
@@ -11,34 +11,34 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--wl-space-2);
+  gap: var(--wp-space-2);
   min-height: 2rem;
   margin: 0;
-  color: var(--wl-color-text-muted);
-  font-size: var(--wl-text-sm);
+  color: var(--wp-color-text-muted);
+  font-size: var(--wp-text-sm);
 
   &[data-save='failed'],
   &[data-save='conflict'] {
-    color: var(--wl-color-text);
+    color: var(--wp-color-text);
   }
 }
 
 .muted {
-  color: var(--wl-color-text-muted);
+  color: var(--wp-color-text-muted);
 }
 
 .choices {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--wl-space-2);
+  gap: var(--wp-space-2);
 }
 
 .message {
   margin: 0;
-  padding: var(--wl-space-2) var(--wl-space-3);
-  border: 1px solid var(--wl-color-danger);
+  padding: var(--wp-space-2) var(--wp-space-3);
+  border: 1px solid var(--wp-color-danger);
   border-inline-start-width: 4px;
-  border-radius: var(--wl-radius-md);
-  background: var(--wl-color-danger-soft);
-  font-size: var(--wl-text-sm);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-color-danger-soft);
+  font-size: var(--wp-text-sm);
 }

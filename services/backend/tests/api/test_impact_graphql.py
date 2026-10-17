@@ -12,14 +12,14 @@ import pytest
 
 from conftest import LOCAL_OK, LoadSettings
 from graphql_harness import AREA_ID, NOW, TOKENS, Harness, make_harness
-from waterlens.application.identity import RequestContext
-from waterlens.application.jobs.proposals import proposal_inputs
-from waterlens.application.tools import options as tools
-from waterlens.domain import geo
-from waterlens.domain.communities import Community
-from waterlens.domain.ids import IdKind, new_id
-from waterlens.domain.impact import ConnectivityEvidence
-from waterlens.domain.reports import Proposal, ProposalSection
+from waterpilot.application.identity import RequestContext
+from waterpilot.application.jobs.proposals import proposal_inputs
+from waterpilot.application.tools import options as tools
+from waterpilot.domain import geo
+from waterpilot.domain.communities import Community
+from waterpilot.domain.ids import IdKind, new_id
+from waterpilot.domain.impact import ConnectivityEvidence
+from waterpilot.domain.reports import Proposal, ProposalSection
 
 TOKEN = "t-alice"
 OTHER_AREA = "are_OTHERWARDOTHERWARDOTHERWA"
@@ -298,7 +298,7 @@ def test_the_chosen_option_keeps_its_assessment_and_provenance(h: Harness) -> No
         updated_at=NOW,
     )
     inputs = proposal_inputs(stored_report, proposal)
-    assert inputs["schema"] == "waterlens.proposal-inputs/2"
+    assert inputs["schema"] == "waterpilot.proposal-inputs/2"
     assert "wider_impact" in inputs["sections"]  # type: ignore[operator]
     impact = inputs["report"]["impact"]  # type: ignore[index,call-overload]
     assert impact["wider"]["id"] == shown["id"]

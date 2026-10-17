@@ -1,81 +1,81 @@
 .agent {
   display: grid;
   align-content: start;
-  gap: var(--wl-card-section-gap);
+  gap: var(--wp-card-section-gap);
 }
 
 .header {
   display: flex;
   align-items: center;
-  gap: var(--wl-space-2);
-  color: var(--wl-color-accent);
+  gap: var(--wp-space-2);
+  color: var(--wp-color-accent);
 }
 
 .title {
   flex: 1;
-  font-size: var(--wl-text-lg);
-  color: var(--wl-color-text);
+  font-size: var(--wp-text-lg);
+  color: var(--wp-color-text);
 }
 
 .guidance {
   margin: 0;
-  color: var(--wl-color-text-muted);
-  font-size: var(--wl-text-sm);
+  color: var(--wp-color-text-muted);
+  font-size: var(--wp-text-sm);
 }
 
 .conversation {
   display: grid;
-  gap: var(--wl-card-body-gap);
+  gap: var(--wp-card-body-gap);
   min-width: 0;
   form {
     display: grid;
-    gap: var(--wl-space-2);
+    gap: var(--wp-space-2);
   }
 }
 .messages {
   display: grid;
-  gap: var(--wl-space-3);
+  gap: var(--wp-space-3);
   overflow-wrap: anywhere;
   min-width: 0;
 
   > p {
     margin: 0;
-    padding: var(--wl-space-3) var(--wl-space-4);
-    border: 1px solid var(--wl-color-border);
-    border-radius: var(--wl-radius-md);
-    background: var(--wl-color-surface-sunken);
+    padding: var(--wp-space-3) var(--wp-space-4);
+    border: 1px solid var(--wp-color-border);
+    border-radius: var(--wp-radius-md);
+    background: var(--wp-color-surface-sunken);
   }
 }
 
 .messages > .userMessage {
   justify-self: end;
   max-width: 92%;
-  border-color: var(--wl-color-accent);
-  background: var(--wl-color-accent-soft);
-  color: var(--wl-color-text);
+  border-color: var(--wp-color-accent);
+  background: var(--wp-color-accent-soft);
+  color: var(--wp-color-text);
 }
 
 .messages > .assistantMessage {
   justify-self: start;
   max-width: 100%;
-  background: var(--wl-color-surface);
+  background: var(--wp-color-surface);
 }
 
 .composer {
   position: sticky;
   z-index: 1;
   bottom: 0;
-  padding-block: var(--wl-space-3);
-  border-top: 1px solid var(--wl-color-border);
-  background: var(--wl-color-bg);
+  padding-block: var(--wp-space-3);
+  border-top: 1px solid var(--wp-color-border);
+  background: var(--wp-color-bg);
 }
 .result {
-  border: 1px solid var(--wl-color-border);
-  border-radius: var(--wl-radius-md);
+  border: 1px solid var(--wp-color-border);
+  border-radius: var(--wp-radius-md);
   display: grid;
-  gap: var(--wl-card-body-gap);
+  gap: var(--wp-card-body-gap);
   min-width: 0;
-  padding: var(--wl-card-padding-compact);
+  padding: var(--wp-card-padding-compact);
   margin: 0;
 
   > h3,
@@ -87,7 +87,7 @@
     max-height: 20rem;
     overflow: auto;
     display: grid;
-    gap: var(--wl-space-2);
+    gap: var(--wp-space-2);
     margin: 0;
   }
   dt {

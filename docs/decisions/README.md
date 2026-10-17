@@ -1,7 +1,7 @@
 # Architecture Decision Records (ADRs)
 
-This folder records WaterLens architecture decisions. The stack and boundaries are
-fixed by `docs/WaterLens-HLD.md` and `docs/WaterLens-Cursor-Build-Guide.md`. **Any
+This folder records WaterPilot architecture decisions. The stack and boundaries are
+fixed by `docs/WaterPilot-HLD.md` and `docs/WaterPilot-Cursor-Build-Guide.md`. **Any
 change to those fixed decisions must be captured as an ADR here before the code
 changes — the stack is never changed silently.** Explicit later user decisions take
 precedence over the guide and must also be recorded as an ADR.

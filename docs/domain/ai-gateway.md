@@ -2,8 +2,8 @@
 
 Reference for the AI subsystem:
 
-- policy, metadata and records: `services/backend/src/waterlens/domain/ai.py`
-- the gateway: `services/backend/src/waterlens/application/services/ai.py` (`ai-gateway-1`)
+- policy, metadata and records: `services/backend/src/waterpilot/domain/ai.py`
+- the gateway: `services/backend/src/waterpilot/application/services/ai.py` (`ai-gateway-1`)
 - provider port and implementations: `application/ports.py`,
   `adapters/model_fake.py`, `adapters/model_vertex.py`
 
@@ -39,7 +39,7 @@ committed-use discount, no permanent free tier**.
 | `gemini-3.8-flash` | global   | 0.75  | 3.75   | 0.075        | 0.15      | current latest; introductory through 2026-12-31 (then 1.50 / 7.50) |
 
 SDK: **`google-genai`** (`from google import genai`; `Client(vertexai=True, …)`). The model
-is configurable (`WL_AI_MODEL`), defaulting to the stable (non-introductory)
+is configurable (`WP_AI_MODEL`), defaulting to the stable (non-introductory)
 `gemini-2.5-flash`.
 
 ## Arithmetic conventions
@@ -62,20 +62,20 @@ retries + 1`, and each attempt re-sends the input and may emit the full output, 
 `output` already includes thinking tokens; `thinking_tokens` is kept only as information.
 `settled (actual)` sums tokens across every billable attempt (a retried attempt is counted).
 
-## Limits (proposed defaults — `AiLimits`, overridable via `WL_AI_*`)
+## Limits (proposed defaults — `AiLimits`, overridable via `WP_AI_*`)
 
 | Limit                       | Default | Setting                                           |
 | --------------------------- | ------- | ------------------------------------------------- |
-| daily requests / project    | 100     | `WL_AI_DAILY_REQUEST_LIMIT`                       |
+| daily requests / project    | 100     | `WP_AI_DAILY_REQUEST_LIMIT`                       |
 | active runs / session       | 1       | (fixed)                                           |
-| calls / run before Continue | 5       | `WL_AI_MAX_CALLS_PER_RUN`                         |
+| calls / run before Continue | 5       | `WP_AI_MAX_CALLS_PER_RUN`                         |
 | hard calls / run (absolute) | 20      | (derived)                                         |
-| transient retries           | 2       | `WL_AI_TRANSIENT_RETRIES`                         |
-| request timeout (s)         | 30      | `WL_AI_REQUEST_TIMEOUT_SECONDS`                   |
-| reservation TTL (s)         | 300     | `WL_AI_RESERVATION_TTL_SECONDS`                   |
-| max input tokens            | 48,000  | `WL_AI_MAX_INPUT_TOKENS`                          |
-| default max output tokens   | 1,024   | `WL_AI_MAX_OUTPUT_TOKENS`                         |
-| suggested daily budget      | $5      | `WL_AI_DAILY_BUDGET_USD` (**no budget → AI off**) |
+| transient retries           | 2       | `WP_AI_TRANSIENT_RETRIES`                         |
+| request timeout (s)         | 30      | `WP_AI_REQUEST_TIMEOUT_SECONDS`                   |
+| reservation TTL (s)         | 300     | `WP_AI_RESERVATION_TTL_SECONDS`                   |
+| max input tokens            | 48,000  | `WP_AI_MAX_INPUT_TOKENS`                          |
+| default max output tokens   | 1,024   | `WP_AI_MAX_OUTPUT_TOKENS`                         |
+| suggested daily budget      | $5      | `WP_AI_DAILY_BUDGET_USD` (**no budget → AI off**) |
 
 Per-task output caps (`TASK_OUTPUT_LIMIT`): goal/scenario interpretation 512, option
 explanation / impact summary 1,024, proposal narrative 2,048. A request over a cap is

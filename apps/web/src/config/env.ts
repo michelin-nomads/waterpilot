@@ -8,7 +8,7 @@ import { z } from 'zod';
  * still applies.
  *
  * Local mode: emulators required; the API must be a loopback http(s) URL; Firebase is
- * the `demo-waterlens` project on a loopback Auth emulator (no real Firebase project).
+ * the `demo-waterpilot` project on a loopback Auth emulator (no real Firebase project).
  * Pilot mode: emulators forbidden; an explicit, non-loopback https API URL and the
  * real project's public Firebase web config are required. The Google Maps browser key,
  * like the Firebase web key, is a public identifier: it is protected by HTTP-referrer
@@ -32,7 +32,7 @@ const ALLOWED_VITE_KEYS: ReadonlySet<string> = new Set(
 );
 
 const LOCAL_DEFAULT_API_BASE_URL = 'http://127.0.0.1:8000';
-export const LOCAL_FIREBASE_PROJECT_ID = 'demo-waterlens';
+export const LOCAL_FIREBASE_PROJECT_ID = 'demo-waterpilot';
 const LOCAL_DEFAULT_AUTH_EMULATOR_HOST = '127.0.0.1:9099';
 // The emulator accepts any API key; this one only identifies the demo project locally.
 const LOCAL_FIREBASE_API_KEY = 'demo-api-key';

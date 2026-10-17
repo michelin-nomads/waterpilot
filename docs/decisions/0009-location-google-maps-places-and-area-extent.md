@@ -35,10 +35,10 @@ behind an adapter so tests make no calls. It asks for:
    | Mode                   | Web adapter                                                      | Backend `PlaceSearch`                                                                                              |
    | ---------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
    | Local                  | `serverPlaces('fixture')`: GraphQL to the API, no map            | `FixturePlaceSearch` (labelled gazetteer JSON)                                                                     |
-   | Pilot with browser key | `googlePlaces`: Maps JS + Places (New) + Geocoder in the browser | `GooglePlaceSearch` only if `WL_PLACES_SERVER_KEY` is set                                                          |
+   | Pilot with browser key | `googlePlaces`: Maps JS + Places (New) + Geocoder in the browser | `GooglePlaceSearch` only if `WP_PLACES_SERVER_KEY` is set                                                          |
    | Pilot without key      | `serverPlaces('server')`, no map                                 | Otherwise `NoPlaceSearch("google")`: no server lookups, but confirmations of browser Google place ids are accepted |
 
-   Local mode refuses `VITE_GOOGLE_MAPS_*` (web) and `WL_PLACES_SERVER_KEY` (API), so it
+   Local mode refuses `VITE_GOOGLE_MAPS_*` (web) and `WP_PLACES_SERVER_KEY` (API), so it
    can never call Google. Tests inject fakes: a fake `PlacesAdapter`, a fake
    `google.maps` namespace and an `httpx.MockTransport`. The end-to-end suite aborts any
    request to a Google host.
@@ -54,7 +54,7 @@ behind an adapter so tests make no calls. It asks for:
    - The script is loaded on demand (`loading=async`, `v=weekly`, with a callback) when
      the location step mounts, never at app start. Loading times out after 10 s, and
      `gm_authFailure` (rejected key) turns into the map-unavailable fallback.
-   - The server key (`WL_PLACES_SERVER_KEY`) is a secret. It is used only by the API's
+   - The server key (`WP_PLACES_SERVER_KEY`) is a secret. It is used only by the API's
      Text Search (agent and fallback search) and must be IP- or service-restricted.
 3. **Places practice.**
    - One `AutocompleteSessionToken` covers the keystrokes of one search and the Place

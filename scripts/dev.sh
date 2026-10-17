@@ -67,7 +67,7 @@ for port in $PORTS; do
   fi
 done
 
-start "Firebase emulators (Auth 9099, Firestore 8080, UI 4000; demo-waterlens)" npm run emulators
+start "Firebase emulators (Auth 9099, Firestore 8080, UI 4000; demo-waterpilot)" npm run emulators
 start "FastAPI API (http://127.0.0.1:8000)" npm run dev:api
 start "Vite web dev server (http://127.0.0.1:5173)" npm run dev:web
 

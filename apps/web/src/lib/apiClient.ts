@@ -1,5 +1,5 @@
 import axios, { type AxiosInstance } from 'axios';
-import type { paths } from '@waterlens/contracts';
+import type { paths } from '@waterpilot/contracts';
 
 import { env } from '../config/env';
 import { getAuthToken } from './authToken';

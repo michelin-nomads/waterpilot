@@ -54,6 +54,7 @@ export class FakeSessionServer {
       goal: null,
       scenario: null,
       selectedPlanOptionId: null,
+      siteProfile: null,
       inputsRevision: 0,
       updatedAt: new Date(0).toISOString(),
       ...overrides,

@@ -47,8 +47,8 @@ function JobBody({ jobId }: { jobId: string }) {
         icon="list"
         title="We could not find this task"
         actions={
-          <ButtonLink to="/dashboard" variant="secondary">
-            Go to dashboard
+          <ButtonLink to="/reports" variant="secondary">
+            Go to your workspace
           </ButtonLink>
         }
       >

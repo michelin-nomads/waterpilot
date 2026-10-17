@@ -2,13 +2,13 @@
 
 .form {
   display: grid;
-  gap: var(--wl-card-section-gap);
+  gap: var(--wp-card-section-gap);
 }
 
 .fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--wl-card-body-gap) var(--wl-space-4);
+  gap: var(--wp-card-body-gap) var(--wp-space-4);
 }
 
 .method,
@@ -16,11 +16,11 @@
   @include card;
 
   display: grid;
-  gap: var(--wl-space-2);
+  gap: var(--wp-space-2);
 }
 
 .method summary {
-  min-height: var(--wl-tap-target);
+  min-height: var(--wp-tap-target);
   align-content: center;
   font-weight: 600;
   cursor: pointer;
@@ -33,17 +33,17 @@
 .method p,
 .result p {
   margin: 0;
-  color: var(--wl-color-text-muted);
+  color: var(--wp-color-text-muted);
 }
 
 .result h2 {
   margin: 0;
-  font-size: var(--wl-text-lg);
+  font-size: var(--wp-text-lg);
 }
 
 .error {
   margin: 0;
-  color: var(--wl-color-danger-text);
+  color: var(--wp-color-danger-text);
 }
 
 @media (max-width: 48rem) {

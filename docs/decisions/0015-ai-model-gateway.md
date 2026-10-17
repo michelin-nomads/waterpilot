@@ -68,7 +68,7 @@ project=…, location=…)`).
 These figures are **published list prices read from the pages above** — not a statement
 about this project. **Project access, quota and model enablement are UNVERIFIED** against a
 live Google Cloud project, because none is provisioned (see "Live-smoke prerequisites"). The
-model is configurable (`WL_AI_MODEL`), so the owner records the exact id they enable.
+model is configurable (`WP_AI_MODEL`), so the owner records the exact id they enable.
 
 ### 2. A model provider port with three implementations
 
@@ -142,7 +142,7 @@ everywhere as estimates, **not an invoice**.
 
 ### 4. Configuration is fail-closed and owner-driven
 
-`config.py` adds `WL_AI_*` settings, all defaulting to **off**: `ai_enabled`,
+`config.py` adds `WP_AI_*` settings, all defaulting to **off**: `ai_enabled`,
 `ai_kill_switch`, `ai_open_to_all`, `ai_invited_testers`, `ai_model`, `ai_location`,
 `ai_daily_budget_usd` (**no budget → AI disabled**), and the numeric limits. The $5 allowance
 is `SUGGESTED_DAILY_BUDGET_USD`, surfaced to the owner but never applied automatically. The
@@ -162,16 +162,16 @@ AI is available.
 ## Live-smoke prerequisites (for a later, explicitly authorized run)
 
 The gated smoke `tests/live/test_vertex_ai_live.py` (`-m live`, skipped unless
-`WL_LIVE_VERTEX_PROJECT` is set) is the only test that may call Vertex, and it was **not**
+`WP_LIVE_VERTEX_PROJECT` is set) is the only test that may call Vertex, and it was **not**
 run. Before an authorized run the operator must have, outside this repository:
 
 - a real Google Cloud project with the **Vertex AI API enabled** and **billing attached**;
 - **Application Default Credentials** for a **dedicated runtime service account** with
   `roles/aiplatform.user` (never a developer credential, never an API key);
 - the chosen model **enabled** for the project (`gemini-2.5-flash` is restricted for new
-  projects; otherwise set `WL_LIVE_VERTEX_MODEL`);
-- the `google-genai` SDK installed, and `WL_LIVE_VERTEX_PROJECT` (and optionally
-  `WL_LIVE_VERTEX_LOCATION`, default `global`) set in the shell.
+  projects; otherwise set `WP_LIVE_VERTEX_MODEL`);
+- the `google-genai` SDK installed, and `WP_LIVE_VERTEX_PROJECT` (and optionally
+  `WP_LIVE_VERTEX_LOCATION`, default `global`) set in the shell.
 
 Nothing in this prompt provisions, deploys, enables billing or spends.
 

@@ -1,0 +1,31 @@
+.tile {
+  display: block;
+  width: 100%;
+  aspect-ratio: 160 / 100;
+  border-radius: var(--wp-radius-md);
+}
+
+.ground {
+  fill: var(--wp-color-surface-sunken);
+}
+
+.grid {
+  stroke: var(--wp-color-border);
+  stroke-width: 1;
+  opacity: 0.7;
+}
+
+.extent {
+  fill: color-mix(in srgb, var(--wp-color-accent) 22%, transparent);
+  stroke: var(--wp-color-accent-strong);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.pin {
+  fill: var(--wp-color-accent-strong);
+}
+
+.pinCore {
+  fill: var(--wp-color-on-accent);
+}

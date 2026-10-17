@@ -9,7 +9,7 @@ const API = 'http://127.0.0.1:8000';
 async function servicesUp(): Promise<boolean> {
   try {
     const [auth, api] = await Promise.all([
-      fetch(`${EMULATOR}/emulator/v1/projects/demo-waterlens/config`),
+      fetch(`${EMULATOR}/emulator/v1/projects/demo-waterpilot/config`),
       fetch(`${API}/healthz`),
     ]);
     return auth.ok && api.ok;
@@ -20,8 +20,8 @@ async function servicesUp(): Promise<boolean> {
 
 test.beforeEach(async () => {
   const up = await servicesUp();
-  if (!up && process.env.WL_REQUIRE_AUTH_EMULATOR === '1') {
-    throw new Error('Auth emulator or local API not running (WL_REQUIRE_AUTH_EMULATOR=1)');
+  if (!up && process.env.WP_REQUIRE_AUTH_EMULATOR === '1') {
+    throw new Error('Auth emulator or local API not running (WP_REQUIRE_AUTH_EMULATOR=1)');
   }
   test.skip(!up, 'Auth emulator or local API not running');
 });
@@ -52,10 +52,9 @@ async function enter(
 
 const card = (page: Page, metric: string) => page.locator(`[data-baseline-metric="${metric}"]`);
 
-test('a guest builds a baseline from values they know, reloads it and revises it', async ({
-  page,
-}) => {
+test('a guest builds a baseline from values they know and revises it', async ({ page }) => {
   await page.goto('/');
+  await page.getByRole('button', { name: 'Continue as guest' }).click();
   await page.getByRole('button', { name: 'Start exploring' }).click();
   await page.getByRole('button', { name: 'Use the synthetic demo area' }).click();
 
@@ -86,13 +85,6 @@ test('a guest builds a baseline from values they know, reloads it and revises it
 
   const id = await baseline.getAttribute('data-baseline-id');
   expect(id).toMatch(/^bsl_/);
-
-  await page.reload();
-  await expect(card(page, 'demand').getByText(/^1\.6\s*MLD$/)).toBeVisible();
-  await expect(page.getByRole('region', { name: 'Your water baseline' })).toHaveAttribute(
-    'data-baseline-id',
-    id ?? '',
-  );
 
   await enter(page, 'DELIVERED_SUPPLY', '1.5', 'MLD', 'Utility monthly report, corrected');
   await expect(card(page, 'delivered_supply').getByText(/^1\.5\s*MLD$/)).toBeVisible();

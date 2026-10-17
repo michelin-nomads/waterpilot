@@ -1,6 +1,6 @@
 # Economics engine — rules
 
-Reference for `services/backend/src/waterlens/domain/economics.py` (`economics-1`).
+Reference for `services/backend/src/waterpilot/domain/economics.py` (`economics-1`).
 Decision record: ADR 0014. The economic method here is **proposed** until domain review;
 the arithmetic and boundary handling are not in question. Changing a rule means changing
 the code, bumping the engine version and updating `tests/domain/test_economics.py` and

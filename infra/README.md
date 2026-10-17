@@ -23,7 +23,7 @@ applied automatically. Before setting either key, an owner should:
    - This key is public by design: it is bundled into the web app.
 2. Optionally create a **Map ID** (`VITE_GOOGLE_MAPS_MAP_ID`) for vector maps and
    advanced markers.
-3. Create a **server key** for `WL_PLACES_SERVER_KEY`, only if server-side search is
+3. Create a **server key** for `WP_PLACES_SERVER_KEY`, only if server-side search is
    wanted (agent and fallback search):
    - **API restriction:** Places API (New) only.
    - Restrict it to the API's service account or egress, and store it in Secret Manager.
@@ -87,7 +87,7 @@ before enabling):
   removed later by enabling the policy.
 
 Local development uses the Firebase Emulator Suite (Auth + Firestore) with the demo
-project `demo-waterlens`; see the root `README.md`. The emulator does not run TTL
+project `demo-waterpilot`; see the root `README.md`. The emulator does not run TTL
 deletion.
 
 ## Bounded pilot capacity (proposal only)
@@ -169,7 +169,7 @@ residency or real service availability.
 
 `services/backend/Dockerfile` builds the API and worker from one image using Python
 3.12.15, uv 0.13.0 and the committed `services/backend/uv.lock`; the worker overrides
-the image command to run `waterlens.worker.asgi:app`. `services/backend/.dockerignore`
+the image command to run `waterpilot.worker.asgi:app`. `services/backend/.dockerignore`
 excludes local credentials, test files and emulator state. Python dependencies are
 installed without development extras. For a real release, pin both base-image references
 to reviewed immutable digests and record the image digest. The web build uses the pinned
@@ -178,7 +178,7 @@ workspace `package-lock.json` and npm 11.19.0.
 `infra/deployment/pilot.env.example.yaml` is a non-secret Cloud Run environment template.
 Copy it to ignored `infra/deployment/pilot.env.yaml`, replace every `REPLACE_` value,
 review the exact CORS origins and invoker emails, and pass that local file to the future
-`gcloud run deploy` commands. `WL_PLACES_SERVER_KEY`, if needed, comes from Secret
+`gcloud run deploy` commands. `WP_PLACES_SERVER_KEY`, if needed, comes from Secret
 Manager and is not in that file. Firebase web config is public and is supplied only as
 the allowlisted `VITE_*` build variables; no runtime service-account key or Vertex key
 belongs in the browser or the repo. The pilot template keeps AI disabled, the kill
@@ -194,16 +194,16 @@ shell first:
 ```bash
 export PROJECT_ID='owner-supplied-project-id'
 export REGION='asia-south1'
-export REPOSITORY='waterlens'
-export BUCKET="${PROJECT_ID}-waterlens-artifacts"
-export IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/waterlens-backend:OWNER_REVIEWED_COMMIT"
-export API_SERVICE='waterlens-api'
-export WORKER_SERVICE='waterlens-worker'
-export API_SA="wl-api@${PROJECT_ID}.iam.gserviceaccount.com"
-export WORKER_SA="wl-worker@${PROJECT_ID}.iam.gserviceaccount.com"
-export TASKS_SA="wl-task-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
-export EVENTARC_SA="wl-eventarc-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
-export SCHEDULER_SA="wl-scheduler-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
+export REPOSITORY='waterpilot'
+export BUCKET="${PROJECT_ID}-waterpilot-artifacts"
+export IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/waterpilot-backend:OWNER_REVIEWED_COMMIT"
+export API_SERVICE='waterpilot-api'
+export WORKER_SERVICE='waterpilot-worker'
+export API_SA="wp-api@${PROJECT_ID}.iam.gserviceaccount.com"
+export WORKER_SA="wp-worker@${PROJECT_ID}.iam.gserviceaccount.com"
+export TASKS_SA="wp-task-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
+export EVENTARC_SA="wp-eventarc-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
+export SCHEDULER_SA="wp-scheduler-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
 ```
 
 Before enabling APIs or creating anything, complete these checks manually:
@@ -243,11 +243,11 @@ gcloud firestore databases create --database='(default)' --location="$REGION" \
   --type=firestore-native --edition=standard --delete-protection --project="$PROJECT_ID"
 
 gcloud artifacts repositories create "$REPOSITORY" --repository-format=docker \
-  --location="$REGION" --description='WaterLens reviewed runtime images' --project="$PROJECT_ID"
+  --location="$REGION" --description='WaterPilot reviewed runtime images' --project="$PROJECT_ID"
 gcloud storage buckets create "gs://$BUCKET" --location="$REGION" \
   --uniform-bucket-level-access --public-access-prevention=enforced --project="$PROJECT_ID"
 
-for account in wl-api wl-worker wl-task-invoker wl-eventarc-invoker wl-scheduler-invoker; do
+for account in wp-api wp-worker wp-task-invoker wp-eventarc-invoker wp-scheduler-invoker; do
   gcloud iam service-accounts create "$account" --project="$PROJECT_ID"
 done
 
@@ -271,13 +271,13 @@ default Compute service account as a runtime identity. Grant a deployer only the
 Cloud Run/Hosting/Firestore/Artifact Registry administration roles and
 `roles/iam.serviceAccountUser` on these runtime accounts; do not give it Owner or Editor.
 
-| Identity               | Resource-scoped grants after review                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `wl-api`               | Firestore `roles/datastore.user`; custom `WaterLens Firebase Token Revocation Check` role (`infra/deployment/firebase-auth-verifier-role.yaml`) on the project (`firebaseauth.users.get` for `check_revoked=True`); Cloud Tasks `roles/cloudtasks.enqueuer` on the one jobs queue; custom `WaterLens API Private Artifact Access` role (`infra/deployment/artifact-api-role.yaml`) on the one bucket (`get` for private downloads, `create` for permitted curator uploads); `roles/secretmanager.secretAccessor` on the Places key only if enabled; `roles/aiplatform.user` only after an explicit AI allowance and live-model approval. |
-| `wl-worker`            | Firestore `roles/datastore.user`; Cloud Tasks `roles/cloudtasks.enqueuer` on the one queue for reconciliation; custom `WaterLens Private Artifact Worker` role (`infra/deployment/artifact-worker-role.yaml`) on the one bucket. It does not need Vertex or Places access.                                                                                                                                                                                                                                                                                                                                                               |
-| `wl-task-invoker`      | `roles/run.invoker` on `waterlens-worker` only. API and worker need `roles/iam.serviceAccountUser` on this account to mint per-task OIDC identity; the Cloud Tasks service agent also needs Service Account User on it.                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| `wl-eventarc-invoker`  | `roles/run.invoker` on `waterlens-worker` only; bind as Eventarc trigger identity and allowlist it in `WL_WORKER_INVOKERS`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| `wl-scheduler-invoker` | `roles/run.invoker` on `waterlens-worker` only; bind to the reconcile schedule and allowlist it in `WL_WORKER_INVOKERS`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| Identity               | Resource-scoped grants after review                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `wp-api`               | Firestore `roles/datastore.user`; custom `WaterPilot Firebase Token Revocation Check` role (`infra/deployment/firebase-auth-verifier-role.yaml`) on the project (`firebaseauth.users.get` for `check_revoked=True`); Cloud Tasks `roles/cloudtasks.enqueuer` on the one jobs queue; custom `WaterPilot API Private Artifact Access` role (`infra/deployment/artifact-api-role.yaml`) on the one bucket (`get` for private downloads, `create` for permitted curator uploads); `roles/secretmanager.secretAccessor` on the Places key only if enabled; `roles/aiplatform.user` only after an explicit AI allowance and live-model approval. |
+| `wp-worker`            | Firestore `roles/datastore.user`; Cloud Tasks `roles/cloudtasks.enqueuer` on the one queue for reconciliation; custom `WaterPilot Private Artifact Worker` role (`infra/deployment/artifact-worker-role.yaml`) on the one bucket. It does not need Vertex or Places access.                                                                                                                                                                                                                                                                                                                                                                |
+| `wp-task-invoker`      | `roles/run.invoker` on `waterpilot-worker` only. API and worker need `roles/iam.serviceAccountUser` on this account to mint per-task OIDC identity; the Cloud Tasks service agent also needs Service Account User on it.                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `wp-eventarc-invoker`  | `roles/run.invoker` on `waterpilot-worker` only; bind as Eventarc trigger identity and allowlist it in `WP_WORKER_INVOKERS`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `wp-scheduler-invoker` | `roles/run.invoker` on `waterpilot-worker` only; bind to the reconcile schedule and allowlist it in `WP_WORKER_INVOKERS`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 
 The two custom artifact roles also need to exist in the project before they can be granted.
 Create the role definitions from the checked-in YAML, then grant each role only on this
@@ -292,8 +292,8 @@ their Google-managed service-agent roles.
 #### Runtime deployment and routing
 
 First deploy the API and worker from the same immutable image and environment template.
-After creating the worker, set its actual default `run.app` origin as `WL_WORKER_URL` and
-`WL_WORKER_AUDIENCE` in the template; redeploy the API/worker after checking it. Use
+After creating the worker, set its actual default `run.app` origin as `WP_WORKER_URL` and
+`WP_WORKER_AUDIENCE` in the template; redeploy the API/worker after checking it. Use
 separate service identities and never copy a service-account key into an environment
 variable. The API needs internet ingress and unauthenticated Cloud Run invocation so a
 browser can reach it; every data route still requires the verified Firebase bearer token,
@@ -303,7 +303,7 @@ the worker IAM-private.
 ```bash
 gcloud run deploy "$WORKER_SERVICE" --project="$PROJECT_ID" --region="$REGION" \
   --image="$IMAGE" --command=uvicorn \
-  --args=waterlens.worker.asgi:app,--host,0.0.0.0,--port,8080 \
+  --args=waterpilot.worker.asgi:app,--host,0.0.0.0,--port,8080 \
   --service-account="$WORKER_SA" --port=8080 --cpu=1 --memory=1Gi \
   --concurrency=1 --min=0 --max=1 --timeout=600s --no-allow-unauthenticated \
   --env-vars-file=infra/deployment/pilot.env.yaml
@@ -349,7 +349,7 @@ npm exec -- firebase deploy --only firestore:rules,firestore:indexes,hosting \
 ```
 
 `firebase.json` now configures `apps/web/dist` as the SPA Hosting root, a push-state
-fallback and basic security/cache headers. The API's `WL_ALLOWED_ORIGINS` must list exact
+fallback and basic security/cache headers. The API's `WP_ALLOWED_ORIGINS` must list exact
 origins without paths or trailing slashes: default `https://PROJECT_ID.web.app`,
 `https://PROJECT_ID.firebaseapp.com`, and only approved custom domains. Firebase Hosting
 domain variants both serve the same site; keep both configured if both are used. The
@@ -368,11 +368,11 @@ Eventarc delivery attempt. Create a five-minute Scheduler job for bounded outbox
 reconciliation using its separate OIDC invoker identity:
 
 ```bash
-gcloud tasks queues create waterlens-jobs --project="$PROJECT_ID" --location="$REGION" \
+gcloud tasks queues create waterpilot-jobs --project="$PROJECT_ID" --location="$REGION" \
   --max-dispatches-per-second=2 --max-concurrent-dispatches=2 \
   --max-attempts=8 --min-backoff=5s --max-backoff=300s --max-doublings=5
 
-gcloud eventarc triggers create waterlens-outbox --project="$PROJECT_ID" \
+gcloud eventarc triggers create waterpilot-outbox --project="$PROJECT_ID" \
   --location="$REGION" --destination-run-service="$WORKER_SERVICE" \
   --destination-run-region="$REGION" --destination-run-path=/internal/outbox/events \
   --event-filters='type=google.cloud.firestore.document.v1.created' \
@@ -381,7 +381,7 @@ gcloud eventarc triggers create waterlens-outbox --project="$PROJECT_ID" \
   --event-data-content-type=application/protobuf --max-retry-attempts=1 \
   --service-account="$EVENTARC_SA"
 
-gcloud scheduler jobs create http waterlens-reconcile --project="$PROJECT_ID" \
+gcloud scheduler jobs create http waterpilot-reconcile --project="$PROJECT_ID" \
   --location="$REGION" --schedule='*/5 * * * *' --time-zone=Etc/UTC \
   --uri="$WORKER_URL/internal/outbox/reconcile" --http-method=POST \
   --message-body='{}' --attempt-deadline=60s --max-retry-attempts=2 \
@@ -390,9 +390,9 @@ gcloud scheduler jobs create http waterlens-reconcile --project="$PROJECT_ID" \
 ```
 
 The Cloud Tasks OIDC audience is the worker origin configured in
-`WL_WORKER_AUDIENCE`. In IAM, give the Cloud Tasks service agent `roles/iam.serviceAccountUser`
-on `wl-task-invoker`, grant that identity `roles/run.invoker` only on the worker, and
-allowlist exactly the task, Eventarc and Scheduler identities in `WL_WORKER_INVOKERS`.
+`WP_WORKER_AUDIENCE`. In IAM, give the Cloud Tasks service agent `roles/iam.serviceAccountUser`
+on `wp-task-invoker`, grant that identity `roles/run.invoker` only on the worker, and
+allowlist exactly the task, Eventarc and Scheduler identities in `WP_WORKER_INVOKERS`.
 Eventarc's trigger service account needs `roles/eventarc.eventReceiver` and worker invoker;
 the Eventarc service agent retains its Google-managed role. Verify `ce-subject` matches
 `documents/jobOutbox/<id>` as expected by the worker. The API/worker are separate
@@ -406,13 +406,13 @@ retention table above. In particular unresolved `usageReservations` have no expi
 must not be deleted; TTL is cleanup only, not correctness or retention policy.
 
 If Places API server search is approved, create a Secret Manager secret and grant
-`roles/secretmanager.secretAccessor` to `wl-api` on that one secret; use Cloud Run's
-`--set-secrets=WL_PLACES_SERVER_KEY=places-server-key:VERSION`. No secret is required for
+`roles/secretmanager.secretAccessor` to `wp-api` on that one secret; use Cloud Run's
+`--set-secrets=WP_PLACES_SERVER_KEY=places-server-key:VERSION`. No secret is required for
 Firebase ID token verification or Vertex; both use workload ADC. Vertex is not enabled by
-this template. Only after owner approval: set `WL_AI_ENABLED=true`, `WL_AI_KILL_SWITCH=false`,
-keep `WL_AI_OPEN_TO_ALL=false`, set explicit invited tester UIDs, choose a currently
+this template. Only after owner approval: set `WP_AI_ENABLED=true`, `WP_AI_KILL_SWITCH=false`,
+keep `WP_AI_OPEN_TO_ALL=false`, set explicit invited tester UIDs, choose a currently
 available model and location, and set the exact positive
-`WL_AI_DAILY_BUDGET_USD`. Grant `roles/aiplatform.user` only to `wl-api`, set project/model
+`WP_AI_DAILY_BUDGET_USD`. Grant `roles/aiplatform.user` only to `wp-api`, set project/model
 quotas, and verify the app reservation limit and kill switch before one paid call. The
 budget is an internal application allowance, not a provider hard cap; Cloud Billing
 budgets only alert.

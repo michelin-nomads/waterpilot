@@ -2,8 +2,8 @@
 
 The API constructs the actual `google-adk==2.11.0` Runner, persisted ADK session service,
 GatewayLlm and the authorized tool catalogue. This feature is local-only and opt-in:
-`WL_AGENT_FAKE_INFERENCE=true`, `WL_AI_ENABLED=true`, `WL_AI_OPEN_TO_ALL=true` (or invited
-UIDs) and a configured `WL_AI_DAILY_BUDGET_USD` are needed. The fake provider makes no
+`WP_AGENT_FAKE_INFERENCE=true`, `WP_AI_ENABLED=true`, `WP_AI_OPEN_TO_ALL=true` (or invited
+UIDs) and a configured `WP_AI_DAILY_BUDGET_USD` are needed. The fake provider makes no
 network calls. Its gateway usage ledger models reservations and limits; it is not billing.
 Default settings still disable AI. Pilot mode rejects the fake-inference flag. No live
 Runner/provider wiring, provisioning, deployment or billing is authorized by this prompt.
@@ -101,6 +101,6 @@ invalidate only their affected families.
 
 Automated headless Chromium was blocked before launch by the desktop sandbox's macOS
 Mach-port permission. The browser E2E specs remain in `apps/web/e2e/agent.spec.ts` for a
-normal desktop run (`WL_E2E_AGENT=1`, with local fake-inference API and emulators). This
+normal desktop run (`WP_E2E_AGENT=1`, with local fake-inference API and emulators). This
 limitation must not be reported as passing E2E. See `docs/progress.md` for exact executed
 checks and the app-browser inspection evidence.

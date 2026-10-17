@@ -3,7 +3,8 @@ import { useRef, useState, type FormEvent } from 'react';
 import { Button } from '../components/Button/Button';
 import { Dialog } from '../components/Dialog/Dialog';
 import { ErrorSummary, type FieldError } from '../components/ErrorSummary/ErrorSummary';
-import { Field, Input } from '../components/Field/Field';
+import { AdornedInput, Field } from '../components/Field/Field';
+import { Icon } from '../components/Icon/Icon';
 import { Notice } from '../components/Notice/Notice';
 import { env } from '../config/env';
 import { useOnlineStatus } from '../lib/useOnlineStatus';
@@ -26,16 +27,16 @@ export function SignInDialog({ open, reason, onClose }: SignInDialogProps) {
       open={open}
       onClose={onClose}
       size="sm"
-      title="Sign in to WaterLens"
+      title="Sign in to WaterPilot"
       description={reason ?? 'Sign in to keep your reports and take part in communities.'}
     >
-      {open && <SignInBody onDone={onClose} />}
+      {open && <SignInForm onDone={onClose} />}
     </Dialog>
   );
 }
 
 type Mode = 'sign-in' | 'create';
-type Busy = 'google' | 'email' | 'claim' | null;
+type Busy = 'google' | 'email' | 'claim' | 'reset' | null;
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const EMAIL_ID = 'sign-in-email';
@@ -54,13 +55,27 @@ function validate(mode: Mode, email: string, password: string): FieldError[] {
   return errors;
 }
 
-function SignInBody({ onDone }: { onDone: () => void }) {
+/**
+ * The sign-in form on its own: the dialog wraps it, and the first screen shows it inline.
+ * `onDone` runs once the person holds a permanent account (or chose to carry on without
+ * moving a guest plan).
+ */
+export function SignInForm({
+  onDone,
+  layout = 'dialog',
+}: {
+  onDone: () => void;
+  /** `screen` is the compact first-screen form: no local-mode note. */
+  layout?: 'dialog' | 'screen';
+}) {
   const auth = useAuth();
   const online = useOnlineStatus();
   const [mode, setMode] = useState<Mode>('sign-in');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fieldErrors, setFieldErrors] = useState<FieldError[]>([]);
+  const [showPassword, setShowPassword] = useState(false);
+  const [resetSentTo, setResetSentTo] = useState<string | null>(null);
   const [busy, setBusy] = useState<Busy>(null);
   const [failure, setFailure] = useState<AuthFailure | null>(null);
   const emailRef = useRef<HTMLInputElement>(null);
@@ -91,8 +106,32 @@ function SignInBody({ onDone }: { onDone: () => void }) {
     );
   };
 
+  const forgotPassword = async () => {
+    if (busy) return;
+    const address = email.trim();
+    if (!EMAIL_PATTERN.test(address)) {
+      setFieldErrors([
+        { fieldId: EMAIL_ID, message: 'Enter your email address, then ask for a reset link.' },
+      ]);
+      emailRef.current?.focus();
+      return;
+    }
+    setFieldErrors([]);
+    setBusy('reset');
+    setFailure(null);
+    try {
+      await auth.sendPasswordReset(address);
+      setResetSentTo(address);
+    } catch (error) {
+      setFailure(toAuthFailure(error));
+    } finally {
+      setBusy(null);
+    }
+  };
+
   const switchMode = (next: Mode) => {
     setMode(next);
+    setResetSentTo(null);
     setFailure(null);
     setFieldErrors([]);
     emailRef.current?.focus();
@@ -141,7 +180,7 @@ function SignInBody({ onDone }: { onDone: () => void }) {
   const fieldError = (id: string) => fieldErrors.find((e) => e.fieldId === id)?.message;
 
   return (
-    <div className={styles.body}>
+    <div className={[styles.body, layout === 'screen' && styles.compact].filter(Boolean).join(' ')}>
       {isGuest && (
         <p className={styles.note}>
           Your current planning session comes with you. If the account you sign in to already has a
@@ -158,27 +197,44 @@ function SignInBody({ onDone }: { onDone: () => void }) {
         />
       )}
 
+      {resetSentTo && (
+        <Notice kind="info">
+          If an account exists for {resetSentTo}, a link to reset the password is on its way.
+        </Notice>
+      )}
+
       <Button
         variant="secondary"
         fullWidth
+        size={layout === 'screen' ? 'lg' : 'md'}
+        className={styles.google}
         loading={busy === 'google'}
         aria-disabled={!online || (busy !== null && busy !== 'google') || undefined}
         onClick={() => void run({ kind: 'google' }, 'google')}
       >
-        Continue with Google
+        <span className={styles.googleLabel}>
+          <GoogleMark />
+          Continue with Google
+        </span>
       </Button>
 
       <p className={styles.divider}>
-        <span>or use email</span>
+        <span>or</span>
       </p>
 
-      <form className={styles.form} noValidate onSubmit={onSubmit}>
+      <form
+        className={[styles.form, layout === 'screen' && styles.compact].filter(Boolean).join(' ')}
+        noValidate
+        onSubmit={onSubmit}
+      >
         <ErrorSummary errors={fieldErrors} />
-        <Field id={EMAIL_ID} label="Email" required error={fieldError(EMAIL_ID)}>
+        <Field id={EMAIL_ID} label="Email" required hideLabel error={fieldError(EMAIL_ID)}>
           {(control) => (
-            <Input
+            <AdornedInput
               {...control}
               ref={emailRef}
+              icon="mail"
+              placeholder="Email address"
               type="email"
               autoComplete="email"
               value={email}
@@ -190,13 +246,27 @@ function SignInBody({ onDone }: { onDone: () => void }) {
           id={PASSWORD_ID}
           label="Password"
           required
+          hideLabel
           hint={mode === 'create' ? 'At least 6 characters.' : undefined}
           error={fieldError(PASSWORD_ID)}
         >
           {(control) => (
-            <Input
+            <AdornedInput
               {...control}
-              type="password"
+              icon="lock"
+              placeholder="Password"
+              end={
+                <button
+                  type="button"
+                  className={styles.reveal}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-pressed={showPassword}
+                  onClick={() => setShowPassword((shown) => !shown)}
+                >
+                  <Icon name={showPassword ? 'eye-off' : 'eye'} />
+                </button>
+              }
+              type={showPassword ? 'text' : 'password'}
               autoComplete={mode === 'create' ? 'new-password' : 'current-password'}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
@@ -206,6 +276,8 @@ function SignInBody({ onDone }: { onDone: () => void }) {
         <Button
           type="submit"
           fullWidth
+          size={layout === 'screen' ? 'lg' : 'md'}
+          className={layout === 'screen' ? styles.screenSubmit : undefined}
           loading={busy === 'email'}
           aria-disabled={!online || (busy !== null && busy !== 'email') || undefined}
         >
@@ -213,8 +285,16 @@ function SignInBody({ onDone }: { onDone: () => void }) {
         </Button>
       </form>
 
+      {mode === 'sign-in' && (
+        <p className={styles.forgot}>
+          <button type="button" className={styles.link} onClick={() => void forgotPassword()}>
+            Forgot password?
+          </button>
+        </p>
+      )}
+
       <p className={styles.switch}>
-        {mode === 'sign-in' ? 'New to WaterLens? ' : 'Already have an account? '}
+        {mode === 'sign-in' ? 'New to WaterPilot? ' : 'Already have an account? '}
         <button
           type="button"
           className={styles.link}
@@ -224,12 +304,33 @@ function SignInBody({ onDone }: { onDone: () => void }) {
         </button>
       </p>
 
-      {env.appMode === 'local' && (
+      {layout === 'dialog' && env.appMode === 'local' && (
         <p className={styles.local}>
           Local mode: accounts live only in the Firebase Auth emulator, never a real project.
         </p>
       )}
     </div>
+  );
+}
+
+/** The Google "G", in its brand colours. */
+function GoogleMark() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+      <path
+        fill="#4285F4"
+        d="M23 12.3c0-.8-.1-1.5-.2-2.2H12v4.2h6.2a5.3 5.3 0 0 1-2.3 3.5v2.9h3.7c2.2-2 3.4-5 3.4-8.4Z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 23.5c3.1 0 5.7-1 7.6-2.8l-3.7-2.9c-1 .7-2.3 1.1-3.9 1.1-3 0-5.5-2-6.4-4.7H1.8v3A11.5 11.5 0 0 0 12 23.5Z"
+      />
+      <path fill="#FBBC05" d="M5.6 14.2a6.9 6.9 0 0 1 0-4.4v-3H1.8a11.5 11.5 0 0 0 0 10.4l3.8-3Z" />
+      <path
+        fill="#EA4335"
+        d="M12 5.1c1.7 0 3.2.6 4.4 1.7l3.3-3.3A11.5 11.5 0 0 0 1.8 6.8l3.8 3C6.5 7.1 9 5.1 12 5.1Z"
+      />
+    </svg>
   );
 }
 

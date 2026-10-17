@@ -16,7 +16,7 @@ export const SCOPE_LABEL: Record<GeographicScope, string> = {
 };
 
 export const ORIGIN_LABEL: Record<AreaOrigin, string> = {
-  CATALOGUE: 'Reviewed WaterLens area',
+  CATALOGUE: 'Reviewed WaterPilot area',
   PLACE_SEARCH: 'Searched place',
   GEOLOCATION: 'Your device location',
   CUSTOM: 'Entered by you',

@@ -1,7 +1,7 @@
 """Client and fixtures for tests against a **running Firebase Auth emulator**.
 
-Run with ``npm run test:emulator`` (starts the emulator for ``demo-waterlens`` and sets
-``WL_REQUIRE_AUTH_EMULATOR=1`` so an unreachable emulator fails instead of skipping).
+Run with ``npm run test:emulator`` (starts the emulator for ``demo-waterpilot`` and sets
+``WP_REQUIRE_AUTH_EMULATOR=1`` so an unreachable emulator fails instead of skipping).
 Tokens are real emulator-issued ID tokens; the API under test is built by the same
 factory as local mode, so verification includes the emulator account lookup.
 
@@ -24,15 +24,15 @@ from fastapi.testclient import TestClient
 from firestore_support import FIRESTORE_HOST, require_firestore_emulator, reset_firestore
 
 from conftest import LOCAL_OK, LoadSettings
-from waterlens.adapters.factory import ApiRuntime, build_api_runtime
-from waterlens.adapters.store_firestore import FirestoreStore
-from waterlens.api.main import create_app
-from waterlens.application.pagination import page_query
+from waterpilot.adapters.factory import ApiRuntime, build_api_runtime
+from waterpilot.adapters.store_firestore import FirestoreStore
+from waterpilot.api.main import create_app
+from waterpilot.application.pagination import page_query
 
 # Read before the autouse fixture strips emulator variables from each test's environment.
 HOST = os.environ.get("FIREBASE_AUTH_EMULATOR_HOST") or "127.0.0.1:9099"
-REQUIRED = os.environ.get("WL_REQUIRE_AUTH_EMULATOR") == "1"
-PROJECT = "demo-waterlens"
+REQUIRED = os.environ.get("WP_REQUIRE_AUTH_EMULATOR") == "1"
+PROJECT = "demo-waterpilot"
 
 
 class EmulatorError(Exception):
@@ -221,9 +221,9 @@ def api(
     settings = load_settings(
         {
             **LOCAL_OK,
-            "WL_FIRESTORE_EMULATOR_HOST": FIRESTORE_HOST,
-            "WL_AUTH_EMULATOR_HOST": emulator_host,
-            "WL_OBJECT_STORAGE_DIR": str(tmp_path / "objects"),
+            "WP_FIRESTORE_EMULATOR_HOST": FIRESTORE_HOST,
+            "WP_AUTH_EMULATOR_HOST": emulator_host,
+            "WP_OBJECT_STORAGE_DIR": str(tmp_path / "objects"),
         }
     )
     runtime = build_api_runtime(settings, clock)

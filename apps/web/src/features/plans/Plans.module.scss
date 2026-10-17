@@ -3,23 +3,23 @@
 .page,
 .stack {
   display: grid;
-  gap: var(--wl-space-4);
+  gap: var(--wp-space-4);
 }
 
 .page {
-  gap: var(--wl-space-5);
+  gap: var(--wp-space-5);
 }
 
 .panel {
   @include card;
 
   display: grid;
-  gap: var(--wl-card-section-gap);
+  gap: var(--wp-card-section-gap);
 }
 
 .title {
   margin: 0;
-  font-size: var(--wl-text-xl);
+  font-size: var(--wp-text-xl);
 }
 
 .head,
@@ -28,7 +28,7 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--wl-space-2);
+  gap: var(--wp-space-2);
 }
 
 .summary,
@@ -37,18 +37,18 @@
 }
 
 .summary {
-  font-size: var(--wl-text-md);
+  font-size: var(--wp-text-md);
 }
 
 .muted {
   margin: 0;
-  color: var(--wl-color-text-muted);
-  font-size: var(--wl-text-sm);
+  color: var(--wp-color-text-muted);
+  font-size: var(--wp-text-sm);
 }
 
 .facts {
   display: grid;
-  gap: var(--wl-space-3);
+  gap: var(--wp-space-3);
   margin: 0;
   grid-template-columns: minmax(0, 1fr);
 
@@ -57,8 +57,8 @@
   }
 
   dt {
-    color: var(--wl-color-text-muted);
-    font-size: var(--wl-text-sm);
+    color: var(--wp-color-text-muted);
+    font-size: var(--wp-text-sm);
   }
 
   dd {
@@ -69,7 +69,7 @@
 
 .options {
   display: grid;
-  gap: var(--wl-space-4);
+  gap: var(--wp-space-4);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -82,90 +82,90 @@
 
 .option {
   display: grid;
-  gap: var(--wl-space-3);
+  gap: var(--wp-space-3);
   min-width: 0;
   height: 100%;
-  padding: var(--wl-card-padding);
-  border: 1px solid var(--wl-color-border);
-  border-radius: var(--wl-radius-lg);
-  background: var(--wl-color-surface-raised);
+  padding: var(--wp-card-padding);
+  border: 1px solid var(--wp-color-border);
+  border-radius: var(--wp-radius-lg);
+  background: var(--wp-color-surface-raised);
 
   &[data-selected='true'] {
-    border: 2px solid var(--wl-color-accent);
-    padding: calc(var(--wl-card-padding) - 1px);
-    background: var(--wl-color-accent-soft);
+    border: 2px solid var(--wp-color-accent);
+    padding: calc(var(--wp-card-padding) - 1px);
+    background: var(--wp-color-accent-soft);
   }
 }
 
 .optionTitle {
   margin: 0;
-  font-size: var(--wl-text-lg);
+  font-size: var(--wp-text-lg);
 }
 
 .rank {
-  color: var(--wl-color-text-muted);
+  color: var(--wp-color-text-muted);
   font-weight: 400;
 }
 
 .block {
   display: grid;
-  gap: var(--wl-space-2);
+  gap: var(--wp-space-2);
 }
 
 .blockTitle {
   margin: 0;
-  font-size: var(--wl-text-md);
+  font-size: var(--wp-text-md);
 }
 
 .list {
   display: grid;
-  gap: var(--wl-space-1);
+  gap: var(--wp-space-1);
   margin: 0;
-  padding-inline-start: var(--wl-space-5);
+  padding-inline-start: var(--wp-space-5);
 }
 
 .findings {
   display: grid;
-  gap: var(--wl-space-3);
+  gap: var(--wp-space-3);
   margin: 0;
   padding: 0;
   list-style: none;
 
   > li {
     display: grid;
-    gap: var(--wl-space-1);
+    gap: var(--wp-space-1);
   }
 }
 
 .tags {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--wl-space-1);
+  gap: var(--wp-space-1);
 }
 
 .table {
   inline-size: 100%;
   border-collapse: collapse;
-  font-size: var(--wl-text-sm);
+  font-size: var(--wp-text-sm);
 
   th,
   td {
-    padding: var(--wl-space-2);
-    border-block-end: 1px solid var(--wl-color-border);
+    padding: var(--wp-space-2);
+    border-block-end: 1px solid var(--wp-color-border);
     text-align: start;
     vertical-align: top;
   }
 }
 
 .caption {
-  margin-block-end: var(--wl-space-2);
-  color: var(--wl-color-text-muted);
+  margin-block-end: var(--wp-space-2);
+  color: var(--wp-color-text-muted);
   text-align: start;
 }
 
 .whatIf {
   display: grid;
-  gap: var(--wl-space-3);
+  gap: var(--wp-space-3);
   grid-template-columns: minmax(0, 1fr);
 
   @include tablet-up {
@@ -175,7 +175,7 @@
 
 .whatIfRow {
   display: grid;
-  gap: var(--wl-space-2);
+  gap: var(--wp-space-2);
   margin: 0;
   padding: 0;
   border: 0;
@@ -183,7 +183,7 @@
 }
 
 .legend {
-  margin-block-end: var(--wl-space-2);
+  margin-block-end: var(--wp-space-2);
   padding: 0;
   font-weight: 600;
 }
@@ -191,7 +191,7 @@
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--wl-card-footer-gap);
+  gap: var(--wp-card-footer-gap);
   align-items: end;
   margin-block-start: auto;
 }
@@ -201,15 +201,15 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--wl-space-3);
-  padding: var(--wl-space-3) var(--wl-space-4);
-  border: 1px solid var(--wl-color-border);
-  border-radius: var(--wl-radius-lg);
-  background: var(--wl-color-surface-raised);
+  gap: var(--wp-space-3);
+  padding: var(--wp-space-3) var(--wp-space-4);
+  border: 1px solid var(--wp-color-border);
+  border-radius: var(--wp-radius-lg);
+  background: var(--wp-color-surface-raised);
 
   > div {
     display: grid;
-    gap: var(--wl-space-1);
+    gap: var(--wp-space-1);
   }
 }
 
@@ -218,15 +218,15 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--wl-space-4);
-  padding: var(--wl-space-4);
-  border: 1px solid var(--wl-color-border);
-  border-radius: var(--wl-radius-lg);
-  background: var(--wl-color-surface-raised);
+  gap: var(--wp-space-4);
+  padding: var(--wp-space-4);
+  border: 1px solid var(--wp-color-border);
+  border-radius: var(--wp-radius-lg);
+  background: var(--wp-color-surface-raised);
 
   > div {
     display: grid;
-    gap: var(--wl-space-2);
+    gap: var(--wp-space-2);
   }
 
   p {
@@ -236,7 +236,7 @@
 
 .detailContent {
   display: grid;
-  gap: var(--wl-space-5);
+  gap: var(--wp-space-5);
   min-width: 0;
 }
 
@@ -245,12 +245,12 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--wl-space-3);
+  gap: var(--wp-space-3);
 }
 
 .detailKpis {
   display: grid;
-  gap: var(--wl-space-3);
+  gap: var(--wp-space-3);
   margin: 0;
   grid-template-columns: minmax(0, 1fr);
 
@@ -261,17 +261,17 @@
   > div {
     display: grid;
     align-content: start;
-    gap: var(--wl-space-1);
+    gap: var(--wp-space-1);
     min-width: 0;
-    padding: var(--wl-space-3);
-    border: 1px solid var(--wl-color-border);
-    border-radius: var(--wl-radius-md);
-    background: var(--wl-color-surface-raised);
+    padding: var(--wp-space-3);
+    border: 1px solid var(--wp-color-border);
+    border-radius: var(--wp-radius-md);
+    background: var(--wp-color-surface-raised);
   }
 
   dt {
-    color: var(--wl-color-text-muted);
-    font-size: var(--wl-text-sm);
+    color: var(--wp-color-text-muted);
+    font-size: var(--wp-text-sm);
   }
 
   dd {

@@ -2,7 +2,7 @@
 
 .panel {
   display: grid;
-  gap: var(--wl-card-section-gap);
+  gap: var(--wp-card-section-gap);
 }
 
 .section {
@@ -10,24 +10,24 @@
 
   display: grid;
   align-content: start;
-  gap: var(--wl-card-body-gap);
+  gap: var(--wp-card-body-gap);
 }
 
 .sectionTitle {
   margin: 0;
-  font-size: var(--wl-text-lg);
+  font-size: var(--wp-text-lg);
 }
 
 .intro,
 .meta {
   margin: 0;
-  color: var(--wl-color-text-muted);
-  font-size: var(--wl-text-sm);
+  color: var(--wp-color-text-muted);
+  font-size: var(--wp-text-sm);
 }
 
 .rows {
   display: grid;
-  gap: var(--wl-space-3);
+  gap: var(--wp-space-3);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -35,9 +35,9 @@
 
 .accordion {
   display: grid;
-  gap: var(--wl-card-body-gap);
-  padding-block-start: var(--wl-space-3);
-  border-block-start: 1px solid var(--wl-color-border);
+  gap: var(--wp-card-body-gap);
+  padding-block-start: var(--wp-space-3);
+  border-block-start: 1px solid var(--wp-color-border);
 }
 
 .accordionSummary {
@@ -45,9 +45,9 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--wl-space-2);
-  min-height: var(--wl-tap-target);
-  color: var(--wl-color-text);
+  gap: var(--wp-space-2);
+  min-height: var(--wp-tap-target);
+  color: var(--wp-color-text);
   font-weight: 700;
   cursor: pointer;
 
@@ -58,9 +58,9 @@
 
 .row {
   display: grid;
-  gap: var(--wl-space-2);
-  padding-block-start: var(--wl-space-3);
-  border-block-start: 1px solid var(--wl-color-border);
+  gap: var(--wp-space-2);
+  padding-block-start: var(--wp-space-3);
+  border-block-start: 1px solid var(--wp-color-border);
 }
 
 .rowHead {
@@ -68,7 +68,7 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--wl-space-2);
+  gap: var(--wp-space-2);
 }
 
 .rowTitle {
@@ -77,30 +77,30 @@
 
 .reasons {
   margin: 0;
-  padding-inline-start: var(--wl-space-5);
-  font-size: var(--wl-text-sm);
+  padding-inline-start: var(--wp-space-5);
+  font-size: var(--wp-text-sm);
 }
 
 .action {
   margin: 0;
-  font-size: var(--wl-text-sm);
+  font-size: var(--wp-text-sm);
 }
 
 .refreshing {
   margin: 0;
-  color: var(--wl-color-text-muted);
-  font-size: var(--wl-text-sm);
+  color: var(--wp-color-text-muted);
+  font-size: var(--wp-text-sm);
 }
 
 .form {
   display: grid;
-  gap: var(--wl-space-3);
+  gap: var(--wp-space-3);
   justify-items: start;
 }
 
 .formRow {
   display: grid;
-  gap: var(--wl-space-3);
+  gap: var(--wp-space-3);
   width: 100%;
 
   @include tablet-up {
@@ -118,10 +118,10 @@
 
 .error {
   margin: 0;
-  color: var(--wl-color-danger-text);
+  color: var(--wp-color-danger-text);
 }
 
 .saved {
   margin: 0;
-  color: var(--wl-color-success-text);
+  color: var(--wp-color-success-text);
 }

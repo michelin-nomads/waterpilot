@@ -15,6 +15,7 @@ export function AuthTestProviders({
   sessions = new FakeSessionServer(),
   recovery = new MemoryRecoveryStore(),
   online = () => true,
+  resumeExisting = true,
   children,
 }: {
   backend: FakeAuthBackend;
@@ -23,6 +24,8 @@ export function AuthTestProviders({
   sessions?: FakeSessionServer;
   recovery?: RecoveryStore;
   online?: () => boolean;
+  /** Whether a plan already on the server is picked up (default), as if mid-visit. */
+  resumeExisting?: boolean;
   children: ReactNode;
 }) {
   const [client] = useState(() => queryClient);
@@ -33,7 +36,12 @@ export function AuthTestProviders({
   return (
     <QueryClientProvider client={client}>
       <AuthProvider loadBackend={loadBackend} claimApi={claims}>
-        <PlanningSessionProvider transport={transport} recovery={store} online={online}>
+        <PlanningSessionProvider
+          transport={transport}
+          recovery={store}
+          online={online}
+          resumeExisting={resumeExisting}
+        >
           {children}
         </PlanningSessionProvider>
       </AuthProvider>

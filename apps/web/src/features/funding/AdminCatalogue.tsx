@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
-import type { components } from '@waterlens/contracts';
+import type { components } from '@waterpilot/contracts';
 import { useAuth } from '../../auth/authContext';
 import { Button, EmptyState, ErrorState, Field, Input, Notice, Textarea } from '../../components';
 import { env } from '../../config/env';

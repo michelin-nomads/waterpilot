@@ -12,13 +12,13 @@ from typing import Any
 import pytest
 
 from graphql_harness import NOW
-from waterlens.application.pagination import page_query
-from waterlens.application.repositories import IdempotencyRecord
-from waterlens.domain import geo
-from waterlens.domain.communities import Community, CommunityStatus
-from waterlens.domain.errors import DomainError, ErrorCode
-from waterlens.domain.ids import IdKind, new_id
-from waterlens.domain.planning import PlanningMode, PlanningSession, SessionStatus
+from waterpilot.application.pagination import page_query
+from waterpilot.application.repositories import IdempotencyRecord
+from waterpilot.domain import geo
+from waterpilot.domain.communities import Community, CommunityStatus
+from waterpilot.domain.errors import DomainError, ErrorCode
+from waterpilot.domain.ids import IdKind, new_id
+from waterpilot.domain.planning import PlanningMode, PlanningSession, SessionStatus
 
 
 def session(owner: str, minutes: int = 0, **extra: Any) -> PlanningSession:

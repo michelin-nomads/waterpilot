@@ -17,10 +17,10 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from waterlens.domain.planning import Capability
-from waterlens.domain.readiness import CAPABILITY_POLICY, INPUTS, METRICS
-from waterlens.domain.sources import SourceManifest
-from waterlens.domain.units import (
+from waterpilot.domain.planning import Capability
+from waterpilot.domain.readiness import CAPABILITY_POLICY, INPUTS, METRICS
+from waterpilot.domain.sources import SourceManifest
+from waterpilot.domain.units import (
     CanonicalUnit,
     UnitConversionError,
     conversion_factor,
@@ -155,7 +155,7 @@ def test_non_terminating_results_are_refused_rather_than_rounded() -> None:
 
 
 def test_every_conversion_factor_terminates_as_a_decimal() -> None:
-    from waterlens.domain.units import REVIEWED_CONVERSIONS
+    from waterpilot.domain.units import REVIEWED_CONVERSIONS
 
     for table in REVIEWED_CONVERSIONS.values():
         for factor in table.values():

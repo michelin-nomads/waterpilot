@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 
 from conftest import LOCAL_OK, PILOT_OK, LoadSettings
-from waterlens.cli.sources import _admin
-from waterlens.config import AppMode, ConfigError, Settings, parse_emulator_host
+from waterpilot.cli.sources import _admin
+from waterpilot.config import AppMode, ConfigError, Settings, parse_emulator_host
 
 
 def test_local_mode_valid(load_settings: LoadSettings) -> None:
@@ -30,16 +30,16 @@ def test_local_mode_accepts_standard_emulator_names(load_settings: LoadSettings)
 
 
 def test_local_mode_requires_emulators(load_settings: LoadSettings) -> None:
-    with pytest.raises(ConfigError, match="WL_USE_EMULATORS"):
-        load_settings(LOCAL_OK | {"WL_USE_EMULATORS": "false"})
+    with pytest.raises(ConfigError, match="WP_USE_EMULATORS"):
+        load_settings(LOCAL_OK | {"WP_USE_EMULATORS": "false"})
 
 
 def test_local_mode_rejects_non_demo_project(load_settings: LoadSettings) -> None:
-    with pytest.raises(ConfigError, match="demo-waterlens"):
-        load_settings(LOCAL_OK | {"WL_GCP_PROJECT": "real-prod"})
+    with pytest.raises(ConfigError, match="demo-waterpilot"):
+        load_settings(LOCAL_OK | {"WP_GCP_PROJECT": "real-prod"})
 
 
-@pytest.mark.parametrize("missing", ["WL_FIRESTORE_EMULATOR_HOST", "WL_AUTH_EMULATOR_HOST"])
+@pytest.mark.parametrize("missing", ["WP_FIRESTORE_EMULATOR_HOST", "WP_AUTH_EMULATOR_HOST"])
 def test_local_mode_requires_both_emulator_hosts(load_settings: LoadSettings, missing: str) -> None:
     env = {k: v for k, v in LOCAL_OK.items() if k != missing}
     with pytest.raises(ConfigError, match="emulator host is required"):
@@ -66,14 +66,14 @@ def test_local_mode_rejects_non_loopback_or_malformed_hosts(
     load_settings: LoadSettings, host: str
 ) -> None:
     with pytest.raises(ConfigError):
-        load_settings(LOCAL_OK | {"WL_FIRESTORE_EMULATOR_HOST": host})
+        load_settings(LOCAL_OK | {"WP_FIRESTORE_EMULATOR_HOST": host})
 
 
 def test_container_hostname_requires_explicit_allowlist(load_settings: LoadSettings) -> None:
-    env = LOCAL_OK | {"WL_FIRESTORE_EMULATOR_HOST": "firebase-emulators:8080"}
+    env = LOCAL_OK | {"WP_FIRESTORE_EMULATOR_HOST": "firebase-emulators:8080"}
     with pytest.raises(ConfigError, match="not an allowed local emulator host"):
         load_settings(env)
-    s = load_settings(env | {"WL_EMULATOR_EXTRA_HOSTNAMES": '["firebase-emulators"]'})
+    s = load_settings(env | {"WP_EMULATOR_EXTRA_HOSTNAMES": '["firebase-emulators"]'})
     assert s.firestore_emulator == "firebase-emulators:8080"
 
 
@@ -106,15 +106,15 @@ def test_source_admin_rejects_remote_fetch_in_pilot(load_settings: LoadSettings)
 
 
 def test_pilot_mode_rejects_emulator_flag(load_settings: LoadSettings) -> None:
-    with pytest.raises(ConfigError, match="WL_USE_EMULATORS"):
-        load_settings(PILOT_OK | {"WL_USE_EMULATORS": "true"})
+    with pytest.raises(ConfigError, match="WP_USE_EMULATORS"):
+        load_settings(PILOT_OK | {"WP_USE_EMULATORS": "true"})
 
 
 @pytest.mark.parametrize(
     "name",
     [
-        "WL_FIRESTORE_EMULATOR_HOST",
-        "WL_AUTH_EMULATOR_HOST",
+        "WP_FIRESTORE_EMULATOR_HOST",
+        "WP_AUTH_EMULATOR_HOST",
         "FIRESTORE_EMULATOR_HOST",
         "FIREBASE_AUTH_EMULATOR_HOST",
     ],
@@ -125,36 +125,36 @@ def test_pilot_mode_rejects_any_emulator_variable(load_settings: LoadSettings, n
 
 
 def test_pilot_mode_rejects_default_demo_project(load_settings: LoadSettings) -> None:
-    env = {k: v for k, v in PILOT_OK.items() if k != "WL_GCP_PROJECT"}
+    env = {k: v for k, v in PILOT_OK.items() if k != "WP_GCP_PROJECT"}
     with pytest.raises(ConfigError, match="demo-"):
         load_settings(env)
 
 
 def test_pilot_mode_rejects_default_loopback_origins(load_settings: LoadSettings) -> None:
-    env = {k: v for k, v in PILOT_OK.items() if k != "WL_ALLOWED_ORIGINS"}
-    with pytest.raises(ConfigError, match="WL_ALLOWED_ORIGINS"):
+    env = {k: v for k, v in PILOT_OK.items() if k != "WP_ALLOWED_ORIGINS"}
+    with pytest.raises(ConfigError, match="WP_ALLOWED_ORIGINS"):
         load_settings(env)
 
 
 @pytest.mark.parametrize(
-    "origins", ['["http://waterlens.example.org"]', '["https://localhost:5173"]', "[]"]
+    "origins", ['["http://waterpilot.example.org"]', '["https://localhost:5173"]', "[]"]
 )
 def test_pilot_mode_rejects_http_or_loopback_origins(
     load_settings: LoadSettings, origins: str
 ) -> None:
-    with pytest.raises(ConfigError, match="WL_ALLOWED_ORIGINS"):
-        load_settings(PILOT_OK | {"WL_ALLOWED_ORIGINS": origins})
+    with pytest.raises(ConfigError, match="WP_ALLOWED_ORIGINS"):
+        load_settings(PILOT_OK | {"WP_ALLOWED_ORIGINS": origins})
 
 
 def test_dotenv_in_working_directory_is_still_validated(tmp_path: Path) -> None:
-    Path(".env").write_text("WL_APP_MODE=local\nWL_GCP_PROJECT=real-prod\n", encoding="utf-8")
+    Path(".env").write_text("WP_APP_MODE=local\nWL_GCP_PROJECT=real-prod\n", encoding="utf-8")
     with pytest.raises(ConfigError):
         Settings()
 
 
 def test_explicit_kwargs_validated_like_env() -> None:
     with pytest.raises(ConfigError):
-        Settings(app_mode=AppMode.LOCAL, use_emulators=True, gcp_project="demo-waterlens")
+        Settings(app_mode=AppMode.LOCAL, use_emulators=True, gcp_project="demo-waterpilot")
 
 
 @pytest.mark.parametrize(

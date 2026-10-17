@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from waterlens.adapters.store_firestore import QueryShape, observed_query_shapes
+from waterpilot.adapters.store_firestore import QueryShape, observed_query_shapes
 
 pytestmark = pytest.mark.emulator
 

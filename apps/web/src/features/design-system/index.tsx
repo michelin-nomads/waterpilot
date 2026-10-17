@@ -30,7 +30,6 @@ import {
 } from '../../components';
 import { formatInrPaise, formatMldFromLitresPerDay } from '../../lib/format';
 import { PageHeader } from '../../shell/PageHeader';
-import { PALETTES } from '../../theme/displayPreferences';
 import { useDisplayPreferences } from '../../theme/displayPreferencesContext';
 import styles from './DesignSystem.module.scss';
 import {
@@ -65,7 +64,6 @@ export default function DesignSystemPage() {
   const [submitted, setSubmitted] = useState(false);
   const [mode, setMode] = useState<'traditional' | 'assistant' | null>('traditional');
   const dialogConfirmRef = useRef<HTMLButtonElement>(null);
-  const palette = PALETTES.find((p) => p.id === preferences.palette);
   const budgetError =
     submitted && !budget ? 'Budget: choose a range so plans can be checked against it.' : undefined;
   const formErrors = budgetError ? [{ fieldId: BUDGET_FIELD_ID, message: budgetError }] : [];
@@ -79,11 +77,11 @@ export default function DesignSystemPage() {
       />
       <p className={styles.fixtureBanner} role="note">
         <strong>UI FIXTURE</strong> — every value on this page is illustrative. None of it is
-        WaterLens data or derived from any source.
+        WaterPilot data or derived from any source.
       </p>
       <p className={styles.current}>
-        Showing <strong>{resolvedTheme}</strong> theme with the <strong>{palette?.label}</strong>{' '}
-        palette (preference: {preferences.theme}). Change it from Display in the header.
+        Showing the <strong>{resolvedTheme}</strong> theme (preference: {preferences.theme}). Change
+        it from Display in the header.
       </p>
 
       <Section title="Buttons">

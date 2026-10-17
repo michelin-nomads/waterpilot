@@ -4,14 +4,14 @@
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
-  gap: var(--wl-space-2) var(--wl-space-3);
-  padding: var(--wl-space-3) var(--wl-space-4);
-  border: 1px solid var(--wl-color-border);
+  gap: var(--wp-space-2) var(--wp-space-3);
+  padding: var(--wp-space-3) var(--wp-space-4);
+  border: 1px solid var(--wp-color-border);
   border-inline-start-width: 4px;
-  border-radius: var(--wl-radius-md);
-  background: var(--wl-color-surface);
-  color: var(--wl-color-text);
-  font-size: var(--wl-text-sm);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-color-surface);
+  color: var(--wp-color-text);
+  font-size: var(--wp-text-sm);
 }
 
 .icon {
@@ -23,9 +23,9 @@
 .text {
   display: grid;
   flex: 1 1 14rem;
-  gap: var(--wl-space-1);
+  gap: var(--wp-space-1);
   min-width: 0;
-  max-width: var(--wl-measure);
+  max-width: var(--wp-measure);
 }
 
 .title {
@@ -38,28 +38,28 @@
 }
 
 .neutral {
-  border-color: var(--wl-color-border-strong);
-  background: var(--wl-color-surface-sunken);
+  border-color: var(--wp-color-border-strong);
+  background: var(--wp-color-surface-sunken);
 
   .icon {
-    color: var(--wl-color-text-muted);
+    color: var(--wp-color-text-muted);
   }
 }
 
 .info {
-  border-color: var(--wl-color-info);
-  background: var(--wl-color-info-soft);
+  border-color: var(--wp-color-info);
+  background: var(--wp-color-info-soft);
 
   .icon {
-    color: var(--wl-color-info);
+    color: var(--wp-color-info);
   }
 }
 
 .warning {
-  border-color: var(--wl-color-warning);
-  background: var(--wl-color-warning-soft);
+  border-color: var(--wp-color-warning);
+  background: var(--wp-color-warning-soft);
 
   .icon {
-    color: var(--wl-color-warning);
+    color: var(--wp-color-warning);
   }
 }

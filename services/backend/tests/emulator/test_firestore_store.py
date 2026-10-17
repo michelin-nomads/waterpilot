@@ -29,22 +29,22 @@ from firestore_support import (
 from conftest import LOCAL_OK, LoadSettings
 from graphql_harness import AREA_ID, NOW, seed_plan_option
 from store_contract import StoreContract
-from waterlens.adapters.catalogue_synthetic import SYNTHETIC_SCHEME_ID
-from waterlens.adapters.factory import build_api_runtime
-from waterlens.adapters.jobqueue_memory import MemoryJobQueue
-from waterlens.adapters.store_firestore import FirestoreStore
-from waterlens.application.identity import AccountKind, Principal, RequestContext
-from waterlens.application.pagination import PageArgs, page_query
-from waterlens.application.services import Deps, Services
-from waterlens.domain.communities import (
+from waterpilot.adapters.catalogue_synthetic import SYNTHETIC_SCHEME_ID
+from waterpilot.adapters.factory import build_api_runtime
+from waterpilot.adapters.jobqueue_memory import MemoryJobQueue
+from waterpilot.adapters.store_firestore import FirestoreStore
+from waterpilot.application.identity import AccountKind, Principal, RequestContext
+from waterpilot.application.pagination import PageArgs, page_query
+from waterpilot.application.services import Deps, Services
+from waterpilot.domain.communities import (
     CommunityStatus,
     Membership,
     MembershipRole,
     membership_id,
 )
-from waterlens.domain.errors import DomainError, ErrorCode
-from waterlens.domain.ids import IdKind, new_id
-from waterlens.domain.impact import (
+from waterpilot.domain.errors import DomainError, ErrorCode
+from waterpilot.domain.ids import IdKind, new_id
+from waterpilot.domain.impact import (
     ConnectivityEvidence,
     ImpactInputs,
     NearbyInput,
@@ -52,20 +52,20 @@ from waterlens.domain.impact import (
     SourcedValue,
     assess,
 )
-from waterlens.domain.impact_records import Citation, CitationKind, OptionImpact
-from waterlens.domain.interventions import CATALOGUE
-from waterlens.domain.options import compare_options, comparison_key
-from waterlens.domain.planning import Goal, GoalFields, GoalKind, SessionStatus, SiteConstraints
-from waterlens.domain.reports import Report
-from waterlens.domain.scenario import Balance
-from waterlens.domain.tracking import (
+from waterpilot.domain.impact_records import Citation, CitationKind, OptionImpact
+from waterpilot.domain.interventions import CATALOGUE
+from waterpilot.domain.options import compare_options, comparison_key
+from waterpilot.domain.planning import Goal, GoalFields, GoalKind, SessionStatus, SiteConstraints
+from waterpilot.domain.reports import Report
+from waterpilot.domain.scenario import Balance
+from waterpilot.domain.tracking import (
     ImplementationProject,
     Milestone,
     Observation,
     ObservationSourceType,
     ProjectExpense,
 )
-from waterlens.domain.values import Money, Quantity, Unit
+from waterpilot.domain.values import Money, Quantity, Unit
 
 pytestmark = pytest.mark.emulator
 
@@ -493,8 +493,8 @@ def test_local_runtime_uses_the_firestore_emulator_with_synthetic_catalogue(
     settings = load_settings(
         {
             **LOCAL_OK,
-            "WL_FIRESTORE_EMULATOR_HOST": FIRESTORE_HOST,
-            "WL_OBJECT_STORAGE_DIR": str(tmp_path / "objects"),
+            "WP_FIRESTORE_EMULATOR_HOST": FIRESTORE_HOST,
+            "WP_OBJECT_STORAGE_DIR": str(tmp_path / "objects"),
         }
     )
     runtime = build_api_runtime(settings)

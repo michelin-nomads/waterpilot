@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-10-07
-- **Deciders:** WaterLens implementation engineer (per HLD v1.0 + Build Guide v1.0)
+- **Deciders:** WaterPilot implementation engineer (per HLD v1.0 + Build Guide v1.0)
 - **Phase:** 00
 
 ## Context

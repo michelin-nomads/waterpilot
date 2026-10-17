@@ -438,3 +438,31 @@ it('falls back to memory when IndexedDB fails', async () => {
   await store.put(record({}));
   expect(await store.forUid('u')).toHaveLength(1);
 });
+
+describe('plans that are not kept', () => {
+  it('does not pick up a plan from an earlier visit when restore is off', async () => {
+    const env = setup();
+    env.server.seed('user-1', { goal: GOAL_A });
+    const coordinator = env.make({ restore: false });
+    await coordinator.start();
+    expect(coordinator.getState().status).toBe('none');
+    expect(coordinator.getState().server).toBeNull();
+  });
+
+  it('discard ends the plan, saves nothing more, and a later create starts a new one', async () => {
+    const env = setup();
+    const { session, coordinator } = await ready(env, { stage: 'GOAL' });
+    coordinator.setGoal(GOAL_A);
+    coordinator.discard();
+    expect(coordinator.getState().status).toBe('none');
+    expect(coordinator.getState().pending).toEqual({});
+    await coordinator.start();
+    expect(coordinator.getState().status).toBe('none');
+    await coordinator.settled();
+    expect(await env.recovery.forUid('user-1')).toEqual([]);
+
+    const created = await coordinator.create('TRADITIONAL');
+    expect(created.id).not.toBe(session.id);
+    expect(coordinator.getState().status).toBe('ready');
+  });
+});

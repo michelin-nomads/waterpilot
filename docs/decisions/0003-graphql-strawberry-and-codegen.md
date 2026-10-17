@@ -53,12 +53,12 @@ cache layer next to Axios and TanStack Query (ADR 0002).
 ## Decision
 
 1. **Server.** Strawberry (`strawberry-graphql[fastapi]`) mounted at **`/graphql`** on
-   the existing FastAPI app. The schema is merged in `waterlens.api.graphql.schema` from
+   the existing FastAPI app. The schema is merged in `waterpilot.api.graphql.schema` from
    one module per domain: planning (areas, coverage, sessions, plans), funding, reports
    (reports, proposals), communities, tracking and jobs. There is no federation, no
    gateway and no separate service.
 2. **Layering.** GraphQL resolvers are thin. They call **application services**
-   (`waterlens.application.services`), which enforce identity, ownership, roles,
+   (`waterpilot.application.services`), which enforce identity, ownership, roles,
    `expectedVersion` and idempotency, and use narrow repository ports. The HTTP routes,
    and later the worker and ADK agent tools, call the same services.
 3. **Identity.** The GraphQL context is built from the `Authorization: Bearer` token by

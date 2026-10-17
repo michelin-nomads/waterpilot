@@ -2,29 +2,29 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: var(--wl-space-2);
+  gap: var(--wp-space-2);
   margin: 0;
 
   > div {
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
-    gap: var(--wl-space-1) var(--wl-space-2);
+    gap: var(--wp-space-1) var(--wp-space-2);
     min-width: 0;
-    padding: var(--wl-space-2) var(--wl-space-3);
-    border: 1px solid var(--wl-color-border);
-    border-radius: var(--wl-radius-pill);
-    background: var(--wl-color-surface);
+    padding: var(--wp-space-2) var(--wp-space-3);
+    border: 1px solid var(--wp-color-border);
+    border-radius: var(--wp-radius-pill);
+    background: var(--wp-color-surface);
   }
 
   dt {
-    color: var(--wl-color-text-muted);
-    font-size: var(--wl-text-xs);
+    color: var(--wp-color-text-muted);
+    font-size: var(--wp-text-xs);
   }
 
   dd {
     margin: 0;
-    font-size: var(--wl-text-sm);
+    font-size: var(--wp-text-sm);
     font-weight: 600;
     overflow-wrap: anywhere;
   }

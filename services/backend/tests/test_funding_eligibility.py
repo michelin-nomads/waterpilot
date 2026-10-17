@@ -5,26 +5,26 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
+
 from tests.api.test_graphql_behaviour import ready_session
 from tests.conftest import LoadSettings
 from tests.graphql_harness import NOW, TOKENS, make_harness
 from tests.test_config import LOCAL_OK
-
-from waterlens.adapters.catalogue_synthetic import SYNTHETIC_SCHEME_ID, synthetic_funding_catalogue
-from waterlens.adapters.embedding_fake import FakeEmbeddingProvider
-from waterlens.adapters.funding_vectors import FakeFundingVectors
-from waterlens.application.identity import RequestContext
-from waterlens.application.services.common import AiConfig
-from waterlens.application.services.funding import FundingService
-from waterlens.domain.ai import AiLimits
-from waterlens.domain.funding import (
+from waterpilot.adapters.catalogue_synthetic import SYNTHETIC_SCHEME_ID, synthetic_funding_catalogue
+from waterpilot.adapters.embedding_fake import FakeEmbeddingProvider
+from waterpilot.adapters.funding_vectors import FakeFundingVectors
+from waterpilot.application.identity import RequestContext
+from waterpilot.application.services.common import AiConfig
+from waterpilot.application.services.funding import FundingService
+from waterpilot.domain.ai import AiLimits
+from waterpilot.domain.funding import (
     ApplicantInformation,
     EligibilityRules,
     EligibilityStatus,
     MatchFacts,
     eligibility,
 )
-from waterlens.domain.values import Money
+from waterpilot.domain.values import Money
 
 
 @pytest.mark.parametrize(

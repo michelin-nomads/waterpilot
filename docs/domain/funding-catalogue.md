@@ -2,7 +2,7 @@
 
 The desktop admin editor is `/admin/funding`. Its HTTP API is
 `GET` / `POST /v1/admin/funding-catalogue`. Both require a verified permanent
-Firebase account whose UID appears in the server-only `WL_FUNDING_ADMIN_UIDS`
+Firebase account whose UID appears in the server-only `WP_FUNDING_ADMIN_UIDS`
 JSON list. The default empty list denies everyone. A browser role, submitted UID,
 model suggestion or document instruction grants no authority.
 

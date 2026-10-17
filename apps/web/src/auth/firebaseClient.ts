@@ -13,6 +13,7 @@ import {
   linkWithCredential,
   linkWithPopup,
   onIdTokenChanged,
+  sendPasswordResetEmail,
   signInAnonymously,
   signInWithCredential,
   signInWithEmailAndPassword,
@@ -163,6 +164,9 @@ export function createFirebaseAuthBackend(
     async signInWithPendingCredential(pending) {
       const credential = await attempt(() => signInWithCredential(auth, pending as AuthCredential));
       return requireUser(credential.user);
+    },
+    async sendPasswordReset(email) {
+      await attempt(() => sendPasswordResetEmail(auth, email));
     },
     signOut: () => signOut(auth),
   };

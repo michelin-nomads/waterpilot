@@ -2,19 +2,19 @@
 
 .wrapper {
   display: grid;
-  gap: var(--wl-space-2);
+  gap: var(--wp-space-2);
 }
 
 .label {
-  font-size: var(--wl-text-sm);
+  font-size: var(--wp-text-sm);
   font-weight: 600;
-  color: var(--wl-color-text-muted);
+  color: var(--wp-color-text-muted);
 }
 
 .list {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--wl-space-2);
+  gap: var(--wp-space-2);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -28,26 +28,26 @@
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: var(--wl-space-1);
+  gap: var(--wp-space-1);
   min-height: 2.25rem;
   padding: 0.25rem 0.875rem;
-  border: 1px solid var(--wl-color-accent);
-  border-radius: var(--wl-radius-pill);
-  background: var(--wl-color-accent-soft);
-  color: var(--wl-color-accent-strong);
-  font-size: var(--wl-text-sm);
+  border: 1px solid var(--wp-color-accent);
+  border-radius: var(--wp-radius-pill);
+  background: var(--wp-color-accent-soft);
+  color: var(--wp-color-accent-strong);
+  font-size: var(--wp-text-sm);
   font-weight: 600;
   cursor: pointer;
 
   &:hover:not([aria-disabled='true']) {
-    background: var(--wl-color-surface);
+    background: var(--wp-color-surface);
   }
 
   &[aria-disabled='true'] {
     border-style: dashed;
-    border-color: var(--wl-color-border-strong);
-    background: var(--wl-color-surface-sunken);
-    color: var(--wl-color-text-muted);
+    border-color: var(--wp-color-border-strong);
+    background: var(--wp-color-surface-sunken);
+    color: var(--wp-color-text-muted);
     cursor: not-allowed;
   }
 
@@ -56,6 +56,6 @@
 
 .reason {
   max-width: 16rem;
-  font-size: var(--wl-text-xs);
-  color: var(--wl-color-text-muted);
+  font-size: var(--wp-text-xs);
+  color: var(--wp-color-text-muted);
 }

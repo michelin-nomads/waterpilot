@@ -113,7 +113,7 @@ export function AgentPanel({
     <div className={styles.agent} data-ai-status={content.state}>
       <div className={styles.header}>
         <Icon name="sparkle" />
-        <h2 className={styles.title}>WaterLensAgent</h2>
+        <h2 className={styles.title}>WaterPilotAgent</h2>
         <Badge tone={content.badgeTone}>{content.badge}</Badge>
       </div>
       {keepConversation && env.appMode === 'local' ? (

@@ -8,12 +8,12 @@ import pytest
 
 from conftest import LOCAL_OK, LoadSettings
 from graphql_harness import NOW, Harness, make_harness
-from waterlens.api.export_openapi import build_openapi
-from waterlens.application.artifacts import HTML
-from waterlens.domain.ids import IdKind, new_id
-from waterlens.domain.jobs import JobKind, JobRecord, JobStatus
-from waterlens.domain.planning import Goal, GoalKind
-from waterlens.domain.reports import Proposal, ProposalSection, ProposalStatus, Report
+from waterpilot.api.export_openapi import build_openapi
+from waterpilot.application.artifacts import HTML
+from waterpilot.domain.ids import IdKind, new_id
+from waterpilot.domain.jobs import JobKind, JobRecord, JobStatus
+from waterpilot.domain.planning import Goal, GoalKind
+from waterpilot.domain.reports import Proposal, ProposalSection, ProposalStatus, Report
 
 
 @pytest.fixture

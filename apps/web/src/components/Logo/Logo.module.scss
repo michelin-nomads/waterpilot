@@ -1,7 +1,7 @@
 .logo {
   display: inline-flex;
   align-items: center;
-  gap: var(--wl-space-2);
+  gap: var(--wp-space-2);
 }
 
 .mark {
@@ -12,26 +12,25 @@
 
 .ring {
   fill: none;
-  stroke: var(--wl-color-accent);
-  stroke-width: 2.5;
-  stroke-dasharray: 80 27;
+  stroke: var(--wp-color-accent);
+  stroke-width: 2.6;
   stroke-linecap: round;
 }
 
 .drop {
-  fill: var(--wl-color-accent);
+  fill: var(--wp-color-accent);
 }
 
 .glint {
   fill: none;
-  stroke: var(--wl-color-on-accent);
+  stroke: var(--wp-color-on-accent);
   stroke-width: 2;
   stroke-linecap: round;
 }
 
 .wordmark {
-  font-size: var(--wl-text-xl);
+  font-size: var(--wp-text-xl);
   font-weight: 800;
   letter-spacing: -0.01em;
-  color: var(--wl-color-text);
+  color: var(--wp-color-text);
 }

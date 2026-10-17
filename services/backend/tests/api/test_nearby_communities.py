@@ -11,10 +11,10 @@ import pytest
 
 from conftest import LOCAL_OK, LoadSettings
 from graphql_harness import NOW, Harness, make_harness
-from waterlens.application.services.communities import NEARBY_CANDIDATES_PER_CELL
-from waterlens.domain import geo
-from waterlens.domain.communities import Community, CommunityStatus
-from waterlens.domain.ids import IdKind, new_id
+from waterpilot.application.services.communities import NEARBY_CANDIDATES_PER_CELL
+from waterpilot.domain import geo
+from waterpilot.domain.communities import Community, CommunityStatus
+from waterpilot.domain.ids import IdKind, new_id
 
 NEARBY = """
 query($near: NearbyCommunitiesInput!, $first: Int, $after: String) {

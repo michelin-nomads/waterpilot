@@ -11,7 +11,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from waterlens.domain.ai import (
+from waterpilot.domain.ai import (
     DEFAULT_MODEL_ID,
     GEMINI_2_5_FLASH,
     MODEL_CATALOGUE,

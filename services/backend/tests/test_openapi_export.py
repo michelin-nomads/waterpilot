@@ -17,22 +17,22 @@ COMMITTED = REPO_ROOT / "packages" / "contracts" / "openapi.json"
 AMBIENTS: dict[str, dict[str, str]] = {
     "empty": {},
     "valid_local": {
-        "WL_APP_MODE": "local",
-        "WL_GCP_PROJECT": "demo-waterlens",
-        "WL_FIRESTORE_EMULATOR_HOST": "127.0.0.1:8080",
-        "WL_AUTH_EMULATOR_HOST": "127.0.0.1:9099",
+        "WP_APP_MODE": "local",
+        "WP_GCP_PROJECT": "demo-waterpilot",
+        "WP_FIRESTORE_EMULATOR_HOST": "127.0.0.1:8080",
+        "WP_AUTH_EMULATOR_HOST": "127.0.0.1:9099",
     },
-    "unrelated": {"WL_ALLOWED_ORIGINS": '["https://other.example"]', "UNRELATED": "1"},
+    "unrelated": {"WP_ALLOWED_ORIGINS": '["https://other.example"]', "UNRELATED": "1"},
     "invalid_pilot": {
-        "WL_APP_MODE": "pilot",
-        "WL_USE_EMULATORS": "true",
+        "WP_APP_MODE": "pilot",
+        "WP_USE_EMULATORS": "true",
         "FIRESTORE_EMULATOR_HOST": "127.0.0.1:8080",
-        "WL_GCP_PROJECT": "demo-waterlens",
+        "WP_GCP_PROJECT": "demo-waterpilot",
     },
-    "garbage": {"WL_APP_MODE": "not-a-mode", "WL_USE_EMULATORS": "maybe"},
+    "garbage": {"WP_APP_MODE": "not-a-mode", "WP_USE_EMULATORS": "maybe"},
 }
 
-BAD_DOTENV = "WL_APP_MODE=pilot\nWL_USE_EMULATORS=true\nWL_GCP_PROJECT=demo-x\n"
+BAD_DOTENV = "WP_APP_MODE=pilot\nWL_USE_EMULATORS=true\nWL_GCP_PROJECT=demo-x\n"
 
 
 def _clean_env() -> dict[str, str]:
@@ -49,7 +49,7 @@ def _export(tmp_path: Path, name: str, ambient: dict[str, str]) -> bytes:
     (cwd / ".env").write_text(BAD_DOTENV, encoding="utf-8")
     out = cwd / "openapi.json"
     subprocess.run(
-        [sys.executable, "-m", "waterlens.api.export_openapi", str(out)],
+        [sys.executable, "-m", "waterpilot.api.export_openapi", str(out)],
         cwd=cwd,
         env=_clean_env() | ambient,
         check=True,
@@ -72,7 +72,7 @@ def test_export_matches_committed_contract(tmp_path: Path) -> None:
 def test_runtime_entry_point_still_fails_closed(tmp_path: Path) -> None:
     (tmp_path / ".env").write_text(BAD_DOTENV, encoding="utf-8")
     result = subprocess.run(
-        [sys.executable, "-c", "import waterlens.api.asgi"],
+        [sys.executable, "-c", "import waterpilot.api.asgi"],
         cwd=tmp_path,
         env=_clean_env(),
         capture_output=True,
@@ -82,7 +82,7 @@ def test_runtime_entry_point_still_fails_closed(tmp_path: Path) -> None:
     assert "ConfigError" in result.stderr
 
 
-@pytest.mark.parametrize("module", ["waterlens.api.main", "waterlens.api.export_openapi"])
+@pytest.mark.parametrize("module", ["waterpilot.api.main", "waterpilot.api.export_openapi"])
 def test_importing_factory_modules_has_no_config_side_effects(tmp_path: Path, module: str) -> None:
     (tmp_path / ".env").write_text(BAD_DOTENV, encoding="utf-8")
     subprocess.run(

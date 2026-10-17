@@ -8,8 +8,8 @@ import pytest
 from pydantic import BaseModel
 
 from conftest import LOCAL_OK, PILOT_OK, LoadSettings
-from waterlens.adapters.catalogue_synthetic import SYNTHETIC_SCHEME_ID
-from waterlens.adapters.factory import (
+from waterpilot.adapters.catalogue_synthetic import SYNTHETIC_SCHEME_ID
+from waterpilot.adapters.factory import (
     build_cloud_job_runner,
     build_job_runner,
     build_local_job_runner,
@@ -17,19 +17,19 @@ from waterlens.adapters.factory import (
     build_object_storage,
     build_worker_verifier,
 )
-from waterlens.adapters.jobrunner_local import LocalJobRunner
-from waterlens.adapters.storage_local import LocalObjectStorage
-from waterlens.adapters.store_firestore import MAX_DOCUMENT_BYTES, _encode
-from waterlens.adapters.store_memory import MemoryStore
-from waterlens.config import ConfigError
-from waterlens.domain.errors import DomainError, ErrorCode
-from waterlens.worker import main as worker_main
+from waterpilot.adapters.jobrunner_local import LocalJobRunner
+from waterpilot.adapters.storage_local import LocalObjectStorage
+from waterpilot.adapters.store_firestore import MAX_DOCUMENT_BYTES, _encode
+from waterpilot.adapters.store_memory import MemoryStore
+from waterpilot.config import ConfigError
+from waterpilot.domain.errors import DomainError, ErrorCode
+from waterpilot.worker import main as worker_main
 
 
 def test_local_adapters_built_in_local_mode(load_settings: LoadSettings, tmp_path: Path) -> None:
     s = load_settings(
         LOCAL_OK
-        | {"WL_JOB_QUEUE_DIR": str(tmp_path / "q"), "WL_OBJECT_STORAGE_DIR": str(tmp_path / "o")}
+        | {"WP_JOB_QUEUE_DIR": str(tmp_path / "q"), "WP_OBJECT_STORAGE_DIR": str(tmp_path / "o")}
     )
     assert isinstance(build_job_runner(s), LocalJobRunner)
     assert isinstance(build_object_storage(s), LocalObjectStorage)
@@ -42,17 +42,17 @@ def test_pilot_never_falls_back_to_local_disk(load_settings: LoadSettings, tmp_p
     built (and no cloud client created) from incomplete settings."""
     s = load_settings(
         PILOT_OK
-        | {"WL_JOB_QUEUE_DIR": str(tmp_path / "q"), "WL_OBJECT_STORAGE_DIR": str(tmp_path / "o")}
+        | {"WP_JOB_QUEUE_DIR": str(tmp_path / "q"), "WP_OBJECT_STORAGE_DIR": str(tmp_path / "o")}
     )
     with pytest.raises(ConfigError, match="pilot"):
         build_local_job_runner(s)
     with pytest.raises(
-        ConfigError, match="WL_TASKS_QUEUE, WL_WORKER_URL, WL_TASKS_SERVICE_ACCOUNT"
+        ConfigError, match="WP_TASKS_QUEUE, WP_WORKER_URL, WP_TASKS_SERVICE_ACCOUNT"
     ):
         build_job_runner(s)
-    with pytest.raises(ConfigError, match="WL_ARTIFACT_BUCKET"):
+    with pytest.raises(ConfigError, match="WP_ARTIFACT_BUCKET"):
         build_object_storage(s)
-    with pytest.raises(ConfigError, match="WL_WORKER_URL, WL_WORKER_INVOKERS"):
+    with pytest.raises(ConfigError, match="WP_WORKER_URL, WP_WORKER_INVOKERS"):
         build_worker_verifier(s)
     assert not (tmp_path / "q").exists()
     assert not (tmp_path / "o").exists()
@@ -62,10 +62,10 @@ def test_pilot_cloud_job_settings_are_validated(load_settings: LoadSettings) -> 
     s = load_settings(
         PILOT_OK
         | {
-            "WL_TASKS_QUEUE": "queues/q",
-            "WL_WORKER_URL": "http://worker.internal",
-            "WL_TASKS_SERVICE_ACCOUNT": "dispatch@waterlens-pilot.iam.gserviceaccount.com",
-            "WL_WORKER_INVOKERS": '["someone@example.com"]',
+            "WP_TASKS_QUEUE": "queues/q",
+            "WP_WORKER_URL": "http://worker.internal",
+            "WP_TASKS_SERVICE_ACCOUNT": "dispatch@waterpilot-pilot.iam.gserviceaccount.com",
+            "WP_WORKER_INVOKERS": '["someone@example.com"]',
         }
     )
     with pytest.raises(ConfigError, match="expected projects/"):
@@ -85,7 +85,7 @@ def test_http_worker_and_cloud_dispatch_are_refused_in_local_mode(
 
 
 def test_local_mode_refuses_cloud_resource_settings(load_settings: LoadSettings) -> None:
-    for name in ("WL_ARTIFACT_BUCKET", "WL_TASKS_QUEUE", "WL_WORKER_URL"):
+    for name in ("WP_ARTIFACT_BUCKET", "WP_TASKS_QUEUE", "WP_WORKER_URL"):
         with pytest.raises(ConfigError, match=name):
             load_settings(LOCAL_OK | {name: "set"})
 
@@ -93,7 +93,7 @@ def test_local_mode_refuses_cloud_resource_settings(load_settings: LoadSettings)
 def test_worker_refuses_pilot_mode_without_touching_disk(
     load_settings: LoadSettings, tmp_path: Path
 ) -> None:
-    load_settings(PILOT_OK | {"WL_JOB_QUEUE_DIR": str(tmp_path / "q")})
+    load_settings(PILOT_OK | {"WP_JOB_QUEUE_DIR": str(tmp_path / "q")})
     with pytest.raises(ConfigError):
         worker_main.run_once()
     assert not (tmp_path / "q").exists()
@@ -102,15 +102,15 @@ def test_worker_refuses_pilot_mode_without_touching_disk(
 def test_local_worker_refuses_the_in_memory_store(
     load_settings: LoadSettings, tmp_path: Path
 ) -> None:
-    load_settings(LOCAL_OK | {"WL_LOCAL_STORE": "memory", "WL_JOB_QUEUE_DIR": str(tmp_path / "q")})
-    with pytest.raises(ConfigError, match="WL_LOCAL_STORE=firestore"):
+    load_settings(LOCAL_OK | {"WP_LOCAL_STORE": "memory", "WP_JOB_QUEUE_DIR": str(tmp_path / "q")})
+    with pytest.raises(ConfigError, match="WP_LOCAL_STORE=firestore"):
         worker_main.run_once()
 
 
 def test_local_memory_store_is_seeded_with_the_synthetic_funding_scheme(
     load_settings: LoadSettings,
 ) -> None:
-    store = build_local_store(load_settings(LOCAL_OK | {"WL_LOCAL_STORE": "memory"}))
+    store = build_local_store(load_settings(LOCAL_OK | {"WP_LOCAL_STORE": "memory"}))
     assert isinstance(store, MemoryStore)
     assert store.funding_schemes.get(SYNTHETIC_SCHEME_ID) is not None
 

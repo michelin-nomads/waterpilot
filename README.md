@@ -1,9 +1,9 @@
-# WaterLens
+# WaterPilot
 
 Water-resilience planning for communities. Monorepo: a React frontend, a FastAPI
 modular-monolith backend (API + private worker), and a shared contracts package.
 
-> Status: early build. See `docs/WaterLens-HLD.md` (design), `docs/WaterLens-Cursor-Build-Guide.md`
+> Status: early build. See `docs/WaterPilot-HLD.md` (design), `docs/WaterPilot-Cursor-Build-Guide.md`
 > (phased plan) and `docs/progress.md` (what is actually done + evidence).
 
 ## Repository layout
@@ -72,15 +72,15 @@ AI is off by default. To exercise the local agent without live model calls, add 
 explicit opt-in settings to `services/backend/.env`, then restart the API:
 
 ```dotenv
-WL_AGENT_FAKE_INFERENCE=true
-WL_AI_ENABLED=true
-WL_AI_OPEN_TO_ALL=true
-WL_AI_DAILY_BUDGET_USD=5
+WP_AGENT_FAKE_INFERENCE=true
+WP_AI_ENABLED=true
+WP_AI_OPEN_TO_ALL=true
+WP_AI_DAILY_BUDGET_USD=5
 ```
 
 This selects deterministic fake inference; it makes no network or billable model calls.
-The configured allowance still bounds the local usage ledger. Keep `WL_APP_MODE=local`,
-`WL_USE_EMULATORS=true` and the `demo-waterlens` project settings from the example file.
+The configured allowance still bounds the local usage ledger. Keep `WP_APP_MODE=local`,
+`WP_USE_EMULATORS=true` and the `demo-waterpilot` project settings from the example file.
 Do not put credentials or secrets in either `.env` file or commit the copied files.
 
 For Windows, start `npm run emulators`, `npm run dev:api`, and `npm run dev:web` in separate
@@ -121,7 +121,7 @@ deliberate steps (`npm run deps:relock`, or per-package commands in `docs/depend
 | Web dev server (http://127.0.0.1:5173)                              | `npm run dev:web`                            |
 | API dev server (http://127.0.0.1:8000)                              | `npm run dev:api`                            |
 | Local worker (polls the file job queue; `-- --once` drains once)    | `npm run dev:worker`                         |
-| Firebase emulators (Auth+Firestore, `demo-waterlens`)               | `npm run emulators`                          |
+| Firebase emulators (Auth+Firestore, `demo-waterpilot`)              | `npm run emulators`                          |
 | Seed SYNTHETIC fixtures into local object store                     | `npm run seed`                               |
 | Regenerate API contracts (OpenAPI + GraphQL SDL, TS types)          | `npm run contracts`                          |
 | Lint (JS/TS) / (Python)                                             | `npm run lint` / `npm run lint:py`           |
@@ -131,7 +131,7 @@ deliberate steps (`npm run deps:relock`, or per-package commands in `docs/depend
 | E2E (Playwright: smoke, themes, keyboard, motion, layouts)          | `npm run test:e2e`                           |
 | Auth emulator tests (backend + real web SDK; starts the emulator)   | `npm run test:emulator`                      |
 | E2E including guest/sign-in flows (starts the Auth emulator)        | `npm run test:e2e:emulator`                  |
-| Re-capture design screenshots (`docs/design/screenshots/phase-03/`) | `WL_CAPTURE_SCREENSHOTS=1 npm run test:e2e`  |
+| Re-capture design screenshots (`docs/design/screenshots/phase-03/`) | `WP_CAPTURE_SCREENSHOTS=1 npm run test:e2e`  |
 | Production build (contracts + web)                                  | `npm run build`                              |
 | Bundle gzip budget (after `build`)                                  | `npm run budget`                             |
 | Format / check formatting                                           | `npm run format` / `npm run format:check`    |
@@ -165,7 +165,7 @@ rendered with labelled UI fixtures (the route does not exist in other modes).
 ## Safety model (local)
 
 - **Local mode requires emulators and never reaches real cloud services**; the backend
-  fails closed at startup unless `WL_USE_EMULATORS=true`, the project is `demo-waterlens`,
+  fails closed at startup unless `WP_USE_EMULATORS=true`, the project is `demo-waterpilot`,
   and both emulator hosts are loopback `host:port` values. Standard
   `FIRESTORE_EMULATOR_HOST` / `FIREBASE_AUTH_EMULATOR_HOST` are validated too.
 - **Pilot mode fails closed** if any emulator/demo/test setting is present (either naming),
@@ -191,7 +191,7 @@ rendered with labelled UI fixtures (the route does not exist in other modes).
 - **Emulator startup** — the Auth and Firestore emulators are exercised by
   `npm run test:emulator` and `npm run test:e2e:emulator` (both run inside
   `firebase emulators:exec --only auth,firestore`). Local mode stores application data in
-  the Firestore emulator (`WL_LOCAL_STORE=firestore`, the default).
+  the Firestore emulator (`WP_LOCAL_STORE=firestore`, the default).
 - **Browser-to-API connectivity** — planning screens use authenticated GraphQL and
   authoritative session state. Prompt 17 adds opt-in local agent conversation over HTTP
   with the actual ADK Runner and fake inference; see `docs/api/agent-stream.md`.
@@ -202,7 +202,7 @@ rendered with labelled UI fixtures (the route does not exist in other modes).
 ## Local funding catalogue administration (Prompt 18)
 
 Open `/admin/funding` with a permanent emulator account whose UID is in the server's
-`WL_FUNDING_ADMIN_UIDS` JSON list (empty by default). The offline importer accepts
+`WP_FUNDING_ADMIN_UIDS` JSON list (empty by default). The offline importer accepts
 permitted JSON/PDF documents and reviewed scheme metadata; no URLs or models are called.
 Use `docs/domain/examples/funding/mock-scheme.json` with `mock-source.json` for the
 owner-approved **synthetic** hackathon demo. The ready-to-POST `mock-import.json` is
@@ -213,7 +213,7 @@ for the import contract, lifecycle, limits and publication requirements.
 
 With a saved selected plan, `/make-it-happen` checks deterministic funding eligibility and
 shows missing information/excluded reasons. Optional fake relevance requires
-`WL_FUNDING_FAKE_EMBEDDINGS=true` plus the existing AI enablement, invitation and explicit
+`WP_FUNDING_FAKE_EMBEDDINGS=true` plus the existing AI enablement, invitation and explicit
 budget controls. Defaults use deterministic fallback. Vertex/Firestore vector adapters
 remain unarmed, and the index is not deployed; live behavior is unverified. See
 `docs/domain/funding-eligibility-ranking.md` for exact SDK/model/index/cache requirements.

@@ -1,4 +1,4 @@
-# @waterlens/contracts
+# @waterpilot/contracts
 
 Single source of truth for the HTTP contract shared between backend and frontend.
 

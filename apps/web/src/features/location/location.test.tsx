@@ -495,7 +495,7 @@ describe('location step', () => {
             message: 'some fields need attention',
             requestId: null,
             currentVersion: null,
-            fieldErrors: [{ field: 'countryCode', message: 'Choose a country WaterLens knows.' }],
+            fieldErrors: [{ field: 'countryCode', message: 'Choose a country WaterPilot knows.' }],
           },
         },
       },
@@ -504,7 +504,7 @@ describe('location step', () => {
     await search('Nairobi');
     fireEvent.click(await screen.findByRole('option', { name: /nairobi/i }));
     await confirmReview();
-    expect(await screen.findByText('Choose a country WaterLens knows.')).toBeInTheDocument();
+    expect(await screen.findByText('Choose a country WaterPilot knows.')).toBeInTheDocument();
   });
 });
 

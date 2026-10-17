@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
-import { Outlet, useLocation, useOutletContext } from 'react-router-dom';
+import { Navigate, Outlet, useLocation, useOutletContext } from 'react-router-dom';
 
 import { ResizeHandle } from '../../components/ResizeHandle/ResizeHandle';
 import { DESKTOP_QUERY, useMediaQuery } from '../../lib/useMediaQuery';
@@ -7,6 +7,7 @@ import { usePlanningSession } from '../../session/sessionContext';
 import { sessionStageForPath } from '../../shell/stages';
 import { AgentPanel } from './AgentPanel';
 import { AGENT_WIDTH, useAgentMaxWidth, useAgentWidth } from './agentWidth';
+import { PlanExitGuard } from './PlanExitGuard';
 import type { PlanningMode } from './planningMode';
 import styles from './PlanningLayout.module.scss';
 import { SessionBar } from './SessionBar';
@@ -30,6 +31,11 @@ export default function PlanningLayout() {
   const isDesktop = useMediaQuery(DESKTOP_QUERY);
   const { pathname } = useLocation();
   const { coordinator, state, view } = usePlanningSession();
+  // Planning screens belong to a plan. Arriving without one (a reload, a pasted link) goes
+  // back to the start; a plan that ends while the person is here (finalized, left on
+  // purpose) must not bounce them, so only a plan that never existed redirects.
+  const [hadPlan, setHadPlan] = useState(false);
+  if (state.status === 'ready' && !hadPlan) setHadPlan(true);
 
   // The session remembers the step the user is on, so Continue resumes it anywhere. Only
   // this tab's navigation writes it; a step saved by another tab never pulls this one back.
@@ -88,11 +94,14 @@ export default function PlanningLayout() {
 
   // The pane width is a runtime value, so it is passed as a custom property.
   const panesStyle = split
-    ? ({ '--wl-agent-pane-width': `${paneWidth}px` } as CSSProperties)
+    ? ({ '--wp-agent-pane-width': `${paneWidth}px` } as CSSProperties)
     : undefined;
+
+  if (state.status === 'none' && !hadPlan) return <Navigate to="/" replace />;
 
   return (
     <div className={styles.planning}>
+      <PlanExitGuard />
       {tabbed && (
         <div
           role="tablist"

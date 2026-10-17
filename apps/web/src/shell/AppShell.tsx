@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 
+import { useAuth } from '../auth/authContext';
 import { Badge } from '../components/Badge/Badge';
 import { Logo } from '../components/Logo/Logo';
 import { env } from '../config/env';
@@ -28,8 +29,10 @@ export default function AppShell() {
   const { pathname } = useLocation();
   const { view } = usePlanningSession();
   const [planningMode, setPlanningMode] = usePlanningMode();
+  const auth = useAuth();
+  const signedIn = auth.status === 'ready' && auth.user?.kind === 'permanent';
   const inPlanning = stageForPath(pathname) !== null;
-  const welcomeFlow = pathname === '/' || pathname === '/start';
+  const welcomeFlow = pathname === '/' && !signedIn;
   const planPath = pathForSessionStage(view?.stage);
 
   return (
@@ -44,29 +47,30 @@ export default function AppShell() {
       <RouteProgress />
       <header className={styles.header}>
         <div className={styles.headerInner}>
-          <Link to="/" className={styles.brand} aria-label="WaterLens home">
+          <Link to="/" className={styles.brand} aria-label="WaterPilot home">
             <Logo />
           </Link>
           <p className={styles.tagline}>Smarter Communities. More Water Secure.</p>
-          <nav aria-label="Primary" className={styles.primaryNav}>
-            <Link
-              to={planPath}
-              className={inPlanning ? `${styles.navLink} ${styles.active}` : styles.navLink}
-              aria-current={inPlanning ? 'true' : undefined}
-            >
-              Plan
-            </Link>
-            <NavLink
-              to="/reports"
-              className={({ isActive }) => navClass({ isActive: isActive && !inPlanning })}
-              aria-current={inPlanning ? 'false' : undefined}
-            >
-              Reports
-            </NavLink>
-            <NavLink to="/communities" className={navClass}>
-              Communities
-            </NavLink>
-          </nav>
+          {signedIn && (
+            <nav aria-label="Primary" className={styles.primaryNav}>
+              {inPlanning && (
+                <Link
+                  to={planPath}
+                  className={`${styles.navLink} ${styles.active}`}
+                  aria-current="true"
+                >
+                  Plan
+                </Link>
+              )}
+              {/* Review lives under /reports; inside the planner only Plan is current. */}
+              <NavLink to="/reports" end={inPlanning} className={navClass}>
+                Reports
+              </NavLink>
+              <NavLink to="/communities" className={navClass}>
+                Communities
+              </NavLink>
+            </nav>
+          )}
           <p className={styles.strapline}>From insight to action for water-resilient communities</p>
           <div className={styles.tools}>
             {inPlanning && (
@@ -77,7 +81,7 @@ export default function AppShell() {
               </div>
             )}
             <DisplayMenu />
-            <AccountMenu />
+            <AccountMenu guestSignIn={!inPlanning} />
           </div>
         </div>
       </header>
@@ -86,7 +90,7 @@ export default function AppShell() {
         <Outlet context={{ planningMode, setPlanningMode }} />
       </main>
       <footer className={styles.footer}>
-        <p>WaterLens helps communities plan for a more water-secure future.</p>
+        <p>WaterPilot helps communities plan for a more water-secure future.</p>
         <div className={styles.footerMeta}>
           {env.appMode === 'local' && (
             <>

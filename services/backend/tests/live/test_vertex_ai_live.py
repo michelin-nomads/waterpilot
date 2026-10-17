@@ -1,7 +1,7 @@
 """Live-only: one explicitly gated Gemini-on-Vertex smoke that records real model usage.
 
 This is the ONLY test that may make a billable model call, and it is opt-in twice over: the
-``live`` marker is deselected by default, and it skips unless ``WL_LIVE_VERTEX_PROJECT`` is
+``live`` marker is deselected by default, and it skips unless ``WP_LIVE_VERTEX_PROJECT`` is
 set in the operator's shell. It is never run by the normal suite, CI, or any local run, and
 the deterministic ``FakeModelProvider`` tests (tests/test_ai_gateway.py) cover all gateway
 behaviour without a network.
@@ -12,12 +12,12 @@ Prerequisites (see docs/decisions/0015-ai-model-gateway.md and docs/domain/ai-ga
   - Application Default Credentials for a dedicated runtime service account with the
     ``roles/aiplatform.user`` role (never a developer's user credentials, never an API key);
   - the configured model enabled for the project (``gemini-2.5-flash`` is restricted for new
-    projects and may need explicit enablement, or set ``WL_LIVE_VERTEX_MODEL``);
+    projects and may need explicit enablement, or set ``WP_LIVE_VERTEX_MODEL``);
   - the ``google-genai`` SDK installed in the environment.
 
 Run (makes one metered request):
 
-    WL_LIVE_VERTEX_PROJECT=<project> uv run pytest -m live tests/live/test_vertex_ai_live.py
+    WP_LIVE_VERTEX_PROJECT=<project> uv run pytest -m live tests/live/test_vertex_ai_live.py
 
 Nothing here provisions resources, deploys, or enables billing; the operator must have done
 that beforehand. Usage is asserted structurally and never printed.
@@ -29,20 +29,20 @@ import os
 
 import pytest
 
-from waterlens.application.ports import ModelRequest
-from waterlens.domain.ai import DEFAULT_MODEL_ID
+from waterpilot.application.ports import ModelRequest
+from waterpilot.domain.ai import DEFAULT_MODEL_ID
 
 pytestmark = pytest.mark.live
 
-PROJECT = os.environ.get("WL_LIVE_VERTEX_PROJECT", "")
-LOCATION = os.environ.get("WL_LIVE_VERTEX_LOCATION", "global")
-MODEL = os.environ.get("WL_LIVE_VERTEX_MODEL", DEFAULT_MODEL_ID)
+PROJECT = os.environ.get("WP_LIVE_VERTEX_PROJECT", "")
+LOCATION = os.environ.get("WP_LIVE_VERTEX_LOCATION", "global")
+MODEL = os.environ.get("WP_LIVE_VERTEX_MODEL", DEFAULT_MODEL_ID)
 
 
 def test_a_single_structured_call_records_model_usage() -> None:
     if not PROJECT:
-        pytest.skip("set WL_LIVE_VERTEX_PROJECT to run the gated live Vertex smoke")
-    from waterlens.adapters.model_vertex import VertexModelProvider
+        pytest.skip("set WP_LIVE_VERTEX_PROJECT to run the gated live Vertex smoke")
+    from waterpilot.adapters.model_vertex import VertexModelProvider
 
     provider = VertexModelProvider(project=PROJECT, location=LOCATION, model_id=MODEL)
     request = ModelRequest(

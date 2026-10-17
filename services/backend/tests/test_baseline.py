@@ -14,22 +14,22 @@ from typing import Any
 import pytest
 
 from sources_support import DEMO_CSV, DEMO_MANIFEST, Clock, make_admin, measured_manifest
-from waterlens.adapters.catalogue_synthetic import SYNTHETIC_AREA_ID
-from waterlens.adapters.jobqueue_memory import MemoryJobQueue
-from waterlens.application.artifacts import ArtifactStore
-from waterlens.application.identity import AccountKind, Principal, RequestContext
-from waterlens.application.series import ArtifactSeriesReader, SeriesUnreadable, parse_series
-from waterlens.application.services import Deps, Services
-from waterlens.application.services import baseline as baseline_module
-from waterlens.application.services.baseline import Baseline, BaselineMetric
-from waterlens.domain.baseline import Origin, Reason
-from waterlens.domain.errors import DomainError
-from waterlens.domain.ids import IdKind, new_id
-from waterlens.domain.location import AreaOrigin
-from waterlens.domain.planning import Capability, PlanningMode, PlanningSession
-from waterlens.domain.readiness import InputId, ReadinessState
-from waterlens.domain.units import CanonicalUnit
-from waterlens.domain.values import Availability, EvidenceQuality
+from waterpilot.adapters.catalogue_synthetic import SYNTHETIC_AREA_ID
+from waterpilot.adapters.jobqueue_memory import MemoryJobQueue
+from waterpilot.application.artifacts import ArtifactStore
+from waterpilot.application.identity import AccountKind, Principal, RequestContext
+from waterpilot.application.series import ArtifactSeriesReader, SeriesUnreadable, parse_series
+from waterpilot.application.services import Deps, Services
+from waterpilot.application.services import baseline as baseline_module
+from waterpilot.application.services.baseline import Baseline, BaselineMetric
+from waterpilot.domain.baseline import Origin, Reason
+from waterpilot.domain.errors import DomainError
+from waterpilot.domain.ids import IdKind, new_id
+from waterpilot.domain.location import AreaOrigin
+from waterpilot.domain.planning import Capability, PlanningMode, PlanningSession
+from waterpilot.domain.readiness import InputId, ReadinessState
+from waterpilot.domain.units import CanonicalUnit
+from waterpilot.domain.values import Availability, EvidenceQuality
 
 NOW = datetime(2026, 10, 10, 6, 0, tzinfo=UTC)
 TODAY = date(2026, 10, 10)
@@ -519,7 +519,7 @@ def test_a_series_dated_in_another_timezone_is_not_compared_day_by_day(tmp_path:
 
 
 def test_synthetic_evidence_ranks_last_among_usable_options() -> None:
-    from waterlens.domain.readiness import _Finding, _preference
+    from waterpilot.domain.readiness import _Finding, _preference
 
     demo_available = _Finding(ReadinessState.AVAILABLE, (), demo=True)
     real_partial = _Finding(ReadinessState.PARTIAL, ())
@@ -557,7 +557,7 @@ def test_a_typed_value_is_never_replaced_by_demo_data(tmp_path: Path) -> None:
 def test_synthetic_records_never_assess_a_real_place(
     tmp_path: Path, origin: AreaOrigin, evidence: EvidenceQuality
 ) -> None:
-    from waterlens.domain.readiness import assess_area, is_demo_area
+    from waterpilot.domain.readiness import assess_area, is_demo_area
 
     w = World(tmp_path, demo=True)
     w.admin.register(DEMO_MANIFEST)

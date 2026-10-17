@@ -1,4 +1,4 @@
-# WaterLens — Progress Record
+# WaterPilot — Progress Record
 
 Running evidence log. Each phase records: files changed · behaviour implemented ·
 exact checks run and results · how to preview locally · live vs. fixture-backed
@@ -28,7 +28,7 @@ actual scope and was not rerun. Full table: `docs/build/implementation-status.md
 
 ### Files changed / created
 
-- `.cursor/rules/00-waterlens-project.mdc` — always-applied core rules (fixed decisions + integrity guardrails + workflow discipline).
+- `.cursor/rules/00-waterpilot-project.mdc` — always-applied core rules (fixed decisions + integrity guardrails + workflow discipline).
 - `.cursor/rules/frontend.mdc` — scoped to `apps/web/**` (React/TS/Vite/SCSS conventions).
 - `.cursor/rules/backend.mdc` — scoped to `services/backend/**/*.py` (FastAPI modular monolith, determinism, tenancy, jobs).
 - `.cursor/rules/testing.mdc` — scoped to test/e2e files (meaningful tests, labelled fixtures, no green-faking).
@@ -131,14 +131,14 @@ Phase 02 — Scaffold the repository and local environment (workspaces, strict T
 
 - **Workspace root:** `package.json` (npm workspaces + all scripts), `tsconfig.base.json`, `eslint.config.mjs` (flat), `.prettierrc.json`, `.prettierignore`, `.gitignore`, `.nvmrc`, `firebase.json`, `.firebaserc`, `README.md`.
 - **`apps/web`** (React + TS + Vite + React Router + SCSS Modules): config, `index.html`, `.env.example`, `playwright.config.ts`, `src/main.tsx`, `src/App.tsx(+module.scss)`, `src/router.tsx`, `src/config/env.ts` (startup validation; rejects secret-like `VITE_` keys), `src/lib/apiClient.ts` (single Axios + contract types), `src/styles/global.scss`, seven lazy **feature folders** (`area`/`scenarios`/`goals`/`plans`/`funding`/`proposals`/`tracking`), `src/features/area/area.test.tsx`, `e2e/smoke.spec.ts`.
-- **`services/backend`** (FastAPI modular monolith, uv): `pyproject.toml`, `.python-version` (3.12), `.env.example`, `README.md`, `src/waterlens/` with `config.py` (fail-closed), `domain/`, `application/ports.py`, `adapters/storage_local.py` + `adapters/jobrunner_local.py`, `api/main.py` + `api/export_openapi.py`, `worker/main.py`, `cli/seed.py`; `tests/` (health, config, storage, jobrunner).
+- **`services/backend`** (FastAPI modular monolith, uv): `pyproject.toml`, `.python-version` (3.12), `.env.example`, `README.md`, `src/waterpilot/` with `config.py` (fail-closed), `domain/`, `application/ports.py`, `adapters/storage_local.py` + `adapters/jobrunner_local.py`, `api/main.py` + `api/export_openapi.py`, `worker/main.py`, `cli/seed.py`; `tests/` (health, config, storage, jobrunner).
 - **`packages/contracts`:** `package.json`, `tsconfig.json`, `src/index.ts`, generated `openapi.json` + `src/openapi.ts`, `README.md`.
 - **`infra/`:** `firebase/firestore.rules` (deny-by-default), `firebase/firestore.indexes.json`, `README.md`. **No cloud provisioning.**
 - **`scripts/`:** `dev.sh` + `README.md`. **`docs/dependencies.md`**. Lockfiles: `package-lock.json`, `services/backend/uv.lock`.
 
 ### Behaviour implemented
 
-Full monorepo scaffold with a real local loop: FastAPI API (`/healthz`, `/readyz`, request-id, CORS), a private worker draining a file-backed local job runner, local filesystem object storage, OpenAPI→TS contract generation, a provisional React shell with lazy feature routes and a single Axios client, fail-closed config on both ends, and Firebase Auth/Firestore emulators on the `demo-waterlens` demo project.
+Full monorepo scaffold with a real local loop: FastAPI API (`/healthz`, `/readyz`, request-id, CORS), a private worker draining a file-backed local job runner, local filesystem object storage, OpenAPI→TS contract generation, a provisional React shell with lazy feature routes and a single Axios client, fail-closed config on both ends, and Firebase Auth/Firestore emulators on the `demo-waterpilot` demo project.
 
 ### Versions verified & locked (from official sources at setup)
 
@@ -170,7 +170,7 @@ All local. Emulators (Auth/Firestore) are real local processes on the demo proje
 - Fixed jest-dom matcher types (brought the vitest augmentation into the TS program) and removed a disallowed triple-slash in `vite.config.ts`.
 - Bound Vite to `127.0.0.1` so Playwright's `webServer` readiness check connects.
 - Switched `AppMode` to `StrEnum` (ruff UP042).
-- **Preserved provided docs:** Prettier initially reformatted `WaterLens-HLD.md` and the build guide; both restored verbatim from pre-format git blobs and added to `.prettierignore`.
+- **Preserved provided docs:** Prettier initially reformatted `WaterPilot-HLD.md` and the build guide; both restored verbatim from pre-format git blobs and added to `.prettierignore`.
 - `jsdom@30` prints an `EBADENGINE` warning (wants Node ≥24.15; host 24.6) — cosmetic; tests pass.
 
 ### Unresolved external blockers
@@ -191,19 +191,19 @@ Phase 03 — Design system and application shell (AppShell, six-stage nav, share
 ## Correction pass — Prompts 00–02 (legacy numbering; review R1–R7) · guide Prompt 00
 
 **Status:** Complete for R1–R7, with the dev-tooling advisory caveat recorded under R5 · **Date:** 2026-10-08
-**Input:** `docs/reviews/WaterLens-Prompts-00-02-Review.md` (preserved verbatim; added to `.prettierignore`).
+**Input:** `docs/reviews/WaterPilot-Prompts-00-02-Review.md` (preserved verbatim; added to `.prettierignore`).
 **Scope:** corrections to Prompts 00–02 only. No Prompt 03 work, no architecture/stack change, no cloud provisioning, deployment, live AI or paid calls. Historical entries above are not rewritten; they now point here.
 
 **Environment for this pass:** macOS (darwin 25.6, arm64) · Node **24.21.0** / npm 11.19.0 (installed locally via nvm because the host default, 24.14.1, is below jsdom's 24.15 floor) · uv 0.8.4 · Python 3.12.12 (uv recreated `services/backend/.venv` because the previous venv linked to a missing interpreter) · OpenJDK 21.0.10 · firebase-tools 15.33.0 (locked).
 
 ### Reproduction before fixing (on the original code)
 
-- **R1 backend:** `Settings` accepted local mode with `gcp_project="real-prod"` and no emulator hosts, and accepted pilot mode with `FIRESTORE_EMULATOR_HOST`/`FIREBASE_AUTH_EMULATOR_HOST` set. With pilot settings, `python -m waterlens.worker.main` printed "drained 0 job(s)" and created its queue directory.
+- **R1 backend:** `Settings` accepted local mode with `gcp_project="real-prod"` and no emulator hosts, and accepted pilot mode with `FIRESTORE_EMULATOR_HOST`/`FIREBASE_AUTH_EMULATOR_HOST` set. With pilot settings, `python -m waterpilot.worker.main` printed "drained 0 job(s)" and created its queue directory.
 - **R1 frontend:** the new `src/config/env.test.ts` run against the original `env.ts` gave **26 failed / 10 passed**. All 16 behavioural cases failed: local mode without emulators, non-loopback local API, pilot with no API URL, and pilot with http/loopback API. The other 10 failures were the not-yet-existing helper.
 - **R2:** `Job(id="../escaped")` wrote `queue/escaped.json` outside `pending/`. Enqueueing the same pending id with payload `{v:1}` and then `{v:2}` silently left `{v:2}`.
 - **R3:** confirmed by reading the files: the "volume-reliability framing" for `reliable_supply/demand` (80% vs 94%), `internalRatioDp: 3` with golden `0.267`, "whole INR internally", the `+365d` default window, `available` missing from the status vocabulary, and groundwater flow present while "groundwater" was marked unavailable.
 - **R4:** against the original schema with format checking on, the review's manifest (validated, `bbox` type with no bbox, no timezone, end before start) produced **0 errors**. `usageRights: licensed` (allowed by the gate) was rejected, and `mg/L` could not be represented.
-- **R6:** the new `tests/test_openapi_export.py` against the original code: **5 failed**. Export crashed under an invalid ambient pilot env, and importing `waterlens.api.main` validated settings as a side effect.
+- **R6:** the new `tests/test_openapi_export.py` against the original code: **5 failed**. Export crashed under an invalid ambient pilot env, and importing `waterpilot.api.main` validated settings as a side effect.
 
 ### Findings — status
 
@@ -217,13 +217,13 @@ Phase 03 — Design system and application shell (AppShell, six-stage nav, share
 | R6 OpenAPI export                          | Fixed                                   |
 | R7 evidence wording / packaging / launcher | Fixed                                   |
 
-**R1.** `config.py` reads `WL_*` and the standard `FIRESTORE_EMULATOR_HOST`, `FIREBASE_AUTH_EMULATOR_HOST`, `GOOGLE_CLOUD_PROJECT`/`GCLOUD_PROJECT`. Conflicting aliases are rejected, and the resolved `firestore_emulator`/`auth_emulator` values are the canonical configuration.
+**R1.** `config.py` reads `WP_*` and the standard `FIRESTORE_EMULATOR_HOST`, `FIREBASE_AUTH_EMULATOR_HOST`, `GOOGLE_CLOUD_PROJECT`/`GCLOUD_PROJECT`. Conflicting aliases are rejected, and the resolved `firestore_emulator`/`auth_emulator` values are the canonical configuration.
 
-- **Local mode** requires `use_emulators`, project `demo-waterlens`, and both hosts as `host:port` with a port in 1–65535. Hosts are parsed with `urlsplit` plus `ipaddress` (no substring tests). Allowed hosts are loopback IPv4 or IPv6, `localhost`, or an exact hostname listed in `WL_EMULATOR_EXTRA_HOSTNAMES` (the explicit container policy).
+- **Local mode** requires `use_emulators`, project `demo-waterpilot`, and both hosts as `host:port` with a port in 1–65535. Hosts are parsed with `urlsplit` plus `ipaddress` (no substring tests). Allowed hosts are loopback IPv4 or IPv6, `localhost`, or an exact hostname listed in `WP_EMULATOR_EXTRA_HOSTNAMES` (the explicit container policy).
 - **Pilot mode** rejects any emulator variable under either naming, `demo-*` projects (so the default can't slip through), extra emulator hostnames, and CORS origins that are not https or are loopback (so the localhost defaults are rejected).
 - `adapters/factory.py` refuses `LocalJobRunner`/`LocalObjectStorage` in pilot mode. The worker and seed build through it, and the worker fails before touching disk.
 - **Frontend:** `env.ts` rejects local mode without emulators or with a non-loopback API, and pilot mode with emulators, a missing API URL, http, or a loopback/unspecified host. It uses WHATWG `URL` parsing, so IPv6, IPv4-mapped and integer IPv4 forms are handled.
-- **Test isolation:** tests run in an empty working directory with `WL_*` and the standard variables removed (`tests/conftest.py`). A `.env` in the working directory is still validated.
+- **Test isolation:** tests run in an empty working directory with `WP_*` and the standard variables removed (`tests/conftest.py`). A `.env` in the working directory is still validated.
 
 **R2.** Job ids must match `[A-Za-z0-9][A-Za-z0-9_-]{0,127}`, checked before any I/O, and every resolved path must stay inside its queue directory. Ids read back from disk are re-validated against the filename.
 
@@ -262,7 +262,7 @@ Phase 03 — Design system and application shell (AppShell, six-stage nav, share
 - **TypeScript rationale corrected:** the `<6.1.0` peer allows TS 6.0.3, which was not evaluated; the tested 5.9.3 is kept. Escaped `|` in Markdown tables.
 - **Caveat:** locking firebase-tools exposes **11 transitive dev-only advisories (4 moderate, 7 high)**. `npm audit --omit=dev` reports **0**, as did the lockfile before this change. The only offered fix is a breaking downgrade to 14.x, which was not applied (`docs/dependencies.md`).
 
-**R6.** `api/main.py` no longer creates an app at import. The runtime app is in `api/asgi.py` (`dev:api` now targets `waterlens.api.asgi:app`), which still fails closed. The exporter builds settings from constructor arguments only — no environment, no `.env`, no adapters, no connections. `/readyz` now reports `scope: "configuration"`, and the contracts were regenerated.
+**R6.** `api/main.py` no longer creates an app at import. The runtime app is in `api/asgi.py` (`dev:api` now targets `waterpilot.api.asgi:app`), which still fails closed. The exporter builds settings from constructor arguments only — no environment, no `.env`, no adapters, no connections. `/readyz` now reports `scope: "configuration"`, and the contracts were regenerated.
 
 **R7.**
 
@@ -289,7 +289,7 @@ Phase 03 — Design system and application shell (AppShell, six-stage nav, share
 | `npm run contracts` ×2                              | ✅ byte-identical `openapi.json` + `openapi.ts`; export under an invalid pilot env is identical                                  |
 | `npm run seed`                                      | ✅ 4 SYNTHETIC fixture files stored (local)                                                                                      |
 | Worker smoke                                        | ✅ enqueue `smoke-1` → drained 1 → re-run drained 0 (completed job not re-run)                                                   |
-| Pilot refusals                                      | ✅ worker exit 1 (`LocalJobRunner is local-only…`), seed exit 1, `import waterlens.api.asgi` raises ConfigError                  |
+| Pilot refusals                                      | ✅ worker exit 1 (`LocalJobRunner is local-only…`), seed exit 1, `import waterpilot.api.asgi` raises ConfigError                 |
 | `npm run emulators` (standard ports)                | ✅ "All emulators ready" — Auth 127.0.0.1:9099, Firestore 127.0.0.1:8080, UI 4000                                                |
 | `bash scripts/dev.sh` (standard ports)              | ✅ emulators ready, `/healthz` 200, web 200; SIGTERM → exit 143, all processes stopped                                           |
 | Launcher fail-fast (temp copy, alternate ports)     | ✅ killing the API's uvicorn → others stopped, exit 1, all ports freed                                                           |
@@ -347,7 +347,7 @@ structure. Capability status and the phase remap are in
 
 - **Decisions and rules:**
   - Added `docs/decisions/0002-revised-product-scope-and-api-style.md` and its index row.
-  - Updated `.cursor/rules/00-waterlens-project.mdc` and `frontend.mdc` to reference ADR 0002.
+  - Updated `.cursor/rules/00-waterpilot-project.mdc` and `frontend.mdc` to reference ADR 0002.
   - Added `docs/domain/conventions.md` §4a, the reviewed currency-extension policy.
 - **Styles** (`apps/web/src/styles/`): `_token-values.scss` holds the neutral and palette maps; `tokens.scss` holds the CSS variables for 2 themes × 3 palettes, spacing, type, motion and z-index; `_mixins.scss` covers breakpoints, focus, reduced motion and visually hidden; `global.scss` was updated. `vite.config.ts` gained the Sass `loadPaths` setting.
 - **Components** (`apps/web/src/components/`, SCSS Module each): Button/ButtonLink, Field/Input/Select/Textarea, MetricCard, Accordion, Dialog, Drawer (shared `useModalLayer`), Tabs, Badge/EvidenceBadge, Tooltip, Toast provider, Skeleton/LoadingRegion, EmptyState/ErrorState/PermissionState/StaleBanner, SuggestionChips, Icon, Spinner, VisuallyHidden, Logo (provisional), and SVG BarChart/LineChart with a table alternative.
@@ -400,8 +400,8 @@ structure. Capability status and the phase remap are in
 | `npm run build`                                | ✅ entry 445.63 kB / 139.11 kB gzip (Vite), CSS 28.16 kB / 5.55 kB; each route chunk < 1 kB; design-system chunk 26.40 kB / 8.87 kB                                    |
 | `npm run budget`                               | ✅ all assets within budget (entry 134.31 kB gzip-9 of 150 kB) — see `docs/dependencies.md`                                                                            |
 | `npm run contracts`                            | ✅ regenerated; the backend drift test above passes                                                                                                                    |
-| `npm run test:e2e` (Playwright chromium)       | ✅ **14 passed**, 1 skipped (capture-only test, runs with `WL_CAPTURE_SCREENSHOTS=1`)                                                                                  |
-| `WL_CAPTURE_SCREENSHOTS=1 npm run test:e2e`    | ✅ 15 passed; 14 JPEGs written to `docs/design/screenshots/phase-03/`                                                                                                  |
+| `npm run test:e2e` (Playwright chromium)       | ✅ **14 passed**, 1 skipped (capture-only test, runs with `WP_CAPTURE_SCREENSHOTS=1`)                                                                                  |
+| `WP_CAPTURE_SCREENSHOTS=1 npm run test:e2e`    | ✅ 15 passed; 14 JPEGs written to `docs/design/screenshots/phase-03/`                                                                                                  |
 | Mutation: modal focus-return removed           | ✅ detected (2 modal tests failed), file restored                                                                                                                      |
 
 The Playwright suite covers:
@@ -483,7 +483,7 @@ The owner asked for a reviewable screen/state map and a reusable token/component
   - the state catalogue, keyboard map and accessibility targets;
   - the uncertainty language, with banned patterns and their replacements;
   - the token and component inventories, and the verification rules.
-- **Tokens and mixins:** `--wl-measure`, `--wl-agent-width-min/max`, `--wl-tap-target`, and the `tap-target` mixin.
+- **Tokens and mixins:** `--wp-measure`, `--wp-agent-width-min/max`, `--wp-tap-target`, and the `tap-target` mixin.
 - **New components:**
   - `Notice` (kinds: stale, offline, partial, archived, budget, auth-cancelled, restored, info); `StaleBanner` now wraps it.
   - `ErrorSummary`, `ChoiceCards`, `StepActions` and `ResizeHandle`.
@@ -511,7 +511,7 @@ The owner asked for a reviewable screen/state map and a reusable token/component
 | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
 | `npm run lint` / `npm run typecheck` / `format:check`              | ✅ / ✅ / ✅                                                                                            |
 | `npm run test:web`                                                 | ✅ **112 passed** (9 files; was 101)                                                                    |
-| `npm run test:e2e`                                                 | ✅ **23 passed**, 1 skipped (capture-only); with `WL_CAPTURE_SCREENSHOTS=1`: 24 passed, 16 screenshots  |
+| `npm run test:e2e`                                                 | ✅ **23 passed**, 1 skipped (capture-only); with `WP_CAPTURE_SCREENSHOTS=1`: 24 passed, 16 screenshots  |
 | `npm run build` + `npm run budget`                                 | ✅ entry 135.82 kB gzip-9 (was 134.31; budget 150), entry CSS 5.69 kB (budget 8), gallery 10.23 kB lazy |
 | `npm run test:py` / `validate:domain` / `lint:py` / `typecheck:py` | ✅ 133 passed (1 known warning) / 61 passed / clean / 18 files clean (backend untouched)                |
 
@@ -702,7 +702,7 @@ local and pilot, the Welcome screen and the header account control. The pilot AP
 is still refused because Phase 04's Firestore adapter is not built.
 
 **Interpretation:** "Welcome supports sign-in and guest continuation in either mode" is
-read as both app modes: local (Auth emulator, `demo-waterlens`) and pilot (a real Firebase
+read as both app modes: local (Auth emulator, `demo-waterpilot`) and pilot (a real Firebase
 project). The UI is identical; only configuration differs (ADR 0004).
 
 ### Files changed
@@ -745,7 +745,7 @@ project). The UI is identical; only configuration differs (ADR 0004).
 ### Behaviour
 
 - **Configuration.** `VITE_` variables are an allowlist of public keys; anything else stops
-  startup. Local mode is pinned to `demo-waterlens` and a loopback emulator host. Pilot mode
+  startup. Local mode is pinned to `demo-waterpilot` and a loopback emulator host. Pilot mode
   requires the real public web config and rejects an emulator host or a `demo-` project.
 - **SDK.** Firebase is initialised once and the emulator connected once, in one lazily
   loaded module. Persistence is IndexedDB, then localStorage, then memory. ID tokens are
@@ -846,7 +846,7 @@ owner will paste the new prompt list.
    never auto-retried.
 2. **Numbering:** blocked, as above.
 3. **Claim windows.** Defaults stay 10 minutes (claim) and 5 minutes (fresh sign-in), now
-   read from `WL_ACCOUNT_CLAIM_TTL_SECONDS` and `WL_ACCOUNT_CLAIM_FRESH_SIGN_IN_SECONDS`.
+   read from `WP_ACCOUNT_CLAIM_TTL_SECONDS` and `WP_ACCOUNT_CLAIM_FRESH_SIGN_IN_SECONDS`.
    Values outside 60–3600 s and 60–900 s stop start-up with a `ConfigError`.
 4. **Token-refresh retry.** `graphqlRequest` retries at most once, with a force-refreshed
    token and the identical body (same idempotency key), and only when every GraphQL error
@@ -863,7 +863,7 @@ owner will paste the new prompt list.
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | `npm run test:py`                     | ✅ 293 passed, 25 deselected (emulator tests). Claim tests cover single use, both identities, narrow transfer, expiry, replay, config |
 | `npm run test:web`                    | ✅ 11 files, 187 tests passed (new: query-client defaults, same-key resend, single retry, no retry on other codes/partial/transport)  |
-| `npm run test:emulator`               | ✅ Python 25 passed; web 6 passed (Auth + Firestore emulators, `demo-waterlens`)                                                      |
+| `npm run test:emulator`               | ✅ Python 25 passed; web 6 passed (Auth + Firestore emulators, `demo-waterpilot`)                                                     |
 | `npm run test:e2e:emulator`           | ✅ 27 passed, 1 skipped (opt-in screenshot generator)                                                                                 |
 | `npm run lint`, `typecheck`           | ✅ clean                                                                                                                              |
 | `npm run lint:py`, `typecheck:py`     | ✅ ruff clean; mypy no issues in 68 source files                                                                                      |
@@ -892,7 +892,7 @@ runtime stays refused.
   `funding.py`, `accounts.py` and `areas.py`, all moved into transactions.
 - Backend adapters: `adapters/store_firestore.py` (new), `adapters/store_memory.py`,
   `adapters/factory.py` (`build_local_store`, `PILOT_MISSING_ADAPTERS`),
-  `adapters/auth_emulator.py` (revocation by `iat`), `config.py` (`WL_LOCAL_STORE`).
+  `adapters/auth_emulator.py` (revocation by `iat`), `config.py` (`WP_LOCAL_STORE`).
 - GraphQL: `api/graphql/loaders.py` (new), `context.py`, module resolvers, and
   `nearbyCommunities` in `modules/communities.py`.
 - Contracts and web: regenerated `packages/contracts/schema.graphql` and the web
@@ -941,7 +941,7 @@ runtime stays refused.
 - **Nearby discovery.** `nearbyCommunities` reads geohash prefix candidates from 9 cells
   (24 near the poles), filters by exact distance, deduplicates, sorts and pages, and
   reports `candidatesTruncated` instead of scanning.
-- **Local mode** uses the Firestore emulator by default (`WL_LOCAL_STORE=memory` is
+- **Local mode** uses the Firestore emulator by default (`WP_LOCAL_STORE=memory` is
   optional). The pilot refusal now lists the live adapters still missing.
 
 **Fixes found while testing:**
@@ -965,7 +965,7 @@ runtime stays refused.
 | `npm run lint:py`, `typecheck:py`, `ruff format --check`        | ✅ ruff clean; mypy no issues in 71 source files                                                                                                                                                                                                                          |
 | `npm run contracts` (drift)                                     | ✅ regenerated outputs byte-identical                                                                                                                                                                                                                                     |
 | `npm run build` + `npm run budget`                              | ✅ entry 142.70 kB gzip (budget 150); CSS 6.51 kB                                                                                                                                                                                                                         |
-| `pytest -m live tests/live` without `WL_LIVE_FIRESTORE_PROJECT` | ⏭ 24 skipped by design; the live probe was **not** run (no pilot project)                                                                                                                                                                                                 |
+| `pytest -m live tests/live` without `WP_LIVE_FIRESTORE_PROJECT` | ⏭ 24 skipped by design; the live probe was **not** run (no pilot project)                                                                                                                                                                                                 |
 
 ### Not done (honest)
 
@@ -1021,7 +1021,7 @@ runtime stays refused.
   `test/fakeSession.ts`; updated `test/AuthTestProviders.tsx`, `shell/shell.test.tsx`
   (+4), `graphql/graphql.test.ts` (+1), `features/area/area.test.tsx`.
 - E2E: new `e2e/session.spec.ts` (6); `e2e/smoke.spec.ts` (guest flows now also need the
-  API); `playwright.config.ts` starts the local API when `WL_E2E_API=1` and runs one worker
+  API); `playwright.config.ts` starts the local API when `WP_E2E_API=1` and runs one worker
   then; root `test:e2e:emulator` sets it.
 - Tooling: `scripts/check-bundle-budget.mjs` counts modulepreloaded chunks as initial;
   `fake-indexeddb ^6.2.5` dev dependency (`apps/web/package.json`, `package-lock.json`).
@@ -1129,7 +1129,7 @@ deployed or called; the Cloud Tasks and Cloud Storage adapters are tested agains
   placeholder document is produced.
 - **Artifacts.** Validated keys `{kind}/{owner}/{resource}/{name}`, PDF ≤ 5 MiB with
   magic-byte check, JSON ≤ 256 KiB; the download route reads through `read_owned`.
-- **Private worker.** `waterlens.worker.asgi:app` serves run, outbox-event and reconcile
+- **Private worker.** `waterpilot.worker.asgi:app` serves run, outbox-event and reconcile
   routes behind Google OIDC verification (audience, issuer, `email_verified`, invoker
   allow-list). It returns 401/403 before any store access, serves no OpenAPI, and is
   refused in pilot like the API.
@@ -1191,7 +1191,7 @@ deployed or called; the Cloud Tasks and Cloud Storage adapters are tested agains
 - Every proposal job currently ends `FAILED` because the renderer is Prompt 20; the
   Proposals screen that starts jobs and links to `/jobs/:jobId` is also Prompt 20.
 - The local file queue is not durable and supports one worker process; with
-  `WL_LOCAL_STORE=memory` nothing drains it.
+  `WP_LOCAL_STORE=memory` nothing drains it.
 - The pilot runtime (API and worker) stays refused until Prompts 08, 18 and 20.
 - GraphQL `NOT_FOUND` answers still log a full traceback in the local API output (pre-existing Strawberry logging; noise only).
 
@@ -1383,7 +1383,7 @@ These remain **pending live verification**:
 - **Place search port.**
   - `FixturePlaceSearch` (labelled gazetteer, local mode).
   - `GooglePlaceSearch` (Places Text Search with an explicit field mask; pilot, only with
-    `WL_PLACES_SERVER_KEY`).
+    `WP_PLACES_SERVER_KEY`).
   - `NoPlaceSearch`.
   - Local mode refuses a server key.
 - **`LocationService`.**
@@ -1427,7 +1427,7 @@ These remain **pending live verification**:
     Otherwise it shows the summary and readiness, with user-input and limited-coverage
     banners.
 - **Configuration.** `VITE_GOOGLE_MAPS_API_KEY` and `VITE_GOOGLE_MAPS_MAP_ID` work in
-  pilot only; their shape is validated, and local mode refuses them. `WL_PLACES_SERVER_KEY`
+  pilot only; their shape is validated, and local mode refuses them. `WP_PLACES_SERVER_KEY`
   is pilot only. Key restriction steps are in `infra/README.md`.
 - **Dependencies.** Two backend dependencies, Babel 2.18.0 and tzfpy 2.1.0, recorded in
   `docs/dependencies.md` with the ODbL attribution.
@@ -1533,7 +1533,7 @@ below and re-ran every affected suite. Prompt 09 has not been started.
    - axios times out after 15 s, query retries are bounded, and the backend httpx
      timeout applies.
 7. **Keys.**
-   - `WL_PLACES_SERVER_KEY` is a `SecretStr` that never reaches the web. Any `VITE_`
+   - `WP_PLACES_SERVER_KEY` is a `SecretStr` that never reaches the web. Any `VITE_`
      variable outside the allowlist fails startup.
    - Browser-key referrer and API restrictions are documented in `infra/README.md` and
      ADR 0009.
@@ -1551,7 +1551,7 @@ below and re-ran every affected suite. Prompt 09 has not been started.
 `docs/build/live-integration-tests.md` describes the opt-in configuration:
 
 - `tests/live/test_places_google_live.py` runs with `-m live` and needs
-  `WL_LIVE_PLACES_SERVER_KEY`. It builds the adapter directly and makes at most four
+  `WP_LIVE_PLACES_SERVER_KEY`. It builds the adapter directly and makes at most four
   requests.
 - A manual browser checklist (B1–B8) runs against a pilot preview on an allowed
   referrer.
@@ -1565,7 +1565,7 @@ Places behaviour, and real dataset coverage, are unverified.**
 | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `npm run test:py`                                                          | ✅ 601 passed, 129 deselected                                                                                                                                                                           |
 | `npm run validate:domain`                                                  | ✅ 172 passed                                                                                                                                                                                           |
-| `uv run pytest -m live tests/live -rs`                                     | ⏭ 33 skipped (no `WL_LIVE_*` variables set; 4 are the new Places tests)                                                                                                                                 |
+| `uv run pytest -m live tests/live -rs`                                     | ⏭ 33 skipped (no `WP_LIVE_*` variables set; 4 are the new Places tests)                                                                                                                                 |
 | `npm run test:emulator`                                                    | ✅ Python 96 passed; web 6 passed                                                                                                                                                                       |
 | `npm run test:web`                                                         | ✅ 288 passed (16 files)                                                                                                                                                                                |
 | `npm run test:e2e:emulator`                                                | ✅ 39 passed, 1 skipped (opt-in screenshot capture). The first run failed 3 location tests on test-side locators (the card label covers the radio, and "Please check" matched two elements); both fixed |
@@ -1615,7 +1615,7 @@ resource changed, and no environment guard changed.
 | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | `npm run test:py`                                                         | ✅ 601 passed, 129 deselected (emulator and live markers)                                                        |
 | `npm run validate:domain`                                                 | ✅ 172 passed                                                                                                    |
-| `uv run pytest -m live tests/live`                                        | ⏭ 33 skipped, 0 run: 29 Firestore index probes and 4 Google Places tests, because no `WL_LIVE_*` variable is set |
+| `uv run pytest -m live tests/live`                                        | ⏭ 33 skipped, 0 run: 29 Firestore index probes and 4 Google Places tests, because no `WP_LIVE_*` variable is set |
 | `npm run test:emulator`                                                   | ✅ Python 96 passed (634 deselected); web 6 passed                                                               |
 | `npm run test:web`                                                        | ✅ 288 passed, 16 files (after the fix above; 9 concurrent stress runs also all passed)                          |
 | `npm run test:e2e:emulator`                                               | ✅ 39 passed, 1 skipped (opt-in screenshot capture), 0 failed                                                    |
@@ -1683,7 +1683,7 @@ or billable test ran, no cloud resource changed and no environment guard changed
 
 ### Built
 
-- **Engine** (`services/backend/src/waterlens/domain/baseline.py`, `baseline-1`):
+- **Engine** (`services/backend/src/waterpilot/domain/baseline.py`, `baseline-1`):
   - exact `Fraction` arithmetic;
   - typed `DailySeries`, `WindowMean` and `DemandBasis` inputs;
   - registry formulas, with reliable supply at `sorted_desc[ceil(9/10·n) − 1]` and at
@@ -1796,7 +1796,7 @@ or billable test ran, no cloud resource changed and no environment guard changed
 | `npm run contracts` plus byte comparison                                  | ✅ no drift in `schema.graphql`, `openapi.json` and the generated web types                                      |
 | `npm run coverage-matrix`                                                 | ✅ regenerated; only the deficit row changed (intended)                                                          |
 | `npm run build` + `npm run budget`                                        | ✅ initial JS 147.39 / 150 kB gzip; `area` 17.72 / 40 kB gzip                                                    |
-| `pytest -m live`                                                          | ⏭ not run (no `WL_LIVE_*` variables; no live or billable test)                                                   |
+| `pytest -m live`                                                          | ⏭ not run (no `WP_LIVE_*` variables; no live or billable test)                                                   |
 
 ### Acceptance evidence
 
@@ -1891,7 +1891,7 @@ environment guard changed. Two statements in the Prompt 09 entry above are super
 | `npm run contracts` plus byte comparison                                  | ✅ no drift in `schema.graphql`, `openapi.json` and the generated web types |
 | `npm run coverage-matrix`                                                 | ✅ unchanged                                                                |
 | `npm run build` + `npm run budget`                                        | ✅ initial JS 147.41 / 150 kB gzip; `area` 18.19 / 40 kB gzip               |
-| `pytest -m live`                                                          | ⏭ not run (no `WL_LIVE_*` variables; live verification is separate)         |
+| `pytest -m live`                                                          | ⏭ not run (no `WP_LIVE_*` variables; live verification is separate)         |
 
 ### Acceptance (local and emulator)
 
@@ -2040,7 +2040,7 @@ is complete for local and emulator environments and ready for Prompt 10.**
 | `npm run contracts` plus byte comparison                                  | ✅ no drift in `schema.graphql`, `openapi.json` and the generated web types                            |
 | `npm run coverage-matrix`, `npm run intervention-catalogue`               | ✅ unchanged                                                                                           |
 | `npm run build` + `npm run budget`                                        | ✅ initial JS 147.75 / 150 kB gzip; `goals` 6.52 kB, `GoalAssessmentView` 2.46 kB, agent check 0.65 kB |
-| `pytest -m live`                                                          | ⏭ not run (no `WL_LIVE_*` variables; live verification is separate)                                    |
+| `pytest -m live`                                                          | ⏭ not run (no `WP_LIVE_*` variables; live verification is separate)                                    |
 
 ### Acceptance (local and emulator)
 
@@ -2200,7 +2200,7 @@ rules in `docs/domain/option-engine.md`
 | `npm run lint:py`, `npm run typecheck:py`, `uv run ruff format --check .` | ✅ clean (mypy: 115 files)                                                                   |
 | `npm run contracts`, `coverage-matrix`, `intervention-catalogue`          | ✅ no drift across 7 generated files                                                         |
 | `npm run build` + `npm run budget`                                        | ✅ initial JS 148.64 / 150 kB gzip; `plans` 5.52 kB                                          |
-| `pytest -m live`                                                          | ⏭ not run (no `WL_LIVE_*` variables; live verification is separate)                          |
+| `pytest -m live`                                                          | ⏭ not run (no `WP_LIVE_*` variables; live verification is separate)                          |
 
 ### Remaining limitations
 
@@ -2231,7 +2231,7 @@ guide text and eight owner points, and closed the gaps found. Prompt 12 was not 
 ### Gaps found and fixed
 
 - **What-if lived in Traditional mode.** The guide says to expose scenario logic to
-  WaterLensAgent and remove separate what-if navigation. The what-if tool now lives in
+  WaterPilotAgent and remove separate what-if navigation. The what-if tool now lives in
   the Agent pane (`AgentScenario`, which wraps `WhatIfPanel`). Traditional mode has no
   what-if controls. The Plans page shows a saved what-if read-only, labelled "What-if
   from Agent mode · Agent-generated", with "Open Agent mode" (`ScenarioResult`).
@@ -2374,7 +2374,7 @@ Prompt 12 was not started.
 - **Selection, report and proposal:**
   - `PlanOption.impact.wider` stores the assessment exactly as shown;
   - `Report.planName` and `Report.impact` are copied at finalization;
-  - proposal inputs are `waterlens.proposal-inputs/2` (`inputs-v2.json`);
+  - proposal inputs are `waterpilot.proposal-inputs/2` (`inputs-v2.json`);
   - `ProposalSection.WIDER_IMPACT` is added.
 - **GraphQL:**
   - new types: `WiderImpact`, `ImpactFinding`, `ImpactCitation`, `ImpactMagnitude`,
@@ -2515,14 +2515,14 @@ the suite is now green at **836 passed** with the fix and the added test.
 
 #### Point-by-point result
 
-| Owner point                                                                       | Result  | Evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| --------------------------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Geographic proximity alone never establishes aquifer/catchment connectivity       | ✅ pass | `ConnectivityEvidence` rejects `basis=proximity` (`domain/impact.py`); `area_linkage`/`pair_linkage` use records only; `SystemLink`/`Boundary` require connectivity citations for a known linkage; narrative `_NEARNESS` guard. Tests: `test_absent_connectivity_evidence_stays_unknown_even_next_door`, `test_connectivity_records_need_real_evidence`, `test_evidence_links_only_the_areas_and_system_it_names`, `test_a_lone_unit_or_conflicting_records_prove_nothing`; API `test_nearby_places_are_geography_only_without_evidence`, `test_reviewed_evidence_links_only_what_it_names`                                           |
-| Missing evidence stays unknown; guards/summaries can't make it "safe"/"no impact" | ✅ pass | `POTABILITY_TERMS`/`REASSURANCE_TERMS` reject reassurance in `Finding`, `Unavailable._still_unknown`, and `check_narrative`; absent records give `UNKNOWN` + an `Unavailable` entry. Tests: `test_unsupported_claims_are_rejected`, `test_a_summary_cannot_go_beyond_the_assessment`; API `test_agent_tools_return_the_same_assessment_and_guard_summaries` ("negligible" rejected)                                                                                                                                                                                                                                                   |
-| Groundwater answer is labeled user-provided, not verified hydrological evidence   | ✅ pass | `_SITE_FACT_LABEL["groundwater_use"]` = "user-provided, not verified hydrological evidence", cited as `CitationKind.USER_INPUT`; the declared false-resilience statement repeats "your answer, not verified hydrological evidence". Tests: `test_a_declared_borewell_is_flagged_as_possible_with_its_uncertainty`; API `test_a_declared_borewell_is_flagged_with_its_uncertainty`                                                                                                                                                                                                                                                     |
-| Required reviews visible before plan selection and in reports/proposals           | ✅ pass | `OptionImpact.reviews` is shown on every option before selection (`WiderImpactView.tsx`); `Report.required_reviews()`; proposals always carry `requiredReviews` and force `ProposalSection.WIDER_IMPACT` when a required review exists (`services/reports.py` `_sections`). Tests: `test_reviews_follow_the_measures`, `test_the_catalogue_cannot_drop_recharge_or_greywater_reviews`; web + e2e review rows; API provenance test asserts `wider_impact` in proposal sections                                                                                                                                                         |
-| Changing relevant inputs or evidence invalidates stale assessments                | ✅ pass | `impact_key` hashes engine/catalogue/comparison/site/evidence/nearby/sourced values; `selection_status` returns `IMPACT_CHANGED`/`NOT_CURRENT` and `finalize` refuses anything not in `FINALIZABLE`. Tests: `test_the_same_inputs_give_the_same_assessment_and_any_change_a_new_one`, `test_changing_the_goal_clears_the_selected_plan`, `test_a_plan_from_earlier_inputs_cannot_be_selected`, `test_a_goal_change_and_a_stale_selection_in_one_patch_is_refused`, and the new `test_selected_plan_status_tracks_the_chosen_option_and_guards_finalize`                                                                               |
-| `interventions-3` and `inputs-v2.json` have explicit compatibility handling       | ✅ pass | `proposals.py` docstring + code: v1 files are never rewritten or deleted (create-only name), any new delivery writes v2 from the immutable report, and reports finalized before impact existed give `impact: null` with `impactStatus` (`not_assessed`/`not_recorded`). `interventions-3`: options compared under `interventions-2` resolve to `SelectionStatus.NOT_CURRENT`, pre-engine options to `LEGACY`. Tests: `test_the_chosen_option_keeps_its_assessment_and_provenance` (asserts `waterlens.proposal-inputs/2`), emulator `test_a_selected_engine_option_round_trips_with_its_comparison` (legacy + engine options coexist) |
+| Owner point                                                                       | Result  | Evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| --------------------------------------------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Geographic proximity alone never establishes aquifer/catchment connectivity       | ✅ pass | `ConnectivityEvidence` rejects `basis=proximity` (`domain/impact.py`); `area_linkage`/`pair_linkage` use records only; `SystemLink`/`Boundary` require connectivity citations for a known linkage; narrative `_NEARNESS` guard. Tests: `test_absent_connectivity_evidence_stays_unknown_even_next_door`, `test_connectivity_records_need_real_evidence`, `test_evidence_links_only_the_areas_and_system_it_names`, `test_a_lone_unit_or_conflicting_records_prove_nothing`; API `test_nearby_places_are_geography_only_without_evidence`, `test_reviewed_evidence_links_only_what_it_names`                                            |
+| Missing evidence stays unknown; guards/summaries can't make it "safe"/"no impact" | ✅ pass | `POTABILITY_TERMS`/`REASSURANCE_TERMS` reject reassurance in `Finding`, `Unavailable._still_unknown`, and `check_narrative`; absent records give `UNKNOWN` + an `Unavailable` entry. Tests: `test_unsupported_claims_are_rejected`, `test_a_summary_cannot_go_beyond_the_assessment`; API `test_agent_tools_return_the_same_assessment_and_guard_summaries` ("negligible" rejected)                                                                                                                                                                                                                                                    |
+| Groundwater answer is labeled user-provided, not verified hydrological evidence   | ✅ pass | `_SITE_FACT_LABEL["groundwater_use"]` = "user-provided, not verified hydrological evidence", cited as `CitationKind.USER_INPUT`; the declared false-resilience statement repeats "your answer, not verified hydrological evidence". Tests: `test_a_declared_borewell_is_flagged_as_possible_with_its_uncertainty`; API `test_a_declared_borewell_is_flagged_with_its_uncertainty`                                                                                                                                                                                                                                                      |
+| Required reviews visible before plan selection and in reports/proposals           | ✅ pass | `OptionImpact.reviews` is shown on every option before selection (`WiderImpactView.tsx`); `Report.required_reviews()`; proposals always carry `requiredReviews` and force `ProposalSection.WIDER_IMPACT` when a required review exists (`services/reports.py` `_sections`). Tests: `test_reviews_follow_the_measures`, `test_the_catalogue_cannot_drop_recharge_or_greywater_reviews`; web + e2e review rows; API provenance test asserts `wider_impact` in proposal sections                                                                                                                                                          |
+| Changing relevant inputs or evidence invalidates stale assessments                | ✅ pass | `impact_key` hashes engine/catalogue/comparison/site/evidence/nearby/sourced values; `selection_status` returns `IMPACT_CHANGED`/`NOT_CURRENT` and `finalize` refuses anything not in `FINALIZABLE`. Tests: `test_the_same_inputs_give_the_same_assessment_and_any_change_a_new_one`, `test_changing_the_goal_clears_the_selected_plan`, `test_a_plan_from_earlier_inputs_cannot_be_selected`, `test_a_goal_change_and_a_stale_selection_in_one_patch_is_refused`, and the new `test_selected_plan_status_tracks_the_chosen_option_and_guards_finalize`                                                                                |
+| `interventions-3` and `inputs-v2.json` have explicit compatibility handling       | ✅ pass | `proposals.py` docstring + code: v1 files are never rewritten or deleted (create-only name), any new delivery writes v2 from the immutable report, and reports finalized before impact existed give `impact: null` with `impactStatus` (`not_assessed`/`not_recorded`). `interventions-3`: options compared under `interventions-2` resolve to `SelectionStatus.NOT_CURRENT`, pre-engine options to `LEGACY`. Tests: `test_the_chosen_option_keeps_its_assessment_and_provenance` (asserts `waterpilot.proposal-inputs/2`), emulator `test_a_selected_engine_option_round_trips_with_its_comparison` (legacy + engine options coexist) |
 
 #### Commands and results (this run)
 
@@ -2643,31 +2643,31 @@ against live/cloud services.
 
 ### Files changed / created
 
-- `services/backend/src/waterlens/domain/values.py` — added `WaterTariff` (price `Money`,
+- `services/backend/src/waterpilot/domain/values.py` — added `WaterTariff` (price `Money`,
   volume in litres > 0), `FundingStatus` (`APPROVED`/`EXPECTED`/`PROPOSED`) and
   `FundingSource` (label, amount ≥ 0, status), each canonicalised and validated.
-- `services/backend/src/waterlens/domain/economics.py` **(new, `economics-1`)** — the pure
+- `services/backend/src/waterpilot/domain/economics.py` **(new, `economics-1`)** — the pure
   engine: `assess_economics(...)` and the serializable result records (`OptionEconomics`,
   `Contingency`, `Payback`/`PaybackOutcome`, `HorizonTotals`, `Funding`/`FundingLine`).
   Imports only from `values.py`, so no cycle. Exact `Fraction` arithmetic, integer minor
   units, half-to-even rounding, `DAYS_PER_YEAR = 365`.
-- `services/backend/src/waterlens/domain/planning.py` — `MeasureEstimate` gains an optional
+- `services/backend/src/waterpilot/domain/planning.py` — `MeasureEstimate` gains an optional
   `recurring`; `GoalFields` gains `water_tariff`, `contingency_ratio` (bounded `[0, 1]`) and
   up to ten `funding` sources; `PlanOption` gains `economics`.
-- `services/backend/src/waterlens/domain/options.py` — sums per-measure recurring (only if
+- `services/backend/src/waterpilot/domain/options.py` — sums per-measure recurring (only if
   every measure has it and in one currency), caps counted water at baseline tanker
   deliveries, and calls `assess_economics` to attach `Option.economics`.
-- `services/backend/src/waterlens/application/services/options.py` — stores
+- `services/backend/src/waterpilot/application/services/options.py` — stores
   `PlanOption.economics`.
-- `services/backend/src/waterlens/domain/reports.py` +
+- `services/backend/src/waterpilot/domain/reports.py` +
   `application/services/reports.py` — `Report` carries `economics`; `finalizeReport` copies
   the chosen option's economics and refuses a **LEGACY** selection whose measures require an
   unassessed professional review (`_unassessed_review`, `PRECONDITION_FAILED`).
-- `services/backend/src/waterlens/api/graphql/modules/{goals,planning,options,reports}.py` —
+- `services/backend/src/waterpilot/api/graphql/modules/{goals,planning,options,reports}.py` —
   GraphQL inputs (`WaterTariffInput`, `FundingSourceInput`, `recurring`, `contingencyRatio`,
   `funding`) and output types (`OptionEconomics` and its parts, `WaterTariff`,
   `FundingSource`) with `.of` mappers.
-- `services/backend/src/waterlens/application/tools/options.py` — agent-tool JSON carries
+- `services/backend/src/waterpilot/application/tools/options.py` — agent-tool JSON carries
   `recurring` and `economics`.
 - `packages/contracts/schema.graphql` + `apps/web/src/graphql/generated/*` — regenerated
   (`npm run contracts`), adding the economics types, `PaybackOutcome` and `FundingStatus`.
@@ -2791,31 +2791,31 @@ Stopped after Prompt 14; Prompt 15 (ADK sessions) was not started.
 
 ### Files changed / created
 
-- `services/backend/src/waterlens/domain/ai.py` **(new)** — pure AI policy, recorded model
+- `services/backend/src/waterpilot/domain/ai.py` **(new)** — pure AI policy, recorded model
   metadata and **list prices** (`gemini-2.5-flash` default, `gemini-3.8-flash` latest;
   `price_date` 2026-10-12), each with an official `source_url` and a `pricing_mode`
   (pay-as-you-go, no PTU, no free tier); exact micro-USD cost (half to even), `AiLimits`
   (proposed defaults), `UsageEstimate`/`UsageActual`, the `UsageReservation` (with an
   `estimated` flag for conservatively settled holds) / `UsageDay` records with
   reconcile-expiry and derived ids, and `AiStatus`/`AiUnavailableReason`.
-- `services/backend/src/waterlens/domain/ids.py` — `USAGE_RESERVATION`, `USAGE_DAY` id kinds.
-- `services/backend/src/waterlens/domain/jobs.py` — `AgentRun` gains
+- `services/backend/src/waterpilot/domain/ids.py` — `USAGE_RESERVATION`, `USAGE_DAY` id kinds.
+- `services/backend/src/waterpilot/domain/jobs.py` — `AgentRun` gains
   `calls_since_checkpoint`/`max_calls_before_checkpoint` and a `needs_continue` rule; the
   tool-call cap default raised for the bounded run.
-- `services/backend/src/waterlens/application/ports.py` — `ModelRequest`/`ModelResponse`/
+- `services/backend/src/waterpilot/application/ports.py` — `ModelRequest`/`ModelResponse`/
   `ModelResponseUsage`, `ModelCallError(transient=…)`, `ModelCancelled`, the `ModelProvider`
   port and `NoModelProvider`.
-- `services/backend/src/waterlens/application/repositories.py` — `Store` gains
+- `services/backend/src/waterpilot/application/repositories.py` — `Store` gains
   `usage_reservations` (a `DueRepository`) and `usage_days`.
-- `services/backend/src/waterlens/adapters/store_memory.py`,
+- `services/backend/src/waterpilot/adapters/store_memory.py`,
   `store_firestore.py` — the two new collections (Firestore writes `_dueMs`/`_expiresAt`
   from `reservation_expires_at`; automatic single-field index only, no new composite index).
-- `services/backend/src/waterlens/adapters/model_fake.py` **(new)** — deterministic
+- `services/backend/src/waterpilot/adapters/model_fake.py` **(new)** — deterministic
   `FakeModelProvider` with scripted responses/errors and helpers.
-- `services/backend/src/waterlens/adapters/model_vertex.py` **(new)** — the live Vertex
+- `services/backend/src/waterpilot/adapters/model_vertex.py` **(new)** — the live Vertex
   adapter (lazy `google-genai`, ADC, refuses `demo-*`, transient/terminal error mapping,
   thinking counted into output). The **only** place a live model is called.
-- `services/backend/src/waterlens/application/services/ai.py` **(new, `ai-gateway-1`)** — the
+- `services/backend/src/waterpilot/application/services/ai.py` **(new, `ai-gateway-1`)** — the
   gateway: availability, run bounds + Continue checkpoint, atomic idempotent reserve, bounded
   retry, cancellation, structured-output validation, settle/reconcile, and a **dispatch-aware
   failure resolver** (`release` only when not dispatched; `settle_estimated` at worst-case
@@ -2823,13 +2823,13 @@ Stopped after Prompt 14; Prompt 15 (ADK sessions) was not started.
   lets `reconcile_expired` release only crash-orphans proven never dispatched and settle the
   rest conservatively; `reconcile_usage` resolves an estimate against evidenced actuals
   (raising or lowering it). Reservations are sized to cover every permitted attempt.
-- `services/backend/src/waterlens/application/services/common.py` + `__init__.py` — `AiConfig`
+- `services/backend/src/waterpilot/application/services/common.py` + `__init__.py` — `AiConfig`
   on `Deps`; `AiGateway` built into `Services`.
-- `services/backend/src/waterlens/config.py` — fail-closed `WL_AI_*` settings (all off by
+- `services/backend/src/waterpilot/config.py` — fail-closed `WP_AI_*` settings (all off by
   default; no budget → AI off), `ai_limits`, and `_ai_problems()` guard.
-- `services/backend/src/waterlens/adapters/factory.py` — builds `VertexModelProvider` **only**
+- `services/backend/src/waterpilot/adapters/factory.py` — builds `VertexModelProvider` **only**
   in a pilot runtime with AI enabled, kill switch off and a budget; otherwise `NoModelProvider`.
-- `services/backend/src/waterlens/api/graphql/modules/ai.py` **(new)** + `schema.py` — the
+- `services/backend/src/waterpilot/api/graphql/modules/ai.py` **(new)** + `schema.py` — the
   read-only `aiStatus` query and `AiUnavailableReason`.
 - `packages/contracts/schema.graphql` + `apps/web/src/graphql/generated/*` — regenerated
   (`npm run contracts`), adding `AiStatus` and `AiUnavailableReason`.
@@ -2900,7 +2900,7 @@ max_output)` cost, where `max_attempts = transient retries + 1`, so a retried ca
 | Retention preserves unresolved reconciliation records   | ✅ pass   | domain `test_retention_keeps_unresolved_records_and_ttls_resolved_ones`; emulator asserts no `_expiresAt` on an unresolved estimate                                                                                                                                |
 | Bounded agent calls / Continue checkpoint / kill switch | ✅ pass   | `test_a_run_pauses_at_the_continue_checkpoint_then_resumes`, `test_the_hard_cap_stops_a_run`, `test_only_one_run_is_active_per_session`, `test_kill_switch_disables_ai_everywhere`                                                                                 |
 | Planning works when AI is unavailable                   | ✅ pass   | `test_ordinary_planning_works_with_ai_disabled`; the gateway is never on the planning path                                                                                                                                                                         |
-| One explicitly gated live smoke records model usage     | ⏭ not run | `tests/live/test_vertex_ai_live.py` (`-m live`, skipped unless `WL_LIVE_VERTEX_PROJECT`); not run per instruction                                                                                                                                                  |
+| One explicitly gated live smoke records model usage     | ⏭ not run | `tests/live/test_vertex_ai_live.py` (`-m live`, skipped unless `WP_LIVE_VERTEX_PROJECT`); not run per instruction                                                                                                                                                  |
 
 ### Checks run
 
@@ -3003,8 +3003,8 @@ mechanism (evidence passed in); wiring it to a real billing export is a later pr
 Documented in ADR 0015. In short: a real GCP project with the Vertex AI API enabled and
 billing attached; ADC for a **dedicated runtime service account** with `roles/aiplatform.user`
 (no user credential, no API key); the chosen model enabled for the project
-(`gemini-2.5-flash` is restricted for new projects, else set `WL_LIVE_VERTEX_MODEL`); the
-`google-genai` SDK installed; and `WL_LIVE_VERTEX_PROJECT` set. Nothing here provisions,
+(`gemini-2.5-flash` is restricted for new projects, else set `WP_LIVE_VERTEX_MODEL`); the
+`google-genai` SDK installed; and `WP_LIVE_VERTEX_PROJECT` set. Nothing here provisions,
 deploys, enables billing or spends.
 
 ### Scientific / configuration method — proposed
@@ -3049,27 +3049,27 @@ provisioned, billed or run against live/cloud services.
   **`google-genai>=2.29,<3`** as **runtime** dependencies (`[project].dependencies`), since the
   deployed agent runtime constructs the adapters that import them; ADK pulls
   `google-genai==2.29.0`. (Close-out item 1 moved these out of the dev group.)
-- `src/waterlens/domain/conversations.py` — conversation records: `ConversationSession`
+- `src/waterpilot/domain/conversations.py` — conversation records: `ConversationSession`
   (session-scoped state, monotonic `next_seq` cursor, `retained_from_seq`, idle `expires_at`;
   `version` is the ADK state-revision/stale-writer marker), `ConversationEvent` (keyed by ADK
   event id, dumped payload), `ScopedState` (app/user shared), `ToolInvocation` (replay guard),
   `ConversationLease`; id helpers and `conversation_doc_id` (tenant-scoped doc id).
-- `src/waterlens/application/conversations.py` — the `ConversationStore` port, `AppendRequest`/
+- `src/waterpilot/application/conversations.py` — the `ConversationStore` port, `AppendRequest`/
   `AppendOutcome`, `StaleConversation`/`ConversationNotFound`, and the shared pure
   `advance_session`.
-- `src/waterlens/adapters/conversation_memory.py`, `conversation_firestore.py` — the two store
+- `src/waterpilot/adapters/conversation_memory.py`, `conversation_firestore.py` — the two store
   adapters with identical atomic semantics (Firestore: `agentSessions/{docId}`, bounded
   `events` subcollection, `agentScopedState`, `agentSessionLeases`, `agentToolGuards`).
-- `src/waterlens/adapters/adk_session.py` — `AdkSessionService(BaseSessionService)` over the
+- `src/waterpilot/adapters/adk_session.py` — `AdkSessionService(BaseSessionService)` over the
   port, mirroring the verified ADK semantics.
-- `src/waterlens/adapters/adk_gateway_llm.py` — `GatewayLlm(BaseLlm)` routing every model call
+- `src/waterpilot/adapters/adk_gateway_llm.py` — `GatewayLlm(BaseLlm)` routing every model call
   through `AiGateway.complete_text`.
-- `src/waterlens/application/services/ai.py` — extracted `_dispatch`; added `complete_text`
+- `src/waterpilot/application/services/ai.py` — extracted `_dispatch`; added `complete_text`
   (free-text, same policy) and `TextResult`; structured `generate` unchanged in behaviour.
-- `src/waterlens/adapters/model_vertex.py` — removed a now-unused `import-untyped` ignore
+- `src/waterpilot/adapters/model_vertex.py` — removed a now-unused `import-untyped` ignore
   (google-genai 2.29.0 ships types).
-- `src/waterlens/domain/ids.py` — `AGENT_SESSION`, `SCOPED_STATE`, `USAGE_CALL_KEY` id kinds.
-- `src/waterlens/domain/ai.py` + `application/services/ai.py` + the store adapters — a durable
+- `src/waterpilot/domain/ids.py` — `AGENT_SESSION`, `SCOPED_STATE`, `USAGE_CALL_KEY` id kinds.
+- `src/waterpilot/domain/ai.py` + `application/services/ai.py` + the store adapters — a durable
   **`UsageCallKey` tombstone** (`usageCallKeys` collection, 30-day TTL) written on settle/
   release so paid-call dedup survives reservation cleanup, independent of conversation events
   (close-out item 2).
@@ -3121,7 +3121,7 @@ provisioned, billed or run against live/cloud services.
 - `uv run pytest` (non-emulator) — **938 passed, 154 deselected** (was 931; +7 close-out:
   3 crash/replay gateway tests, 1 trimmed-event revision test, 3 actual-`Runner` tests).
 - `npm run test:emulator:py` under the pinned Node 24.21.0 / npm 11.19.0 and the Firebase
-  Firestore+Auth emulators (`demo-waterlens`) — **119 passed** (was 117; +2 tombstone
+  Firestore+Auth emulators (`demo-waterpilot`) — **119 passed** (was 117; +2 tombstone
   persistence + replay-after-deletion), including the Firestore index-coverage test.
 
 ### Remaining limitations / rollout block
@@ -3159,7 +3159,7 @@ loop is not wired to a model, no live Vertex call, no provisioning, deployment o
 - **Run lifecycle (`domain/jobs.py`, `application/services/ai.py`, `config.py`):** `AgentRun`
   gained a wall-clock `expires_at`, a durable monotonic `step_seq` (committed tool steps) and
   `max_tool_steps`, plus `AgentStopReason.STEP_BUDGET`/`EXPIRED`. `start_run` sets `expires_at`;
-  the gateway `_dispatch` refuses an expired run (defence in depth). New `AiLimits`/`WL_AI_*`
+  the gateway `_dispatch` refuses an expired run (defence in depth). New `AiLimits`/`WP_AI_*`
   knobs: `run_ttl_seconds`, `max_tool_steps_per_run`, `max_tool_fanout`, `max_tool_repeats`.
 - **Agent package (`application/agent/`):** `context.RunContext` (identity from the verified
   `ctx` + the run's `session_id`); `registry` (30 typed tools — read / reversible-edit /
@@ -3193,7 +3193,7 @@ isolation and durable replay protections of Prompts 14–15 are preserved.
   the regenerated GraphQL schema contract — two new `AgentStopReason` values — passes).
 - `npm run contracts` regenerated `packages/contracts/schema.graphql` and the web generated
   types (two added enum members); `npm -w apps/web run typecheck` — **clean**.
-- Emulator (pinned Node 24.21.0 / npm 11.19.0, Firestore+Auth, `demo-waterlens`) — **120 passed**
+- Emulator (pinned Node 24.21.0 / npm 11.19.0, Firestore+Auth, `demo-waterpilot`) — **120 passed**
   (119 before + one new lease-recovery test, see the close-out below). The lease-concurrency
   flake observed during the Prompt 16 run has been root-caused and fixed in the close-out.
 
@@ -3322,7 +3322,7 @@ Prompt 18 has not started. No live Vertex call, cloud provisioning, deployment o
 - Repository-wide `npm run format:check` observed pre-existing documentation formatting
   failures (seven files at the first run); changed files are formatted separately. The final
   remaining unchanged-file failures are recorded in the delivered validation report.
-- `WL_E2E_AGENT=1 ... playwright test agent.spec.ts --workers=1` — **3 launch failures,
+- `WP_E2E_AGENT=1 ... playwright test agent.spec.ts --workers=1` — **3 launch failures,
   zero browser tests executed**. Chromium fails before opening a page with macOS
   `bootstrap_check_in ... MachPortRendezvousServer: Permission denied (1100)`. No assertions
   were disabled or weakened to make this pass. Specs remain for a normal desktop run.

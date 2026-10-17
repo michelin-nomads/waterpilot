@@ -2,11 +2,11 @@
 
 .summary {
   display: grid;
-  gap: var(--wl-space-2);
-  padding: var(--wl-space-4);
-  border: 2px solid var(--wl-color-danger);
-  border-radius: var(--wl-radius-md);
-  background: var(--wl-color-danger-soft);
+  gap: var(--wp-space-2);
+  padding: var(--wp-space-4);
+  border: 2px solid var(--wp-color-danger);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-color-danger-soft);
 
   &:focus-visible,
   &:focus {
@@ -17,19 +17,19 @@
 .title {
   display: flex;
   align-items: center;
-  gap: var(--wl-space-2);
-  color: var(--wl-color-danger);
-  font-size: var(--wl-text-md);
+  gap: var(--wp-space-2);
+  color: var(--wp-color-danger);
+  font-size: var(--wp-text-md);
 }
 
 .list {
   display: grid;
-  gap: var(--wl-space-1);
+  gap: var(--wp-space-1);
   margin: 0;
   padding-left: 1.25rem;
 
   a {
-    color: var(--wl-color-text);
+    color: var(--wp-color-text);
     font-weight: 600;
   }
 }

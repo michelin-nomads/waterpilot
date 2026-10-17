@@ -1,4 +1,5 @@
 import type {
+  CommunityType,
   GoalInput,
   PlanningMode,
   QuantityInput,
@@ -18,6 +19,13 @@ export interface SessionInputs {
   goal: GoalInput | null;
   scenario: ScenarioInput | null;
   selectedPlanOptionId: string | null;
+  siteProfile: SiteProfile | null;
+}
+
+/** What the person says about their community; descriptive only, never an input to results. */
+export interface SiteProfile {
+  communityType: CommunityType | null;
+  occupiedHomes: number | null;
 }
 
 /** The authoritative planning session in the shape the UI and the coordinator use. */
@@ -41,6 +49,7 @@ export const SESSION_FIELDS: readonly SessionField[] = [
   'goal',
   'scenario',
   'selectedPlanOptionId',
+  'siteProfile',
 ];
 
 /** Inputs whose change makes plan comparisons, matches and proposal previews out of date. */
@@ -113,6 +122,16 @@ function canonicalScenario(scenario: ScenarioInput | null | undefined): Scenario
   };
 }
 
+/** An empty profile is no profile, so "nothing stated" has a single form. */
+function canonicalSiteProfile(
+  profile:
+    { communityType?: CommunityType | null; occupiedHomes?: number | null } | null | undefined,
+): SiteProfile | null {
+  const communityType = profile?.communityType ?? null;
+  const occupiedHomes = profile?.occupiedHomes ?? null;
+  return communityType === null && occupiedHomes === null ? null : { communityType, occupiedHomes };
+}
+
 /** One canonical form per field, so equal inputs compare equal however they were built. */
 export function canonical<F extends SessionField>(
   field: F,
@@ -120,6 +139,7 @@ export function canonical<F extends SessionField>(
 ): unknown {
   if (field === 'goal') return canonicalGoal(value as GoalInput | null);
   if (field === 'scenario') return canonicalScenario(value as ScenarioInput | null);
+  if (field === 'siteProfile') return canonicalSiteProfile(value as SiteProfile | null);
   return value ?? null;
 }
 
@@ -158,6 +178,7 @@ export function fromFragment(s: PlanningSessionFieldsFragment): SessionState {
         : null,
     ),
     selectedPlanOptionId: s.selectedPlanOptionId ?? null,
+    siteProfile: canonicalSiteProfile(s.siteProfile),
     inputsRevision: s.inputsRevision,
     updatedAt: s.updatedAt,
   };

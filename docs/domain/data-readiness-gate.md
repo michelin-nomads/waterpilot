@@ -1,10 +1,10 @@
-# WaterLens — Data-Readiness Gate
+# WaterPilot — Data-Readiness Gate
 
 Version 0.3 · criteria **PROPOSED**, runtime **implemented** (Prompt 07, ADR 0008)
 
 Defines the gate a candidate pilot area must pass **before** any of its metrics are shown
 as real (non-synthetic) values. Since Prompt 07 the gate runs in the backend
-(`services/backend/src/waterlens/domain/readiness.py`) for every area and metric, and is
+(`services/backend/src/waterpilot/domain/readiness.py`) for every area and metric, and is
 exposed as `Area.readiness` in GraphQL and the readiness panel on the area page. The
 generated coverage matrix is `docs/data-readiness.md`, and the operator procedure is
 `docs/data/ingestion-runbook.md`. Reporting windows and freshness bounds in the runtime
@@ -27,7 +27,7 @@ synthetic evidence, and `assess_area` applies that check, so a real place never 
 synthetic evidence. It is excluded, not ranked below real sources (ADR 0011 §8).
 
 **Technical support ≠ area readiness.** `capability-matrix.json → technicalSupport` says
-whether WaterLens has (or could have) a method for a capability in general. This gate says
+whether WaterPilot has (or could have) a method for a capability in general. This gate says
 whether a **specific area** has the validated, authorized evidence to show it. A
 capability can be technically `supported` (e.g. land cover) while every area is still
 `BLOCKED` because no source has been onboarded.

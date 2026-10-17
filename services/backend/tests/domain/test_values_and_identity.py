@@ -11,11 +11,11 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from waterlens.adapters.auth_emulator import EmulatorTokenVerifier
-from waterlens.application.identity import AccountKind
-from waterlens.domain.errors import DomainError, ErrorCode
-from waterlens.domain.ids import IdKind, new_id, require_id
-from waterlens.domain.values import (
+from waterpilot.adapters.auth_emulator import EmulatorTokenVerifier
+from waterpilot.application.identity import AccountKind
+from waterpilot.domain.errors import DomainError, ErrorCode
+from waterpilot.domain.ids import IdKind, new_id, require_id
+from waterpilot.domain.values import (
     Availability,
     MeasuredValue,
     Money,
@@ -116,8 +116,8 @@ def _b64(data: dict[str, object]) -> str:
 
 def _token(alg: str = "none", **overrides: object) -> str:
     claims: dict[str, object] = {
-        "iss": "https://securetoken.google.com/demo-waterlens",
-        "aud": "demo-waterlens",
+        "iss": "https://securetoken.google.com/demo-waterpilot",
+        "aud": "demo-waterpilot",
         "sub": "user-1",
         "iat": int(NOW.timestamp()) - 10,
         "auth_time": int(NOW.timestamp()) - 10,
@@ -129,7 +129,7 @@ def _token(alg: str = "none", **overrides: object) -> str:
 
 
 def test_emulator_verifier_accepts_valid_emulator_tokens() -> None:
-    verifier = EmulatorTokenVerifier("demo-waterlens", lambda: NOW)
+    verifier = EmulatorTokenVerifier("demo-waterpilot", lambda: NOW)
     guest = verifier.verify(_token())
     assert guest.uid == "user-1" and guest.kind is AccountKind.GUEST
     google = verifier.verify(_token(firebase={"sign_in_provider": "google.com"}))
@@ -152,7 +152,7 @@ def test_emulator_verifier_accepts_valid_emulator_tokens() -> None:
     ],
 )
 def test_emulator_verifier_rejects_invalid_tokens(token: str) -> None:
-    verifier = EmulatorTokenVerifier("demo-waterlens", lambda: NOW)
+    verifier = EmulatorTokenVerifier("demo-waterpilot", lambda: NOW)
     with pytest.raises(DomainError) as exc:
         verifier.verify(token)
     assert exc.value.code is ErrorCode.UNAUTHENTICATED
@@ -160,4 +160,4 @@ def test_emulator_verifier_rejects_invalid_tokens(token: str) -> None:
 
 def test_emulator_verifier_refuses_real_projects() -> None:
     with pytest.raises(ValueError):
-        EmulatorTokenVerifier("waterlens-pilot", lambda: NOW)
+        EmulatorTokenVerifier("waterpilot-pilot", lambda: NOW)

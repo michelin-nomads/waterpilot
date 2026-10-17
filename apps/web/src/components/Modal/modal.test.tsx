@@ -46,10 +46,10 @@ describe('Dialog', () => {
     const { container } = render(<DialogHarness />);
     fireEvent.click(screen.getByRole('button', { name: 'Open details' }));
     expect(container).toHaveAttribute('inert');
-    expect(document.documentElement).toHaveClass('wl-scroll-locked');
+    expect(document.documentElement).toHaveClass('wp-scroll-locked');
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
     expect(container).not.toHaveAttribute('inert');
-    expect(document.documentElement).not.toHaveClass('wl-scroll-locked');
+    expect(document.documentElement).not.toHaveClass('wp-scroll-locked');
   });
 
   it('wraps Tab and Shift+Tab inside the dialog', () => {

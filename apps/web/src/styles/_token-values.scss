@@ -1,5 +1,4 @@
-// Raw token values (no CSS output). Consumed by tokens.scss and by modules that need a
-// palette's literal colour, e.g. the palette swatches in the display menu.
+// Raw token values (no CSS output). Consumed by tokens.scss.
 
 $neutrals: (
   light: (
@@ -59,50 +58,6 @@ $palettes: (
       accent-soft: #123a49,
       on-accent: #06212a,
       chart-2: #b9a4ff,
-      chart-3: #f5b45a,
-      chart-4: #9aabb6,
-    ),
-  ),
-  monsoon: (
-    light: (
-      bg: #f4f7fc,
-      accent: #1d4ed8,
-      accent-strong: #1e3a8a,
-      accent-soft: #e5ecfb,
-      on-accent: #ffffff,
-      chart-2: #0f766e,
-      chart-3: #b45309,
-      chart-4: #5b6b77,
-    ),
-    dark: (
-      bg: #0a111c,
-      accent: #8ab4ff,
-      accent-strong: #b8d0ff,
-      accent-soft: #13213d,
-      on-accent: #091631,
-      chart-2: #5eead4,
-      chart-3: #f5b45a,
-      chart-4: #9aabb6,
-    ),
-  ),
-  grove: (
-    light: (
-      bg: #f4f8f4,
-      accent: #136f35,
-      accent-strong: #0d5227,
-      accent-soft: #e2f1e6,
-      on-accent: #ffffff,
-      chart-2: #1d4ed8,
-      chart-3: #b45309,
-      chart-4: #5b6b77,
-    ),
-    dark: (
-      bg: #0a140e,
-      accent: #5ee08f,
-      accent-strong: #98f0b9,
-      accent-soft: #10291a,
-      on-accent: #04230f,
-      chart-2: #8ab4ff,
       chart-3: #f5b45a,
       chart-4: #9aabb6,
     ),

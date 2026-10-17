@@ -1,4 +1,4 @@
-# WaterLens — Screenshot-to-Feature Traceability
+# WaterPilot — Screenshot-to-Feature Traceability
 
 ## Owner override — desktop hackathon scope (2026-10-13)
 
@@ -32,7 +32,7 @@ Version 0.1 (proposed) · Created by Prompt 00 · 7 October 2026
 
 Maps every visible control/action in the eight reference screenshots
 (`docs/design/reference/1.png`–`8.png`) and the original workflow
-(`docs/product/WaterLens-work-flow.txt`) to a capability, acceptance criteria and
+(`docs/product/WaterPilot-work-flow.txt`) to a capability, acceptance criteria and
 a build-guide phase.
 
 ## How to read this document
@@ -239,7 +239,7 @@ Phase ownership summary (legacy numbering):
 
 | Control                                                                                                                                                | Acceptance criteria                                                                                                                                                         | Phase                |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| WaterLens logo + droplet mark (top-left)                                                                                                               | Renders approved logo if supplied; otherwise a clearly provisional SVG droplet/lens mark (see [Missing references](#missing-references-flagged)). Links to app home.        | 03                   |
+| WaterPilot logo + droplet mark (top-left)                                                                                                              | Renders approved logo if supplied; otherwise a clearly provisional SVG droplet/lens mark (see [Missing references](#missing-references-flagged)). Links to app home.        | 03                   |
 | Tagline "Smarter Communities. More Water Secure."                                                                                                      | Static brand copy, present in header.                                                                                                                                       | 03                   |
 | Header strapline "From insight to action for Water Resilient Communities"                                                                              | Canonical copy "From insight to action for water-resilient communities" (inconsistency #1 resolved in Phase 03). Hidden below tablet width.                                 | 03 ✅                |
 | Account / profile icon (top-right)                                                                                                                     | Built as `AccountMenu`: shows the signed-in name/email and Sign out; guests see a "Guest" label and Sign in (which upgrades, never discards); signed-out users see Sign in. | 05 ✅                |
@@ -527,7 +527,7 @@ screenshot numbers.**
 ## Missing references flagged
 
 - **Approved visual preview / stylesheet-theme tokens / logo** — `docs/design/approved/` is **empty**. Exact palettes, typography tokens and the official logo are therefore **unavailable**. Per the build guide, visual fidelity cannot yet be verified; Phase 03 must use clearly provisional tokens and a provisional droplet/lens mark and must not claim to reproduce the prior design. The prior preview's palette and logo must not be invented.
-- **Original workflow** — present at `docs/product/WaterLens-work-flow.txt` (used above). ✓
+- **Original workflow** — present at `docs/product/WaterPilot-work-flow.txt` (used above). ✓
 - **Eight reference images** — all present (`1.png`–`8.png`) and inspected. ✓
 - **Metric definitions** — created in Phase 01 (`docs/domain/metrics.md`, `metrics.registry.json`, corrected after review R3); all are still **proposed pending domain review**, and screenshot metrics remain illustrative.
 - **Source manifests and licences** — the manifest schema and readiness gate run in the backend since Prompt 07 (ADR 0008), but **no real source, licence or authorization has been onboarded**; only the labelled synthetic demo source exists (`docs/data-readiness.md`).
@@ -677,7 +677,7 @@ its in-app browser had previously rejected localhost with
 page did render after opening DevTools and closing it. The reproducible Playwright command,
 after exporting the pinned Node/tooling paths, JDK 21, emulator cache/config paths and
 fake-inference variables, was:
-`npm exec -- firebase emulators:exec --only auth,firestore --project demo-waterlens "WL_REQUIRE_AUTH_EMULATOR=1 WL_E2E_API=1 npm -w apps/web run test:e2e -- --grep-invert 'mobile|responsive|320 px|320px'"`.
+`npm exec -- firebase emulators:exec --only auth,firestore --project demo-waterpilot "WP_REQUIRE_AUTH_EMULATOR=1 WP_E2E_API=1 npm -w apps/web run test:e2e -- --grep-invert 'mobile|responsive|320 px|320px'"`.
 Manual native-Chrome observations in this run: guest Start planning opened the persisted
 session; selecting the labelled synthetic area saved `Synthville (SYNTHETIC — not a real
 place)` and displayed the baseline's unavailable/partial-data explanations; the goal could

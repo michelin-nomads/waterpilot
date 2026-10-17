@@ -17,29 +17,29 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from waterlens.adapters.catalogue_synthetic import synthetic_area_catalogue
-from waterlens.adapters.factory import WorkerRuntime, build_worker_runtime
-from waterlens.adapters.jobqueue_memory import MemoryJobQueue
-from waterlens.adapters.jobrunner_local import LocalJobRunner
-from waterlens.adapters.storage_local import LocalObjectStorage
-from waterlens.adapters.store_memory import MemoryStore
-from waterlens.application.artifacts import (
+from waterpilot.adapters.catalogue_synthetic import synthetic_area_catalogue
+from waterpilot.adapters.factory import WorkerRuntime, build_worker_runtime
+from waterpilot.adapters.jobqueue_memory import MemoryJobQueue
+from waterpilot.adapters.jobrunner_local import LocalJobRunner
+from waterpilot.adapters.storage_local import LocalObjectStorage
+from waterpilot.adapters.store_memory import MemoryStore
+from waterpilot.application.artifacts import (
     JSON,
     PDF,
     ArtifactKey,
     ArtifactKind,
     ArtifactStore,
 )
-from waterlens.application.identity import AccountKind, Principal, RequestContext
-from waterlens.application.jobs import RunOutcome
-from waterlens.application.jobs.outbox import OutboxDispatcher
-from waterlens.application.jobs.proposals import INPUTS_NAME
-from waterlens.application.ports import JsonValue, RenderedDocument, StorageKeyError, TaskRequest
-from waterlens.application.repositories import Store
-from waterlens.application.services import Deps, Services
-from waterlens.domain.errors import DomainError, ErrorCode
-from waterlens.domain.ids import IdKind, new_id
-from waterlens.domain.jobs import (
+from waterpilot.application.identity import AccountKind, Principal, RequestContext
+from waterpilot.application.jobs import RunOutcome
+from waterpilot.application.jobs.outbox import OutboxDispatcher
+from waterpilot.application.jobs.proposals import INPUTS_NAME
+from waterpilot.application.ports import JsonValue, RenderedDocument, StorageKeyError, TaskRequest
+from waterpilot.application.repositories import Store
+from waterpilot.application.services import Deps, Services
+from waterpilot.domain.errors import DomainError, ErrorCode
+from waterpilot.domain.ids import IdKind, new_id
+from waterpilot.domain.jobs import (
     DISPATCH_ABANDONED_STAGE,
     OUTBOX_RETENTION,
     JobKind,
@@ -54,9 +54,9 @@ from waterlens.domain.jobs import (
     outbox_id_for,
     task_name_for,
 )
-from waterlens.domain.planning import Goal, GoalKind
-from waterlens.domain.reports import Proposal, ProposalStatus, Report
-from waterlens.worker import main as worker_main
+from waterpilot.domain.planning import Goal, GoalKind
+from waterpilot.domain.reports import Proposal, ProposalStatus, Report
+from waterpilot.worker import main as worker_main
 
 T0 = datetime(2026, 10, 10, 6, 0, tzinfo=UTC)
 POLICY = JobPolicy()
@@ -608,6 +608,6 @@ def test_local_worker_drains_the_file_queue_with_the_same_executor(tmp_path: Pat
 
 
 def _page() -> Any:
-    from waterlens.application.pagination import page_query
+    from waterpilot.application.pagination import page_query
 
     return page_query(10, None, {})

@@ -5,6 +5,7 @@ import { env } from './config/env';
 import AppShell from './shell/AppShell';
 import { LaunchScreen } from './shell/LaunchScreen';
 import { NotFoundPage, RouteError } from './shell/RouteStatus';
+import { RequireAccount } from './shell/RequireAccount';
 
 const lazyPage = (load: () => Promise<{ default: ComponentType }>) => async () => ({
   Component: (await load()).default,
@@ -25,11 +26,10 @@ export const routes: RouteObject[] = [
         // Pathless boundary so route errors render inside the shell.
         errorElement: <RouteError />,
         children: [
-          // Signed-in accounts are sent on to their dashboard from Welcome.
+          // The start: Welcome for everyone else, the workspace for signed-in accounts.
           { index: true, lazy: lazyPage(() => import('./features/welcome')) },
-          { path: 'dashboard', lazy: lazyPage(() => import('./features/dashboard')) },
-          { path: 'start', lazy: lazyPage(() => import('./features/start')) },
           {
+            // The planner is open to guests; it needs a plan, which Welcome or New report starts.
             lazy: lazyPage(() => import('./features/planning/PlanningLayout')),
             children: [
               { path: 'area', lazy: lazyPage(() => import('./features/area')) },
@@ -44,32 +44,50 @@ export const routes: RouteObject[] = [
           },
           // What-if is a workspace panel now (ADR 0002); keep old links working.
           { path: 'scenarios', element: <Navigate to="/plans" replace /> },
-          // Optional branches retain their existing public URLs, outside the planner.
-          { path: 'make-it-happen', lazy: lazyPage(() => import('./features/funding')) },
-          { path: 'tracking', lazy: lazyPage(() => import('./features/tracking')) },
-          { path: 'tracking/:projectId', lazy: lazyPage(() => import('./features/tracking')) },
-          { path: 'funding', element: <Navigate to="/make-it-happen" replace /> },
+          // Everything below belongs to a signed-in account; guests can only plan.
           {
-            path: 'admin/funding',
-            lazy: lazyPage(() => import('./features/funding/AdminCatalogue')),
+            element: <RequireAccount />,
+            children: [
+              {
+                lazy: lazyPage(() => import('./features/workspace/WorkspaceLayout')),
+                children: [
+                  {
+                    path: 'reports',
+                    lazy: lazyPage(() => import('./features/workspace/ReportsTab')),
+                  },
+                  {
+                    path: 'communities',
+                    lazy: lazyPage(() => import('./features/workspace/CommunitiesTab')),
+                  },
+                ],
+              },
+              { path: 'dashboard', element: <Navigate to="/reports" replace /> },
+              // Optional branches retain their existing public URLs, outside the planner.
+              { path: 'make-it-happen', lazy: lazyPage(() => import('./features/funding')) },
+              { path: 'tracking', lazy: lazyPage(() => import('./features/tracking')) },
+              { path: 'tracking/:projectId', lazy: lazyPage(() => import('./features/tracking')) },
+              { path: 'funding', element: <Navigate to="/make-it-happen" replace /> },
+              {
+                path: 'admin/funding',
+                lazy: lazyPage(() => import('./features/funding/AdminCatalogue')),
+              },
+              { path: 'proposals', lazy: lazyPage(() => import('./features/proposals')) },
+              { path: 'proposals/new', lazy: lazyPage(() => import('./features/proposals')) },
+              {
+                path: 'reports/:reportId',
+                lazy: lazyPage(() => import('./features/reports/ReportDetail')),
+              },
+              {
+                path: 'communities/new',
+                lazy: lazyPage(() => import('./features/communities/Create')),
+              },
+              {
+                path: 'communities/:communityId',
+                lazy: lazyPage(() => import('./features/communities/Detail')),
+              },
+              { path: 'jobs/:jobId', lazy: lazyPage(() => import('./features/jobs')) },
+            ],
           },
-          { path: 'proposals', lazy: lazyPage(() => import('./features/proposals')) },
-          { path: 'proposals/new', lazy: lazyPage(() => import('./features/proposals')) },
-          {
-            path: 'reports/:reportId',
-            lazy: lazyPage(() => import('./features/reports/ReportDetail')),
-          },
-          { path: 'reports', lazy: lazyPage(() => import('./features/reports')) },
-          {
-            path: 'communities/new',
-            lazy: lazyPage(() => import('./features/communities/Create')),
-          },
-          {
-            path: 'communities/:communityId',
-            lazy: lazyPage(() => import('./features/communities/Detail')),
-          },
-          { path: 'communities', lazy: lazyPage(() => import('./features/communities')) },
-          { path: 'jobs/:jobId', lazy: lazyPage(() => import('./features/jobs')) },
           ...(env.appMode === 'local'
             ? [{ path: 'design-system', lazy: lazyPage(() => import('./features/design-system')) }]
             : []),

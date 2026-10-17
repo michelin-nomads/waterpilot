@@ -21,14 +21,14 @@ from fastapi.testclient import TestClient
 from google.auth import crypt, jwt
 
 from test_durable_jobs import Renderer, World, make_world
-from waterlens.adapters.factory import WorkerRuntime
-from waterlens.adapters.worker_auth import GoogleOidcInvokerVerifier
-from waterlens.config import ConfigError
-from waterlens.domain.jobs import JobStatus, outbox_id_for
-from waterlens.worker.app import create_worker_app
+from waterpilot.adapters.factory import WorkerRuntime
+from waterpilot.adapters.worker_auth import GoogleOidcInvokerVerifier
+from waterpilot.config import ConfigError
+from waterpilot.domain.jobs import JobStatus, outbox_id_for
+from waterpilot.worker.app import create_worker_app
 
 AUDIENCE = "https://worker-abc.a.run.app"
-INVOKER = "waterlens-dispatch@waterlens-pilot.iam.gserviceaccount.com"
+INVOKER = "waterpilot-dispatch@waterpilot-pilot.iam.gserviceaccount.com"
 KID = "test-key-1"
 
 

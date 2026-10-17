@@ -3,8 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from waterlens.cli.intervention_catalogue import render
-from waterlens.domain.interventions import CATALOGUE, Catalogue
+from waterpilot.cli.intervention_catalogue import render
+from waterpilot.domain.interventions import CATALOGUE, Catalogue
 
 DOC = Path(__file__).resolve().parents[4] / "docs" / "domain" / "interventions.catalogue.json"
 

@@ -71,7 +71,7 @@ function Metrics({ readiness }: { readiness: Readiness }) {
   return (
     <Section
       id="readiness-metrics"
-      title="What WaterLens can calculate here"
+      title="What WaterPilot can calculate here"
       intro="Each result needs specific inputs. Your water baseline above shows a value only where the inputs below allow."
     >
       <ul className={styles.rows}>
@@ -147,7 +147,7 @@ function Inputs({
     <Section
       id={`readiness-inputs-${section ?? 'all'}`}
       title="What you can provide"
-      intro="Inputs WaterLens is missing, and how to fill them. Values you enter are labelled as entered by you."
+      intro="Inputs WaterPilot is missing, and how to fill them. Values you enter are labelled as entered by you."
     >
       <ul className={styles.rows}>
         {visibleInputs.map((i) => (
@@ -295,9 +295,9 @@ export function ReadinessPanel({ areaId, sessionId, section }: ReadinessPanelPro
       )}
       {readiness.basis === 'USER_INPUT' && (
         <Notice kind="partial" title="User-input assessment" announce={false}>
-          WaterLens has no reviewed data source covering this location. You can still complete every
-          step: the assessment uses only values you enter, and each result is labelled as based on
-          your inputs, not on measured data.
+          WaterPilot has no reviewed data source covering this location. You can still complete
+          every step: the assessment uses only values you enter, and each result is labelled as
+          based on your inputs, not on measured data.
         </Notice>
       )}
       {readiness.basis === 'LIMITED' && (
@@ -308,7 +308,7 @@ export function ReadinessPanel({ areaId, sessionId, section }: ReadinessPanelPro
       )}
       {readiness.demo && (
         <Notice kind="partial" title="Demo data" announce={false}>
-          Some sources for {area.name} are synthetic demonstration data. They show how WaterLens
+          Some sources for {area.name} are synthetic demonstration data. They show how WaterPilot
           works and are not facts about any real place.
         </Notice>
       )}

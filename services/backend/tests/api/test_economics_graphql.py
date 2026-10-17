@@ -14,10 +14,10 @@ from test_impact_graphql import OTHER_AREA, TOKEN, ok, place, session, update
 from conftest import LOCAL_OK, LoadSettings
 from graphql_harness import NOW, Harness, make_harness, seed_plan_option
 from graphql_harness import TOKENS as HARNESS_TOKENS
-from waterlens.application.identity import RequestContext
-from waterlens.application.jobs.proposals import proposal_inputs
-from waterlens.application.tools import options as tools
-from waterlens.domain.reports import ProposalSection
+from waterpilot.application.identity import RequestContext
+from waterpilot.application.jobs.proposals import proposal_inputs
+from waterpilot.application.tools import options as tools
+from waterpilot.domain.reports import ProposalSection
 
 ECON = """economics {
   engineVersion currency
@@ -184,10 +184,10 @@ def test_finalization_replay_and_proposal_inputs_keep_exact_report_numbers(
     assert inputs["applicant"]["assumptions"] == ["Applicant will obtain land permission."]
     assert inputs["scheme"]["evidence"] == "synthetic"
 
-    from waterlens.adapters.factory import build_worker_runtime
-    from waterlens.adapters.proposal_renderer import LocalProposalRenderer
-    from waterlens.application.artifacts import PDF, ArtifactStore
-    from waterlens.application.jobs import RunOutcome
+    from waterpilot.adapters.factory import build_worker_runtime
+    from waterpilot.adapters.proposal_renderer import LocalProposalRenderer
+    from waterpilot.application.artifacts import PDF, ArtifactStore
+    from waterpilot.application.jobs import RunOutcome
 
     worker = build_worker_runtime(
         h.store, h.jobs, h.storage, renderer=LocalProposalRenderer(), clock=lambda: NOW

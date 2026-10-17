@@ -1,4 +1,4 @@
-# WaterLens — Implementation Status
+# WaterPilot — Implementation Status
 
 ## Owner override — desktop hackathon scope (2026-10-13)
 
@@ -49,7 +49,7 @@ exists with tests; "Shell only" means the route/layout exists and states plainly
 the feature is not built, without showing data.
 
 **Numbering:** prompts follow the end-to-end guide's **Prompt 00–26**
-(`WaterLens_Cursor_End_to_End_Guide.md`, adopted 2026-10-10). Older entries in
+(`WaterPilot_Cursor_End_to_End_Guide.md`, adopted 2026-10-10). Older entries in
 `docs/progress.md` keep their original "Phase NN" headings, labelled _legacy_; the mapping
 is below.
 
@@ -315,9 +315,9 @@ retries + 1`), so retries can never overspend — calls the provider with a time
 genai`, `Client(vertexai=True, …)`). These are **published list prices**; project access,
   quota and model enablement are **UNVERIFIED** against a live project (none is provisioned).
 - **Owner setup, not permission to spend:** the $5 internal allowance is a **suggested**
-  `WL_AI_DAILY_BUDGET_USD`; with no budget set, AI reports `NO_BUDGET_CONFIGURED` and stays
-  off. A global **kill switch** (`WL_AI_KILL_SWITCH`) and **invite** controls
-  (`WL_AI_OPEN_TO_ALL`, `WL_AI_INVITED_TESTERS`) gate hackathon access.
+  `WP_AI_DAILY_BUDGET_USD`; with no budget set, AI reports `NO_BUDGET_CONFIGURED` and stays
+  off. A global **kill switch** (`WP_AI_KILL_SWITCH`) and **invite** controls
+  (`WP_AI_OPEN_TO_ALL`, `WP_AI_INVITED_TESTERS`) gate hackathon access.
 - **Server-only, guarded:** the live Vertex adapter (`adapters/model_vertex.py`) is the only
   place a model is called, is built **only** in a pilot runtime with AI enabled and a budget
   configured, refuses a `demo-*` project, and lazily imports the SDK. Local and test mode
@@ -340,7 +340,7 @@ genai`, `Client(vertexai=True, …)`). These are **published list prices**; proj
   TTL, `reconcile_expired` releases an undispatched crash-orphan and conservatively settles a
   dispatched one, and `reconcile_usage` resolves an estimate before the TTL applies — plus a
   Prompt 13 economics round-trip through Firestore. One **gated live smoke**
-  (`tests/live/test_vertex_ai_live.py`, `-m live`, skipped unless `WL_LIVE_VERTEX_PROJECT` is
+  (`tests/live/test_vertex_ai_live.py`, `-m live`, skipped unless `WP_LIVE_VERTEX_PROJECT` is
   set) records real usage; it was **not** run.
 - **Still pending:** no live Vertex call, provisioning, deployment or billing was done;
   conservatively settled estimates can be resolved by `reconcile_usage` but it is not yet
@@ -417,7 +417,7 @@ genai`, `Client(vertexai=True, …)`). These are **published list prices**; proj
     (`groundwaterUse`), and not when evidence shows a separate aquifer. Recharge is not
     counted as an offset;
   - water-quality readings keep parameter, method and date, with a fixed note that
-    WaterLens does not judge drinkability. There is no potability field.
+    WaterPilot does not judge drinkability. There is no potability field.
 - **Claim guards:**
   - validators reject magnitudes beyond the site, metrics other than tanker dependence
     or shortage days (or a wrong unit), drinking-water certification, and
@@ -442,7 +442,7 @@ genai`, `Client(vertexai=True, …)`). These are **published list prices**; proj
     same rule: `finalizeReport` refuses a selection that is not `CURRENT`/`LEGACY`
     (`PRECONDITION_FAILED`), and because a proposal can only be generated from a finalized
     report, dependent proposal generation inherits the guarantee;
-  - proposal inputs `waterlens.proposal-inputs/2` (`inputs-v2.json`) carry them, and
+  - proposal inputs `waterpilot.proposal-inputs/2` (`inputs-v2.json`) carry them, and
     `ProposalSection.WIDER_IMPACT` is added;
   - the agent tools `compare_plans` and `explain_option` include impact.
 - **Still pending:**

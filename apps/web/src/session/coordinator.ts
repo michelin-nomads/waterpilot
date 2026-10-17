@@ -52,6 +52,13 @@ export interface CoordinatorDeps {
   online?: () => boolean;
   /** A previous guest uid whose unsent edits this account may adopt (account claim). */
   adoptFrom?: string | null;
+  /**
+   * Whether a plan that already exists (on the server or as this device's unsent edits) is
+   * picked up when the coordinator starts. Plans are not kept between visits, so only a
+   * hand-over inside one visit (a guest signing in) sets this; a fresh visit starts empty.
+   * Defaults to true.
+   */
+  restore?: boolean;
   /** Called after the server acknowledges a change; `inputsChanged` when derived data is stale. */
   onSaved?: (session: SessionState, inputsChanged: boolean) => void;
 }
@@ -102,8 +109,10 @@ export class SessionCoordinator {
   private editedAt: number | null = null;
   private persistChain: Promise<void> = Promise.resolve();
   private disposed = false;
+  private restorable: boolean;
 
   constructor(private readonly deps: CoordinatorDeps) {
+    this.restorable = deps.restore ?? true;
     this.now = deps.now ?? Date.now;
     this.online = deps.online ?? (() => navigator.onLine);
   }
@@ -177,6 +186,16 @@ export class SessionCoordinator {
   }
 
   private async load(): Promise<void> {
+    if (!this.restorable) {
+      // A plan from an earlier visit is not resumed and nothing of it stays on this device;
+      // the next plan started replaces it on the server.
+      const { recovery, uid, adoptFrom } = this.deps;
+      await Promise.all([uid, adoptFrom].map((owner) => owner && recovery.deleteUid(owner))).catch(
+        () => undefined,
+      );
+      this.set({ status: 'none' });
+      return;
+    }
     const record = await this.recoveryRecord();
     let current: SessionState | null;
     try {
@@ -261,6 +280,7 @@ export class SessionCoordinator {
     void this.flush();
   }
 
+  setSiteProfile = (siteProfile: SessionState['siteProfile']) => this.edit({ siteProfile });
   setMode = (mode: PlanningMode) => this.edit({ mode });
   setStage = (stage: SessionState['stage']) => this.edit({ stage });
   setArea = (areaId: string | null) => this.edit({ areaId });
@@ -323,6 +343,8 @@ export class SessionCoordinator {
   }
 
   private acknowledge(sent: SessionPatch, session: SessionState): void {
+    // A save that finishes after the plan was discarded must not bring it back.
+    if (this.state.status !== 'ready') return;
     const previous = this.state.server;
     let pending = { ...this.state.pending };
     for (const field of patchFields(sent)) {
@@ -482,6 +504,7 @@ export class SessionCoordinator {
     if ('error' in result) throw new Error(result.error.message);
     this.createKey = null;
     this.editedAt = null;
+    this.restorable = true;
     this.starting = Promise.resolve();
     this.set({
       ...INITIAL,
@@ -490,6 +513,19 @@ export class SessionCoordinator {
     });
     this.deps.onSaved?.(result.session, true);
     return result.session;
+  }
+
+  /**
+   * End the plan here: nothing is saved, restored or shown again. Used when the person
+   * leaves a plan on purpose and when a finalized report has taken its place. The plan is
+   * not resumed later in this visit either, only replaced by `create`.
+   */
+  discard(): void {
+    this.restorable = false;
+    this.editedAt = null;
+    this.createKey = null;
+    this.starting = Promise.resolve();
+    this.set({ ...INITIAL, status: 'none' });
   }
 
   // --- recovery persistence ------------------------------------------------------------

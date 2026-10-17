@@ -15,7 +15,7 @@ interface PageHeaderProps {
  */
 export function PageHeader({ title, eyebrow, subtitle, actions }: PageHeaderProps) {
   useEffect(() => {
-    document.title = `${title} · WaterLens`;
+    document.title = `${title} · WaterPilot`;
   }, [title]);
 
   return (

@@ -96,7 +96,7 @@ These claims cannot be stored or returned.
 ### 5. Water quality as context, and professional review
 
 - Readings keep parameter, value, unit, method, date and citation. A fixed note says
-  WaterLens does not judge whether water is safe to drink. There is no potability field
+  WaterPilot does not judge whether water is safe to drink. There is no potability field
   or score.
 - Catalogue `reviews` per measure: recharge pits and wells require hydrogeological and
   water-quality review, greywater reuse requires water-quality review, stormwater
@@ -114,7 +114,7 @@ These claims cannot be stored or returned.
 - Choosing an option stores `PlanOption.impact.wider` exactly as shown, with
   `comparisonId`, `engineVersion` and `inputHash`. `finalizeReport` copies the chosen
   option's `impact` and `planName` into the immutable report. Proposal inputs become
-  `waterlens.proposal-inputs/2` (`inputs-v2.json`) with `report.planName` and
+  `waterpilot.proposal-inputs/2` (`inputs-v2.json`) with `report.planName` and
   `report.impact`, and `ProposalSection.WIDER_IMPACT` is added.
 - Model-written summaries go through `check_narrative` / `require_valid_narrative` (agent
   tool `check_impact_summary`). The checker requires:

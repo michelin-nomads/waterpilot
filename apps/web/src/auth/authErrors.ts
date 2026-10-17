@@ -20,7 +20,7 @@ const MESSAGES: Record<AuthFailureKind, string> = {
   'popup-blocked':
     'Your browser blocked the sign-in window. Allow pop-ups for this site and try again, or use email instead.',
   'email-in-use': 'An account with this email already exists. Sign in to it instead.',
-  'credential-in-use': 'That Google account already has a WaterLens account.',
+  'credential-in-use': 'That Google account already has a WaterPilot account.',
   'different-provider':
     'This email already signs in another way. Use email and password for this account.',
   'wrong-credentials': 'The email or password is not right. Check them and try again.',
@@ -29,7 +29,7 @@ const MESSAGES: Record<AuthFailureKind, string> = {
   network: 'We could not reach the sign-in service. Check your connection and try again.',
   'rate-limited': 'Too many attempts right now. Wait a few minutes, then try again.',
   'method-disabled': 'This sign-in method is turned off right now. Try another method.',
-  'account-disabled': 'This account has been disabled. Contact the WaterLens team for help.',
+  'account-disabled': 'This account has been disabled. Contact the WaterPilot team for help.',
   'session-expired': 'Your sign-in has expired. Sign in again to continue.',
   'claim-failed': 'You are signed in, but your guest plan could not be moved to your account yet.',
   unknown: 'Something went wrong while signing in. Try again.',

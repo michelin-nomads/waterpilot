@@ -2,13 +2,13 @@
 
 .viewport {
   position: fixed;
-  z-index: var(--wl-z-toast);
-  right: var(--wl-space-4);
-  bottom: var(--wl-space-4);
-  left: var(--wl-space-4);
+  z-index: var(--wp-z-toast);
+  right: var(--wp-space-4);
+  bottom: var(--wp-space-4);
+  left: var(--wp-space-4);
   display: grid;
   justify-items: end;
-  gap: var(--wl-space-2);
+  gap: var(--wp-space-2);
   pointer-events: none;
 
   @include tablet-up {
@@ -19,22 +19,22 @@
 
 .stack {
   display: grid;
-  gap: var(--wl-space-2);
+  gap: var(--wp-space-2);
   width: 100%;
 }
 
 .toast {
   display: flex;
   align-items: flex-start;
-  gap: var(--wl-space-2);
-  padding: var(--wl-space-3);
-  border: 1px solid var(--wl-color-border);
+  gap: var(--wp-space-2);
+  padding: var(--wp-space-3);
+  border: 1px solid var(--wp-color-border);
   border-left-width: 4px;
-  border-radius: var(--wl-radius-md);
-  background: var(--wl-color-surface-raised);
-  box-shadow: var(--wl-shadow-md);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-color-surface-raised);
+  box-shadow: var(--wp-shadow-md);
   pointer-events: auto;
-  animation: enter var(--wl-motion-slow) var(--wl-ease);
+  animation: enter var(--wp-motion-slow) var(--wp-ease);
 
   @include reduced-motion {
     animation: none;
@@ -42,40 +42,40 @@
 }
 
 .info {
-  border-left-color: var(--wl-color-info);
+  border-left-color: var(--wp-color-info);
 
   > svg {
-    color: var(--wl-color-info);
+    color: var(--wp-color-info);
   }
 }
 
 .success {
-  border-left-color: var(--wl-color-success);
+  border-left-color: var(--wp-color-success);
 
   > svg {
-    color: var(--wl-color-success);
+    color: var(--wp-color-success);
   }
 }
 
 .warning {
-  border-left-color: var(--wl-color-warning);
+  border-left-color: var(--wp-color-warning);
 
   > svg {
-    color: var(--wl-color-warning);
+    color: var(--wp-color-warning);
   }
 }
 
 .error {
-  border-left-color: var(--wl-color-danger);
+  border-left-color: var(--wp-color-danger);
 
   > svg {
-    color: var(--wl-color-danger);
+    color: var(--wp-color-danger);
   }
 }
 
 .message {
   flex: 1;
-  font-size: var(--wl-text-sm);
+  font-size: var(--wp-text-sm);
 }
 
 .action,
@@ -89,9 +89,9 @@
 }
 
 .action {
-  color: var(--wl-color-accent);
+  color: var(--wp-color-accent);
   font-weight: 700;
-  font-size: var(--wl-text-sm);
+  font-size: var(--wp-text-sm);
 }
 
 .dismiss {
@@ -100,7 +100,7 @@
   width: 1.75rem;
   height: 1.75rem;
   border-radius: 50%;
-  color: var(--wl-color-text-muted);
+  color: var(--wp-color-text-muted);
 }
 
 @keyframes enter {

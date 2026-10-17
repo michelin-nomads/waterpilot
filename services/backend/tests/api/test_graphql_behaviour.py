@@ -11,11 +11,11 @@ from fastapi.testclient import TestClient
 
 from conftest import LOCAL_OK, PILOT_OK, LoadSettings
 from graphql_harness import AREA_ID, Harness, make_harness, seed_plan_option
-from waterlens.api.main import create_app
-from waterlens.application.services.sessions import SessionService
-from waterlens.domain.jobs import JobStatus, OutboxStatus, outbox_id_for
-from waterlens.domain.planning import ImpactMetric
-from waterlens.domain.values import Availability, MeasuredValue, Quantity, Unit
+from waterpilot.api.main import create_app
+from waterpilot.application.services.sessions import SessionService
+from waterpilot.domain.jobs import JobStatus, OutboxStatus, outbox_id_for
+from waterpilot.domain.planning import ImpactMetric
+from waterpilot.domain.values import Availability, MeasuredValue, Quantity, Unit
 
 KEY = "key-0000000000000001"
 

@@ -21,7 +21,7 @@ interface RegionSettingsReviewProps {
 }
 
 /**
- * The currency, time zone and units WaterLens infers from the country and point (never
+ * The currency, time zone and units WaterPilot infers from the country and point (never
  * from the interface language), shown before confirming. Uncertain values say so and can
  * be corrected; if the preview cannot load, the server infers them on confirmation.
  */
@@ -71,11 +71,11 @@ export function RegionSettingsReview({
     <fieldset className={styles.region}>
       <legend className={styles.label}>Region settings</legend>
       <p className={styles.hint}>
-        Set from the country and this point, not from the language you read WaterLens in.
+        Set from the country and this point, not from the language you read WaterPilot in.
       </p>
       {uncertain.length > 0 && (
         <Notice kind="info" title="Please check" announce={false}>
-          WaterLens is not sure because {uncertain.join(', and ')}. Correct anything that is wrong.
+          WaterPilot is not sure because {uncertain.join(', and ')}. Correct anything that is wrong.
         </Notice>
       )}
       <div className={styles.formRow}>

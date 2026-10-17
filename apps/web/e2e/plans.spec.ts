@@ -9,7 +9,7 @@ const API = 'http://127.0.0.1:8000';
 async function servicesUp(): Promise<boolean> {
   try {
     const [auth, api] = await Promise.all([
-      fetch(`${EMULATOR}/emulator/v1/projects/demo-waterlens/config`),
+      fetch(`${EMULATOR}/emulator/v1/projects/demo-waterpilot/config`),
       fetch(`${API}/healthz`),
     ]);
     return auth.ok && api.ok;
@@ -20,8 +20,8 @@ async function servicesUp(): Promise<boolean> {
 
 test.beforeEach(async () => {
   const up = await servicesUp();
-  if (!up && process.env.WL_REQUIRE_AUTH_EMULATOR === '1') {
-    throw new Error('Auth emulator or local API not running (WL_REQUIRE_AUTH_EMULATOR=1)');
+  if (!up && process.env.WP_REQUIRE_AUTH_EMULATOR === '1') {
+    throw new Error('Auth emulator or local API not running (WP_REQUIRE_AUTH_EMULATOR=1)');
   }
   test.skip(!up, 'Auth emulator or local API not running');
 });
@@ -45,6 +45,7 @@ test('a guest compares only feasible plans, chooses one, and tests a what-if in 
   page,
 }) => {
   await page.goto('/');
+  await page.getByRole('button', { name: 'Continue as guest' }).click();
   await page.getByRole('button', { name: 'Start exploring' }).click();
   await page.getByRole('button', { name: 'Use the synthetic demo area' }).click();
   // 12000 people x 135 L = 1,620,000 L/day demand; 300,000 L/day from tankers (30%).
@@ -101,8 +102,6 @@ test('a guest compares only feasible plans, chooses one, and tests a what-if in 
 
   await plans.getByRole('button', { name: 'Choose this plan' }).click();
   await expect(plans.getByRole('button', { name: 'Chosen plan' })).toBeDisabled();
-  await page.reload();
-  await expect(plans.getByRole('button', { name: 'Chosen plan' })).toBeDisabled();
 
   // Traditional mode has ordinary goal editing and no what-if controls.
   await expect(page.getByRole('button', { name: 'Preview' })).toHaveCount(0);
@@ -117,8 +116,7 @@ test('a guest compares only feasible plans, chooses one, and tests a what-if in 
   await agent.getByRole('button', { name: 'Preview' }).click();
   await expect(agent.locator('[data-scenario-source="preview"]')).toBeVisible();
   await expect(agent.getByText('+8,10,000 L/day').first()).toBeVisible();
-  // Previewing saved nothing: the plan is still chosen, after a reload too.
-  await page.reload();
+  // Previewing saved nothing: the plan is still chosen.
   await expect(plans.getByRole('button', { name: 'Chosen plan' })).toBeDisabled();
   await expect(page.locator('[data-scenario-result]')).toHaveCount(0);
 

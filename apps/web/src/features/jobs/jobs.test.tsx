@@ -8,7 +8,7 @@ import type { JobFieldsFragment } from '../../graphql/generated/graphql';
 import { apiClient } from '../../lib/apiClient';
 import { routes } from '../../routes';
 import { AuthTestProviders } from '../../test/AuthTestProviders';
-import { FakeAuthBackend, guest } from '../../test/fakeAuth';
+import { FakeAuthBackend, permanent } from '../../test/fakeAuth';
 import { preloadLazyRoutes } from '../../test/preloadRoutes';
 import { DisplayPreferencesProvider } from '../../theme/DisplayPreferencesProvider';
 import {
@@ -124,7 +124,7 @@ async function openJob(id = JOB_ID) {
   const router = createMemoryRouter(routes, { initialEntries: [`/jobs/${id}`] });
   render(
     <DisplayPreferencesProvider>
-      <AuthTestProviders backend={new FakeAuthBackend(guest())}>
+      <AuthTestProviders backend={new FakeAuthBackend(permanent())}>
         <ToastProvider>
           <RouterProvider router={router} />
         </ToastProvider>

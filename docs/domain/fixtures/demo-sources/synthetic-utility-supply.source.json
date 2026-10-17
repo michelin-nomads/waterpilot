@@ -2,7 +2,7 @@
   "id": "synthetic-utility-supply-demo",
   "recordKind": "registered_source",
   "title": "Synthville daily utility and tanker supply (SYNTHETIC DEMO — not a real source)",
-  "publisher": "WaterLens test fixtures",
+  "publisher": "WaterPilot test fixtures",
   "sourceUrl": "https://example.invalid/synthetic-demo",
   "licence": {
     "name": "Synthetic test data (hand-authored)",

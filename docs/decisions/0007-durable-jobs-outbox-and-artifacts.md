@@ -135,7 +135,7 @@ The worker is a separate Cloud Run service with unauthenticated access disabled 
 `roles/run.invoker` only for the Cloud Tasks, Eventarc and Scheduler service accounts).
 It also verifies every request itself: a Google-signed OIDC token (RS256 against Google's
 cached certificates, refreshed on rotation at most once a minute), the expected audience
-and issuer, `email_verified`, and an email on the `WL_WORKER_INVOKERS` allow-list. A
+and issuer, `email_verified`, and an email on the `WP_WORKER_INVOKERS` allow-list. A
 missing or invalid token gives 401 and a valid token from another identity gives 403,
 both before any store access. No OpenAPI document is served. The worker runtime is
 refused, like the API, until every pilot adapter exists.

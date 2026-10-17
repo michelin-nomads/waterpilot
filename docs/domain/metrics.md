@@ -1,4 +1,4 @@
-# WaterLens — Metric Dictionary
+# WaterPilot — Metric Dictionary
 
 Version 0.3 · **ALL DEFINITIONS PROPOSED pending domain review** · Phase 01 (corrected 2026-10-08, review R3); context indicators and engine notes added in Prompt 09 (ADR 0010)
 

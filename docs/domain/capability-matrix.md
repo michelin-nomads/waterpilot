@@ -1,4 +1,4 @@
-# WaterLens — Supported-Capability Matrix
+# WaterPilot — Supported-Capability Matrix
 
 Version 0.2 · **PROPOSED pending domain review** · Phase 01 (corrected 2026-10-08, review R4)
 

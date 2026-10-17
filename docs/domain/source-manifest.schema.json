@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://waterlens/docs/domain/source-manifest.schema.json",
-  "title": "WaterLens Source Manifest",
-  "description": "Provenance record for one data source. Version 0.3, PROPOSED pending domain review (0.3 adds optional provenance fields only; every 0.2 manifest stays valid). Mirrors HLD §11. recordKind separates registered source metadata (no data imported yet) from an ingested immutable snapshot (raw object + checksum required). A manifest entry does not by itself establish local suitability or authorized use: the data-readiness gate checks those. Cross-field rules JSON Schema cannot express (date order, IANA timezone validity, bbox ordering) are enforced by the semantic validator in services/backend/tests/domain/test_source_manifest.py; the runtime model services/backend/src/waterlens/domain/sources.py enforces schema and semantics together (parity-tested). Validate with format checking enabled.",
+  "$id": "https://waterpilot/docs/domain/source-manifest.schema.json",
+  "title": "WaterPilot Source Manifest",
+  "description": "Provenance record for one data source. Version 0.3, PROPOSED pending domain review (0.3 adds optional provenance fields only; every 0.2 manifest stays valid). Mirrors HLD §11. recordKind separates registered source metadata (no data imported yet) from an ingested immutable snapshot (raw object + checksum required). A manifest entry does not by itself establish local suitability or authorized use: the data-readiness gate checks those. Cross-field rules JSON Schema cannot express (date order, IANA timezone validity, bbox ordering) are enforced by the semantic validator in services/backend/tests/domain/test_source_manifest.py; the runtime model services/backend/src/waterpilot/domain/sources.py enforces schema and semantics together (parity-tested). Validate with format checking enabled.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -318,7 +318,7 @@
           "type": "object",
           "additionalProperties": false,
           "required": ["status"],
-          "description": "Explicit review of whether WaterLens's intended uses are permitted under usageRights.",
+          "description": "Explicit review of whether WaterPilot's intended uses are permitted under usageRights.",
           "properties": {
             "status": {
               "type": "string",

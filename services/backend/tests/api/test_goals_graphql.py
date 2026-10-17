@@ -11,8 +11,8 @@ import pytest
 
 from conftest import LOCAL_OK, LoadSettings
 from graphql_harness import AREA_ID, TOKENS, Harness, make_harness, seed_plan_option
-from waterlens.application.identity import RequestContext
-from waterlens.application.tools import goals as tools
+from waterpilot.application.identity import RequestContext
+from waterpilot.application.tools import goals as tools
 
 TOKEN = "t-guest"
 

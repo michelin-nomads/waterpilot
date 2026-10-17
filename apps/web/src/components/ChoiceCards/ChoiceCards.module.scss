@@ -2,7 +2,7 @@
 
 .fieldset {
   display: grid;
-  gap: var(--wl-space-3);
+  gap: var(--wp-space-3);
   min-width: 0;
   margin: 0;
   padding: 0;
@@ -11,7 +11,7 @@
 
 .legend {
   padding: 0;
-  font-size: var(--wl-text-lg);
+  font-size: var(--wp-text-lg);
   font-weight: 700;
 }
 
@@ -20,13 +20,13 @@
 }
 
 .hint {
-  color: var(--wl-color-text-muted);
-  font-size: var(--wl-text-sm);
+  color: var(--wp-color-text-muted);
+  font-size: var(--wp-text-sm);
 }
 
 .grid {
   display: grid;
-  gap: var(--wl-space-3);
+  gap: var(--wp-space-3);
 }
 
 .cols2 {
@@ -50,13 +50,13 @@
     display: grid;
     justify-items: center;
     align-content: start;
-    gap: var(--wl-space-3);
+    gap: var(--wp-space-3);
     min-height: 14rem;
-    padding: var(--wl-space-5);
+    padding: var(--wp-space-5);
     text-align: center;
 
     &:has(:checked) {
-      padding: calc(var(--wl-space-5) - 1px);
+      padding: calc(var(--wp-space-5) - 1px);
     }
   }
 
@@ -67,7 +67,7 @@
 
   .content {
     justify-items: center;
-    gap: var(--wl-space-2);
+    gap: var(--wp-space-2);
   }
 
   .titleRow {
@@ -76,8 +76,8 @@
 
   .check {
     position: absolute;
-    inset-block-start: var(--wl-space-4);
-    inset-inline-end: var(--wl-space-4);
+    inset-block-start: var(--wp-space-4);
+    inset-inline-end: var(--wp-space-4);
   }
 }
 
@@ -85,25 +85,25 @@
   position: relative;
   display: flex;
   align-items: flex-start;
-  gap: var(--wl-space-3);
-  min-height: var(--wl-tap-target);
-  padding: var(--wl-card-padding-compact);
-  border: 1px solid var(--wl-color-border);
-  border-radius: var(--wl-radius-lg);
-  background: var(--wl-color-surface);
+  gap: var(--wp-space-3);
+  min-height: var(--wp-tap-target);
+  padding: var(--wp-card-padding-compact);
+  border: 1px solid var(--wp-color-border);
+  border-radius: var(--wp-radius-lg);
+  background: var(--wp-color-surface);
   cursor: pointer;
   transition:
-    border-color var(--wl-motion-fast) var(--wl-ease),
-    background-color var(--wl-motion-fast) var(--wl-ease);
+    border-color var(--wp-motion-fast) var(--wp-ease),
+    background-color var(--wp-motion-fast) var(--wp-ease);
 
   &:hover:not([data-disabled]) {
-    border-color: var(--wl-color-accent);
+    border-color: var(--wp-color-accent);
   }
 
   &:has(:checked) {
-    border: 2px solid var(--wl-color-accent);
-    padding: calc(var(--wl-card-padding-compact) - 1px);
-    background: var(--wl-color-accent-soft);
+    border: 2px solid var(--wp-color-accent);
+    padding: calc(var(--wp-card-padding-compact) - 1px);
+    background: var(--wp-color-accent-soft);
   }
 
   &:has(:focus-visible) {
@@ -112,7 +112,7 @@
 
   &[data-disabled] {
     border-style: dashed;
-    background: var(--wl-color-surface-sunken);
+    background: var(--wp-color-surface-sunken);
     cursor: not-allowed;
   }
 }
@@ -129,19 +129,19 @@
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 50%;
-  background: var(--wl-color-accent-soft);
-  color: var(--wl-color-accent-strong);
+  background: var(--wp-color-accent-soft);
+  color: var(--wp-color-accent-strong);
 
   [data-disabled] & {
-    background: var(--wl-color-surface);
-    color: var(--wl-color-text-muted);
+    background: var(--wp-color-surface);
+    color: var(--wp-color-text-muted);
   }
 }
 
 .content {
   display: grid;
   flex: 1;
-  gap: var(--wl-space-1);
+  gap: var(--wp-space-1);
   min-width: 0;
 }
 
@@ -149,7 +149,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--wl-space-2);
+  gap: var(--wp-space-2);
 }
 
 .title {
@@ -157,13 +157,13 @@
 }
 
 .description {
-  color: var(--wl-color-text-muted);
-  font-size: var(--wl-text-sm);
+  color: var(--wp-color-text-muted);
+  font-size: var(--wp-text-sm);
 }
 
 .reason {
-  color: var(--wl-color-text);
-  font-size: var(--wl-text-sm);
+  color: var(--wp-color-text);
+  font-size: var(--wp-text-sm);
   font-style: italic;
 }
 
@@ -173,14 +173,14 @@
   place-items: center;
   width: 1.5rem;
   height: 1.5rem;
-  border: 2px solid var(--wl-color-border-strong);
+  border: 2px solid var(--wp-color-border-strong);
   border-radius: 50%;
   color: transparent;
 
   .card:has(:checked) & {
-    border-color: var(--wl-color-accent);
-    background: var(--wl-color-accent);
-    color: var(--wl-color-on-accent);
+    border-color: var(--wp-color-accent);
+    background: var(--wp-color-accent);
+    color: var(--wp-color-on-accent);
   }
 }
 

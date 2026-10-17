@@ -3,7 +3,7 @@
 .layer {
   position: fixed;
   inset: 0;
-  z-index: var(--wl-z-dialog);
+  z-index: var(--wp-z-dialog);
   display: flex;
 }
 
@@ -14,20 +14,20 @@
 
   @include tablet-up {
     align-items: center;
-    padding: var(--wl-space-4);
+    padding: var(--wp-space-4);
   }
 }
 
 .drawer {
-  z-index: var(--wl-z-drawer);
+  z-index: var(--wp-z-drawer);
   justify-content: flex-end;
 }
 
 .backdrop {
   position: absolute;
   inset: 0;
-  background: color-mix(in srgb, var(--wl-color-overlay) 55%, transparent);
-  animation: fade var(--wl-motion-base) var(--wl-ease);
+  background: color-mix(in srgb, var(--wp-color-overlay) 55%, transparent);
+  animation: fade var(--wp-motion-base) var(--wp-ease);
 }
 
 .panel {
@@ -35,9 +35,9 @@
   display: flex;
   flex-direction: column;
   max-height: 100%;
-  background: var(--wl-color-surface);
-  color: var(--wl-color-text);
-  box-shadow: var(--wl-shadow-lg);
+  background: var(--wp-color-surface);
+  color: var(--wp-color-text);
+  box-shadow: var(--wp-shadow-lg);
 
   &:focus-visible {
     @include focus-ring;
@@ -48,11 +48,11 @@
 .dialog .panel {
   width: 100%;
   max-height: 100%;
-  animation: rise var(--wl-motion-slow) var(--wl-ease);
+  animation: rise var(--wp-motion-slow) var(--wp-ease);
 
   @include tablet-up {
     max-height: calc(100vh - 2rem);
-    border-radius: var(--wl-radius-lg);
+    border-radius: var(--wp-radius-lg);
   }
 }
 
@@ -71,10 +71,10 @@
 .drawer .panel {
   width: min(100%, 28rem);
   height: 100%;
-  animation: slide var(--wl-motion-slow) var(--wl-ease);
+  animation: slide var(--wp-motion-slow) var(--wp-ease);
 
   @include tablet-up {
-    border-radius: var(--wl-radius-lg) 0 0 var(--wl-radius-lg);
+    border-radius: var(--wp-radius-lg) 0 0 var(--wp-radius-lg);
   }
 }
 
@@ -93,24 +93,24 @@
 .header {
   display: flex;
   align-items: flex-start;
-  gap: var(--wl-space-3);
-  padding: var(--wl-space-4) var(--wl-space-5);
-  border-bottom: 1px solid var(--wl-color-border);
+  gap: var(--wp-space-3);
+  padding: var(--wp-space-4) var(--wp-space-5);
+  border-bottom: 1px solid var(--wp-color-border);
 }
 
 .headings {
   flex: 1;
   display: grid;
-  gap: var(--wl-space-1);
+  gap: var(--wp-space-1);
 }
 
 .title {
-  font-size: var(--wl-text-xl);
+  font-size: var(--wp-text-xl);
 }
 
 .description {
-  color: var(--wl-color-text-muted);
-  font-size: var(--wl-text-sm);
+  color: var(--wp-color-text-muted);
+  font-size: var(--wp-text-sm);
 }
 
 .close {
@@ -121,12 +121,12 @@
   border: 0;
   border-radius: 50%;
   background: transparent;
-  color: var(--wl-color-text-muted);
+  color: var(--wp-color-text-muted);
   cursor: pointer;
 
   &:hover {
-    background: var(--wl-color-surface-sunken);
-    color: var(--wl-color-text);
+    background: var(--wp-color-surface-sunken);
+    color: var(--wp-color-text);
   }
 
   @include focus-visible;
@@ -135,16 +135,16 @@
 .body {
   flex: 1;
   overflow: auto;
-  padding: var(--wl-space-5);
+  padding: var(--wp-space-5);
 }
 
 .footer {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: var(--wl-space-2);
-  padding: var(--wl-space-4) var(--wl-space-5);
-  border-top: 1px solid var(--wl-color-border);
+  gap: var(--wp-space-2);
+  padding: var(--wp-space-4) var(--wp-space-5);
+  border-top: 1px solid var(--wp-color-border);
 }
 
 @include reduced-motion {

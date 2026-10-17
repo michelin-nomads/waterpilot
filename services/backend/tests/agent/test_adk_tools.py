@@ -7,18 +7,18 @@ import asyncio
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 
-from waterlens.adapters.adk_tools import RuntimeTool, build_agent_tools
-from waterlens.adapters.jobqueue_memory import MemoryJobQueue
-from waterlens.adapters.store_memory import MemoryStore
-from waterlens.application.agent import AgentToolRuntime
-from waterlens.application.agent.registry import TOOLS
-from waterlens.application.identity import AccountKind, Principal, RequestContext
-from waterlens.application.services import Deps, Services
-from waterlens.application.services.common import AiConfig
-from waterlens.domain.ai import DEFAULT_MODEL_ID, AiLimits
-from waterlens.domain.ids import IdKind, new_id
-from waterlens.domain.jobs import AgentRun
-from waterlens.domain.planning import PlanningMode, PlanningSession
+from waterpilot.adapters.adk_tools import RuntimeTool, build_agent_tools
+from waterpilot.adapters.jobqueue_memory import MemoryJobQueue
+from waterpilot.adapters.store_memory import MemoryStore
+from waterpilot.application.agent import AgentToolRuntime
+from waterpilot.application.agent.registry import TOOLS
+from waterpilot.application.identity import AccountKind, Principal, RequestContext
+from waterpilot.application.services import Deps, Services
+from waterpilot.application.services.common import AiConfig
+from waterpilot.domain.ai import DEFAULT_MODEL_ID, AiLimits
+from waterpilot.domain.ids import IdKind, new_id
+from waterpilot.domain.jobs import AgentRun
+from waterpilot.domain.planning import PlanningMode, PlanningSession
 
 NOW = datetime(2026, 10, 13, 9, 0, tzinfo=UTC)
 OWNER = Principal("owner-1", AccountKind.PERMANENT, "google.com", NOW)

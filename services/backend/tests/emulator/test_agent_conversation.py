@@ -7,9 +7,9 @@ import pytest
 from firestore_support import firestore_store  # noqa: F401
 
 from agent.test_conversation import CTX, world
-from waterlens.adapters.conversation_firestore import FirestoreConversationStore
-from waterlens.application.agent.conversation import ConversationAgent
-from waterlens.application.services import Services
+from waterpilot.adapters.conversation_firestore import FirestoreConversationStore
+from waterpilot.application.agent.conversation import ConversationAgent
+from waterpilot.application.services import Services
 
 pytestmark = pytest.mark.emulator
 

@@ -2,27 +2,31 @@
 
 .field {
   display: grid;
-  gap: var(--wl-field-gap);
+  gap: var(--wp-field-gap);
 }
 
 .label {
   font-weight: 600;
-  font-size: var(--wl-text-sm);
+  font-size: var(--wp-text-sm);
+}
+
+.hidden {
+  @include visually-hidden;
 }
 
 .required {
   font-weight: 400;
-  color: var(--wl-color-text-muted);
+  color: var(--wp-color-text-muted);
 }
 
 .hint {
-  font-size: var(--wl-text-sm);
-  color: var(--wl-color-text-muted);
+  font-size: var(--wp-text-sm);
+  color: var(--wp-color-text-muted);
 }
 
 .error {
-  font-size: var(--wl-text-sm);
-  color: var(--wl-color-danger);
+  font-size: var(--wp-text-sm);
+  color: var(--wp-color-danger);
   font-weight: 600;
 }
 
@@ -30,13 +34,13 @@
   width: 100%;
   min-height: 2.75rem;
   padding: 0.5rem 0.75rem;
-  border: 1px solid var(--wl-color-border-strong);
-  border-radius: var(--wl-radius-md);
-  background: var(--wl-color-surface);
-  color: var(--wl-color-text);
+  border: 1px solid var(--wp-color-border-strong);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-color-surface);
+  color: var(--wp-color-text);
 
   &::placeholder {
-    color: var(--wl-color-text-muted);
+    color: var(--wp-color-text-muted);
   }
 
   &:focus-visible {
@@ -45,12 +49,12 @@
   }
 
   &[aria-invalid='true'] {
-    border-color: var(--wl-color-danger);
+    border-color: var(--wp-color-danger);
     border-width: 2px;
   }
 
   &:disabled {
-    background: var(--wl-color-surface-sunken);
+    background: var(--wp-color-surface-sunken);
     cursor: not-allowed;
   }
 }
@@ -71,4 +75,30 @@ select.control {
 .textarea {
   min-height: 5rem;
   resize: vertical;
+}
+
+.adorned {
+  position: relative;
+  display: block;
+}
+
+.adornedIcon {
+  position: absolute;
+  top: 50%;
+  inset-inline-start: 0.875rem;
+  color: var(--wp-color-text-muted);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.adornedControl {
+  padding-inline-start: 2.75rem;
+}
+
+.adornedEnd {
+  position: absolute;
+  top: 50%;
+  inset-inline-end: 0.25rem;
+  display: flex;
+  transform: translateY(-50%);
 }

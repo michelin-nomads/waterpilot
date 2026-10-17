@@ -10,10 +10,10 @@ from tests.conftest import LoadSettings
 from tests.graphql_harness import make_harness
 from tests.test_config import LOCAL_OK
 
-from waterlens.adapters.catalogue_synthetic import SYNTHETIC_SCHEME_ID
-from waterlens.domain.errors import DomainError, ErrorCode
-from waterlens.domain.funding import FundingScheme
-from waterlens.domain.ids import IdKind, new_id
+from waterpilot.adapters.catalogue_synthetic import SYNTHETIC_SCHEME_ID
+from waterpilot.domain.errors import DomainError, ErrorCode
+from waterpilot.domain.funding import FundingScheme
+from waterpilot.domain.ids import IdKind, new_id
 
 PATH = "/v1/admin/funding-catalogue"
 HEADERS = {"authorization": "Bearer t-alice"}

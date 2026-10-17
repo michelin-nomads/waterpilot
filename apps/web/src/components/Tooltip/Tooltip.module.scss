@@ -14,11 +14,11 @@
   border: 0;
   border-radius: 50%;
   background: transparent;
-  color: var(--wl-color-text-muted);
+  color: var(--wp-color-text-muted);
   cursor: help;
 
   &:hover {
-    color: var(--wl-color-accent);
+    color: var(--wp-color-accent);
   }
 
   @include focus-visible;
@@ -26,19 +26,19 @@
 
 .tip {
   position: absolute;
-  z-index: var(--wl-z-toast);
+  z-index: var(--wp-z-toast);
   top: calc(100% + 0.25rem);
   left: 50%;
   width: max-content;
   max-width: min(18rem, 80vw);
-  padding: var(--wl-space-2) var(--wl-space-3);
-  border-radius: var(--wl-radius-sm);
-  background: var(--wl-color-text);
-  color: var(--wl-color-surface);
-  font-size: var(--wl-text-sm);
+  padding: var(--wp-space-2) var(--wp-space-3);
+  border-radius: var(--wp-radius-sm);
+  background: var(--wp-color-text);
+  color: var(--wp-color-surface);
+  font-size: var(--wp-text-sm);
   font-weight: 400;
-  line-height: var(--wl-leading-normal);
-  box-shadow: var(--wl-shadow-md);
+  line-height: var(--wp-leading-normal);
+  box-shadow: var(--wp-shadow-md);
   pointer-events: none;
   // Closed tips take no layout space, so they can never widen the page at 320 px.
   // aria-describedby still exposes the text while it is not displayed.
@@ -47,7 +47,7 @@
 
   &[data-open='true'] {
     display: block;
-    animation: tip-in var(--wl-motion-fast) var(--wl-ease);
+    animation: tip-in var(--wp-motion-fast) var(--wp-ease);
   }
 }
 

@@ -128,7 +128,7 @@ export const demoLink: Link = {
   snapshotId: 'synthetic-utility-supply-demo-abc',
   manualInputId: null,
   title: 'Synthville daily utility and tanker supply (SYNTHETIC DEMO — not a real source)',
-  publisher: 'WaterLens test fixtures',
+  publisher: 'WaterPilot test fixtures',
   url: 'https://example.invalid/synthetic-demo',
   asOf: '2026-01-10',
   quality: 'SYNTHETIC',

@@ -23,10 +23,13 @@ function renderMenu(storage?: Storage | null) {
 }
 
 describe('stored display preferences', () => {
-  it('falls back per field, so a corrupt theme does not reset a valid palette', () => {
-    expect(parseDisplayPreferences('{"theme":"neon","palette":"grove"}')).toEqual({
-      theme: 'system',
-      palette: 'grove',
+  it('falls back to the default theme when the stored one is unknown', () => {
+    expect(parseDisplayPreferences('{"theme":"neon"}')).toEqual({ theme: 'system' });
+  });
+
+  it('ignores a palette saved by an earlier version: Estuary is the only palette', () => {
+    expect(parseDisplayPreferences('{"theme":"dark","palette":"grove"}')).toEqual({
+      theme: 'dark',
     });
   });
 
@@ -53,18 +56,26 @@ describe('DisplayPreferencesProvider + DisplayMenu', () => {
     expect(root.dataset.theme).toBe('dark');
   });
 
-  it('keeps theme and palette independent and persists both', () => {
+  it('offers only light, dark and system, with no palette choice', () => {
+    renderMenu();
+    expect(screen.getAllByRole('radio').map((radio) => radio.parentElement?.textContent)).toEqual([
+      'System',
+      'Light',
+      'Dark',
+    ]);
+    expect(screen.queryByText('Palette')).not.toBeInTheDocument();
+    expect(screen.queryByText('Theme')).not.toBeInTheDocument();
+    expect(screen.getByRole('radiogroup', { name: 'Theme' })).toBeInTheDocument();
+    expect(root.dataset.palette).toBe('estuary');
+  });
+
+  it('persists the chosen theme', () => {
     renderMenu();
     fireEvent.click(screen.getByRole('radio', { name: /dark/i }));
-    fireEvent.click(screen.getByRole('radio', { name: /monsoon/i }));
     expect(root.dataset.theme).toBe('dark');
-    expect(root.dataset.palette).toBe('monsoon');
-
-    fireEvent.click(screen.getByRole('radio', { name: /grove/i }));
-    expect(root.dataset.theme).toBe('dark');
+    expect(root.dataset.palette).toBe('estuary');
     expect(JSON.parse(window.localStorage.getItem(DISPLAY_STORAGE_KEY) ?? '{}')).toEqual({
       theme: 'dark',
-      palette: 'grove',
     });
   });
 
@@ -79,8 +90,8 @@ describe('DisplayPreferencesProvider + DisplayMenu', () => {
     window.localStorage.setItem(DISPLAY_STORAGE_KEY, '{"theme":"dark","palette":"grove"}');
     renderMenu();
     expect(root.dataset.theme).toBe('dark');
-    expect(root.dataset.palette).toBe('grove');
-    expect(screen.getByRole('radio', { name: /grove/i })).toBeChecked();
+    expect(root.dataset.palette).toBe('estuary');
+    expect(screen.getByRole('radio', { name: /dark/i })).toBeChecked();
   });
 
   it('tells the user when storage is blocked instead of pretending to save', () => {
@@ -96,11 +107,10 @@ describe('DisplayPreferencesProvider + DisplayMenu', () => {
       window.dispatchEvent(
         new StorageEvent('storage', {
           key: DISPLAY_STORAGE_KEY,
-          newValue: '{"theme":"dark","palette":"monsoon"}',
+          newValue: '{"theme":"dark"}',
         }),
       );
     });
-    expect(root.dataset.palette).toBe('monsoon');
     expect(root.dataset.theme).toBe('dark');
   });
 

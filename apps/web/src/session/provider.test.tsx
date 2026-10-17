@@ -40,7 +40,9 @@ function renderApp({
   sessions = new FakeSessionServer(),
   recovery = new MemoryRecoveryStore(),
   queryClient = new QueryClient(),
+  resumeExisting = true,
 }: {
+  resumeExisting?: boolean;
   path?: string;
   backend?: FakeAuthBackend;
   sessions?: FakeSessionServer;
@@ -55,6 +57,7 @@ function renderApp({
         sessions={sessions}
         recovery={recovery}
         queryClient={queryClient}
+        resumeExisting={resumeExisting}
       >
         <Probe />
         <ToastProvider>
@@ -67,6 +70,12 @@ function renderApp({
 }
 
 const session = () => probe.session as Session;
+
+/** Sign out lives in the account menu: open it, then choose it. */
+function chooseSignOut() {
+  fireEvent.click(screen.getByRole('button', { name: /^Account menu/ }));
+  fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
+}
 
 beforeEach(() => {
   probe.session = null;
@@ -194,26 +203,43 @@ describe('planning session in the app', () => {
     await screen.findByText(GOAL_A.description);
     await vi.waitFor(async () => expect(await recovery.forUid('user-1')).toHaveLength(1));
 
-    fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
+    chooseSignOut();
+    fireEvent.click(
+      within(await screen.findByRole('dialog', { name: 'Sign out and lose your plan?' })).getByRole(
+        'button',
+        { name: 'Sign out and lose plan' },
+      ),
+    );
     await vi.waitFor(() => expect(backend.calls).toContain('signOut'));
-    expect(await screen.findByRole('button', { name: 'Start exploring' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Welcome to WaterPilot' }),
+    ).toBeInTheDocument();
     await vi.waitFor(async () => expect(await recovery.forUid('user-1')).toEqual([]));
     expect(screen.queryByText(GOAL_A.description)).not.toBeInTheDocument();
   });
 
-  it('asks before signing out with changes the server has not received', async () => {
+  it('asks before signing out of a plan, and signing out ends it', async () => {
     const sessions = new FakeSessionServer();
-    sessions.seed('user-1');
-    const { backend } = renderApp({ sessions });
-    await vi.waitFor(() => expect(session().state.status).toBe('ready'));
-    sessions.offline = true;
-    act(() => session().coordinator?.setGoal(GOAL_A));
-    await screen.findByText(/not saved/i);
+    sessions.seed('user-1', { goal: GOAL_A, stage: 'GOAL' });
+    const { backend } = renderApp({ sessions, path: '/goals' });
+    await screen.findByText(GOAL_A.description);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Some changes are not saved' });
+    chooseSignOut();
+    const dialog = await screen.findByRole('dialog', { name: 'Sign out and lose your plan?' });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Stay signed in' }));
     expect(backend.calls).not.toContain('signOut');
+
+    chooseSignOut();
+    fireEvent.click(
+      within(await screen.findByRole('dialog', { name: 'Sign out and lose your plan?' })).getByRole(
+        'button',
+        { name: 'Sign out and lose plan' },
+      ),
+    );
+    await vi.waitFor(() => expect(backend.calls).toContain('signOut'));
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Welcome to WaterPilot' }),
+    ).toBeInTheDocument();
   });
 
   it('a guest who upgrades keeps the same plan', async () => {
@@ -230,43 +256,40 @@ describe('planning session in the app', () => {
     expect(screen.getByText(GOAL_A.description)).toBeInTheDocument();
   });
 
-  it('New report replaces the current plan only after confirmation', async () => {
+  it('New report starts the chosen mode from the workspace and replaces the old plan', async () => {
     const sessions = new FakeSessionServer();
     const { id } = sessions.seed('user-1', { stage: 'GOAL' });
-    const { router } = renderApp({ sessions, path: '/start' });
-    await vi.waitFor(() => expect(session().state.status).toBe('ready'));
-    const startButton = await screen.findByRole('button', { name: 'Start new report' });
-    expect(startButton).toBeDisabled();
-    fireEvent.click(screen.getByRole('radio', { name: /Explorer/i }));
-    expect(startButton).toBeEnabled();
-    fireEvent.click(startButton);
-    const dialog = await screen.findByRole('dialog', { name: 'Replace your current plan?' });
-    expect(within(dialog).getByText(/step 3, goal/i)).toBeInTheDocument();
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Start new report' }));
+    const { router } = renderApp({ sessions, path: '/reports' });
+    await screen.findByRole('heading', { level: 1, name: 'Your water planning workspace' });
+
+    fireEvent.click(screen.getByRole('button', { name: 'New report' }));
+    const dialog = await screen.findByRole('dialog', { name: 'New report' });
+    expect(within(dialog).getByRole('button', { name: /Explorer/ })).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: /Copilot/ })).toBeInTheDocument();
+    expect(screen.queryByText('Replace your current plan?')).not.toBeInTheDocument();
+
+    fireEvent.click(within(dialog).getByRole('button', { name: /Explorer/ }));
     await screen.findByRole('heading', { level: 1, name: 'Confirm your location' });
     expect(router.state.location.pathname).toBe('/area');
     expect(sessions.sessions.get(id)?.status).toBe('CLOSED');
     expect(session().view?.id).not.toBe(id);
   });
 
-  it('starts the selected mode and reuses the same create intent after a lost response', async () => {
+  it('reuses the same create intent after a lost response', async () => {
     const sessions = new FakeSessionServer();
-    const { router } = renderApp({ sessions, path: '/start' });
-    await vi.waitFor(() => expect(session().state.status).not.toBe('loading'));
+    const { router } = renderApp({ sessions, path: '/reports', resumeExisting: false });
+    await screen.findByRole('heading', { level: 1, name: 'Your water planning workspace' });
 
-    const startButton = screen.getByRole('button', { name: 'Start new report' });
-    expect(startButton).toBeDisabled();
-    fireEvent.click(screen.getByRole('radio', { name: /Copilot/i }));
-    expect(startButton).toBeEnabled();
-
+    fireEvent.click(screen.getByRole('button', { name: 'New report' }));
+    const dialog = await screen.findByRole('dialog', { name: 'New report' });
     sessions.dropResponses = 1;
-    await act(async () => fireEvent.click(startButton));
+    await act(async () => fireEvent.click(within(dialog).getByRole('button', { name: /Copilot/ })));
     expect(
       await screen.findByText(
         'A new report could not be started. Check your connection and try again.',
       ),
     ).toBeInTheDocument();
-    await act(async () => fireEvent.click(startButton));
+    await act(async () => fireEvent.click(within(dialog).getByRole('button', { name: /Copilot/ })));
 
     await screen.findByRole('heading', { level: 1, name: 'Confirm your location' });
     expect(router.state.location.pathname).toBe('/area');
@@ -274,5 +297,77 @@ describe('planning session in the app', () => {
     expect([...sessions.sessions.values()].filter((item) => item.status === 'ACTIVE')).toHaveLength(
       1,
     );
+  });
+
+  it('does not resume a plan from an earlier visit', async () => {
+    const sessions = new FakeSessionServer();
+    const { id } = sessions.seed('user-1', { goal: GOAL_A, stage: 'GOAL' });
+    const recovery = new MemoryRecoveryStore();
+    const { router } = renderApp({ sessions, recovery, path: '/goals', resumeExisting: false });
+
+    await screen.findByRole('heading', { level: 1, name: 'Your water planning workspace' });
+    expect(router.state.location.pathname).toBe('/reports');
+    expect(session().state.status).toBe('none');
+    expect(screen.queryByText(GOAL_A.description)).not.toBeInTheDocument();
+    expect(await recovery.forUid('user-1')).toEqual([]);
+    // Nothing closed it on the server; the next plan started replaces it.
+    expect(sessions.sessions.get(id)?.status).toBe('ACTIVE');
+  });
+
+  it('asks before leaving a plan and discards it only when confirmed', async () => {
+    const sessions = new FakeSessionServer();
+    sessions.seed('user-1', { goal: GOAL_A, stage: 'GOAL' });
+    const { router } = renderApp({ sessions, path: '/goals' });
+    await screen.findByText(GOAL_A.description);
+
+    await vi.waitFor(() => expect(session().state.status).toBe('ready'));
+    // Let the router register its leave-guard, as the moments before a real click do.
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 50)));
+    fireEvent.click(screen.getByRole('link', { name: 'Communities' }));
+    const dialog = await screen.findByRole(
+      'dialog',
+      { name: 'Leave this plan?' },
+      { timeout: 4000 },
+    );
+    expect(within(dialog).getByText(/Your plan will be lost/)).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Stay on this plan' }));
+    expect(router.state.location.pathname).toBe('/goals');
+    expect(session().state.status).toBe('ready');
+
+    fireEvent.click(screen.getByRole('link', { name: 'Communities' }));
+    fireEvent.click(
+      within(
+        await screen.findByRole('dialog', { name: 'Leave this plan?' }, { timeout: 4000 }),
+      ).getByRole('button', {
+        name: 'Leave and lose plan',
+      }),
+    );
+    await screen.findByRole('heading', { level: 1, name: 'Your water planning workspace' });
+    expect(router.state.location.pathname).toBe('/communities');
+    expect(session().state.status).toBe('none');
+  });
+
+  it('moving between planning steps never asks', async () => {
+    const sessions = new FakeSessionServer();
+    sessions.seed('user-1', { goal: GOAL_A, stage: 'GOAL' });
+    const { router } = renderApp({ sessions, path: '/goals' });
+    await screen.findByText(GOAL_A.description);
+
+    await act(async () => {
+      await router.navigate('/plans');
+    });
+    expect(screen.queryByRole('dialog', { name: 'Leave this plan?' })).not.toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/plans');
+  });
+
+  it('keeps the workspace and its routes for signed-in accounts only', async () => {
+    const { router } = renderApp({
+      backend: new FakeAuthBackend(guest()),
+      path: '/reports',
+      resumeExisting: false,
+    });
+    await screen.findByRole('heading', { level: 1, name: 'A better water plan starts here.' });
+    expect(router.state.location.pathname).toBe('/');
+    expect(screen.queryByRole('navigation', { name: 'Primary' })).not.toBeInTheDocument();
   });
 });

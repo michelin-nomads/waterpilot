@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from waterlens.adapters.storage_local import LocalObjectStorage, StorageKeyError
-from waterlens.application.ports import (
+from waterpilot.adapters.storage_local import LocalObjectStorage, StorageKeyError
+from waterpilot.application.ports import (
     ObjectConflictError,
     ObjectNotFoundError,
     ObjectTooLargeError,

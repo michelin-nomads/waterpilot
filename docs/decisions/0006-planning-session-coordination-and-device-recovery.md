@@ -37,7 +37,7 @@ cannot be sent yet, a rule for concurrent edits, and a way to tell when derived 
    else changed is rebased silently; mode and stage take the latest choice; a plan choice
    whose inputs changed elsewhere is dropped with a message; the same input changed in two
    places stops and asks the user: "Keep my changes" or "Use the saved version".
-4. **Device recovery in IndexedDB** (`waterlens-recovery`, store `sessions`): one record
+4. **Device recovery in IndexedDB** (`waterpilot-recovery`, store `sessions`): one record
    per uid and tab with the acknowledged copy of the session inputs, the pending patch and
    timestamps; never tokens, credentials or source data. Records expire after 7 days and
    are garbage-collected on load. Recovered edits apply only to the same session id;

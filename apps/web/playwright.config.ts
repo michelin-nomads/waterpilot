@@ -1,9 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// WL_E2E_API=1 (set by `npm run test:e2e:emulator`) also starts the local API against the
+// WP_E2E_API=1 (set by `npm run test:e2e:emulator`) also starts the local API against the
 // Firebase emulators. It runs in local mode only: emulator hosts are loopback and the
-// project is demo-waterlens, so no real cloud service can be reached.
-const withApi = process.env.WL_E2E_API === '1';
+// project is demo-waterpilot, so no real cloud service can be reached.
+const withApi = process.env.WP_E2E_API === '1';
 
 const web = {
   command: 'npm run dev',
@@ -14,17 +14,17 @@ const web = {
 
 const api = {
   command:
-    'cd ../../services/backend && uv run uvicorn waterlens.api.asgi:app --host 127.0.0.1 --port 8000',
+    'cd ../../services/backend && uv run uvicorn waterpilot.api.asgi:app --host 127.0.0.1 --port 8000',
   url: 'http://127.0.0.1:8000/healthz',
   reuseExistingServer: !process.env.CI,
   timeout: 120_000,
   env: {
-    WL_APP_MODE: 'local',
-    WL_USE_EMULATORS: 'true',
-    WL_FIRESTORE_EMULATOR_HOST: '127.0.0.1:8080',
-    WL_AUTH_EMULATOR_HOST: '127.0.0.1:9099',
-    WL_GCP_PROJECT: 'demo-waterlens',
-    WL_LOCAL_STORE: 'firestore',
+    WP_APP_MODE: 'local',
+    WP_USE_EMULATORS: 'true',
+    WP_FIRESTORE_EMULATOR_HOST: '127.0.0.1:8080',
+    WP_AUTH_EMULATOR_HOST: '127.0.0.1:9099',
+    WP_GCP_PROJECT: 'demo-waterpilot',
+    WP_LOCAL_STORE: 'firestore',
   },
 };
 

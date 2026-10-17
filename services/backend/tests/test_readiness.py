@@ -21,17 +21,17 @@ from sources_support import (
     make_admin,
     measured_manifest,
 )
-from waterlens.adapters.catalogue_synthetic import SYNTHETIC_AREA_ID
-from waterlens.adapters.jobqueue_memory import MemoryJobQueue
-from waterlens.application.identity import AccountKind, Principal, RequestContext
-from waterlens.application.services import Deps, Services
-from waterlens.application.sources.admin import SourceAdmin
-from waterlens.domain.errors import DomainError, ErrorCode
-from waterlens.domain.ids import IdKind, derived_id, new_id
-from waterlens.domain.location import ExtentKind
-from waterlens.domain.planning import Area, Capability, PlanningMode, PlanningSession
-from waterlens.domain.readiness import AreaReadiness, InputId, ReadinessState
-from waterlens.domain.values import Availability, EvidenceQuality
+from waterpilot.adapters.catalogue_synthetic import SYNTHETIC_AREA_ID
+from waterpilot.adapters.jobqueue_memory import MemoryJobQueue
+from waterpilot.application.identity import AccountKind, Principal, RequestContext
+from waterpilot.application.services import Deps, Services
+from waterpilot.application.sources.admin import SourceAdmin
+from waterpilot.domain.errors import DomainError, ErrorCode
+from waterpilot.domain.ids import IdKind, derived_id, new_id
+from waterpilot.domain.location import ExtentKind
+from waterpilot.domain.planning import Area, Capability, PlanningMode, PlanningSession
+from waterpilot.domain.readiness import AreaReadiness, InputId, ReadinessState
+from waterpilot.domain.values import Availability, EvidenceQuality
 
 NOW = datetime(2026, 10, 10, 6, 0, tzinfo=UTC)  # 10 Oct 2026, 11:30 IST
 TODAY = date(2026, 10, 10)

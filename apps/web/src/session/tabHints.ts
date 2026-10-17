@@ -2,8 +2,8 @@
  * Disposable per-tab hints in sessionStorage. They survive a reload of the same tab and
  * vanish with it; nothing here is needed for correctness.
  */
-const TAB_ID_KEY = 'waterlens.tabId.v1';
-const RESTORED_DISMISSED_PREFIX = 'waterlens.restoredDismissed.v1:';
+const TAB_ID_KEY = 'waterpilot.tabId.v1';
+const RESTORED_DISMISSED_PREFIX = 'waterpilot.restoredDismissed.v1:';
 
 function storage(): Storage | null {
   try {

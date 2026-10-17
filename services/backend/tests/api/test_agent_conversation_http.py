@@ -7,15 +7,15 @@ from fastapi.testclient import TestClient
 from agent.test_conversation import CTX, world
 from conftest import LOCAL_OK
 from graphql_harness import AREA_ID
-from waterlens.adapters.factory import ApiRuntime
-from waterlens.adapters.storage_local import LocalObjectStorage
-from waterlens.api.main import create_app
-from waterlens.application.artifacts import ArtifactStore
-from waterlens.application.identity import AccountKind, Principal
-from waterlens.domain.errors import DomainError, ErrorCode
-from waterlens.domain.ids import IdKind, new_id
-from waterlens.domain.planning import Goal, GoalKind
-from waterlens.domain.reports import Report
+from waterpilot.adapters.factory import ApiRuntime
+from waterpilot.adapters.storage_local import LocalObjectStorage
+from waterpilot.api.main import create_app
+from waterpilot.application.artifacts import ArtifactStore
+from waterpilot.application.identity import AccountKind, Principal
+from waterpilot.domain.errors import DomainError, ErrorCode
+from waterpilot.domain.ids import IdKind, new_id
+from waterpilot.domain.planning import Goal, GoalKind
+from waterpilot.domain.reports import Report
 
 
 class Verifier:
@@ -94,7 +94,7 @@ def test_ordered_stream_reconnect_authorization_and_no_repeat_model_calls(
 def test_http_confirmation_is_explicit_bound_to_prepared_action_and_idempotent(
     load_settings, tmp_path
 ):
-    from waterlens.application.agent.runtime import AgentToolRuntime
+    from waterpilot.application.agent.runtime import AgentToolRuntime
 
     agent, sid = world()
     now = CTX.require_principal().auth_time

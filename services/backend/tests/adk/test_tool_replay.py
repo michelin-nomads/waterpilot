@@ -10,8 +10,8 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 
-from waterlens.adapters.conversation_memory import MemoryConversationStore
-from waterlens.domain.conversations import LEASE_TTL, ToolInvocation, ToolStatus
+from waterpilot.adapters.conversation_memory import MemoryConversationStore
+from waterpilot.domain.conversations import LEASE_TTL, ToolInvocation, ToolStatus
 
 NOW = datetime(2026, 10, 12, 9, 0, tzinfo=UTC)
 

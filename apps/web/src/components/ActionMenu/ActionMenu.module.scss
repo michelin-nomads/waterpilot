@@ -1,0 +1,72 @@
+@use 'mixins' as *;
+
+.root {
+  position: relative;
+}
+
+.trigger {
+  display: inline-grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 1px solid var(--wp-color-border);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-color-surface);
+  color: var(--wp-color-text-muted);
+  cursor: pointer;
+
+  &:hover,
+  &[aria-expanded='true'] {
+    background: var(--wp-color-accent-soft);
+    color: var(--wp-color-accent-strong);
+  }
+
+  @include focus-visible;
+}
+
+.panel {
+  position: absolute;
+  z-index: var(--wp-z-drawer);
+  top: calc(100% + 0.25rem);
+  right: 0;
+  display: grid;
+  min-width: 12rem;
+  margin: 0;
+  padding: var(--wp-space-1);
+  border: 1px solid var(--wp-color-border);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-color-surface-raised);
+  box-shadow: var(--wp-shadow-lg);
+  list-style: none;
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+.item {
+  display: block;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: var(--wp-space-2) var(--wp-space-3);
+  border: 0;
+  border-radius: var(--wp-radius-sm);
+  background: transparent;
+  color: var(--wp-color-text);
+  font: inherit;
+  line-height: 1.75rem;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--wp-color-accent-soft);
+  }
+
+  &[data-danger] {
+    color: var(--wp-color-danger);
+  }
+
+  @include focus-visible;
+}

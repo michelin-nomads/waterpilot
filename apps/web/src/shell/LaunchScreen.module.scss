@@ -1,0 +1,7 @@
+.screen {
+  display: grid;
+  place-content: center;
+  min-height: 100vh;
+  padding: var(--wp-space-5);
+  background: var(--wp-color-bg);
+}

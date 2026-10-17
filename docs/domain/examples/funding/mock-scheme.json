@@ -25,7 +25,7 @@
   "deadline_timezone": "Asia/Kolkata",
   "source_hash": null,
   "source_document_key": null,
-  "permission_note": "Created for WaterLens local hackathon testing; permitted to reuse.",
+  "permission_note": "Created for WaterPilot local hackathon testing; permitted to reuse.",
   "official_source": false,
   "reviewed_by": null,
   "unknown_fields": ["co_funding_ratio", "contact", "payment_schedule"],

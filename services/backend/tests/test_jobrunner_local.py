@@ -9,8 +9,8 @@ from pathlib import Path
 
 import pytest
 
-from waterlens.adapters.jobrunner_local import InvalidTaskNameError, LocalJobRunner
-from waterlens.application.ports import TaskRequest
+from waterpilot.adapters.jobrunner_local import InvalidTaskNameError, LocalJobRunner
+from waterpilot.application.ports import TaskRequest
 
 NOW = datetime(2026, 10, 10, 6, 0, tzinfo=UTC)
 

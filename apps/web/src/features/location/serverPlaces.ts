@@ -9,7 +9,7 @@ const isAbort = (error: unknown) =>
     : (error as { code?: string } | null)?.code === 'ERR_CANCELED';
 
 /**
- * Places through the WaterLens API (`resolveLocation` / `reverseLocation`). In local mode
+ * Places through the WaterPilot API (`resolveLocation` / `reverseLocation`). In local mode
  * the API answers from its labelled test gazetteer, so nothing billable is called. In a
  * pilot without a browser key it uses the server's provider, or reports unavailable.
  * There is no map here.
@@ -20,7 +20,7 @@ export function serverPlaces(provider: 'fixture' | 'server'): PlacesAdapter {
     attribution:
       provider === 'fixture'
         ? 'Local test gazetteer: approximate, not real place data'
-        : 'Place search by the WaterLens service',
+        : 'Place search by the WaterPilot service',
     hasMap: false,
 
     async suggest(text, signal) {

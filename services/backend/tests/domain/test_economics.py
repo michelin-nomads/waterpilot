@@ -6,13 +6,13 @@ from __future__ import annotations
 
 from fractions import Fraction
 
-from waterlens.domain.economics import (
+from waterpilot.domain.economics import (
     ECONOMICS_ENGINE_VERSION,
     OptionEconomics,
     PaybackOutcome,
     assess_economics,
 )
-from waterlens.domain.values import (
+from waterpilot.domain.values import (
     FundingSource,
     FundingStatus,
     Money,

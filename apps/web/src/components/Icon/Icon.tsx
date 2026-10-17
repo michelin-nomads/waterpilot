@@ -1,6 +1,6 @@
 import styles from './Icon.module.scss';
 
-// 24×24 stroke icons drawn for WaterLens (no icon-font or icon-library dependency).
+// 24×24 stroke icons drawn for WaterPilot (no icon-font or icon-library dependency).
 const PATHS = {
   info: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Zm0-6v-5m0-3h.01',
   close: 'M6 6l12 12M18 6 6 18',
@@ -39,6 +39,16 @@ const PATHS = {
   wallet: 'M4 6h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4V6Zm0 0V5a1 1 0 0 1 1-1h11M16 13h.01',
   user: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 9a7 7 0 0 1 14 0',
   history: 'M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 7v5l3 2',
+  search: 'm21 21-4.3-4.3M17 10.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z',
+  more: 'M12 5h.01M12 12h.01M12 19h.01',
+  calendar: 'M4 6h16v14H4zM4 10h16M8 3v4m8-4v4',
+  home: 'm3 11 9-8 9 8M5 10v10h14V10M10 20v-6h4v6',
+  mail: 'M3 5h18v14H3zM3 7l9 6.5L21 7',
+  eye: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Zm10 3a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z',
+  'eye-off':
+    'M3 3l18 18M10.6 5.1A9.7 9.7 0 0 1 12 5c6 0 10 7 10 7a17 17 0 0 1-3.2 3.9M6.6 6.6A16.6 16.6 0 0 0 2 12s4 7 10 7a9.7 9.7 0 0 0 4.3-1M9.9 9.9a3 3 0 0 0 4.2 4.2',
+  bulb: 'M9 18h6m-5 3h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3Z',
+  clipboard: 'M9 4h6v3H9zM7 5H5v16h14V5h-2M9 12h6m-6 4h4',
 } as const;
 
 export type IconName = keyof typeof PATHS;

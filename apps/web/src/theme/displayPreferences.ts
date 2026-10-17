@@ -6,32 +6,22 @@ export const THEME_PREFERENCES = ['system', 'light', 'dark'] as const;
 export type ThemePreference = (typeof THEME_PREFERENCES)[number];
 export type ResolvedTheme = Exclude<ThemePreference, 'system'>;
 
-export const PALETTE_IDS = ['estuary', 'monsoon', 'grove'] as const;
-export type PaletteId = (typeof PALETTE_IDS)[number];
-
-/** Display palettes: Estuary follows the supplied design reference; others remain optional. */
-export const PALETTES: ReadonlyArray<{ id: PaletteId; label: string; description: string }> = [
-  { id: 'estuary', label: 'Estuary', description: 'Teal accent' },
-  { id: 'monsoon', label: 'Monsoon', description: 'Blue accent' },
-  { id: 'grove', label: 'Grove', description: 'Green accent' },
-];
+/** One palette ships: Estuary, which follows the supplied design reference. */
+export const PALETTE = 'estuary';
 
 export interface DisplayPreferences {
   theme: ThemePreference;
-  palette: PaletteId;
 }
 
 export const DEFAULT_DISPLAY_PREFERENCES: DisplayPreferences = {
   theme: 'system',
-  palette: 'estuary',
 };
 
-export const DISPLAY_STORAGE_KEY = 'waterlens.display.v1';
+export const DISPLAY_STORAGE_KEY = 'waterpilot.display.v1';
 
-// Each field falls back on its own, so one corrupt value never resets the other preference.
+// An unknown stored theme falls back to the default; other stored keys (an old palette) are ignored.
 const StoredSchema = z.object({
   theme: z.enum(THEME_PREFERENCES).catch(DEFAULT_DISPLAY_PREFERENCES.theme),
-  palette: z.enum(PALETTE_IDS).catch(DEFAULT_DISPLAY_PREFERENCES.palette),
 });
 
 /** Returns `localStorage`, or `null` where storage is blocked (privacy modes, sandboxed frames). */
@@ -80,19 +70,15 @@ export function resolveTheme(preference: ThemePreference, prefersDark: boolean):
   return preference;
 }
 
-export function applyDisplayAttributes(
-  root: HTMLElement,
-  theme: ResolvedTheme,
-  palette: PaletteId,
-): void {
+export function applyDisplayAttributes(root: HTMLElement, theme: ResolvedTheme): void {
   root.dataset.theme = theme;
-  root.dataset.palette = palette;
+  root.dataset.palette = PALETTE;
 }
 
 /** Applies the stored preference before the first React render to avoid a theme flash. */
 export function applyStoredDisplayPreferences(): void {
-  const { theme, palette } = readDisplayPreferences(getPreferenceStorage());
+  const { theme } = readDisplayPreferences(getPreferenceStorage());
   const prefersDark =
     typeof window.matchMedia === 'function' && window.matchMedia(PREFERS_DARK_QUERY).matches;
-  applyDisplayAttributes(document.documentElement, resolveTheme(theme, prefersDark), palette);
+  applyDisplayAttributes(document.documentElement, resolveTheme(theme, prefersDark));
 }

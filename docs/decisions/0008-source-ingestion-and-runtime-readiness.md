@@ -58,7 +58,7 @@ measured fact. No real source has been licence-reviewed yet.
    for the caller's own session and area, with its source note and as-of date. The value
    is converted exactly to the canonical unit and labelled `user_entered`, never measured.
 9. **Admin through the CLI only.** Registering, reviewing and importing run through
-   `waterlens.cli.sources`, in local mode only. There is no API route for them. Network
+   `waterpilot.cli.sources`, in local mode only. There is no API route for them. Network
    access needs `--allow-network` and is limited to `https` on the registered host, with
    no redirects, no credentials and a size cap. `httpx` moves to a runtime dependency for
    this.

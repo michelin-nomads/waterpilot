@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "WaterLens Metric Registry",
+  "title": "WaterPilot Metric Registry",
   "description": "Machine-readable companion to docs/domain/metrics.md. All definitions are PROPOSED pending domain review. Equations must not be altered to reproduce screenshot example numbers.",
   "version": "0.3",
   "status": "proposed",

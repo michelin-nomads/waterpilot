@@ -50,8 +50,8 @@ evidence; it is not a cloud deployment approval.
 - Prompt 23 follow-up focused suite: **114 passed** across configuration/deployment guards
   (39), source ingestion/offline import (38), AI gateway (27), conversation (8), and
   conversation HTTP (2). Ruff on all changed Python files and `git diff --check` passed.
-- Firestore accounting emulator test: **10 passed**, with `WL_REQUIRE_AUTH_EMULATOR=1`, the
-  `demo-waterlens` project, and both Auth and Firestore emulators. Firebase CLI debug output
+- Firestore accounting emulator test: **10 passed**, with `WP_REQUIRE_AUTH_EMULATOR=1`, the
+  `demo-waterpilot` project, and both Auth and Firestore emulators. Firebase CLI debug output
   showed JDK `21.0.12.1`, the cached Firestore emulator JAR at
   `/Users/quashid/Documents/Codex/2026-10-13/can/work/firebase/cloud-firestore-emulator-v1.22.0.jar`,
   successful startup, test exit code 0, and clean shutdown. It ran with pinned Node `24.21.0`,

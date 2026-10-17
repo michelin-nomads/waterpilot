@@ -3,12 +3,12 @@
 .group {
   display: flex;
   align-items: center;
-  gap: var(--wl-space-1);
+  gap: var(--wp-space-1);
   margin: 0;
-  padding: var(--wl-space-1);
-  border: 1px solid var(--wl-color-border);
-  border-radius: var(--wl-radius-lg);
-  background: var(--wl-color-surface-sunken);
+  padding: var(--wp-space-1);
+  border: 1px solid var(--wp-color-border);
+  border-radius: var(--wp-radius-lg);
+  background: var(--wp-color-surface-sunken);
 }
 
 .option {
@@ -18,18 +18,18 @@
   place-items: center;
   width: 2.25rem;
   height: 2.25rem;
-  border-radius: var(--wl-radius-md);
-  color: var(--wl-color-text-muted);
+  border-radius: var(--wp-radius-md);
+  color: var(--wp-color-text-muted);
   cursor: pointer;
 
   &:hover {
-    background: var(--wl-color-surface);
-    color: var(--wl-color-text);
+    background: var(--wp-color-surface);
+    color: var(--wp-color-text);
   }
 
   &[data-active='true'] {
-    background: var(--wl-color-accent);
-    color: var(--wl-color-on-accent);
+    background: var(--wp-color-accent);
+    color: var(--wp-color-on-accent);
   }
 
   &:has(input:focus-visible) {
@@ -53,25 +53,25 @@
 
 .tooltip {
   position: absolute;
-  z-index: calc(var(--wl-z-toast) - 1);
-  top: calc(100% + var(--wl-space-2));
+  z-index: calc(var(--wp-z-toast) - 1);
+  top: calc(100% + var(--wp-space-2));
   right: 0;
   display: none;
-  gap: var(--wl-space-1);
+  gap: var(--wp-space-1);
   width: max-content;
   max-width: min(18rem, 80vw);
-  padding: var(--wl-space-2) var(--wl-space-3);
-  border-radius: var(--wl-radius-sm);
-  background: var(--wl-color-text);
-  box-shadow: var(--wl-shadow-md);
-  color: var(--wl-color-surface);
-  font-size: var(--wl-text-xs);
+  padding: var(--wp-space-2) var(--wp-space-3);
+  border-radius: var(--wp-radius-sm);
+  background: var(--wp-color-text);
+  box-shadow: var(--wp-shadow-md);
+  color: var(--wp-color-surface);
+  font-size: var(--wp-text-xs);
   font-weight: 400;
-  line-height: var(--wl-leading-normal);
+  line-height: var(--wp-leading-normal);
   text-align: start;
   pointer-events: none;
 
   strong {
-    font-size: var(--wl-text-sm);
+    font-size: var(--wp-text-sm);
   }
 }

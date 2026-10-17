@@ -3,14 +3,14 @@ import { fileURLToPath } from 'node:url';
 
 import { expect, test, type Page } from '@playwright/test';
 
-// Real-browser checks for Phase 03: six theme × palette combinations (token contrast),
+// Real-browser checks for Phase 03: both themes with the Estuary palette (token contrast),
 // keyboard paths, reduced motion, hidden-tab pausing and responsive layouts.
-// Screenshots are written only when WL_CAPTURE_SCREENSHOTS=1, so normal runs never
+// Screenshots are written only when WP_CAPTURE_SCREENSHOTS=1, so normal runs never
 // rewrite docs.
 
 const THEMES = ['light', 'dark'] as const;
-const PALETTES = ['estuary', 'monsoon', 'grove'] as const;
-const CAPTURE = process.env.WL_CAPTURE_SCREENSHOTS === '1';
+const PALETTES = ['estuary'] as const;
+const CAPTURE = process.env.WP_CAPTURE_SCREENSHOTS === '1';
 const SHOT_DIR = fileURLToPath(
   new URL('../../../docs/design/screenshots/phase-03/', import.meta.url),
 );
@@ -18,11 +18,51 @@ const SHOT_DIR = fileURLToPath(
 async function usePreferences(page: Page, theme: string, palette: string, mode = 'traditional') {
   await page.addInitScript(
     ([t, p, m]) => {
-      window.localStorage.setItem('waterlens.display.v1', JSON.stringify({ theme: t, palette: p }));
-      window.localStorage.setItem('waterlens.planningMode.v1', m!);
+      window.localStorage.setItem(
+        'waterpilot.display.v1',
+        JSON.stringify({ theme: t, palette: p }),
+      );
+      window.localStorage.setItem('waterpilot.planningMode.v1', m!);
     },
     [theme, palette, mode],
   );
+}
+
+// The planner needs a plan, and a plan needs the local API with the Auth emulator; the
+// signed-in screens need an account. Without that stack these checks are skipped.
+async function stackUp(): Promise<boolean> {
+  try {
+    const [api, auth] = await Promise.all([
+      fetch('http://127.0.0.1:8000/healthz'),
+      fetch('http://127.0.0.1:9099'),
+    ]);
+    return api.ok && auth.ok;
+  } catch {
+    return false;
+  }
+}
+
+/** Continue as a guest and start a plan, the way a visitor reaches the planner. */
+async function openPlanner(page: Page, mode: 'traditional' | 'agent' = 'traditional') {
+  test.skip(!(await stackUp()), 'Needs the local API and Auth emulator');
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Continue as guest' }).click();
+  await page
+    .getByRole('button', { name: mode === 'agent' ? 'Start with agent' : 'Start exploring' })
+    .click();
+  await expect(page).toHaveURL(/\/area$/);
+}
+
+/** Sign up a fresh account, then open a signed-in screen. */
+async function openSignedIn(page: Page, path: string) {
+  test.skip(!(await stackUp()), 'Needs the local API and Auth emulator');
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Create an account' }).click();
+  await page.getByLabel(/^Email/).fill(`ds-${Date.now()}-${Math.random()}@example.org`);
+  await page.getByLabel(/^Password/).fill('secret-pass');
+  await page.getByRole('button', { name: 'Create account' }).click();
+  await expect(page).toHaveURL(/\/reports$/);
+  await page.goto(path);
 }
 
 async function capture(page: Page, name: string, fullPage = false) {
@@ -101,7 +141,7 @@ for (const theme of THEMES) {
         (names) => {
           const style = getComputedStyle(document.documentElement);
           return Object.fromEntries(
-            names.map((n) => [n, style.getPropertyValue(`--wl-color-${n}`).trim()]),
+            names.map((n) => [n, style.getPropertyValue(`--wp-color-${n}`).trim()]),
           );
         },
         [...new Set(PAIRS.flatMap(([fg, bg]) => [fg, bg]))],
@@ -122,14 +162,14 @@ for (const theme of THEMES) {
   }
 }
 
-test('theme and palette chosen in the Display menu persist across reload', async ({ page }) => {
-  await page.goto('/area');
-  await page.getByRole('button', { name: 'Display' }).click();
+test('the theme chosen in the Display menu persists across reload', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Display settings' }).click();
+  await expect(page.getByRole('radio')).toHaveCount(3);
   await page.getByRole('radio', { name: /dark/i }).check();
-  await page.getByRole('radio', { name: /grove/i }).check();
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-  await expect(page.locator('html')).toHaveAttribute('data-palette', 'grove');
+  await expect(page.locator('html')).toHaveAttribute('data-palette', 'estuary');
 });
 
 test('keyboard: skip link, stage navigation focus and dialog focus return', async ({ page }) => {
@@ -155,19 +195,21 @@ test('keyboard: skip link, stage navigation focus and dialog focus return', asyn
   await expect(dialog).toBeHidden();
   await expect(opener).toBeFocused();
 
-  await page.goto('/area');
+  await openPlanner(page);
   const goal = page
     .getByRole('navigation', { name: 'Planning stages' })
     .getByRole('link', { name: /goal/i });
   await goal.focus();
   await page.keyboard.press('Enter');
-  await expect(page.getByRole('heading', { level: 1, name: 'Goal' })).toBeFocused();
-  await expect(page).toHaveTitle('Goal · WaterLens');
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Set your goal and constraints' }),
+  ).toBeFocused();
+  await expect(page).toHaveTitle('Set your goal and constraints · WaterPilot');
 });
 
 test.describe('motion', () => {
   test('ambient animations run normally and pause while the tab is hidden', async ({ page }) => {
-    await page.goto('/area');
+    await openPlanner(page);
     const wave = page.locator('[data-decor="water"] svg').first();
     await expect(wave).toHaveCSS('animation-play-state', 'running');
     expect(await wave.evaluate((el) => getComputedStyle(el).animationName)).not.toBe('none');
@@ -183,7 +225,7 @@ test.describe('motion', () => {
   test('reduced motion disables ambient animation', async ({ browser }) => {
     const context = await browser.newContext({ reducedMotion: 'reduce' });
     const page = await context.newPage();
-    await page.goto('/area');
+    await openPlanner(page);
     for (const selector of ['[data-decor="water"] svg', '[data-decor="earth"] g']) {
       const name = await page
         .locator(selector)
@@ -205,7 +247,7 @@ for (const viewport of VIEWPORTS) {
   test(`responsive ${viewport.name}: agent mode layout`, async ({ page }) => {
     await page.setViewportSize(viewport);
     await usePreferences(page, 'light', 'estuary', 'agent');
-    await page.goto('/area');
+    await openPlanner(page, 'agent');
     const heading = page.getByRole('heading', { level: 1, name: 'Location' });
     await expect(heading).toBeVisible();
 
@@ -242,8 +284,8 @@ test.describe('320 px reflow', () => {
   const ROUTES = [
     { path: '/area', heading: 'Location', mode: 'traditional' },
     { path: '/area', heading: 'Location', mode: 'agent' },
-    { path: '/make-it-happen', heading: 'Make It Happen', mode: 'agent' },
-    { path: '/communities', heading: 'Communities', mode: 'traditional' },
+    { path: '/make-it-happen', heading: 'Funding opportunities', mode: 'agent' },
+    { path: '/communities', heading: 'Your water planning workspace', mode: 'traditional' },
     { path: '/design-system', heading: 'Design system', mode: 'traditional' },
   ] as const;
 
@@ -251,13 +293,24 @@ test.describe('320 px reflow', () => {
     test(`${route.path} (${route.mode}) has no sideways scroll at 320 px`, async ({ page }) => {
       await page.setViewportSize({ width: 320, height: 640 });
       await usePreferences(page, 'light', 'estuary', route.mode);
-      await page.goto(route.path);
+      if (route.path === '/area') await openPlanner(page, route.mode);
+      else if (route.path === '/design-system') await page.goto(route.path);
+      else await openSignedIn(page, route.path);
       await expect(page.getByRole('heading', { level: 1, name: route.heading })).toBeVisible();
       expect(await pageOverflow(page), 'page must not scroll sideways').toBeLessThanOrEqual(0);
       if (route.path === '/design-system') await capture(page, 'design-system-320');
       if (route.mode === 'agent' && route.path === '/area') await capture(page, 'area-agent-320');
     });
   }
+
+  test('the sign-in screen has no sideways scroll at 320 px', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 640 });
+    await page.goto('/');
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Welcome to WaterPilot' }),
+    ).toBeVisible();
+    expect(await pageOverflow(page)).toBeLessThanOrEqual(0);
+  });
 
   test('open tooltips stay inside the viewport at 320 px', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 640 });
@@ -288,12 +341,12 @@ test.describe('320 px reflow', () => {
   });
 });
 
-test('desktop conversation pane resizes by pointer drag and keeps its width after reload', async ({
+test('desktop conversation pane resizes by pointer drag and keeps its width on the device', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await usePreferences(page, 'light', 'estuary', 'agent');
-  await page.goto('/area');
+  await openPlanner(page, 'agent');
   const pane = page.getByRole('complementary', { name: 'Conversation' });
   const handle = page.getByRole('separator', { name: 'Resize conversation pane' });
   const before = (await pane.boundingBox())!.width;
@@ -314,11 +367,10 @@ test('desktop conversation pane resizes by pointer drag and keeps its width afte
   const workspace = page.getByRole('region', { name: 'Workspace' });
   expect((await pane.boundingBox())!.width).toBeLessThan((await workspace.boundingBox())!.width);
 
+  // The width is a display preference, kept on the device (a reload would end the plan).
   const stored = await handle.getAttribute('aria-valuenow');
-  await page.reload();
-  await expect(page.getByRole('separator', { name: 'Resize conversation pane' })).toHaveAttribute(
-    'aria-valuenow',
-    stored!,
+  expect(await page.evaluate(() => window.localStorage.getItem('waterpilot.agentWidth.v1'))).toBe(
+    stored,
   );
 });
 
@@ -344,7 +396,11 @@ test('dark theme planning screenshots (traditional mode, desktop)', async ({ pag
   await page.setViewportSize({ width: 1440, height: 900 });
   for (const palette of PALETTES) {
     await usePreferences(page, 'dark', palette);
-    await page.goto('/plans');
+    await openPlanner(page);
+    await page
+      .getByRole('navigation', { name: 'Planning stages' })
+      .getByRole('link', { name: /compare/i })
+      .click();
     await expect(page.getByRole('heading', { level: 1, name: 'Compare' })).toBeVisible();
     await capture(page, `plans-dark-${palette}`);
   }

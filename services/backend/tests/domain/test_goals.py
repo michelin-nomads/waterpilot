@@ -9,7 +9,7 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from waterlens.domain.goals import (
+from waterpilot.domain.goals import (
     BaselineFact,
     GoalContext,
     GoalOutcome,
@@ -17,9 +17,9 @@ from waterlens.domain.goals import (
     site_fit,
     validate_goal,
 )
-from waterlens.domain.interventions import CATALOGUE, InterventionFamily
-from waterlens.domain.planning import GoalFields, SiteConstraints
-from waterlens.domain.values import Availability, Unit
+from waterpilot.domain.interventions import CATALOGUE, InterventionFamily
+from waterpilot.domain.planning import GoalFields, SiteConstraints
+from waterpilot.domain.values import Availability, Unit
 
 AV, PR, UN = Availability.AVAILABLE, Availability.PROVISIONAL, Availability.UNAVAILABLE
 

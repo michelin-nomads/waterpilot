@@ -3,36 +3,36 @@
   flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
-  gap: var(--wl-space-3);
-  margin-bottom: var(--wl-card-section-gap);
+  gap: var(--wp-space-3);
+  margin-bottom: var(--wp-card-section-gap);
 }
 
 .text {
   display: grid;
-  gap: var(--wl-space-1);
+  gap: var(--wp-space-1);
 }
 
 .eyebrow {
-  font-size: var(--wl-text-xs);
+  font-size: var(--wp-text-xs);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--wl-color-accent);
+  color: var(--wp-color-accent);
 }
 
 .title {
-  font-size: var(--wl-text-3xl);
+  font-size: var(--wp-text-3xl);
   font-weight: 800;
   letter-spacing: -0.015em;
 }
 
 .subtitle {
-  font-size: var(--wl-text-lg);
-  color: var(--wl-color-text-muted);
+  font-size: var(--wp-text-lg);
+  color: var(--wp-color-text-muted);
 }
 
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--wl-space-2);
+  gap: var(--wp-space-2);
 }

@@ -21,14 +21,14 @@ from firestore_support import firestore_store  # noqa: F401 - fixture injected b
 from pydantic import BaseModel
 
 from graphql_harness import AREA_ID, seed_plan_option
-from waterlens.adapters.jobqueue_memory import MemoryJobQueue
-from waterlens.adapters.model_fake import FakeModelProvider, response
-from waterlens.adapters.store_firestore import DUE_FIELD, EXPIRES_AT_FIELD, FirestoreStore
-from waterlens.application.identity import AccountKind, Principal, RequestContext
-from waterlens.application.services import Deps, Services
-from waterlens.application.services.ai import estimate_tokens
-from waterlens.application.services.common import AiConfig
-from waterlens.domain.ai import (
+from waterpilot.adapters.jobqueue_memory import MemoryJobQueue
+from waterpilot.adapters.model_fake import FakeModelProvider, response
+from waterpilot.adapters.store_firestore import DUE_FIELD, EXPIRES_AT_FIELD, FirestoreStore
+from waterpilot.application.identity import AccountKind, Principal, RequestContext
+from waterpilot.application.services import Deps, Services
+from waterpilot.application.services.ai import estimate_tokens
+from waterpilot.application.services.common import AiConfig
+from waterpilot.domain.ai import (
     CALL_KEY_RETENTION,
     DEFAULT_MODEL_ID,
     RESERVATION_RETENTION,
@@ -42,12 +42,12 @@ from waterlens.domain.ai import (
     reservation_id_for,
     usage_day_id,
 )
-from waterlens.domain.economics import OptionEconomics, assess_economics
-from waterlens.domain.errors import DomainError, ErrorCode
-from waterlens.domain.ids import IdKind, new_id
-from waterlens.domain.planning import Goal, GoalKind, PlanningMode, PlanningSession
-from waterlens.domain.reports import Report
-from waterlens.domain.values import (
+from waterpilot.domain.economics import OptionEconomics, assess_economics
+from waterpilot.domain.errors import DomainError, ErrorCode
+from waterpilot.domain.ids import IdKind, new_id
+from waterpilot.domain.planning import Goal, GoalKind, PlanningMode, PlanningSession
+from waterpilot.domain.reports import Report
+from waterpilot.domain.values import (
     FundingSource,
     FundingStatus,
     Money,

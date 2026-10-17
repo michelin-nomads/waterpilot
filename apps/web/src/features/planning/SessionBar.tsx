@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { Button, ButtonLink } from '../../components/Button/Button';
+import { Button } from '../../components/Button/Button';
 import { Icon } from '../../components/Icon/Icon';
 import { Notice } from '../../components/Notice/Notice';
 import { Spinner } from '../../components/Spinner/Spinner';
@@ -18,6 +18,7 @@ const FIELD_LABEL: Record<SessionField, string> = {
   goal: 'goal',
   scenario: 'what-if changes',
   selectedPlanOptionId: 'chosen plan',
+  siteProfile: 'community details',
 };
 
 function listFields(fields: readonly SessionField[]): string {
@@ -96,22 +97,8 @@ export function SessionBar() {
     );
   }
 
-  if (!coordinator || state.status === 'none') {
-    return (
-      <Notice
-        kind="info"
-        announce={false}
-        action={
-          <ButtonLink to="/start" size="sm" endIcon="arrow-right">
-            Start planning
-          </ButtonLink>
-        }
-      >
-        No plan in progress. Start one to save what you enter here.
-        {state.message && <> {state.message}</>}
-      </Notice>
-    );
-  }
+  // No plan: the planner redirects away, so there is nothing to show here.
+  if (!coordinator || state.status === 'none') return null;
 
   if (state.status === 'error') {
     return (
@@ -181,7 +168,7 @@ export function SessionBar() {
       )}
       {state.offlineCopy && (
         <Notice kind="offline">
-          WaterLens cannot reach the server, so you are seeing the copy of your plan saved on this
+          WaterPilot cannot reach the server, so you are seeing the copy of your plan saved on this
           device. Your changes will be saved when the connection returns.
         </Notice>
       )}

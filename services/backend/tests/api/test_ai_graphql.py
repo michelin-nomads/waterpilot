@@ -8,9 +8,9 @@ from pathlib import Path
 
 from conftest import LOCAL_OK, LoadSettings
 from graphql_harness import AREA_ID, Harness, make_harness
-from waterlens.adapters.model_fake import FakeModelProvider
-from waterlens.application.services.common import AiConfig
-from waterlens.domain.ai import AiLimits
+from waterpilot.adapters.model_fake import FakeModelProvider
+from waterpilot.application.services.common import AiConfig
+from waterpilot.domain.ai import AiLimits
 
 TOKEN = "t-alice"
 

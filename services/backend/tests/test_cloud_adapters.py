@@ -14,13 +14,13 @@ import pytest
 from google.api_core import exceptions as gexc
 from google.cloud import tasks_v2
 
-from waterlens.adapters.storage_gcs import GcsObjectStorage, PublicBucketError, validate_key
-from waterlens.adapters.tasks_cloud import (
+from waterpilot.adapters.storage_gcs import GcsObjectStorage, PublicBucketError, validate_key
+from waterpilot.adapters.tasks_cloud import (
     CloudTasksJobRunner,
     validate_queue_path,
     validate_worker_url,
 )
-from waterlens.application.ports import (
+from waterpilot.application.ports import (
     DispatchError,
     ObjectConflictError,
     ObjectNotFoundError,
@@ -29,9 +29,9 @@ from waterlens.application.ports import (
     TaskRequest,
 )
 
-QUEUE = "projects/waterlens-pilot/locations/asia-south1/queues/waterlens-jobs"
+QUEUE = "projects/waterpilot-pilot/locations/asia-south1/queues/waterpilot-jobs"
 WORKER = "https://worker-abc.a.run.app"
-SA = "waterlens-dispatch@waterlens-pilot.iam.gserviceaccount.com"
+SA = "waterpilot-dispatch@waterpilot-pilot.iam.gserviceaccount.com"
 
 
 @dataclass
@@ -131,7 +131,7 @@ class FakeBlob:
 
 @dataclass
 class FakeBucket:
-    name: str = "waterlens-artifacts"
+    name: str = "waterpilot-artifacts"
     objects: dict[str, tuple[bytes, str]] = field(default_factory=dict)
     iam_configuration: Any = field(
         default_factory=lambda: SimpleNamespace(

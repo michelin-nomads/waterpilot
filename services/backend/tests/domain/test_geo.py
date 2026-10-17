@@ -7,7 +7,7 @@ import random
 
 import pytest
 
-from waterlens.domain import geo
+from waterpilot.domain import geo
 
 
 def test_encode_matches_the_reference_geohash() -> None:

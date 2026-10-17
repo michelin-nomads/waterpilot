@@ -6,9 +6,9 @@ from types import SimpleNamespace
 import pytest
 from google.api_core import exceptions as gexc
 
-from waterlens.adapters.conversation_firestore import FirestoreConversationStore
-from waterlens.application.deadline import DeadlineRpc, bounded
-from waterlens.domain.errors import DomainError
+from waterpilot.adapters.conversation_firestore import FirestoreConversationStore
+from waterpilot.application.deadline import DeadlineRpc, bounded
+from waterpilot.domain.errors import DomainError
 
 
 def test_all_rpc_calls_receive_remaining_deadline_and_no_hidden_sdk_retries():

@@ -8,22 +8,22 @@ const LOCAL = {
 
 const PILOT_FIREBASE = {
   VITE_FIREBASE_API_KEY: 'public-web-key',
-  VITE_FIREBASE_AUTH_DOMAIN: 'waterlens-pilot.firebaseapp.com',
-  VITE_FIREBASE_PROJECT_ID: 'waterlens-pilot',
+  VITE_FIREBASE_AUTH_DOMAIN: 'waterpilot-pilot.firebaseapp.com',
+  VITE_FIREBASE_PROJECT_ID: 'waterpilot-pilot',
   VITE_FIREBASE_APP_ID: '1:123:web:abc',
 };
 
 const PILOT = {
   VITE_APP_MODE: 'pilot',
   VITE_USE_EMULATORS: 'false',
-  VITE_API_BASE_URL: 'https://api.waterlens.example.org',
+  VITE_API_BASE_URL: 'https://api.waterpilot.example.org',
   ...PILOT_FIREBASE,
 };
 
 const LOCAL_FIREBASE = {
   apiKey: 'demo-api-key',
-  authDomain: 'demo-waterlens.firebaseapp.com',
-  projectId: 'demo-waterlens',
+  authDomain: 'demo-waterpilot.firebaseapp.com',
+  projectId: 'demo-waterpilot',
   appId: null,
   authEmulatorHost: '127.0.0.1:9099',
 };
@@ -53,7 +53,7 @@ describe('loadEnv — local mode', () => {
   });
 
   it.each([
-    'https://api.waterlens.example.org',
+    'https://api.waterpilot.example.org',
     'http://10.0.0.5:8000',
     'http://127.0.0.1.evil.example:8000',
     'http://localhost.evil.example',
@@ -66,13 +66,13 @@ describe('loadEnv — local mode', () => {
 describe('loadEnv — pilot mode', () => {
   it('accepts an explicit public https API', () => {
     expect(loadEnv(PILOT)).toEqual({
-      apiBaseUrl: 'https://api.waterlens.example.org',
+      apiBaseUrl: 'https://api.waterpilot.example.org',
       appMode: 'pilot',
       useEmulators: false,
       firebase: {
         apiKey: 'public-web-key',
-        authDomain: 'waterlens-pilot.firebaseapp.com',
-        projectId: 'waterlens-pilot',
+        authDomain: 'waterpilot-pilot.firebaseapp.com',
+        projectId: 'waterpilot-pilot',
         appId: '1:123:web:abc',
         authEmulatorHost: null,
       },
@@ -97,7 +97,7 @@ describe('loadEnv — pilot mode', () => {
   });
 
   it.each([
-    'http://api.waterlens.example.org',
+    'http://api.waterpilot.example.org',
     'https://127.0.0.1:8000',
     'https://localhost',
     'https://app.localhost',
@@ -138,8 +138,8 @@ describe('loadEnv — Firebase', () => {
   );
 
   it('keeps local mode on the demo project', () => {
-    expect(() => loadEnv({ ...LOCAL, VITE_FIREBASE_PROJECT_ID: 'waterlens-pilot' })).toThrow(
-      /demo-waterlens/,
+    expect(() => loadEnv({ ...LOCAL, VITE_FIREBASE_PROJECT_ID: 'waterpilot-pilot' })).toThrow(
+      /demo-waterpilot/,
     );
   });
 
@@ -154,7 +154,7 @@ describe('loadEnv — Firebase', () => {
   });
 
   it('rejects a demo project in pilot mode', () => {
-    expect(() => loadEnv({ ...PILOT, VITE_FIREBASE_PROJECT_ID: 'demo-waterlens' })).toThrow(
+    expect(() => loadEnv({ ...PILOT, VITE_FIREBASE_PROJECT_ID: 'demo-waterpilot' })).toThrow(
       /demo-/,
     );
   });

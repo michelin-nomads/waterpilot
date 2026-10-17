@@ -2,7 +2,7 @@
 
 Date: 2026-10-16
 
-The conversation pane now identifies WaterLensAgent, distinguishes user and
+The conversation pane now identifies WaterPilotAgent, distinguishes user and
 assistant bubbles, keeps structured result cards and confirmation controls, and
 shows the workspace-editing guidance. The composer is visually anchored while
 the conversation pane scrolls. The right workspace continues to read session

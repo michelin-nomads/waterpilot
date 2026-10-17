@@ -1,8 +1,8 @@
 import { expect, test, type Page, type Request } from '@playwright/test';
 
 // The shared planning session in a real browser, against the local API and the Firebase
-// emulators (`npm run test:e2e:emulator`): refresh, offline edits, reconnect, two tabs,
-// mode switch and account switch. Conflicting edits to the same input need the location
+// emulators (`npm run test:e2e:emulator`): plans ending with the visit, offline edits,
+// reconnect, mode switch and account switch. Conflicting edits to the same input need the location
 // and goal editors (later prompts); their choice UI is covered in Vitest.
 const EMULATOR = 'http://127.0.0.1:9099';
 const API = 'http://127.0.0.1:8000';
@@ -10,7 +10,7 @@ const API = 'http://127.0.0.1:8000';
 async function servicesUp(): Promise<boolean> {
   try {
     const [auth, api] = await Promise.all([
-      fetch(`${EMULATOR}/emulator/v1/projects/demo-waterlens/config`),
+      fetch(`${EMULATOR}/emulator/v1/projects/demo-waterpilot/config`),
       fetch(`${API}/healthz`),
     ]);
     return auth.ok && api.ok;
@@ -21,8 +21,8 @@ async function servicesUp(): Promise<boolean> {
 
 test.beforeEach(async () => {
   const up = await servicesUp();
-  if (!up && process.env.WL_REQUIRE_AUTH_EMULATOR === '1') {
-    throw new Error('Auth emulator or local API not running (WL_REQUIRE_AUTH_EMULATOR=1)');
+  if (!up && process.env.WP_REQUIRE_AUTH_EMULATOR === '1') {
+    throw new Error('Auth emulator or local API not running (WP_REQUIRE_AUTH_EMULATOR=1)');
   }
   test.skip(!up, 'Auth emulator or local API not running');
 });
@@ -55,7 +55,8 @@ async function expectSettled(count: () => number, expected: number) {
 
 async function startPlanning(page: Page, mode: 'Traditional' | 'With the assistant') {
   await page.goto('/');
-  const button = mode === 'Traditional' ? 'Start exploring' : 'Plan with Copilot';
+  const button = mode === 'Traditional' ? 'Start exploring' : 'Start with agent';
+  await page.getByRole('button', { name: 'Continue as guest' }).click();
   await page.getByRole('button', { name: button }).click();
   await expect(page).toHaveURL(/\/area$/);
 }
@@ -69,7 +70,7 @@ async function recoveryRecords(page: Page): Promise<Array<{ uid: string; pending
   return page.evaluate(
     () =>
       new Promise((resolve, reject) => {
-        const open = indexedDB.open('waterlens-recovery', 1);
+        const open = indexedDB.open('waterpilot-recovery', 1);
         open.onerror = () => reject(open.error);
         open.onsuccess = () => {
           const db = open.result;
@@ -82,20 +83,18 @@ async function recoveryRecords(page: Page): Promise<Array<{ uid: string; pending
   );
 }
 
-test('refresh and Continue restore the saved mode and step', async ({ page }) => {
+test('a plan is not kept: reloading ends it and Welcome offers a fresh start', async ({ page }) => {
   await startPlanning(page, 'With the assistant');
   await expect(page.getByRole('complementary', { name: 'Conversation' })).toBeVisible();
   await stageLink(page, /goal/i).click();
   await expect(saveStatus(page)).toContainText('Changes saved');
 
   await page.reload();
-  await expect(page.getByRole('heading', { level: 1, name: 'Goal' })).toBeVisible();
-  await expect(page.getByRole('radio', { name: 'Copilot' })).toBeChecked();
-
-  await page.goto('/');
-  await page.getByRole('button', { name: 'Continue planning' }).click();
-  await expect(page).toHaveURL(/\/goals$/);
-  await expect(page.getByRole('complementary', { name: 'Conversation' })).toBeVisible();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole('button', { name: 'Continue planning' })).toHaveCount(0);
+  await expect(page.getByText(/in progress/i)).toHaveCount(0);
+  // The guest account stays, so the start screen is the choice of how to plan.
+  await expect(page.getByRole('button', { name: 'Start exploring' })).toBeVisible();
 });
 
 test('"Changes saved" waits for the server to acknowledge', async ({ page }) => {
@@ -116,48 +115,17 @@ test('"Changes saved" waits for the server to acknowledge', async ({ page }) => 
   await expect(saveStatus(page)).toContainText('Changes saved');
 });
 
-test('edits made while the API is unreachable survive a reload and save once on reconnect', async ({
-  page,
-}) => {
+test('edits made while the API is unreachable save once on reconnect', async ({ page }) => {
   await startPlanning(page, 'Traditional');
   const counts = countAppliedUpdates(page);
   await page.route(`${API}/graphql`, (route) => route.abort('internetdisconnected'));
-  await stageLink(page, /make it happen/i).click();
+  await stageLink(page, /goal/i).click();
   await expect(saveStatus(page)).toContainText('Not saved');
-  await expect.poll(async () => (await recoveryRecords(page)).length).toBeGreaterThan(0);
-
-  await page.reload();
-  await expect(page.getByText(/copy of your plan saved on this device/i)).toBeVisible();
-  await expect(page.getByRole('heading', { level: 1, name: 'Make It Happen' })).toBeVisible();
 
   await page.unroute(`${API}/graphql`);
   await page.evaluate(() => window.dispatchEvent(new Event('online')));
   await expect(saveStatus(page)).toContainText('Changes saved');
   await expectSettled(() => counts.applied, 1);
-
-  await page.goto('/');
-  await page.getByRole('button', { name: 'Continue planning' }).click();
-  await expect(page).toHaveURL(/\/make-it-happen$/);
-});
-
-test('two tabs share one session without duplicate or lost writes', async ({ context }) => {
-  const first = await context.newPage();
-  await startPlanning(first, 'Traditional');
-  const second = await context.newPage();
-  await second.goto('/area');
-  await expect(second.getByText('Location', { exact: true })).toBeVisible();
-  const firstCounts = countAppliedUpdates(first);
-  const secondCounts = countAppliedUpdates(second);
-
-  await stageLink(first, /goal/i).click();
-  await expect(saveStatus(first)).toContainText('Changes saved');
-  await stageLink(second, /compare/i).click();
-  await expect(saveStatus(second)).toContainText('Changes saved');
-
-  await expectSettled(() => firstCounts.applied + secondCounts.applied, 2);
-  await first.goto('/');
-  await first.getByRole('button', { name: 'Continue planning' }).click();
-  await expect(first).toHaveURL(/\/plans$/);
 });
 
 test('switching mode keeps the same session', async ({ page }) => {
@@ -169,39 +137,48 @@ test('switching mode keeps the same session', async ({ page }) => {
       created.push(request.url());
     }
   });
-  await page.getByRole('radio', { name: 'Copilot' }).check();
+  await page.locator('label', { has: page.getByRole('radio', { name: 'Copilot' }) }).click();
   await expect(saveStatus(page)).toContainText('Changes saved');
-  await page.reload();
   await expect(page.getByRole('radio', { name: 'Copilot' })).toBeChecked();
   expect(created).toEqual([]);
   await expectSettled(() => counts.applied, 1);
 });
 
-test('an account switch shows nothing of the previous account and clears its device copy', async ({
+test('a signed-in person plans with an avatar in the header; signing out asks first', async ({
   page,
 }) => {
   const email = `switch-${Date.now()}@example.org`;
-  await startPlanning(page, 'Traditional');
-  await stageLink(page, /goal/i).click();
-  await expect(saveStatus(page)).toContainText('Changes saved');
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Create an account' }).click();
+  await page.getByLabel(/^Email/).fill(email);
+  await page.getByLabel(/^Password/).fill('secret-pass');
+  await page.getByRole('button', { name: 'Create account' }).click();
+  await expect(page).toHaveURL(/\/reports$/);
 
-  // The guest becomes a permanent account and keeps the plan.
-  await page.getByRole('banner').getByRole('button', { name: 'Sign in' }).click();
-  const dialog = page.getByRole('dialog', { name: 'Sign in to WaterLens' });
-  await dialog.getByRole('button', { name: 'Create an account' }).click();
-  await dialog.getByLabel(/^Email/).fill(email);
-  await dialog.getByLabel(/^Password/).fill('secret-pass');
-  await dialog.getByRole('button', { name: 'Create account' }).click();
-  await expect(dialog).toBeHidden();
-  await page.goto('/dashboard');
-  await expect(page.getByRole('link', { name: /resume set your goal/i })).toBeVisible();
+  await page.getByRole('button', { name: 'New report' }).click();
+  await page
+    .getByRole('dialog', { name: 'New report' })
+    .getByRole('button', { name: /Explorer/ })
+    .click();
+  await expect(page).toHaveURL(/\/area$/);
+  const header = page
+    .getByRole('link', { name: 'WaterPilot home' })
+    .locator('xpath=ancestor::header');
+  await expect(header.getByRole('button', { name: /Account menu/ })).toBeVisible();
+  await expect(header.getByText('Guest')).toHaveCount(0);
+  await expect(header.getByRole('button', { name: 'Sign in' })).toHaveCount(0);
 
-  await page.getByRole('banner').getByRole('button', { name: 'Sign out' }).click();
-  await expect(page.getByRole('button', { name: 'Start exploring' })).toBeVisible();
+  await header.getByRole('button', { name: /Account menu/ }).click();
+  await header.getByRole('button', { name: 'Sign out' }).click();
+  const confirm = page.getByRole('dialog', { name: 'Sign out and lose your plan?' });
+  await confirm.getByRole('button', { name: 'Sign out and lose plan' }).click();
+  await expect(page.getByRole('button', { name: 'Continue as guest' })).toBeVisible();
   await expect.poll(async () => (await recoveryRecords(page)).length).toBe(0);
+});
 
-  // A different person on the same browser starts clean.
+test('guests cannot open the signed-in workspace', async ({ page }) => {
   await startPlanning(page, 'Traditional');
-  await expect(page.getByRole('heading', { level: 1, name: 'Location' })).toBeVisible();
-  await expect(page.getByRole('banner').getByText(email)).toHaveCount(0);
+  await page.goto('/reports');
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole('navigation', { name: 'Primary' })).toHaveCount(0);
 });

@@ -7,12 +7,12 @@ from pathlib import Path
 from google.cloud import firestore
 
 from conftest import PILOT_OK, LoadSettings
-from waterlens.adapters import factory
-from waterlens.adapters.jobqueue_memory import MemoryJobQueue
-from waterlens.adapters.proposal_renderer import DeterministicProposalRenderer
-from waterlens.adapters.storage_local import LocalObjectStorage
-from waterlens.adapters.store_memory import MemoryStore
-from waterlens.domain.jobs import JobKind
+from waterpilot.adapters import factory
+from waterpilot.adapters.jobqueue_memory import MemoryJobQueue
+from waterpilot.adapters.proposal_renderer import DeterministicProposalRenderer
+from waterpilot.adapters.storage_local import LocalObjectStorage
+from waterpilot.adapters.store_memory import MemoryStore
+from waterpilot.domain.jobs import JobKind
 
 
 def test_pilot_store_uses_default_project_database_without_demo_seed(
@@ -22,6 +22,7 @@ def test_pilot_store_uses_default_project_database_without_demo_seed(
     client = object()
     built: list[object] = []
     monkeypatch.setattr(firestore, "Client", lambda *, project: client)
+
     def build_store(supplied: object) -> object:
         built.append(supplied)
         return supplied

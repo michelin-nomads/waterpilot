@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from waterlens.cli.coverage_matrix import render
-from waterlens.domain.readiness import CAPABILITY_POLICY, INPUTS, METRICS
+from waterpilot.cli.coverage_matrix import render
+from waterpilot.domain.readiness import CAPABILITY_POLICY, INPUTS, METRICS
 
 DOC = Path(__file__).resolve().parents[3] / "docs" / "data-readiness.md"
 

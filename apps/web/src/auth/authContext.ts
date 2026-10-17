@@ -23,6 +23,8 @@ export interface AuthContextValue {
   openSignIn: (reason?: string) => Promise<boolean>;
   /** True immediately for permanent accounts; otherwise asks the user to sign in first. */
   ensurePermanent: (reason?: string) => Promise<boolean>;
+  /** Email a password-reset link to an address. */
+  sendPasswordReset: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 

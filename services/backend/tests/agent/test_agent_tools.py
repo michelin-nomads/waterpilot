@@ -12,28 +12,28 @@ from __future__ import annotations
 from datetime import UTC, date, datetime, timedelta
 
 from graphql_harness import AREA_ID
-from waterlens.adapters.catalogue_synthetic import synthetic_area_catalogue
-from waterlens.adapters.jobqueue_memory import MemoryJobQueue
-from waterlens.adapters.places_fixture import FixturePlaceSearch
-from waterlens.adapters.store_memory import MemoryStore
-from waterlens.application.agent import (
+from waterpilot.adapters.catalogue_synthetic import synthetic_area_catalogue
+from waterpilot.adapters.jobqueue_memory import MemoryJobQueue
+from waterpilot.adapters.places_fixture import FixturePlaceSearch
+from waterpilot.adapters.store_memory import MemoryStore
+from waterpilot.application.agent import (
     AgentActionKind,
     AgentActionService,
     AgentToolRuntime,
     ConfirmActionInput,
 )
-from waterlens.application.agent.actions import confirmation_token
-from waterlens.application.identity import AccountKind, Principal, RequestContext
-from waterlens.application.services import Deps, Services
-from waterlens.application.services.common import AiConfig
-from waterlens.domain.ai import DEFAULT_MODEL_ID, AiLimits
-from waterlens.domain.communities import Community
-from waterlens.domain.errors import DomainError, ErrorCode
-from waterlens.domain.ids import IdKind, new_id
-from waterlens.domain.jobs import AgentRun, AgentRunStatus, AgentStopReason
-from waterlens.domain.planning import Goal, GoalKind, PlanningMode, PlanningSession
-from waterlens.domain.reports import Report
-from waterlens.domain.tracking import ImplementationProject, Milestone, MilestoneStatus
+from waterpilot.application.agent.actions import confirmation_token
+from waterpilot.application.identity import AccountKind, Principal, RequestContext
+from waterpilot.application.services import Deps, Services
+from waterpilot.application.services.common import AiConfig
+from waterpilot.domain.ai import DEFAULT_MODEL_ID, AiLimits
+from waterpilot.domain.communities import Community
+from waterpilot.domain.errors import DomainError, ErrorCode
+from waterpilot.domain.ids import IdKind, new_id
+from waterpilot.domain.jobs import AgentRun, AgentRunStatus, AgentStopReason
+from waterpilot.domain.planning import Goal, GoalKind, PlanningMode, PlanningSession
+from waterpilot.domain.reports import Report
+from waterpilot.domain.tracking import ImplementationProject, Milestone, MilestoneStatus
 
 NOW = datetime(2026, 10, 13, 9, 0, tzinfo=UTC)
 OWNER = Principal("owner-1", AccountKind.PERMANENT, "google.com", NOW)

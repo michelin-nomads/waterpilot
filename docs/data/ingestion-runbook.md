@@ -5,7 +5,7 @@ is **pending** and not verified. Decisions: ADR 0008. Gate rules:
 `docs/domain/data-readiness-gate.md`. What is covered today: `docs/data-readiness.md`.
 
 All commands run through `npm run sources -- <command>` (the
-`waterlens.cli.sources` module). They:
+`waterpilot.cli.sources` module). They:
 
 - refuse pilot mode and the in-memory store, so they only write to the Firestore emulator
   and local object storage (`.local/objects`);
@@ -15,7 +15,7 @@ All commands run through `npm run sources -- <command>` (the
   review or import a source.
 
 Start the emulators first (`npm run emulators`), or wrap a command in
-`firebase emulators:exec --only firestore --project demo-waterlens "..."`.
+`firebase emulators:exec --only firestore --project demo-waterpilot "..."`.
 
 ## Records
 
