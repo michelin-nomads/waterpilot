@@ -98,3 +98,57 @@
     overflow-wrap: anywhere;
   }
 }
+
+.metaBadge {
+  margin: 0;
+  font-size: var(--wp-text-xs);
+  color: var(--wp-color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.suggestions {
+  display: grid;
+  gap: var(--wp-space-2);
+  margin-block: var(--wp-space-2);
+}
+
+.suggestionsHeading {
+  margin: 0;
+  font-size: var(--wp-text-xs);
+  color: var(--wp-color-text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.suggestionChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-2);
+}
+
+.suggestionChip {
+  background: var(--wp-color-surface);
+  border: 1px solid var(--wp-color-border);
+  border-radius: 9999px;
+  padding: var(--wp-space-1) var(--wp-space-3);
+  font-size: var(--wp-text-xs);
+  color: var(--wp-color-text);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background: var(--wp-color-accent-soft);
+    border-color: var(--wp-color-accent);
+    color: var(--wp-color-accent);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+

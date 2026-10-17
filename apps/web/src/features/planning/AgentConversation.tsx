@@ -187,7 +187,7 @@ export default function AgentConversation({
         : [...events].reverse().find((e) => e.message)?.message;
   return (
     <div className={styles.conversation}>
-      <p>Local demonstration · fake inference</p>
+      <p className={styles.metaBadge}>WaterPilot AI Assistant · Powered by Vertex AI</p>
       <div
         role="log"
         aria-label="Conversation messages"
@@ -316,6 +316,37 @@ export default function AgentConversation({
           Continue
         </Button>
       )}
+      {!active && (
+        <div className={styles.suggestions}>
+          <p className={styles.suggestionsHeading}>Suggested prompts:</p>
+          <div className={styles.suggestionChips}>
+            {getContextualSuggestions(events).map((item) => (
+              <button
+                key={item}
+                type="button"
+                className={styles.suggestionChip}
+                disabled={!sid || active || busy || isSaving}
+                onClick={() => {
+                  if (!sid || active || busy || isSaving) return;
+                  startKey.current ??= crypto.randomUUID();
+                  void perform(async () => {
+                    const value = await agentCommand('', {
+                      sessionId: sid,
+                      prompt: item,
+                      idempotencyKey: startKey.current,
+                    });
+                    startKey.current = null;
+                    setInput('');
+                    return value;
+                  });
+                }}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       <form
         className={styles.composer}
         onSubmit={(event) => {
@@ -352,3 +383,51 @@ export default function AgentConversation({
     </div>
   );
 }
+
+function getContextualSuggestions(events: AgentEvent[]): string[] {
+  const lastResult = [...events].reverse().find((e) => e.type === 'result');
+  if (!lastResult) {
+    return [
+      'Assess baseline water security for this area',
+      'What data is available for this location?',
+      'Explore intervention options',
+      'Search verified government funding schemes',
+    ];
+  }
+  const toolName = (lastResult.name ?? '').toLowerCase();
+  if (toolName.includes('baseline') || toolName.includes('location')) {
+    return [
+      'Recommend water security goals for this baseline',
+      'What interventions are available for this area?',
+      'Check government subsidies & funding schemes',
+    ];
+  }
+  if (toolName.includes('goal') || toolName.includes('intervention')) {
+    return [
+      'Calculate scenario outcomes for these interventions',
+      'Compare cost vs yield for rainwater harvesting',
+      'Check eligible subsidies for this community',
+    ];
+  }
+  if (toolName.includes('scenario') || toolName.includes('plan')) {
+    return [
+      'Search verified government funding schemes',
+      'Prepare proposal for top matching scheme',
+      'What are the limitations and provenance of this plan?',
+    ];
+  }
+  if (toolName.includes('funding')) {
+    return [
+      'Explain eligibility conditions and required documents',
+      'Prepare grant proposal with immutable report inputs',
+      'Review official scheme source details',
+    ];
+  }
+  return [
+    'Assess baseline water security for this area',
+    'Explore intervention options',
+    'Search verified government funding schemes',
+    'Prepare finalized report and proposal',
+  ];
+}
+
