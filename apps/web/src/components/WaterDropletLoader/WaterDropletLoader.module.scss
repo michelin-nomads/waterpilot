@@ -1,67 +1,73 @@
 @use 'mixins' as *;
 
+// Colours come from the supplied loader design; light-dark() follows the app's theme
+// because tokens.scss sets color-scheme on the root.
 .loader {
+  --loader-ink: light-dark(#123a3f, #e7f8f5);
+  --loader-muted: light-dark(#4d7073, #9bbfbd);
+  --loader-teal: light-dark(#089b91, #28cabb);
+  --loader-teal-deep: light-dark(#087f78, #1aa99e);
+  --loader-drop-fill: light-dark(#d9f2ee, #16383a);
+  --loader-arc: light-dark(#effbf8, #0b292c);
+
   display: grid;
-  place-content: center;
   justify-items: center;
-  gap: var(--wl-space-4);
-  min-height: 100vh;
-  padding: var(--wl-space-5);
-  background: var(--wl-color-bg);
-  color: var(--wl-color-text);
+  gap: 0.5rem;
+  color: var(--loader-ink);
   text-align: center;
 }
 
 .art {
-  display: block;
   width: min(220px, 58vw);
-  height: auto;
+  aspect-ratio: 240 / 300;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: 100%;
   overflow: visible;
 }
 
 .drop {
-  fill: var(--wl-color-accent-soft);
-}
-
-.fillGroup {
-  transform-box: view-box;
-  animation: fill 8s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+  fill: var(--loader-drop-fill);
 }
 
 .waveTrack {
-  transform-box: view-box;
   animation: drift 3.5s linear infinite;
 }
 
+.art[data-complete='true'] .waveTrack {
+  animation-play-state: paused;
+}
+
 .backWave {
-  fill: var(--wl-color-accent-strong);
+  fill: var(--loader-teal-deep);
   opacity: 0.48;
 }
 
 .frontWave {
-  fill: var(--wl-color-accent);
+  fill: var(--loader-teal);
 }
 
 .accentArc {
   fill: none;
-  stroke: color-mix(in srgb, var(--wl-color-accent) 35%, #04211f);
+  stroke: var(--loader-arc);
   stroke-width: 8;
   stroke-linecap: round;
 }
 
-.label {
-  color: var(--wl-color-text-muted);
-  font-weight: 600;
+.percentage {
+  margin: 0.15rem 0 0;
+  color: var(--loader-ink);
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
 }
 
-@keyframes fill {
-  from {
-    transform: translateY(95.333%);
-  }
-
-  to {
-    transform: translateY(6.667%);
-  }
+.status {
+  margin: 0;
+  color: var(--loader-muted);
+  font-size: 0.95rem;
 }
 
 @keyframes drift {
@@ -70,16 +76,11 @@
   }
 
   to {
-    transform: translateX(-100%);
+    transform: translateX(-240px);
   }
 }
 
 @include reduced-motion {
-  .fillGroup {
-    animation: none;
-    transform: translateY(6.667%);
-  }
-
   .waveTrack {
     animation: none;
   }

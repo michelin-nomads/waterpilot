@@ -154,7 +154,7 @@ const CONTEXT: ImpactContextFieldsFragment = {
   groundwater: 'UNKNOWN',
   groundwaterCitations: [],
   waterQualityNote:
-    'Readings are shown with their parameter, method and date. WaterLens does not judge whether water is safe to drink.',
+    'Readings are shown with their parameter, method and date. WaterPilot does not judge whether water is safe to drink.',
   boundaries: [
     {
       level: 'SITE',

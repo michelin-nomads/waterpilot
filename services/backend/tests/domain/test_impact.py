@@ -12,8 +12,8 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from waterlens.domain.errors import DomainError
-from waterlens.domain.impact import (
+from waterpilot.domain.errors import DomainError
+from waterpilot.domain.impact import (
     REVIEWED_CONNECTIVITY,
     ConnectivityEvidence,
     ImpactInputs,
@@ -24,7 +24,7 @@ from waterlens.domain.impact import (
     check_narrative,
     require_valid_narrative,
 )
-from waterlens.domain.impact_records import (
+from waterpilot.domain.impact_records import (
     CLAIMABLE_METRICS,
     Citation,
     CitationKind,
@@ -37,18 +37,18 @@ from waterlens.domain.impact_records import (
     Magnitude,
     OptionImpact,
 )
-from waterlens.domain.interventions import (
+from waterpilot.domain.interventions import (
     CATALOGUE,
     CostInput,
     Intervention,
     InterventionFamily,
     ProfessionalReview,
 )
-from waterlens.domain.options import METRIC_UNIT, Comparison, compare_options, comparison_key
-from waterlens.domain.planning import GoalFields, SiteConstraints
-from waterlens.domain.scenario import Balance
-from waterlens.domain.systems import EffectDirection, ReviewKind, SharedSystem
-from waterlens.domain.values import Unit
+from waterpilot.domain.options import METRIC_UNIT, Comparison, compare_options, comparison_key
+from waterpilot.domain.planning import GoalFields, SiteConstraints
+from waterpilot.domain.scenario import Balance
+from waterpilot.domain.systems import EffectDirection, ReviewKind, SharedSystem
+from waterpilot.domain.values import Unit
 
 AREA = "are_HOME"
 NEIGHBOUR = "are_NEXT"

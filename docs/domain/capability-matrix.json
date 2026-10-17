@@ -1,14 +1,14 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "WaterLens Supported-Capability Matrix",
-  "description": "Which data capabilities WaterLens can technically support, their candidate source families, and whether they need local measurement or can be inferred from imagery. PROPOSED pending domain review. technicalSupport describes whether a method/source family exists in principle; it says NOTHING about whether any particular area has onboarded, validated data — that is area readiness, assessed per area by data-readiness-gate.md. Values not ready for an area render as 'unavailable', never 0.",
+  "title": "WaterPilot Supported-Capability Matrix",
+  "description": "Which data capabilities WaterPilot can technically support, their candidate source families, and whether they need local measurement or can be inferred from imagery. PROPOSED pending domain review. technicalSupport describes whether a method/source family exists in principle; it says NOTHING about whether any particular area has onboarded, validated data — that is area readiness, assessed per area by data-readiness-gate.md. Values not ready for an area render as 'unavailable', never 0.",
   "version": "0.2",
   "status": "proposed",
   "legend": {
     "technicalSupport": {
       "supported": "A deterministic method and a candidate source family exist; once a validated, authorized source is onboarded for an area, the capability can be produced without a new model. Does not imply any area is ready.",
       "provisional": "Partially derivable; needs caveats and/or a reviewed model even with validated data.",
-      "unavailable": "No adequate method without local measurement and/or a reviewed model that WaterLens does not yet have."
+      "unavailable": "No adequate method without local measurement and/or a reviewed model that WaterPilot does not yet have."
     },
     "areaReadinessRef": "docs/domain/data-readiness-gate.md"
   },

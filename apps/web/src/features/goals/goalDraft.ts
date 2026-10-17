@@ -154,7 +154,7 @@ export const PRESETS: readonly Preset[] = [
   {
     id: 'bills',
     title: 'Reduce water bills by 20%',
-    description: 'Use and lose less water. WaterLens has no record of your bills.',
+    description: 'Use and lose less water. WaterPilot has no record of your bills.',
     apply: (d) => ({
       ...d,
       kind: 'REDUCE_WATER_BILLS',

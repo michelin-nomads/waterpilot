@@ -53,7 +53,7 @@ export function useModalLayer({ open, onClose, panelRef, initialFocusRef }: Opti
     }
 
     scrollLocks += 1;
-    document.documentElement.classList.add('wl-scroll-locked');
+    document.documentElement.classList.add('wp-scroll-locked');
 
     (initialFocusRef?.current ?? getFocusable(panel)[0] ?? panel).focus();
 
@@ -87,7 +87,7 @@ export function useModalLayer({ open, onClose, panelRef, initialFocusRef }: Opti
       layer.removeEventListener('keydown', onKeyDown);
       for (const el of inerted) el.removeAttribute('inert');
       scrollLocks -= 1;
-      if (scrollLocks === 0) document.documentElement.classList.remove('wl-scroll-locked');
+      if (scrollLocks === 0) document.documentElement.classList.remove('wp-scroll-locked');
       if (opener?.isConnected) opener.focus();
     };
   }, [open, panelRef, initialFocusRef]);

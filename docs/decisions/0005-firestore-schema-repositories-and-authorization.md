@@ -122,7 +122,7 @@ the immutable version document, and nothing invents a version before then.
 - The emulator does not enforce indexes. The adapter records every query shape it runs,
   and an emulator test checks each one against `firestore.indexes.json` (it found one
   missing index, now added) and checks that no queried field is exempt. A separate
-  `live`-marked test (opt-in, `WL_LIVE_FIRESTORE_PROJECT`) probes each declared index on a
+  `live`-marked test (opt-in, `WP_LIVE_FIRESTORE_PROJECT`) probes each declared index on a
   real project with read-only `limit(1)` queries.
 
 ### 7. Pagination and N+1
@@ -173,7 +173,7 @@ the immutable version document, and nothing invents a version before then.
 
 ### 11. Local and pilot modes
 
-- Local mode uses the Firestore emulator by default (`WL_LOCAL_STORE=firestore`), or
+- Local mode uses the Firestore emulator by default (`WP_LOCAL_STORE=firestore`), or
   `memory` for quick runs. Both are seeded with the synthetic area and funding catalogues.
 - The pilot runtime now selects the Firestore default database, Firebase Admin verifier,
   Cloud Storage and Cloud Tasks adapters; the location and curated funding catalogues use

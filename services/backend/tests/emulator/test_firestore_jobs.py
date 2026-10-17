@@ -12,16 +12,16 @@ import pytest
 from firestore_support import firestore_store  # noqa: F401 - fixture injected by name
 
 from test_durable_jobs import POLICY, T0, Clock, Renderer, WorkerCrash, World
-from waterlens.adapters.factory import build_worker_runtime
-from waterlens.adapters.jobqueue_memory import MemoryJobQueue
-from waterlens.adapters.storage_local import LocalObjectStorage
-from waterlens.adapters.store_firestore import DUE_FIELD, EXPIRES_AT_FIELD, FirestoreStore
-from waterlens.application.jobs import RunOutcome
-from waterlens.application.jobs.outbox import OutboxDispatcher
-from waterlens.application.services import Deps, Services
-from waterlens.domain.errors import DomainError, ErrorCode
-from waterlens.domain.jobs import OUTBOX_RETENTION, JobStatus, OutboxStatus, outbox_id_for
-from waterlens.domain.reports import ProposalStatus
+from waterpilot.adapters.factory import build_worker_runtime
+from waterpilot.adapters.jobqueue_memory import MemoryJobQueue
+from waterpilot.adapters.storage_local import LocalObjectStorage
+from waterpilot.adapters.store_firestore import DUE_FIELD, EXPIRES_AT_FIELD, FirestoreStore
+from waterpilot.application.jobs import RunOutcome
+from waterpilot.application.jobs.outbox import OutboxDispatcher
+from waterpilot.application.services import Deps, Services
+from waterpilot.domain.errors import DomainError, ErrorCode
+from waterpilot.domain.jobs import OUTBOX_RETENTION, JobStatus, OutboxStatus, outbox_id_for
+from waterpilot.domain.reports import ProposalStatus
 
 pytestmark = pytest.mark.emulator
 

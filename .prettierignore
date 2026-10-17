@@ -18,8 +18,8 @@ docs/domain/interventions.catalogue.json
 docs/design/reference
 
 # Provided source-of-truth documents — preserve verbatim, never reformat.
-docs/WaterLens-HLD.md
-docs/WaterLens-Cursor-Build-Guide.md
-docs/product/WaterLens-work-flow.txt
+docs/WaterPilot-HLD.md
+docs/WaterPilot-Cursor-Build-Guide.md
+docs/product/WaterPilot-work-flow.txt
 docs/reviews/
 archives

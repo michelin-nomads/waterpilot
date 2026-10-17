@@ -30,5 +30,5 @@ COPY src ./src
 EXPOSE 8080
 USER 65532:65532
 
-# Cloud Run worker service overrides this command with waterlens.worker.asgi:app.
-CMD ["uvicorn", "waterlens.api.asgi:app", "--host", "0.0.0.0", "--port", "8080"]
+# Cloud Run worker service overrides this command with waterpilot.worker.asgi:app.
+CMD ["uvicorn", "waterpilot.api.asgi:app", "--host", "0.0.0.0", "--port", "8080"]

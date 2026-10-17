@@ -445,7 +445,7 @@ export function BaselinePanel({ areaId, sessionId, showActions = true }: Baselin
       )}
       {b.demo && (
         <Notice kind="partial" title="Demo data" announce={false}>
-          Some values use synthetic demonstration data. They show how WaterLens works and are not
+          Some values use synthetic demonstration data. They show how WaterPilot works and are not
           facts about any real place.
         </Notice>
       )}

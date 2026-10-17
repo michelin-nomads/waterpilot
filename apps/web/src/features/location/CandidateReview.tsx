@@ -135,7 +135,7 @@ export function CandidateReview({
       </dl>
       {fixture && (
         <p className={styles.hint}>
-          This comes from the local test gazetteer: approximate coordinates for trying WaterLens
+          This comes from the local test gazetteer: approximate coordinates for trying WaterPilot
           out, not a real place lookup.
         </p>
       )}
@@ -165,7 +165,7 @@ export function CandidateReview({
 
       <Notice kind="info" title="A place is not a catchment" announce={false}>
         This is {SCOPE_LABEL[place.scope]}. A name or a point is not a water catchment or a ward
-        boundary, and WaterLens does not draw neighbourhood boundaries it has no reviewed source
+        boundary, and WaterPilot does not draw neighbourhood boundaries it has no reviewed source
         for. Choose below how calculations should treat it.
       </Notice>
 

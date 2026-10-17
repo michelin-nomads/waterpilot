@@ -120,10 +120,27 @@ query Reports($filter: ReportFilter, $first: Int, $after: String) {
   reports(filter: $filter, first: $first, after: $after) {
     nodes {
       ...ReportFields
+      siteProfile {
+        communityType
+        occupiedHomes
+      }
       area {
         id
         name
         countryCode
+        centroidLat
+        centroidLon
+        extent
+        radiusMeters
+        admin {
+          locality
+        }
+        boundaryBox {
+          minLongitude
+          minLatitude
+          maxLongitude
+          maxLatitude
+        }
       }
     }
     pageInfo {

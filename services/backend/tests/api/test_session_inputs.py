@@ -9,7 +9,7 @@ import pytest
 
 from conftest import LOCAL_OK, LoadSettings
 from graphql_harness import Harness, make_harness, seed_plan_option
-from waterlens.adapters.catalogue_synthetic import SYNTHETIC_AREA_ID
+from waterpilot.adapters.catalogue_synthetic import SYNTHETIC_AREA_ID
 
 FIELDS = "id version mode stage areaId selectedPlanOptionId inputsRevision goal { kind }"
 CREATE = f"""mutation($input: CreatePlanningSessionInput!) {{

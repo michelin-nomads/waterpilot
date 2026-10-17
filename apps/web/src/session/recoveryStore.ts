@@ -31,7 +31,7 @@ export interface RecoveryStore {
 /** Records expire a week after their last write, guests and accounts alike. */
 export const RECOVERY_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
-const DB_NAME = 'waterlens-recovery';
+const DB_NAME = 'waterpilot-recovery';
 const STORE = 'sessions';
 
 export class MemoryRecoveryStore implements RecoveryStore {

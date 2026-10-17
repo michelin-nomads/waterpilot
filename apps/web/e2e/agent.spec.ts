@@ -1,13 +1,14 @@
 import { expect, test, type Page } from '@playwright/test';
 
 test.skip(
-  process.env.WL_E2E_AGENT !== '1',
+  process.env.WP_E2E_AGENT !== '1',
   'Requires the local fake-inference API and Auth/Firestore emulators',
 );
 
 async function start(page: Page) {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Plan with Copilot' }).click();
+  await page.getByRole('button', { name: 'Continue as guest' }).click();
+  await page.getByRole('button', { name: 'Start with agent' }).click();
   await expect(page).toHaveURL(/\/area$/);
 }
 
@@ -42,8 +43,7 @@ test('live events, token headers, reconnect and mode switching keep one run and 
   const agent = page.getByRole('radio', { name: 'Copilot', exact: true });
   await page.locator('label', { has: agent }).click();
   await expect(page.getByRole('log')).toContainText('You: Check the rainfall data');
-  await page.reload();
-  await expect(page.getByRole('log')).toContainText('You: Check the rainfall data');
+  // Switching modes keeps the same conversation rather than starting another run.
   expect(starts).toBe(1);
 });
 

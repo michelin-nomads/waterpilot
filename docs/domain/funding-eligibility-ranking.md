@@ -43,8 +43,8 @@ results, regardless of relevance. No distance, percentage or likelihood is expos
 A missing provider/index, incomplete vector response, kill switch, exhausted budget,
 invitation denial or deadline returns **deterministic_fallback** with a reason.
 
-Local ranking is opt-in via `WL_FUNDING_FAKE_EMBEDDINGS=true`, with existing
-`WL_AI_ENABLED=true`, an explicit positive `WL_AI_DAILY_BUDGET_USD` and authorized
+Local ranking is opt-in via `WP_FUNDING_FAKE_EMBEDDINGS=true`, with existing
+`WP_AI_ENABLED=true`, an explicit positive `WP_AI_DAILY_BUDGET_USD` and authorized
 invitation/open-to-all policy. Fake embeddings are refused in pilot configuration.
 The default disabled provider yields deterministic results. The fake token-hash
 ordering is labelled `fake_semantic`; it is not evidence of real semantic quality.

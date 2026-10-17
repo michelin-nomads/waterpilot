@@ -35,7 +35,7 @@ export const PLANNING_MODE_OPTIONS: readonly PlanningModeOption[] = [
   },
 ];
 
-export const PLANNING_MODE_STORAGE_KEY = 'waterlens.planningMode.v1';
+export const PLANNING_MODE_STORAGE_KEY = 'waterpilot.planningMode.v1';
 export const DEFAULT_PLANNING_MODE: PlanningMode = 'traditional';
 
 export const toSessionMode = (mode: PlanningMode): SessionMode =>

@@ -13,9 +13,9 @@ import pytest
 
 from conftest import LOCAL_OK, LoadSettings
 from graphql_harness import AREA_ID, NOW, TOKENS, Harness, make_harness
-from waterlens.application.identity import RequestContext
-from waterlens.application.tools import options as tools
-from waterlens.domain.ids import IdKind, derived_id
+from waterpilot.application.identity import RequestContext
+from waterpilot.application.tools import options as tools
+from waterpilot.domain.ids import IdKind, derived_id
 
 TOKEN = "t-guest"
 UNKNOWN_OPTION = derived_id(IdKind.PLAN_OPTION, "not-a-current-comparison")

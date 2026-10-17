@@ -2,7 +2,7 @@
 
 .step {
   display: grid;
-  gap: var(--wl-space-5);
+  gap: var(--wp-space-5);
 
   @include desktop-up {
     grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
@@ -13,7 +13,7 @@
 .main,
 .aside {
   display: grid;
-  gap: var(--wl-space-4);
+  gap: var(--wp-space-4);
   min-width: 0;
 }
 
@@ -22,40 +22,40 @@
   @include card;
 
   display: grid;
-  gap: var(--wl-card-body-gap);
-  padding: var(--wl-card-padding);
+  gap: var(--wp-card-body-gap);
+  padding: var(--wp-card-padding);
 }
 
 .title {
   margin: 0;
-  font-size: var(--wl-text-lg);
+  font-size: var(--wp-text-lg);
 }
 
 .label {
   margin: 0;
   font-weight: 600;
-  font-size: var(--wl-text-sm);
+  font-size: var(--wp-text-sm);
 }
 
 .hint {
   margin: 0;
-  color: var(--wl-color-text-muted);
-  font-size: var(--wl-text-sm);
+  color: var(--wp-color-text-muted);
+  font-size: var(--wp-text-sm);
 }
 
 .error {
   margin: 0;
   padding: 0;
   list-style: none;
-  color: var(--wl-color-danger-text);
-  font-size: var(--wl-text-sm);
+  color: var(--wp-color-danger-text);
+  font-size: var(--wp-text-sm);
   font-weight: 600;
 }
 
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--wl-card-footer-gap);
+  gap: var(--wp-card-footer-gap);
 }
 
 .mapStage {
@@ -64,19 +64,19 @@
   display: grid;
   align-content: start;
   min-height: 30rem;
-  padding: var(--wl-card-padding);
+  padding: var(--wp-card-padding);
 }
 
 .search {
   position: relative;
   display: grid;
-  gap: var(--wl-space-2);
+  gap: var(--wp-space-2);
 }
 
 .inputRow {
   display: flex;
   align-items: center;
-  gap: var(--wl-space-2);
+  gap: var(--wp-space-2);
 }
 
 .input {
@@ -85,10 +85,10 @@
   flex: 1;
   width: 100%;
   padding: 0.5rem 0.75rem;
-  border: 1px solid var(--wl-color-border-strong);
-  border-radius: var(--wl-radius-md);
-  background: var(--wl-color-surface);
-  color: var(--wl-color-text);
+  border: 1px solid var(--wp-color-border-strong);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-color-surface);
+  color: var(--wp-color-text);
 
   &:focus-visible {
     @include focus-ring;
@@ -100,11 +100,11 @@
 .listbox {
   display: grid;
   margin: 0;
-  padding: var(--wl-space-1);
+  padding: var(--wp-space-1);
   list-style: none;
-  border: 1px solid var(--wl-color-border);
-  border-radius: var(--wl-radius-md);
-  background: var(--wl-color-surface);
+  border: 1px solid var(--wp-color-border);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-color-surface);
 
   &[hidden] {
     display: none;
@@ -116,17 +116,17 @@
 
   display: grid;
   gap: 2px;
-  padding: var(--wl-space-2) var(--wl-space-3);
-  border-radius: var(--wl-radius-sm);
+  padding: var(--wp-space-2) var(--wp-space-3);
+  border-radius: var(--wp-radius-sm);
   cursor: pointer;
 
   &:hover,
   &[aria-selected='true'] {
-    background: var(--wl-color-accent-soft);
+    background: var(--wp-color-accent-soft);
   }
 
   &[aria-selected='true'] {
-    outline: 2px solid var(--wl-color-accent);
+    outline: 2px solid var(--wp-color-accent);
     outline-offset: -2px;
   }
 }
@@ -136,8 +136,8 @@
 }
 
 .optionSecondary {
-  color: var(--wl-color-text-muted);
-  font-size: var(--wl-text-sm);
+  color: var(--wp-color-text-muted);
+  font-size: var(--wp-text-sm);
 }
 
 .searchFooter {
@@ -145,17 +145,17 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--wl-space-2);
+  gap: var(--wp-space-2);
 }
 
 .attribution {
-  color: var(--wl-color-text-muted);
-  font-size: var(--wl-text-xs);
+  color: var(--wp-color-text-muted);
+  font-size: var(--wp-text-xs);
 }
 
 .facts {
   display: grid;
-  gap: var(--wl-space-2);
+  gap: var(--wp-space-2);
   margin: 0;
 
   @include tablet-up {
@@ -168,8 +168,8 @@
   }
 
   dt {
-    color: var(--wl-color-text-muted);
-    font-size: var(--wl-text-sm);
+    color: var(--wp-color-text-muted);
+    font-size: var(--wp-text-sm);
   }
 
   dd {
@@ -180,13 +180,13 @@
 
 .nearby {
   display: grid;
-  gap: var(--wl-space-2);
+  gap: var(--wp-space-2);
 }
 
 .plainList {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--wl-space-2);
+  gap: var(--wp-space-2);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -196,17 +196,17 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--wl-space-2);
+  gap: var(--wp-space-2);
 }
 
 .form {
   display: grid;
-  gap: var(--wl-card-body-gap);
+  gap: var(--wp-card-body-gap);
 }
 
 .formRow {
   display: grid;
-  gap: var(--wl-space-3);
+  gap: var(--wp-space-3);
 
   @include tablet-up {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -215,14 +215,14 @@
 
 .mapWrap {
   display: grid;
-  gap: var(--wl-space-2);
+  gap: var(--wp-space-2);
 }
 
 .map {
   min-height: 18rem;
-  border: 1px solid var(--wl-color-border);
-  border-radius: var(--wl-radius-lg);
-  background: var(--wl-color-surface-sunken);
+  border: 1px solid var(--wp-color-border);
+  border-radius: var(--wp-radius-lg);
+  background: var(--wp-color-surface-sunken);
 
   @include desktop-up {
     min-height: 30rem;
@@ -231,7 +231,7 @@
 
 .region {
   display: grid;
-  gap: var(--wl-space-3);
+  gap: var(--wp-space-3);
   margin: 0;
   padding: 0;
   border: 0;

@@ -14,19 +14,19 @@ from google.adk.agents.llm_agent import LlmAgent
 from google.adk.runners import Runner
 from google.genai import types
 
-from waterlens.adapters.adk_gateway_llm import GatewayLlm
-from waterlens.adapters.adk_session import AdkSessionService
-from waterlens.adapters.conversation_memory import MemoryConversationStore
-from waterlens.adapters.jobqueue_memory import MemoryJobQueue
-from waterlens.adapters.model_fake import FakeModelProvider, response
-from waterlens.adapters.store_memory import MemoryStore
-from waterlens.application.identity import AccountKind, Principal, RequestContext
-from waterlens.application.services import Deps, Services
-from waterlens.application.services.common import AiConfig
-from waterlens.domain.ai import DEFAULT_MODEL_ID, AiLimits, usage_day_id
-from waterlens.domain.ids import IdKind, new_id
-from waterlens.domain.jobs import AgentRun
-from waterlens.domain.planning import PlanningMode, PlanningSession
+from waterpilot.adapters.adk_gateway_llm import GatewayLlm
+from waterpilot.adapters.adk_session import AdkSessionService
+from waterpilot.adapters.conversation_memory import MemoryConversationStore
+from waterpilot.adapters.jobqueue_memory import MemoryJobQueue
+from waterpilot.adapters.model_fake import FakeModelProvider, response
+from waterpilot.adapters.store_memory import MemoryStore
+from waterpilot.application.identity import AccountKind, Principal, RequestContext
+from waterpilot.application.services import Deps, Services
+from waterpilot.application.services.common import AiConfig
+from waterpilot.domain.ai import DEFAULT_MODEL_ID, AiLimits, usage_day_id
+from waterpilot.domain.ids import IdKind, new_id
+from waterpilot.domain.jobs import AgentRun
+from waterpilot.domain.planning import PlanningMode, PlanningSession
 
 APP = "waterpilot"
 NOW = datetime(2026, 10, 12, 9, 0, tzinfo=UTC)
@@ -86,7 +86,7 @@ class World:
             session_id=session_id,
         )
         agent = LlmAgent(
-            name="waterlens_agent",
+            name="waterpilot_agent",
             model=llm,
             instruction="Answer briefly.",
             output_key=self.output_key,
@@ -121,7 +121,7 @@ def test_runner_persists_events_and_state_and_settles_through_the_gateway() -> N
     assert reloaded is not None
     # The real Runner persisted the user turn and the model turn through our session service.
     assert len(reloaded.events) == 2
-    assert [e.author for e in reloaded.events] == ["user", "waterlens_agent"]
+    assert [e.author for e in reloaded.events] == ["user", "waterpilot_agent"]
     # The agent's output_key wrote the answer into session state, which we persisted.
     assert reloaded.state == {"answer": TEXT}
 

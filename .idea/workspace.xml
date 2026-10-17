@@ -5,7 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b6748139-16bc-458e-8e43-05794326c221" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.cursor/rules/00-waterlens-project.mdc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.cursor/rules/00-waterpilot-project.mdc" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.cursor/rules/backend.mdc" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.cursor/rules/frontend.mdc" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.cursor/rules/testing.mdc" beforeDir="false" />
@@ -61,14 +61,14 @@
       <change beforePath="$PROJECT_DIR$/services/backend/.env.example" beforeDir="false" afterPath="$PROJECT_DIR$/services/backend/.env.example" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/services/backend/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/services/backend/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/services/backend/pyproject.toml" beforeDir="false" afterPath="$PROJECT_DIR$/services/backend/pyproject.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/backend/src/waterlens/adapters/jobrunner_local.py" beforeDir="false" afterPath="$PROJECT_DIR$/services/backend/src/waterlens/adapters/jobrunner_local.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/backend/src/waterlens/adapters/storage_local.py" beforeDir="false" afterPath="$PROJECT_DIR$/services/backend/src/waterlens/adapters/storage_local.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/backend/src/waterlens/api/export_openapi.py" beforeDir="false" afterPath="$PROJECT_DIR$/services/backend/src/waterlens/api/export_openapi.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/backend/src/waterlens/api/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/services/backend/src/waterlens/api/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/backend/src/waterlens/application/ports.py" beforeDir="false" afterPath="$PROJECT_DIR$/services/backend/src/waterlens/application/ports.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/backend/src/waterlens/cli/seed.py" beforeDir="false" afterPath="$PROJECT_DIR$/services/backend/src/waterlens/cli/seed.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/backend/src/waterlens/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/services/backend/src/waterlens/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/backend/src/waterlens/worker/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/services/backend/src/waterlens/worker/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/backend/src/waterpilot/adapters/jobrunner_local.py" beforeDir="false" afterPath="$PROJECT_DIR$/services/backend/src/waterpilot/adapters/jobrunner_local.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/backend/src/waterpilot/adapters/storage_local.py" beforeDir="false" afterPath="$PROJECT_DIR$/services/backend/src/waterpilot/adapters/storage_local.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/backend/src/waterpilot/api/export_openapi.py" beforeDir="false" afterPath="$PROJECT_DIR$/services/backend/src/waterpilot/api/export_openapi.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/backend/src/waterpilot/api/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/services/backend/src/waterpilot/api/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/backend/src/waterpilot/application/ports.py" beforeDir="false" afterPath="$PROJECT_DIR$/services/backend/src/waterpilot/application/ports.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/backend/src/waterpilot/cli/seed.py" beforeDir="false" afterPath="$PROJECT_DIR$/services/backend/src/waterpilot/cli/seed.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/backend/src/waterpilot/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/services/backend/src/waterpilot/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/backend/src/waterpilot/worker/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/services/backend/src/waterpilot/worker/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/services/backend/tests/test_config.py" beforeDir="false" afterPath="$PROJECT_DIR$/services/backend/tests/test_config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/services/backend/tests/test_health_smoke.py" beforeDir="false" afterPath="$PROJECT_DIR$/services/backend/tests/test_health_smoke.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/services/backend/tests/test_jobrunner_local.py" beforeDir="false" afterPath="$PROJECT_DIR$/services/backend/tests/test_jobrunner_local.py" afterDir="false" />
@@ -103,7 +103,7 @@
     "codeWithMe.voiceChat.enabledByDefault": "false",
     "git-widget-placeholder": "main",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "/Users/m0s1csy/Downloads/WaterLens",
+    "last_opened_file_path": "/Users/m0s1csy/Downloads/WaterPilot",
     "nodejs_package_manager_path": "npm",
     "settings.editor.selected.configurable": "advanced.settings"
   }

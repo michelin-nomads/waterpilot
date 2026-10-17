@@ -1,6 +1,6 @@
-// Real Firebase JS SDK against the Auth emulator (demo-waterlens). Run with
+// Real Firebase JS SDK against the Auth emulator (demo-waterpilot). Run with
 // `npm run test:emulator` from the repo root; skipped when the emulator is not running
-// unless WL_REQUIRE_AUTH_EMULATOR=1.
+// unless WP_REQUIRE_AUTH_EMULATOR=1.
 import { GoogleAuthProvider } from 'firebase/auth';
 
 import type { FirebaseWebConfig } from '../config/env';
@@ -9,8 +9,8 @@ import { createFirebaseAuthBackend } from './firebaseClient';
 
 // Vitest exposes the process environment on import.meta.env.
 const HOST = String(import.meta.env.FIREBASE_AUTH_EMULATOR_HOST ?? '127.0.0.1:9099');
-const PROJECT = 'demo-waterlens';
-const REQUIRED = import.meta.env.WL_REQUIRE_AUTH_EMULATOR === '1';
+const PROJECT = 'demo-waterpilot';
+const REQUIRED = import.meta.env.WP_REQUIRE_AUTH_EMULATOR === '1';
 
 const config: FirebaseWebConfig = {
   apiKey: 'demo-api-key',
@@ -31,7 +31,7 @@ async function emulatorUp(): Promise<boolean> {
 
 const available = await emulatorUp();
 if (!available && REQUIRED) {
-  throw new Error(`Auth emulator not reachable at ${HOST} (WL_REQUIRE_AUTH_EMULATOR=1)`);
+  throw new Error(`Auth emulator not reachable at ${HOST} (WP_REQUIRE_AUTH_EMULATOR=1)`);
 }
 
 function claims(token: string): Record<string, unknown> {

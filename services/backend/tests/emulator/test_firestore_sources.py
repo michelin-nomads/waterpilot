@@ -12,20 +12,20 @@ from firestore_support import firestore_store  # noqa: F401 - fixture injected b
 
 from sources_support import DEMO_CSV, DEMO_MANIFEST, Clock, measured_manifest
 from test_readiness import NOW, OWNER, _year_csv
-from waterlens.adapters.catalogue_synthetic import SYNTHETIC_AREA_ID
-from waterlens.adapters.jobqueue_memory import MemoryJobQueue
-from waterlens.adapters.storage_local import LocalObjectStorage
-from waterlens.adapters.store_firestore import FirestoreStore
-from waterlens.application.artifacts import ArtifactStore
-from waterlens.application.identity import RequestContext
-from waterlens.application.services import Deps, Services
-from waterlens.application.sources.admin import SourceAdmin
-from waterlens.cli.sources import _list
-from waterlens.domain.ids import IdKind, new_id
-from waterlens.domain.planning import PlanningMode, PlanningSession
-from waterlens.domain.readiness import InputId, ReadinessState
-from waterlens.domain.sources import IngestionStatus
-from waterlens.domain.values import EvidenceQuality
+from waterpilot.adapters.catalogue_synthetic import SYNTHETIC_AREA_ID
+from waterpilot.adapters.jobqueue_memory import MemoryJobQueue
+from waterpilot.adapters.storage_local import LocalObjectStorage
+from waterpilot.adapters.store_firestore import FirestoreStore
+from waterpilot.application.artifacts import ArtifactStore
+from waterpilot.application.identity import RequestContext
+from waterpilot.application.services import Deps, Services
+from waterpilot.application.sources.admin import SourceAdmin
+from waterpilot.cli.sources import _list
+from waterpilot.domain.ids import IdKind, new_id
+from waterpilot.domain.planning import PlanningMode, PlanningSession
+from waterpilot.domain.readiness import InputId, ReadinessState
+from waterpilot.domain.sources import IngestionStatus
+from waterpilot.domain.values import EvidenceQuality
 
 pytestmark = pytest.mark.emulator
 

@@ -2,29 +2,29 @@
 
 .planning {
   display: grid;
-  gap: var(--wl-space-4);
+  gap: var(--wp-space-4);
 }
 
 .paneTabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
   padding: 0.1875rem;
-  border: 1px solid var(--wl-color-border-strong);
-  border-radius: var(--wl-radius-pill);
-  background: var(--wl-color-surface);
+  border: 1px solid var(--wp-color-border-strong);
+  border-radius: var(--wp-radius-pill);
+  background: var(--wp-color-surface);
 }
 
 .paneTab {
-  padding: var(--wl-space-2);
+  padding: var(--wp-space-2);
   border: 0;
-  border-radius: var(--wl-radius-pill);
+  border-radius: var(--wp-radius-pill);
   background: transparent;
   font-weight: 700;
   cursor: pointer;
 
   &[aria-selected='true'] {
-    background: var(--wl-color-accent);
-    color: var(--wl-color-on-accent);
+    background: var(--wp-color-accent);
+    color: var(--wp-color-on-accent);
   }
 
   @include focus-visible;
@@ -32,16 +32,16 @@
 
 .panes {
   display: grid;
-  gap: var(--wl-space-5);
+  gap: var(--wp-space-5);
   align-items: start;
 
   @include desktop-up {
     &[data-mode='agent'] {
       grid-template-columns:
-        var(--wl-agent-pane-width, var(--wl-agent-width))
+        var(--wp-agent-pane-width, var(--wp-agent-width))
         auto
         minmax(0, 1fr);
-      column-gap: var(--wl-space-2);
+      column-gap: var(--wp-space-2);
       align-items: stretch;
     }
   }
@@ -49,10 +49,10 @@
 
 .agentPane {
   min-width: 0;
-  padding: var(--wl-card-padding);
-  border: 1px solid var(--wl-color-border);
-  border-radius: var(--wl-radius-lg);
-  background: var(--wl-color-surface);
+  padding: var(--wp-card-padding);
+  border: 1px solid var(--wp-color-border);
+  border-radius: var(--wp-radius-lg);
+  background: var(--wp-color-surface);
   overflow-wrap: anywhere;
 
   @include desktop-up {
@@ -69,16 +69,16 @@
 }
 
 .workspaceNav {
-  padding: var(--wl-space-3) var(--wl-workspace-inset) 0;
-  background: var(--wl-color-surface);
+  padding: var(--wp-space-3) var(--wp-workspace-inset) 0;
+  background: var(--wp-color-surface);
 }
 
 .workspaceBody {
   display: grid;
-  gap: var(--wl-section-gap);
-  padding: var(--wl-workspace-inset);
+  gap: var(--wp-section-gap);
+  padding: var(--wp-workspace-inset);
   min-width: 0;
-  padding-bottom: var(--wl-space-7);
+  padding-bottom: var(--wp-space-7);
 }
 
 @include desktop-up {
@@ -107,11 +107,11 @@
     height: 100%;
     max-height: none;
     min-height: 0;
-    padding: var(--wl-workspace-inset);
-    padding-bottom: var(--wl-space-7);
+    padding: var(--wp-workspace-inset);
+    padding-bottom: var(--wp-space-7);
     border: 0;
     border-radius: 0;
-    background: var(--wl-color-bg);
+    background: var(--wp-color-bg);
     overflow: auto;
     scrollbar-gutter: stable;
     overscroll-behavior: contain;
@@ -123,8 +123,8 @@
     overflow: auto;
     scrollbar-gutter: stable;
     overscroll-behavior: contain;
-    scroll-padding-block: 5rem var(--wl-space-6);
-    background: var(--wl-color-surface);
+    scroll-padding-block: 5rem var(--wp-space-6);
+    background: var(--wp-color-surface);
   }
 
   .workspaceNav {

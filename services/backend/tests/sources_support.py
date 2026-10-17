@@ -8,12 +8,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from waterlens.adapters.catalogue_synthetic import synthetic_area_catalogue
-from waterlens.adapters.storage_local import LocalObjectStorage
-from waterlens.adapters.store_memory import MemoryStore
-from waterlens.application.artifacts import ArtifactStore
-from waterlens.application.ports import SourceFetcher
-from waterlens.application.sources.admin import SourceAdmin
+from waterpilot.adapters.catalogue_synthetic import synthetic_area_catalogue
+from waterpilot.adapters.storage_local import LocalObjectStorage
+from waterpilot.adapters.store_memory import MemoryStore
+from waterpilot.application.artifacts import ArtifactStore
+from waterpilot.application.ports import SourceFetcher
+from waterpilot.application.sources.admin import SourceAdmin
 
 REPO = Path(__file__).resolve().parents[3]
 DEMO_DIR = REPO / "docs" / "domain" / "fixtures" / "demo-sources"

@@ -3,18 +3,18 @@ from __future__ import annotations
 import asyncio
 from datetime import UTC, datetime
 
-from waterlens.adapters.conversation_memory import MemoryConversationStore
-from waterlens.adapters.jobqueue_memory import MemoryJobQueue
-from waterlens.adapters.model_agent_fake import LocalAgentProvider
-from waterlens.adapters.store_memory import MemoryStore
-from waterlens.application.agent.conversation import ConversationAgent
-from waterlens.application.identity import AccountKind, Principal, RequestContext
-from waterlens.application.services import Deps, Services
-from waterlens.application.services.common import AiConfig
-from waterlens.domain.ai import AiLimits
-from waterlens.domain.ids import IdKind, new_id
-from waterlens.domain.jobs import AgentRunStatus
-from waterlens.domain.planning import PlanningMode, PlanningSession
+from waterpilot.adapters.conversation_memory import MemoryConversationStore
+from waterpilot.adapters.jobqueue_memory import MemoryJobQueue
+from waterpilot.adapters.model_agent_fake import LocalAgentProvider
+from waterpilot.adapters.store_memory import MemoryStore
+from waterpilot.application.agent.conversation import ConversationAgent
+from waterpilot.application.identity import AccountKind, Principal, RequestContext
+from waterpilot.application.services import Deps, Services
+from waterpilot.application.services.common import AiConfig
+from waterpilot.domain.ai import AiLimits
+from waterpilot.domain.ids import IdKind, new_id
+from waterpilot.domain.jobs import AgentRunStatus
+from waterpilot.domain.planning import PlanningMode, PlanningSession
 
 NOW = datetime(2026, 10, 13, 9, tzinfo=UTC)
 CTX = RequestContext("test", Principal("owner", AccountKind.PERMANENT, "google.com", NOW))
@@ -156,8 +156,8 @@ def test_manual_edit_during_inference_is_reconciled_and_event_loop_is_responsive
 def test_tool_replay_uses_saved_result_and_never_claims_another_step():
     from types import SimpleNamespace
 
-    from waterlens.application.agent.conversation import ConversationTool
-    from waterlens.application.agent.runtime import AgentToolRuntime
+    from waterpilot.application.agent.conversation import ConversationTool
+    from waterpilot.application.agent.runtime import AgentToolRuntime
 
     async def check():
         agent, sid = world()
@@ -224,8 +224,8 @@ def test_expired_execution_lease_requires_explicit_continue_on_same_run():
 def test_loop_counts_survive_runtime_restart():
     import pytest
 
-    from waterlens.application.agent.runtime import AgentToolRuntime
-    from waterlens.domain.errors import DomainError
+    from waterpilot.application.agent.runtime import AgentToolRuntime
+    from waterpilot.domain.errors import DomainError
 
     agent, sid = world()
     run = agent.services.ai.start_run(CTX, sid, "durable-loop-key-0001")

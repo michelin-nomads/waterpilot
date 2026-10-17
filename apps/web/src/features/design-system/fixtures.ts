@@ -1,6 +1,6 @@
 /**
  * UI FIXTURES — illustrative values for demonstrating components only. They are not
- * WaterLens results, are not derived from any source, and must never be shown outside
+ * WaterPilot results, are not derived from any source, and must never be shown outside
  * the local-only design-system page.
  */
 import type { ChartData } from '../../components/charts/scale';

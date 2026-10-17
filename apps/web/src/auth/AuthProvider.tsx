@@ -171,6 +171,11 @@ export function AuthProvider({
     setDialog(null);
   }, []);
 
+  const sendPasswordReset = useCallback(
+    async (email: string) => (await backend()).sendPasswordReset(email),
+    [backend],
+  );
+
   const signOut = useCallback(async () => {
     setPendingClaim(null);
     await (await backend()).signOut();
@@ -189,6 +194,7 @@ export function AuthProvider({
       discardPendingClaim: () => setPendingClaim(null),
       openSignIn,
       ensurePermanent,
+      sendPasswordReset,
       signOut,
     }),
     [
@@ -200,6 +206,7 @@ export function AuthProvider({
       retryPendingClaim,
       openSignIn,
       ensurePermanent,
+      sendPasswordReset,
       signOut,
     ],
   );

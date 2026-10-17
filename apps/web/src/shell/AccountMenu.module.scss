@@ -1,19 +1,76 @@
+@use 'mixins' as *;
+
 .account {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: var(--wl-space-2);
+  gap: var(--wp-space-2);
   min-width: 0;
 }
 
-.who {
-  max-width: 12rem;
+.avatarButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wp-space-1);
+  padding: var(--wp-space-1) var(--wp-space-2) var(--wp-space-1) var(--wp-space-1);
+  border: 0;
+  border-radius: var(--wp-radius-pill);
+  background: transparent;
+  color: var(--wp-color-text-muted);
+  cursor: pointer;
+
+  &:hover,
+  &[aria-expanded='true'] {
+    background: var(--wp-color-accent-soft);
+  }
+
+  @include focus-visible;
+}
+
+.avatar {
+  display: inline-grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: var(--wp-color-accent-soft);
+  color: var(--wp-color-accent-strong);
+  font-size: var(--wp-text-sm);
+  font-weight: 700;
+}
+
+.panel {
+  position: absolute;
+  z-index: var(--wp-z-drawer);
+  top: calc(100% + 0.5rem);
+  right: 0;
+  display: grid;
+  gap: var(--wp-space-2);
+  width: min(16rem, calc(100vw - 2rem));
+  padding: var(--wp-space-3);
+  border: 1px solid var(--wp-color-border);
+  border-radius: var(--wp-radius-lg);
+  background: var(--wp-color-surface-raised);
+  box-shadow: var(--wp-shadow-lg);
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+.who,
+.email {
+  margin: 0;
   overflow: hidden;
-  font-size: var(--wl-text-sm);
-  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
 
-  @media (max-width: 479px) {
-    max-width: 7rem;
-  }
+.who {
+  font-weight: 700;
+}
+
+.email {
+  color: var(--wp-color-text-muted);
+  font-size: var(--wp-text-sm);
 }

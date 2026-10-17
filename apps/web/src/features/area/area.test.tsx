@@ -153,7 +153,7 @@ afterEach(() => {
 
 /** The readiness panel's own sections; the baseline above repeats some labels. */
 const readinessMetrics = () =>
-  screen.findByRole('region', { name: 'What WaterLens can calculate here' });
+  screen.findByRole('region', { name: 'What WaterPilot can calculate here' });
 const readinessInputs = () => screen.findByRole('region', { name: 'What you can provide' });
 const populationRow = async () =>
   within(await readinessInputs())
@@ -210,6 +210,26 @@ function renderBaseline(initialEntry = '/baseline') {
   );
   return sessions;
 }
+
+describe('community type', () => {
+  it('records the community type on the plan and keeps the stated homes', async () => {
+    const sessions = renderBaseline('/baseline');
+    const select = await screen.findByRole('combobox', { name: 'Community type' });
+    expect(select).toHaveValue('');
+    fireEvent.change(select, { target: { value: 'APARTMENT' } });
+    await waitFor(() =>
+      expect(sessions.applied.at(-1)?.patch).toEqual({
+        siteProfile: { communityType: 'APARTMENT', occupiedHomes: null },
+      }),
+    );
+    fireEvent.change(select, { target: { value: '' } });
+    await waitFor(() =>
+      expect(sessions.applied.at(-1)?.patch).toEqual({
+        siteProfile: { communityType: null, occupiedHomes: null },
+      }),
+    );
+  });
+});
 
 describe('AreaPage', () => {
   it('renders the stage heading and position', async () => {
@@ -542,7 +562,7 @@ describe('Baseline community setup', () => {
         },
       };
     };
-    renderBaseline('/baseline/estimate');
+    const sessions = renderBaseline('/baseline/estimate');
     await screen.findByRole('heading', { level: 1, name: 'Estimate your community baseline' });
     fireEvent.change(screen.getByLabelText(/occupied homes/i), { target: { value: '10' } });
     fireEvent.change(screen.getByLabelText(/residents per occupied home/i), {
@@ -573,6 +593,11 @@ describe('Baseline community setup', () => {
       'Estimate from Housing register; stated occupancy assumption; 10 occupied homes × 2 residents/home; 135.5 L/person/day; estimated demand 2710 L/day.',
     );
     expect(writes[1]?.note).toBe(writes[0]?.note);
+    await waitFor(() =>
+      expect(sessions.applied.at(-1)?.patch).toEqual({
+        siteProfile: { communityType: null, occupiedHomes: 10 },
+      }),
+    );
   });
 
   it.each([

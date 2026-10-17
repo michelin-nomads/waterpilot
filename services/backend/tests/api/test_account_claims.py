@@ -26,10 +26,10 @@ from flows import (
     report_ids,
 )
 from graphql_harness import NOW, FakeVerifier, Harness, make_harness, seed_plan_option
-from waterlens.application.identity import Principal
-from waterlens.config import ConfigError
-from waterlens.domain.accounts import CLAIM_TTL, FRESH_SIGN_IN, ClaimPolicy
-from waterlens.domain.planning import SessionStatus
+from waterpilot.application.identity import Principal
+from waterpilot.config import ConfigError
+from waterpilot.domain.accounts import CLAIM_TTL, FRESH_SIGN_IN, ClaimPolicy
+from waterpilot.domain.planning import SessionStatus
 
 
 class Clock:
@@ -303,8 +303,8 @@ def test_the_windows_are_configurable_server_side(load_settings: LoadSettings) -
     settings = load_settings(
         {
             **LOCAL_OK,
-            "WL_ACCOUNT_CLAIM_TTL_SECONDS": "120",
-            "WL_ACCOUNT_CLAIM_FRESH_SIGN_IN_SECONDS": "60",
+            "WP_ACCOUNT_CLAIM_TTL_SECONDS": "120",
+            "WP_ACCOUNT_CLAIM_FRESH_SIGN_IN_SECONDS": "60",
         }
     )
     assert settings.claim_policy == ClaimPolicy(
@@ -315,16 +315,16 @@ def test_the_windows_are_configurable_server_side(load_settings: LoadSettings) -
 @pytest.mark.parametrize(
     ("name", "value"),
     [
-        ("WL_ACCOUNT_CLAIM_TTL_SECONDS", "30"),
-        ("WL_ACCOUNT_CLAIM_TTL_SECONDS", "7200"),
-        ("WL_ACCOUNT_CLAIM_FRESH_SIGN_IN_SECONDS", "10"),
-        ("WL_ACCOUNT_CLAIM_FRESH_SIGN_IN_SECONDS", "3600"),
+        ("WP_ACCOUNT_CLAIM_TTL_SECONDS", "30"),
+        ("WP_ACCOUNT_CLAIM_TTL_SECONDS", "7200"),
+        ("WP_ACCOUNT_CLAIM_FRESH_SIGN_IN_SECONDS", "10"),
+        ("WP_ACCOUNT_CLAIM_FRESH_SIGN_IN_SECONDS", "3600"),
     ],
 )
 def test_out_of_bounds_windows_fail_closed(
     load_settings: LoadSettings, name: str, value: str
 ) -> None:
-    with pytest.raises(ConfigError, match="WL_ACCOUNT_CLAIM_"):
+    with pytest.raises(ConfigError, match="WP_ACCOUNT_CLAIM_"):
         load_settings({**LOCAL_OK, name: value})
 
 

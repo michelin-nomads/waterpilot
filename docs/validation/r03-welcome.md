@@ -11,7 +11,7 @@ agent` action first; Explorer with the exploration icon and an outlined `Start e
   action second.
 - Applied the reference card copy while retaining the existing guest identity/session start
   service, chosen mode persistence, current-session continuation and inline retry behavior.
-- Kept `How WaterLens works` and the sign-in requirement below the choices. The local-only
+- Kept `How WaterPilot works` and the sign-in requirement below the choices. The local-only
   preview links are now behind a collapsed disclosure so they remain secondary.
 - Updated the Welcome entry in the UX specification. No new dependencies or routes were added.
 

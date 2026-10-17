@@ -2,56 +2,56 @@
 
 .page {
   display: grid;
-  gap: var(--wl-space-5);
+  gap: var(--wp-space-5);
 }
 
 .fixtureBanner {
-  padding: var(--wl-space-3) var(--wl-space-4);
-  border: 2px dashed var(--wl-color-info);
-  border-radius: var(--wl-radius-md);
-  background: var(--wl-color-info-soft);
-  color: var(--wl-color-info);
+  padding: var(--wp-space-3) var(--wp-space-4);
+  border: 2px dashed var(--wp-color-info);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-color-info-soft);
+  color: var(--wp-color-info);
 }
 
 .current {
-  color: var(--wl-color-text-muted);
+  color: var(--wp-color-text-muted);
 }
 
 .section {
   display: grid;
-  gap: var(--wl-space-3);
+  gap: var(--wp-space-3);
 }
 
 .sectionTitle {
-  font-size: var(--wl-text-xl);
+  font-size: var(--wp-text-xl);
 }
 
 .row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--wl-space-2);
+  gap: var(--wp-space-2);
 }
 
 .inline {
   display: inline-flex;
   align-items: center;
-  gap: var(--wl-space-1);
-  font-size: var(--wl-text-sm);
+  gap: var(--wp-space-1);
+  font-size: var(--wp-text-sm);
   font-weight: 600;
 }
 
 .form {
-  @include card(var(--wl-card-padding-compact));
+  @include card(var(--wp-card-padding-compact));
 
   display: grid;
-  gap: var(--wl-space-4);
+  gap: var(--wp-space-4);
   max-width: 40rem;
 }
 
 .grid {
   display: grid;
-  gap: var(--wl-space-3);
+  gap: var(--wp-space-3);
 
   @include tablet-up {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -64,13 +64,13 @@
 
 .stack {
   display: grid;
-  gap: var(--wl-space-3);
+  gap: var(--wp-space-3);
   max-width: 56rem;
 }
 
 .grid2 {
   display: grid;
-  gap: var(--wl-space-3);
+  gap: var(--wp-space-3);
 
   @include desktop-up {
     grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -5,7 +5,7 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 
 from conftest import LOCAL_OK, LoadSettings
-from waterlens.api.main import create_app
+from waterpilot.api.main import create_app
 
 
 def _client(load_settings: LoadSettings) -> TestClient:
@@ -17,7 +17,7 @@ def test_healthz_ok(load_settings: LoadSettings) -> None:
     assert resp.status_code == 200
     body = resp.json()
     assert body["status"] == "ok"
-    assert body["service"] == "waterlens"
+    assert body["service"] == "waterpilot"
     assert "x-request-id" in resp.headers
 
 

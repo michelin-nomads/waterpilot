@@ -3,12 +3,12 @@
 Unit tests replay recorded response shapes; only this checks that Google still answers
 the field mask, that worldwide and ambiguous names come back as candidates, and that a
 point reverse-geocodes. Opt-in twice over: the ``live`` marker is deselected by default,
-and every test skips unless ``WL_LIVE_PLACES_SERVER_KEY`` is set in the operator's shell.
+and every test skips unless ``WP_LIVE_PLACES_SERVER_KEY`` is set in the operator's shell.
 
-    WL_LIVE_PLACES_SERVER_KEY=<restricted server key> uv run pytest -m live tests/live
+    WP_LIVE_PLACES_SERVER_KEY=<restricted server key> uv run pytest -m live tests/live
 
 The adapter is constructed directly. ``Settings`` and the local-mode guards (which refuse
-``WL_PLACES_SERVER_KEY`` when ``WL_ENV=local``) are not touched, so this cannot make a
+``WP_PLACES_SERVER_KEY`` when ``WP_ENV=local``) are not touched, so this cannot make a
 local run fall through to Google. Each run makes at most four metered requests
 (see docs/build/live-integration-tests.md). Results are asserted structurally only and
 never printed.
@@ -21,18 +21,18 @@ from collections.abc import Iterator
 
 import pytest
 
-from waterlens.adapters.places_google import GooglePlaceSearch
-from waterlens.application.ports import PlaceSearchUnavailable
+from waterpilot.adapters.places_google import GooglePlaceSearch
+from waterpilot.application.ports import PlaceSearchUnavailable
 
 pytestmark = pytest.mark.live
 
-KEY = os.environ.get("WL_LIVE_PLACES_SERVER_KEY", "")
+KEY = os.environ.get("WP_LIVE_PLACES_SERVER_KEY", "")
 
 
 @pytest.fixture(scope="module")
 def places() -> Iterator[GooglePlaceSearch]:
     if not KEY:
-        pytest.skip("set WL_LIVE_PLACES_SERVER_KEY to run live Google Places checks")
+        pytest.skip("set WP_LIVE_PLACES_SERVER_KEY to run live Google Places checks")
     yield GooglePlaceSearch(KEY)
 
 
@@ -58,7 +58,7 @@ def test_a_point_reverse_geocodes_to_named_context(places: GooglePlaceSearch) ->
 
 def test_a_rejected_key_is_unavailable_and_never_echoed() -> None:
     if not KEY:
-        pytest.skip("set WL_LIVE_PLACES_SERVER_KEY to run live Google Places checks")
+        pytest.skip("set WP_LIVE_PLACES_SERVER_KEY to run live Google Places checks")
     with pytest.raises(PlaceSearchUnavailable) as caught:
         GooglePlaceSearch("not-a-real-key").search("Nairobi", limit=1)
     assert "not-a-real-key" not in str(caught.value)

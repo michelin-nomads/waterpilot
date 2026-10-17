@@ -3,30 +3,30 @@
 .page {
   display: grid;
   justify-items: center;
-  gap: var(--wl-space-5);
+  gap: var(--wp-space-5);
   width: min(100%, 68rem);
   margin: 0 auto;
-  padding-block: clamp(var(--wl-space-4), 5vh, var(--wl-space-7));
+  padding-block: clamp(var(--wp-space-4), 5vh, var(--wp-space-7));
   text-align: center;
 }
 
 .hero {
   display: grid;
   justify-items: center;
-  gap: var(--wl-space-3);
+  gap: var(--wp-space-3);
   max-width: 44rem;
 }
 
 .eyebrow {
-  color: var(--wl-color-accent-strong);
-  font-size: var(--wl-text-xs);
+  color: var(--wp-color-accent-strong);
+  font-size: var(--wp-text-xs);
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 .title {
-  color: var(--wl-color-text);
+  color: var(--wp-color-text);
   font-size: clamp(2rem, 1.2rem + 2.8vw, 3.1rem);
   letter-spacing: -0.035em;
   line-height: 1.08;
@@ -34,14 +34,14 @@
 
 .subtitle {
   max-width: 42ch;
-  color: var(--wl-color-text-muted);
-  font-size: var(--wl-text-lg);
+  color: var(--wp-color-text-muted);
+  font-size: var(--wp-text-lg);
 }
 
 .choices {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--wl-space-4);
+  gap: var(--wp-space-4);
   width: min(100%, 68rem);
 }
 
@@ -50,19 +50,19 @@
   justify-items: center;
   align-content: start;
   grid-template-rows: auto auto 1fr auto;
-  gap: var(--wl-space-2);
+  gap: var(--wp-space-2);
   min-height: 17rem;
-  padding: var(--wl-space-5);
-  border: 1px solid var(--wl-color-border);
-  border-radius: var(--wl-radius-lg);
-  background: var(--wl-color-surface);
-  box-shadow: var(--wl-shadow-sm);
+  padding: var(--wp-space-5);
+  border: 1px solid var(--wp-color-border);
+  border-radius: var(--wp-radius-lg);
+  background: var(--wp-color-surface);
+  box-shadow: var(--wp-shadow-sm);
   text-align: center;
 }
 
 .choice:hover {
-  border-color: var(--wl-color-accent);
-  box-shadow: var(--wl-shadow-md);
+  border-color: var(--wp-color-accent);
+  box-shadow: var(--wp-shadow-md);
 }
 
 .choiceIcon {
@@ -71,36 +71,36 @@
   width: 4rem;
   height: 4rem;
   border-radius: 50%;
-  background: var(--wl-color-accent-soft);
-  color: var(--wl-color-accent-strong);
+  background: var(--wp-color-accent-soft);
+  color: var(--wp-color-accent-strong);
 }
 
 .choiceTitle {
-  color: var(--wl-color-text);
-  font-size: var(--wl-text-xl);
+  color: var(--wp-color-text);
+  font-size: var(--wp-text-xl);
 }
 
 .choiceText {
   max-width: 38ch;
-  color: var(--wl-color-text-muted);
-  font-size: var(--wl-text-md);
+  color: var(--wp-color-text-muted);
+  font-size: var(--wp-text-md);
 }
 
 .choiceButton {
   width: 100%;
-  margin-top: var(--wl-space-1);
+  margin-top: var(--wp-space-1);
 }
 
 .howItWorks {
   width: min(100%, 48rem);
-  color: var(--wl-color-text-muted);
-  font-size: var(--wl-text-sm);
+  color: var(--wp-color-text-muted);
+  font-size: var(--wp-text-sm);
   text-align: start;
 
   summary {
     width: fit-content;
     margin: 0 auto;
-    color: var(--wl-color-accent-strong);
+    color: var(--wp-color-accent-strong);
     font-weight: 600;
     cursor: pointer;
     text-align: center;
@@ -109,24 +109,24 @@
 
 .previewPages {
   width: min(100%, 48rem);
-  color: var(--wl-color-text-muted);
-  font-size: var(--wl-text-sm);
+  color: var(--wp-color-text-muted);
+  font-size: var(--wp-text-sm);
   text-align: start;
 
   summary {
     width: fit-content;
     margin: 0 auto;
-    padding: var(--wl-space-2) var(--wl-space-4);
-    border: 1px solid var(--wl-color-accent);
-    border-radius: var(--wl-radius-pill);
-    background: var(--wl-color-surface);
-    color: var(--wl-color-accent-strong);
+    padding: var(--wp-space-2) var(--wp-space-4);
+    border: 1px solid var(--wp-color-accent);
+    border-radius: var(--wp-radius-pill);
+    background: var(--wp-color-surface);
+    color: var(--wp-color-accent-strong);
     font-weight: 600;
     cursor: pointer;
     text-align: center;
 
     &:hover {
-      background: var(--wl-color-accent-soft);
+      background: var(--wp-color-accent-soft);
     }
 
     &:focus-visible {
@@ -139,21 +139,21 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: var(--wl-space-2) var(--wl-space-3);
-  margin-top: var(--wl-space-3);
+  gap: var(--wp-space-2) var(--wp-space-3);
+  margin-top: var(--wp-space-3);
 
   a {
-    padding: var(--wl-space-2) var(--wl-space-3);
-    border: 1px solid var(--wl-color-border);
-    border-radius: var(--wl-radius-pill);
-    background: var(--wl-color-surface);
-    color: var(--wl-color-accent-strong);
+    padding: var(--wp-space-2) var(--wp-space-3);
+    border: 1px solid var(--wp-color-border);
+    border-radius: var(--wp-radius-pill);
+    background: var(--wp-color-surface);
+    color: var(--wp-color-accent-strong);
     font-weight: 600;
     text-decoration: none;
 
     &:hover {
-      border-color: var(--wl-color-accent);
-      background: var(--wl-color-accent-soft);
+      border-color: var(--wp-color-accent);
+      background: var(--wp-color-accent-soft);
     }
 
     &:focus-visible {
@@ -165,60 +165,60 @@
 .benefits {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--wl-space-3);
-  margin: var(--wl-space-3) 0 0;
+  gap: var(--wp-space-3);
+  margin: var(--wp-space-3) 0 0;
   padding: 0;
   list-style: none;
 }
 
 .benefit {
   display: flex;
-  gap: var(--wl-space-2);
+  gap: var(--wp-space-2);
   align-items: flex-start;
-  padding: var(--wl-space-3);
-  border-radius: var(--wl-radius-md);
-  background: var(--wl-color-surface-sunken);
+  padding: var(--wp-space-3);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-color-surface-sunken);
 }
 
 .benefitIcon {
-  color: var(--wl-color-accent-strong);
+  color: var(--wp-color-accent-strong);
 }
 
 .benefitText {
-  color: var(--wl-color-text);
+  color: var(--wp-color-text);
 }
 
 .coverage {
-  color: var(--wl-color-text-muted);
-  font-size: var(--wl-text-sm);
+  color: var(--wp-color-text-muted);
+  font-size: var(--wp-text-sm);
 }
 
 .error {
   width: min(100%, 48rem);
-  padding: var(--wl-space-3) var(--wl-space-4);
-  border: 1px solid var(--wl-color-danger);
+  padding: var(--wp-space-3) var(--wp-space-4);
+  border: 1px solid var(--wp-color-danger);
   border-inline-start-width: 4px;
-  border-radius: var(--wl-radius-md);
-  background: var(--wl-color-danger-soft);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-color-danger-soft);
   text-align: start;
 }
 
 .continue {
   display: grid;
   justify-items: center;
-  gap: var(--wl-space-3);
+  gap: var(--wp-space-3);
   width: min(100%, 48rem);
-  padding: var(--wl-space-5);
-  border: 1px solid var(--wl-color-border);
-  border-radius: var(--wl-radius-lg);
-  background: var(--wl-color-surface);
+  padding: var(--wp-space-5);
+  border: 1px solid var(--wp-color-border);
+  border-radius: var(--wp-radius-lg);
+  background: var(--wp-color-surface);
 }
 
 .actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: var(--wl-space-3);
+  gap: var(--wp-space-3);
 }
 
 @media (max-width: 44rem) {

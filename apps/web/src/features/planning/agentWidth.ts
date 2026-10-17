@@ -2,9 +2,9 @@ import { useCallback, useEffect, useState, type RefObject } from 'react';
 
 import { getPreferenceStorage } from '../../theme/displayPreferences';
 
-/** Conversation-pane width bounds in CSS px; mirror --wl-agent-width* in tokens.scss. */
+/** Conversation-pane width bounds in CSS px; mirror --wp-agent-width* in tokens.scss. */
 export const AGENT_WIDTH = { default: 384, min: 288, max: 640, maxShare: 0.45 } as const;
-export const AGENT_WIDTH_STORAGE_KEY = 'waterlens.agentWidth.v1';
+export const AGENT_WIDTH_STORAGE_KEY = 'waterpilot.agentWidth.v1';
 
 export function readAgentWidth(storage: Storage | null): number {
   try {

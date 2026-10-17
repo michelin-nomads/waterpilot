@@ -1,42 +1,42 @@
 .badge {
   display: inline-flex;
   align-items: center;
-  gap: var(--wl-space-1);
+  gap: var(--wp-space-1);
   padding: 0.125rem 0.625rem;
-  border-radius: var(--wl-radius-pill);
+  border-radius: var(--wp-radius-pill);
   border: 1px solid currentColor;
-  font-size: var(--wl-text-xs);
+  font-size: var(--wp-text-xs);
   font-weight: 600;
   line-height: 1.5;
   white-space: nowrap;
 }
 
 .neutral {
-  color: var(--wl-color-text-muted);
-  background: var(--wl-color-surface-sunken);
+  color: var(--wp-color-text-muted);
+  background: var(--wp-color-surface-sunken);
 }
 
 .accent {
-  color: var(--wl-color-accent-strong);
-  background: var(--wl-color-accent-soft);
+  color: var(--wp-color-accent-strong);
+  background: var(--wp-color-accent-soft);
 }
 
 .success {
-  color: var(--wl-color-success);
-  background: var(--wl-color-success-soft);
+  color: var(--wp-color-success);
+  background: var(--wp-color-success-soft);
 }
 
 .warning {
-  color: var(--wl-color-warning);
-  background: var(--wl-color-warning-soft);
+  color: var(--wp-color-warning);
+  background: var(--wp-color-warning-soft);
 }
 
 .danger {
-  color: var(--wl-color-danger);
-  background: var(--wl-color-danger-soft);
+  color: var(--wp-color-danger);
+  background: var(--wp-color-danger-soft);
 }
 
 .info {
-  color: var(--wl-color-info);
-  background: var(--wl-color-info-soft);
+  color: var(--wp-color-info);
+  background: var(--wp-color-info-soft);
 }

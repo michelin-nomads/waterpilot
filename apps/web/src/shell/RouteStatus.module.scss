@@ -2,7 +2,7 @@
 
 .progress {
   position: fixed;
-  z-index: var(--wl-z-toast);
+  z-index: var(--wp-z-toast);
   inset: 0 0 auto;
   height: 3px;
   overflow: hidden;
@@ -13,8 +13,8 @@
   position: absolute;
   inset: 0;
   width: 40%;
-  background: var(--wl-color-accent);
-  animation: sweep 1.1s var(--wl-ease) infinite;
+  background: var(--wp-color-accent);
+  animation: sweep 1.1s var(--wp-ease) infinite;
 
   @include reduced-motion {
     width: 100%;
@@ -24,8 +24,8 @@
 }
 
 .page {
-  padding: var(--wl-space-5) var(--wl-space-4);
-  max-width: var(--wl-content-max);
+  padding: var(--wp-space-5) var(--wp-space-4);
+  max-width: var(--wp-content-max);
   margin: 0 auto;
 }
 

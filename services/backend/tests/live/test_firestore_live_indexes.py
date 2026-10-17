@@ -3,10 +3,10 @@
 The emulator never enforces composite indexes, so this is the only check that the
 indexes in ``infra/firebase/firestore.indexes.json`` are deployed and match the adapter's
 queries. It is opt-in twice over: the ``live`` marker is deselected by default, and the
-tests skip unless ``WL_LIVE_FIRESTORE_PROJECT`` names a non-demo project. Each probe is a
+tests skip unless ``WP_LIVE_FIRESTORE_PROJECT`` names a non-demo project. Each probe is a
 read-only ``limit(1)`` query (at most one document read per index); nothing is written.
 
-    WL_LIVE_FIRESTORE_PROJECT=<project> uv run pytest -m live tests/live
+    WP_LIVE_FIRESTORE_PROJECT=<project> uv run pytest -m live tests/live
 
 Credentials come from Application Default Credentials on the operator's machine; none
 are read from this repository.
@@ -21,12 +21,12 @@ from typing import Any
 
 import pytest
 
-from waterlens.adapters.store_firestore import pilot_client
+from waterpilot.adapters.store_firestore import pilot_client
 
 pytestmark = pytest.mark.live
 
 INDEXES = Path(__file__).resolve().parents[4] / "infra" / "firebase" / "firestore.indexes.json"
-PROJECT = os.environ.get("WL_LIVE_FIRESTORE_PROJECT", "")
+PROJECT = os.environ.get("WP_LIVE_FIRESTORE_PROJECT", "")
 
 
 def _composite_indexes() -> list[dict[str, Any]]:
@@ -37,7 +37,7 @@ def _composite_indexes() -> list[dict[str, Any]]:
 @pytest.fixture(scope="module")
 def client() -> Any:
     if not PROJECT:
-        pytest.skip("set WL_LIVE_FIRESTORE_PROJECT to run live Firestore checks")
+        pytest.skip("set WP_LIVE_FIRESTORE_PROJECT to run live Firestore checks")
     return pilot_client(PROJECT)
 
 

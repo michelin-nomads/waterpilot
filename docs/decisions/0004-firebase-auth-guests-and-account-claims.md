@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-10-10
-- **Deciders:** Implementation engineer, under the owner's Phase 05 instruction (Firebase Web Auth, emulator `demo-waterlens` locally, anonymous guests, Google + email/password, link before finalizing, one-use server claim for credential conflicts)
+- **Deciders:** Implementation engineer, under the owner's Phase 05 instruction (Firebase Web Auth, emulator `demo-waterpilot` locally, anonymous guests, Google + email/password, link before finalizing, one-use server claim for credential conflicts)
 - **Phase:** 05
 
 ## Context
@@ -30,7 +30,7 @@ and that move must not trust a client-supplied guest id or merge whole accounts.
    `VITE_API_BASE_URL`, `VITE_APP_MODE`, `VITE_USE_EMULATORS`, `VITE_FIREBASE_API_KEY`,
    `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID`,
    `VITE_FIREBASE_AUTH_EMULATOR_HOST`. Any other `VITE_` key stops startup.
-   - Local mode: project `demo-waterlens` only, emulator on a loopback `host:port`.
+   - Local mode: project `demo-waterpilot` only, emulator on a loopback `host:port`.
    - Pilot mode: no emulator host; the real project's API key, auth domain, project id and
      app id are required, and a `demo-` project is refused.
 3. **Guests are anonymous Firebase accounts** (`signInAnonymously`), so a guest has a real
@@ -51,8 +51,8 @@ and that move must not trust a client-supplied guest id or merge whole accounts.
 6. **Account claim.** `beginAccountClaim` (guest token) returns a secret once and stores
    its SHA-256; the claim lives 10 minutes. `completeAccountClaim` needs a permanent token
    signed in within 5 minutes, the secret and an idempotency key. Both windows are
-   server-side settings (`WL_ACCOUNT_CLAIM_TTL_SECONDS`, default 600, allowed 60–3600;
-   `WL_ACCOUNT_CLAIM_FRESH_SIGN_IN_SECONDS`, default 300, allowed 60–900); a value outside
+   server-side settings (`WP_ACCOUNT_CLAIM_TTL_SECONDS`, default 600, allowed 60–3600;
+   `WP_ACCOUNT_CLAIM_FRESH_SIGN_IN_SECONDS`, default 300, allowed 60–900); a value outside
    those bounds stops the server at start-up. It moves only the guest's
    active planning session and that session's funding matches, and closes the account's
    previous active session. A sign-in failure or cancellation calls `cancelAccountClaim`.
@@ -71,7 +71,7 @@ and that move must not trust a client-supplied guest id or merge whole accounts.
 
 **Interpretation recorded:** the instruction "Welcome supports sign-in and guest
 continuation in either mode" is read as _both app modes_ — local (Auth emulator,
-`demo-waterlens`) and pilot (a real Firebase project). The Welcome and sign-in UI are
+`demo-waterpilot`) and pilot (a real Firebase project). The Welcome and sign-in UI are
 identical in both; only configuration differs.
 
 ## Alternatives considered

@@ -2,7 +2,7 @@
 
 .accordion {
   display: grid;
-  gap: var(--wl-space-2);
+  gap: var(--wp-space-2);
 }
 
 .item {
@@ -18,16 +18,16 @@
 .trigger {
   display: flex;
   align-items: center;
-  gap: var(--wl-space-3);
+  gap: var(--wp-space-3);
   width: 100%;
-  padding: var(--wl-space-3) var(--wl-space-4);
+  padding: var(--wp-space-3) var(--wp-space-4);
   border: 0;
   background: transparent;
   text-align: start;
   cursor: pointer;
 
   &:hover {
-    background: var(--wl-color-surface-sunken);
+    background: var(--wp-color-surface-sunken);
   }
 
   &:focus-visible {
@@ -43,15 +43,15 @@
   width: 2rem;
   height: 2rem;
   border-radius: 50%;
-  background: var(--wl-color-accent-soft);
-  color: var(--wl-color-accent-strong);
+  background: var(--wp-color-accent-soft);
+  color: var(--wp-color-accent-strong);
   font-weight: 700;
-  font-size: var(--wl-text-sm);
+  font-size: var(--wp-text-sm);
 }
 
 .icon {
   flex: none;
-  color: var(--wl-color-accent);
+  color: var(--wp-color-accent);
 }
 
 .text {
@@ -62,18 +62,18 @@
 
 .title {
   font-weight: 700;
-  font-size: var(--wl-text-md);
+  font-size: var(--wp-text-md);
 }
 
 .summary {
-  font-size: var(--wl-text-sm);
-  color: var(--wl-color-text-muted);
+  font-size: var(--wp-text-sm);
+  color: var(--wp-color-text-muted);
 }
 
 .chevron {
   flex: none;
-  color: var(--wl-color-text-muted);
-  transition: transform var(--wl-motion-base) var(--wl-ease);
+  color: var(--wp-color-text-muted);
+  transition: transform var(--wp-motion-base) var(--wp-ease);
 
   .item[data-open='true'] & {
     transform: rotate(180deg);
@@ -81,5 +81,5 @@
 }
 
 .panel {
-  padding: 0 var(--wl-space-4) var(--wl-space-4);
+  padding: 0 var(--wp-space-4) var(--wp-space-4);
 }

@@ -1,4 +1,4 @@
-title: WaterLens API Private Artifact Access
+title: WaterPilot API Private Artifact Access
 description: Read generated artifacts and create permitted source documents in one bucket.
 stage: GA
 includedPermissions:

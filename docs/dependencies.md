@@ -1,4 +1,4 @@
-# WaterLens — Selected dependency versions and rationale
+# WaterPilot — Selected dependency versions and rationale
 
 Version 0.2 · Phase 02 (corrected 2026-10-08, review R5)
 
@@ -28,7 +28,7 @@ via its bundled `chokidar`, `proxy-agent`/`basic-ftp`, `uuid` via `gaxios`).
 The floating `npx` invocation used the same tree without it being visible. npm's only
 offered fix is `npm audit fix --force`, which downgrades to firebase-tools 14.x (breaking,
 unverified) — **not applied**. Revisit at the next firebase-tools release; the CLI runs
-only locally against the `demo-waterlens` demo project.
+only locally against the `demo-waterpilot` demo project.
 
 ## Frontend (`apps/web`)
 

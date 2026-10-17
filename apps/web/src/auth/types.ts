@@ -39,5 +39,7 @@ export interface AuthBackend {
   link(method: LinkMethod): Promise<AuthUser>;
   /** Sign in to the account that already owns a credential reported by a failed link. */
   signInWithPendingCredential(pending: unknown): Promise<AuthUser>;
+  /** Email a password-reset link. Succeeds whether or not the address has an account. */
+  sendPasswordReset(email: string): Promise<void>;
   signOut(): Promise<void>;
 }

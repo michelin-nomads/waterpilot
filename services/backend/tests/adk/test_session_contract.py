@@ -18,8 +18,8 @@ from google.adk.events.event_actions import EventActions
 from google.adk.sessions.base_session_service import GetSessionConfig
 from google.genai import types
 
-from waterlens.adapters.adk_session import AdkSessionService
-from waterlens.adapters.conversation_memory import MemoryConversationStore
+from waterpilot.adapters.adk_session import AdkSessionService
+from waterpilot.adapters.conversation_memory import MemoryConversationStore
 
 APP = "waterpilot"
 NOW = datetime(2026, 10, 12, 9, 0, tzinfo=UTC)

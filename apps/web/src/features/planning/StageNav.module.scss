@@ -16,7 +16,7 @@
   list-style: none;
   overflow-x: auto;
   scrollbar-width: thin;
-  border-bottom: 1px solid var(--wl-color-border);
+  border-bottom: 1px solid var(--wp-color-border);
 }
 
 .item {
@@ -29,11 +29,11 @@
   flex: 1;
   align-items: center;
   justify-content: center;
-  gap: var(--wl-space-2);
-  padding: var(--wl-space-3) var(--wl-space-2);
+  gap: var(--wp-space-2);
+  padding: var(--wp-space-3) var(--wp-space-2);
   border-bottom: 3px solid transparent;
-  color: var(--wl-color-text-muted);
-  font-size: var(--wl-text-sm);
+  color: var(--wp-color-text-muted);
+  font-size: var(--wp-text-sm);
   font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
@@ -41,18 +41,18 @@
   @include focus-visible;
 
   &:hover {
-    background: var(--wl-color-accent-soft);
-    color: var(--wl-color-text);
+    background: var(--wp-color-accent-soft);
+    color: var(--wp-color-text);
   }
 
   &[aria-current='step'] {
-    border-bottom-color: var(--wl-color-accent);
-    color: var(--wl-color-accent-strong);
+    border-bottom-color: var(--wp-color-accent);
+    color: var(--wp-color-accent-strong);
 
     .number {
-      background: var(--wl-color-accent);
-      border-color: var(--wl-color-accent);
-      color: var(--wl-color-on-accent);
+      background: var(--wp-color-accent);
+      border-color: var(--wp-color-accent);
+      color: var(--wp-color-on-accent);
     }
   }
 }
@@ -63,7 +63,7 @@
   place-items: center;
   width: 1.75rem;
   height: 1.75rem;
-  border: 1px solid var(--wl-color-border);
+  border: 1px solid var(--wp-color-border);
   border-radius: 50%;
   font-weight: 700;
 }

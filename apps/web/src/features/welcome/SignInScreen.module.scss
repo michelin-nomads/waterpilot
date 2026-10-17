@@ -1,0 +1,201 @@
+@use 'mixins' as *;
+
+// Behind the content, like the page's other decorative layers; the fixed layer is clipped to
+// the viewport so it never creates overflow.
+.waves {
+  position: fixed;
+  z-index: -1;
+  inset: auto 0 0;
+  width: 100%;
+  height: 52vh;
+  pointer-events: none;
+}
+
+.waveBack {
+  fill: color-mix(in srgb, var(--wp-color-accent) 9%, var(--wp-color-bg));
+}
+
+.waveMid {
+  fill: color-mix(in srgb, var(--wp-color-accent) 14%, var(--wp-color-bg));
+}
+
+.waveFront {
+  fill: color-mix(in srgb, var(--wp-color-accent) 20%, var(--wp-color-bg));
+}
+
+.waveLine {
+  fill: none;
+  stroke: var(--wp-color-accent);
+  stroke-width: 1.5;
+  opacity: 0.3;
+}
+
+.screen {
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  gap: var(--wp-space-5);
+  width: min(100%, 72rem);
+  margin: 0 auto;
+  min-height: calc(100dvh - 9rem);
+  padding-block: clamp(var(--wp-space-3), 3vh, var(--wp-space-5));
+
+  @include desktop-up {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 30rem) minmax(0, 1fr);
+    gap: var(--wp-space-6);
+  }
+}
+
+.drop {
+  display: none;
+  width: min(100%, 17rem);
+  height: auto;
+
+  @include desktop-up {
+    display: block;
+    justify-self: start;
+  }
+}
+
+.cloud {
+  fill: var(--wp-color-accent);
+  opacity: 0.18;
+}
+
+.drop {
+  color: var(--wp-color-accent);
+}
+
+.dropShape {
+  fill: url('#sign-in-drop-fill');
+}
+
+.far rect {
+  fill: var(--wp-color-accent);
+  opacity: 0.2;
+}
+
+.hillBack {
+  fill: var(--wp-color-accent);
+  opacity: 0.25;
+}
+
+.hillFront {
+  fill: var(--wp-color-accent);
+  opacity: 0.4;
+}
+
+.dropOutline {
+  fill: none;
+  stroke: var(--wp-color-accent);
+  stroke-width: 2;
+}
+
+.skyline rect {
+  fill: var(--wp-color-accent);
+  opacity: 0.4;
+}
+
+.windows path {
+  fill: none;
+  stroke: var(--wp-color-accent-soft);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.trees circle {
+  fill: var(--wp-color-accent);
+  opacity: 0.55;
+}
+
+.hill {
+  fill: var(--wp-color-accent);
+  opacity: 0.3;
+}
+
+.wave {
+  fill: none;
+  stroke: var(--wp-color-accent);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+// A soft glass panel: the theme's surface, slightly see-through over the page art.
+.card {
+  display: grid;
+  gap: var(--wp-space-4);
+  width: 100%;
+  padding: var(--wp-space-6);
+  border: 1px solid color-mix(in srgb, var(--wp-color-accent) 35%, var(--wp-color-border));
+  border-radius: var(--wp-radius-lg);
+  background: color-mix(in srgb, var(--wp-color-surface) 70%, transparent);
+  box-shadow: var(--wp-shadow-lg);
+  backdrop-filter: blur(10px);
+}
+
+.title {
+  margin: 0;
+  color: var(--wp-color-text);
+  font-size: var(--wp-text-2xl);
+  text-align: center;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--wp-color-text-muted);
+  text-align: center;
+}
+
+// Plain and neutral beside the teal primary action.
+.guest .guestButton {
+  border-color: var(--wp-color-border-strong);
+  background: transparent;
+  color: var(--wp-color-text);
+
+  &:hover {
+    background: color-mix(in srgb, var(--wp-color-text) 8%, transparent);
+    color: var(--wp-color-text);
+  }
+}
+
+.guest {
+  display: grid;
+  gap: var(--wp-space-3);
+  padding-top: var(--wp-space-4);
+  border-top: 1px solid var(--wp-color-border);
+}
+
+.footnote {
+  margin: 0;
+  color: var(--wp-color-text-muted);
+  font-size: var(--wp-text-xs);
+  text-align: center;
+}
+
+.points {
+  display: grid;
+  gap: var(--wp-space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  @include desktop-up {
+    justify-self: end;
+  }
+}
+
+.point {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-3);
+  color: var(--wp-color-text);
+  font-size: var(--wp-text-sm);
+  font-weight: 500;
+}
+
+.pointIcon {
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  color: var(--wp-color-accent);
+}

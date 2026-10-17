@@ -10,7 +10,6 @@ import {
   resolveTheme,
   writeDisplayPreferences,
   type DisplayPreferences,
-  type PaletteId,
   type ThemePreference,
 } from './displayPreferences';
 import {
@@ -34,8 +33,8 @@ export function DisplayPreferencesProvider({ children, storage: injected }: Prop
   const resolvedTheme = resolveTheme(preferences.theme, prefersDark);
 
   useLayoutEffect(() => {
-    applyDisplayAttributes(document.documentElement, resolvedTheme, preferences.palette);
-  }, [resolvedTheme, preferences.palette]);
+    applyDisplayAttributes(document.documentElement, resolvedTheme);
+  }, [resolvedTheme]);
 
   // Keep other open tabs in sync with a change made here.
   useEffect(() => {
@@ -62,7 +61,6 @@ export function DisplayPreferencesProvider({ children, storage: injected }: Prop
       resolvedTheme,
       persisted,
       setTheme: (theme: ThemePreference) => update({ theme }),
-      setPalette: (palette: PaletteId) => update({ palette }),
     }),
     [preferences, resolvedTheme, persisted, update],
   );

@@ -2,7 +2,7 @@
   "id": "synthetic-utility-supply",
   "recordKind": "ingested_snapshot",
   "title": "Synthville daily supply (SYNTHETIC)",
-  "publisher": "WaterLens test fixtures",
+  "publisher": "WaterPilot test fixtures",
   "sourceUrl": "https://example.org/synthetic",
   "licence": {
     "name": "Synthetic test data",

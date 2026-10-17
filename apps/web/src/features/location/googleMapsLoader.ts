@@ -1,6 +1,6 @@
 import { PlacesUnavailable } from './types';
 
-/** The few `google.maps` members WaterLens uses; kept local so no global typings ship. */
+/** The few `google.maps` members WaterPilot uses; kept local so no global typings ship. */
 export interface GoogleMapsApi {
   importLibrary(name: 'places' | 'geocoding' | 'maps' | 'marker'): Promise<unknown>;
 }
@@ -8,7 +8,7 @@ export interface GoogleMapsApi {
 type MapsWindow = Window & {
   google?: { maps?: GoogleMapsApi };
   gm_authFailure?: () => void;
-  __waterlensMapsReady?: () => void;
+  __waterpilotMapsReady?: () => void;
 };
 
 const SCRIPT_URL = 'https://maps.googleapis.com/maps/api/js';
@@ -51,7 +51,7 @@ export function loadGoogleMaps(
       authListeners.forEach((listener) => listener());
       fail('The map key was rejected.');
     };
-    win.__waterlensMapsReady = () => {
+    win.__waterpilotMapsReady = () => {
       win.clearTimeout(timer);
       const api = win.google?.maps;
       if (api?.importLibrary) resolve(api);
@@ -61,7 +61,7 @@ export function loadGoogleMaps(
       key: apiKey,
       v: 'weekly',
       loading: 'async',
-      callback: '__waterlensMapsReady',
+      callback: '__waterpilotMapsReady',
     });
     script.src = `${SCRIPT_URL}?${params.toString()}`;
     script.async = true;

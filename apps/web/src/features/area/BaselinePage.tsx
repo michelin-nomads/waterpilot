@@ -15,6 +15,7 @@ import { usePlanningSession } from '../../session/sessionContext';
 import { LocationSummary } from '../location/LocationSummary';
 import { StagePage } from '../planning/StagePage';
 import { BaselinePanel } from './BaselinePanel';
+import { CommunityProfile } from './CommunityProfile';
 import { BaselineCoverageDrawer } from './BaselineCoverageDrawer';
 import { PopulationEstimateHelper } from './PopulationEstimate';
 import styles from './BaselinePage.module.scss';
@@ -111,6 +112,7 @@ export default function BaselinePage() {
                 Enter supported population and demand values with a source and date. Do not estimate
                 a missing value unless you can state its basis.
               </p>
+              <CommunityProfile />
               <ReadinessPanel areaId={areaId} sessionId={view.id} section="community" />
             </div>
           )}
@@ -131,8 +133,8 @@ export default function BaselinePage() {
                   </Button>
                 }
               >
-                WaterLens leaves unprovided values unknown. Review available sources and assumptions
-                before continuing.
+                WaterPilot leaves unprovided values unknown. Review available sources and
+                assumptions before continuing.
               </Notice>
               <ReadinessPanel areaId={areaId} sessionId={view.id} section="inputs" />
             </div>

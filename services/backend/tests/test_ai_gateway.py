@@ -13,15 +13,15 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from pydantic import BaseModel
 
-from waterlens.adapters.jobqueue_memory import MemoryJobQueue
-from waterlens.adapters.model_fake import FakeModelProvider, response, terminal, transient
-from waterlens.adapters.store_memory import MemoryStore
-from waterlens.application.identity import AccountKind, Principal, RequestContext
-from waterlens.application.ports import ModelCancelled
-from waterlens.application.services import Deps, Services
-from waterlens.application.services.ai import ExpiredSweep, estimate_tokens
-from waterlens.application.services.common import AiConfig
-from waterlens.domain.ai import (
+from waterpilot.adapters.jobqueue_memory import MemoryJobQueue
+from waterpilot.adapters.model_fake import FakeModelProvider, response, terminal, transient
+from waterpilot.adapters.store_memory import MemoryStore
+from waterpilot.application.identity import AccountKind, Principal, RequestContext
+from waterpilot.application.ports import ModelCancelled
+from waterpilot.application.services import Deps, Services
+from waterpilot.application.services.ai import ExpiredSweep, estimate_tokens
+from waterpilot.application.services.common import AiConfig
+from waterpilot.domain.ai import (
     DEFAULT_MODEL_ID,
     AiLimits,
     AiUnavailableReason,
@@ -34,10 +34,10 @@ from waterlens.domain.ai import (
     reservation_id_for,
     usage_day_id,
 )
-from waterlens.domain.errors import DomainError, ErrorCode
-from waterlens.domain.ids import IdKind, new_id
-from waterlens.domain.jobs import AgentRunStatus, AgentStopReason
-from waterlens.domain.planning import PlanningMode, PlanningSession
+from waterpilot.domain.errors import DomainError, ErrorCode
+from waterpilot.domain.ids import IdKind, new_id
+from waterpilot.domain.jobs import AgentRunStatus, AgentStopReason
+from waterpilot.domain.planning import PlanningMode, PlanningSession
 
 NOW = datetime(2026, 10, 12, 9, 0, tzinfo=UTC)
 OWNER = Principal("owner-1", AccountKind.PERMANENT, "google.com", NOW)

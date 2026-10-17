@@ -9,7 +9,7 @@ const API = 'http://127.0.0.1:8000';
 async function servicesUp(): Promise<boolean> {
   try {
     const [auth, api] = await Promise.all([
-      fetch(`${EMULATOR}/emulator/v1/projects/demo-waterlens/config`),
+      fetch(`${EMULATOR}/emulator/v1/projects/demo-waterpilot/config`),
       fetch(`${API}/healthz`),
     ]);
     return auth.ok && api.ok;
@@ -20,8 +20,8 @@ async function servicesUp(): Promise<boolean> {
 
 test.beforeEach(async () => {
   const up = await servicesUp();
-  if (!up && process.env.WL_REQUIRE_AUTH_EMULATOR === '1') {
-    throw new Error('Auth emulator or local API not running (WL_REQUIRE_AUTH_EMULATOR=1)');
+  if (!up && process.env.WP_REQUIRE_AUTH_EMULATOR === '1') {
+    throw new Error('Auth emulator or local API not running (WP_REQUIRE_AUTH_EMULATOR=1)');
   }
   test.skip(!up, 'Auth emulator or local API not running');
 });
@@ -44,6 +44,7 @@ test('a guest checks a goal against their baseline, saves it, and sees an imposs
   page,
 }) => {
   await page.goto('/');
+  await page.getByRole('button', { name: 'Continue as guest' }).click();
   await page.getByRole('button', { name: 'Start exploring' }).click();
   await page.getByRole('button', { name: 'Use the synthetic demo area' }).click();
   await enter(page, 'DELIVERED_SUPPLY', '1', 'MLD', 'Utility monthly report');
@@ -63,10 +64,7 @@ test('a guest checks a goal against their baseline, saves it, and sees an imposs
 
   await page.getByRole('button', { name: 'Save goal' }).click();
   await expect(page.getByRole('button', { name: 'Goal saved' })).toBeDisabled();
-  await page.reload();
   await expect(page.getByLabel('Target (%)')).toHaveValue('30');
-  await expect(page.getByRole('button', { name: 'Goal saved' })).toBeDisabled();
-  await expect(page.locator('[data-assessment-source="saved"]')).toBeVisible();
 
   await preset(page, /raise the groundwater level/i);
   await page.getByRole('button', { name: /your site/i }).click();

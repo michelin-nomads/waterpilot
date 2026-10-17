@@ -1,10 +1,10 @@
 @use 'mixins' as *;
 
 .card {
-  @include card(var(--wl-card-padding-compact));
+  @include card(var(--wp-card-padding-compact));
 
   display: flex;
-  gap: var(--wl-space-3);
+  gap: var(--wp-space-3);
   min-width: 0;
 }
 
@@ -19,85 +19,85 @@
 
 .body {
   display: grid;
-  gap: var(--wl-space-1);
+  gap: var(--wp-space-1);
   min-width: 0;
 }
 
 .header {
   display: flex;
   align-items: center;
-  gap: var(--wl-space-1);
+  gap: var(--wp-space-1);
 }
 
 .label {
-  font-size: var(--wl-text-sm);
+  font-size: var(--wp-text-sm);
   font-weight: 600;
 }
 
 .value {
-  font-size: var(--wl-text-2xl);
+  font-size: var(--wp-text-2xl);
   font-weight: 700;
-  line-height: var(--wl-leading-tight);
+  line-height: var(--wp-leading-tight);
   overflow-wrap: anywhere;
 }
 
 .unit {
-  font-size: var(--wl-text-lg);
+  font-size: var(--wp-text-lg);
   font-weight: 600;
 }
 
 .unavailable {
-  font-size: var(--wl-text-xl);
+  font-size: var(--wp-text-xl);
   font-weight: 600;
-  color: var(--wl-color-text-muted);
+  color: var(--wp-color-text-muted);
 }
 
 .caption {
-  font-size: var(--wl-text-sm);
-  color: var(--wl-color-text-muted);
+  font-size: var(--wp-text-sm);
+  color: var(--wp-color-text-muted);
 }
 
 .delta {
-  font-size: var(--wl-text-sm);
+  font-size: var(--wp-text-sm);
   font-weight: 600;
 }
 
 .improves {
-  color: var(--wl-color-success);
+  color: var(--wp-color-success);
 }
 
 .worsens {
-  color: var(--wl-color-danger);
+  color: var(--wp-color-danger);
 }
 
 .neutral {
-  color: var(--wl-color-text-muted);
+  color: var(--wp-color-text-muted);
 }
 
 .badges {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--wl-space-1);
-  margin-top: var(--wl-space-1);
+  gap: var(--wp-space-1);
+  margin-top: var(--wp-space-1);
 }
 
 @each $tone in (accent, success, warning, danger, info) {
   .#{$tone} {
     .icon {
       @if $tone == accent {
-        color: var(--wl-color-accent-strong);
-        background: var(--wl-color-accent-soft);
+        color: var(--wp-color-accent-strong);
+        background: var(--wp-color-accent-soft);
       } @else {
-        color: var(--wl-color-#{$tone});
-        background: var(--wl-color-#{$tone}-soft);
+        color: var(--wp-color-#{$tone});
+        background: var(--wp-color-#{$tone}-soft);
       }
     }
 
     &:not([data-availability='unavailable']) .value {
       @if $tone == accent {
-        color: var(--wl-color-accent);
+        color: var(--wp-color-accent);
       } @else {
-        color: var(--wl-color-#{$tone});
+        color: var(--wp-color-#{$tone});
       }
     }
   }

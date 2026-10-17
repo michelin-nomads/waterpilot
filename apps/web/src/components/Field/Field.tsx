@@ -7,6 +7,7 @@ import {
   type TextareaHTMLAttributes,
 } from 'react';
 
+import { Icon, type IconName } from '../Icon/Icon';
 import styles from './Field.module.scss';
 
 export interface FieldControlProps {
@@ -24,11 +25,21 @@ interface FieldProps {
   /** Actionable message: say what is wrong and how to fix it. */
   error?: ReactNode;
   required?: boolean;
+  /** Keep the label for assistive technology only (the control carries a placeholder). */
+  hideLabel?: boolean;
   /** Receives the id/ARIA wiring for the control so label, hint and error stay linked. */
   children: (control: FieldControlProps) => ReactNode;
 }
 
-export function Field({ id: idProp, label, hint, error, required = false, children }: FieldProps) {
+export function Field({
+  id: idProp,
+  label,
+  hint,
+  error,
+  required = false,
+  hideLabel = false,
+  children,
+}: FieldProps) {
   const generatedId = useId();
   const id = idProp ?? generatedId;
   const hintId = hint ? `${id}-hint` : undefined;
@@ -37,7 +48,10 @@ export function Field({ id: idProp, label, hint, error, required = false, childr
 
   return (
     <div className={styles.field}>
-      <label className={styles.label} htmlFor={id}>
+      <label
+        className={[styles.label, hideLabel && styles.hidden].filter(Boolean).join(' ')}
+        htmlFor={id}
+      >
         {label}
         {required && <span className={styles.required}> (required)</span>}
       </label>
@@ -72,6 +86,27 @@ export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputE
     );
   },
 );
+
+interface AdornedInputProps extends InputHTMLAttributes<HTMLInputElement> {
+  /** Decorative icon at the start of the control. */
+  icon: IconName;
+  /** Control at the end, such as a show/hide button. */
+  end?: ReactNode;
+}
+
+/** An input with a leading icon and an optional trailing control. */
+export const AdornedInput = forwardRef<HTMLInputElement, AdornedInputProps>(function AdornedInput(
+  { icon, end, ...rest },
+  ref,
+) {
+  return (
+    <span className={styles.adorned}>
+      <Icon name={icon} className={styles.adornedIcon} />
+      <Input ref={ref} className={styles.adornedControl} {...rest} />
+      {end && <span className={styles.adornedEnd}>{end}</span>}
+    </span>
+  );
+});
 
 export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSelectElement>>(
   function Select({ className, ...rest }, ref) {

@@ -6,8 +6,8 @@ from __future__ import annotations
 from fractions import Fraction
 from typing import Any
 
-from waterlens.domain.interventions import CATALOGUE, Catalogue, EffectInput
-from waterlens.domain.options import (
+from waterpilot.domain.interventions import CATALOGUE, Catalogue, EffectInput
+from waterpilot.domain.options import (
     MAX_OPTIONS,
     ROOF_CATCHMENT,
     Comparison,
@@ -17,9 +17,9 @@ from waterlens.domain.options import (
     compare_options,
     comparison_key,
 )
-from waterlens.domain.planning import GoalFields, ScenarioAdjustment
-from waterlens.domain.scenario import Balance, DayBalance
-from waterlens.domain.values import Unit
+from waterpilot.domain.planning import GoalFields, ScenarioAdjustment
+from waterpilot.domain.scenario import Balance, DayBalance
+from waterpilot.domain.values import Unit
 
 BASE = Balance(Fraction(1000), Fraction(700), Fraction(300), Fraction(730))
 """1000 L/day demand, 300 L/day from tankers: tanker dependence 0.3."""

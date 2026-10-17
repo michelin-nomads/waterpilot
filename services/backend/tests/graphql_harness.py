@@ -15,29 +15,29 @@ from typing import Any
 
 from fastapi.testclient import TestClient
 
-from waterlens.adapters.catalogue_synthetic import (
+from waterpilot.adapters.catalogue_synthetic import (
     SYNTHETIC_AREA_ID,
     synthetic_area_catalogue,
     synthetic_funding_catalogue,
 )
-from waterlens.adapters.factory import ApiRuntime, build_place_search
-from waterlens.adapters.jobqueue_memory import MemoryJobQueue
-from waterlens.adapters.storage_local import LocalObjectStorage
-from waterlens.adapters.store_memory import MemoryStore
-from waterlens.api.main import create_app
-from waterlens.application.artifacts import ArtifactStore
-from waterlens.application.identity import AccountKind, IdentityVerifier, Principal
-from waterlens.application.repositories import Store
-from waterlens.application.series import ArtifactSeriesReader
-from waterlens.application.services import Deps, Services
-from waterlens.application.services.common import AiConfig
-from waterlens.config import Settings
-from waterlens.domain.accounts import ClaimPolicy
-from waterlens.domain.errors import DomainError, ErrorCode
-from waterlens.domain.ids import IdKind, new_id
-from waterlens.domain.impact import ConnectivityEvidence
-from waterlens.domain.planning import DayRange, Feasibility, ImpactAssessment, PlanOption
-from waterlens.domain.values import EvidenceQuality, MeasuredValue, Money, MoneyRange, Provenance
+from waterpilot.adapters.factory import ApiRuntime, build_place_search
+from waterpilot.adapters.jobqueue_memory import MemoryJobQueue
+from waterpilot.adapters.storage_local import LocalObjectStorage
+from waterpilot.adapters.store_memory import MemoryStore
+from waterpilot.api.main import create_app
+from waterpilot.application.artifacts import ArtifactStore
+from waterpilot.application.identity import AccountKind, IdentityVerifier, Principal
+from waterpilot.application.repositories import Store
+from waterpilot.application.series import ArtifactSeriesReader
+from waterpilot.application.services import Deps, Services
+from waterpilot.application.services.common import AiConfig
+from waterpilot.config import Settings
+from waterpilot.domain.accounts import ClaimPolicy
+from waterpilot.domain.errors import DomainError, ErrorCode
+from waterpilot.domain.ids import IdKind, new_id
+from waterpilot.domain.impact import ConnectivityEvidence
+from waterpilot.domain.planning import DayRange, Feasibility, ImpactAssessment, PlanOption
+from waterpilot.domain.values import EvidenceQuality, MeasuredValue, Money, MoneyRange, Provenance
 
 NOW = datetime(2026, 10, 10, 6, 0, tzinfo=UTC)
 

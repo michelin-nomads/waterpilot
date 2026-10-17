@@ -14,8 +14,8 @@ from graphql import (
     build_schema,
 )
 
-from waterlens.api.graphql.schema import build_schema as build_app_schema
-from waterlens.api.graphql.schema import schema_sdl
+from waterpilot.api.graphql.schema import build_schema as build_app_schema
+from waterpilot.api.graphql.schema import schema_sdl
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 COMMITTED_SDL = REPO_ROOT / "packages" / "contracts" / "schema.graphql"

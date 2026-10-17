@@ -1,0 +1,50 @@
+"""Seed local development state with the SYNTHETIC fixture.
+
+Loads docs/domain/fixtures/*.json into the local object store under ``fixtures/``.
+Refuses to run in pilot mode: synthetic data must never be seeded as live evidence.
+
+Usage:  uv run python -m waterpilot.cli.seed
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+from waterpilot.adapters.factory import build_object_storage
+from waterpilot.application.ports import ObjectConflictError
+from waterpilot.config import get_settings
+
+
+def _find_repo_root(start: Path) -> Path:
+    for parent in [start, *start.parents]:
+        if (parent / "docs" / "domain" / "fixtures").is_dir():
+            return parent
+    raise FileNotFoundError("could not locate repo root containing docs/domain/fixtures")
+
+
+def seed() -> int:
+    settings = get_settings()
+    if settings.is_pilot:
+        raise SystemExit("refusing to seed synthetic fixtures in pilot mode")
+
+    repo_root = _find_repo_root(Path(__file__).resolve())
+    fixtures_dir = repo_root / "docs" / "domain" / "fixtures"
+    storage = build_object_storage(settings)
+
+    seeded = 0
+    for json_file in sorted(fixtures_dir.glob("*.json")):
+        key = f"fixtures/{json_file.name}"
+        try:
+            storage.put(key, json_file.read_bytes(), content_type="application/json")
+        except ObjectConflictError:
+            # Objects are immutable; delete the local object directory to refresh.
+            print(f"[seed] kept existing {key} (differs from the fixture)")
+            continue
+        print(f"[seed] stored SYNTHETIC {key}")
+        seeded += 1
+    print(f"[seed] done: {seeded} synthetic fixture file(s) in {settings.object_storage_dir}")
+    return seeded
+
+
+if __name__ == "__main__":
+    seed()

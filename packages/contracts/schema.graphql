@@ -177,6 +177,11 @@ type Area {
   """False when only the reference point is known; no boundary is invented."""
   hasBoundary: Boolean!
 
+  """
+  The box used for coverage checks (a reviewed boundary's box or the box around a chosen radius); an extent, never an exact boundary. Null for a point.
+  """
+  boundaryBox: BoundingBox
+
   """After this, provider content must be refreshed by choosing it again."""
   providerExpiresAt: UtcDateTime
 
@@ -357,6 +362,14 @@ enum BoundaryLevel {
   SHARED_SYSTEM
 }
 
+"""Where the stored extent lies, in WGS 84 degrees."""
+type BoundingBox {
+  minLongitude: DecimalString!
+  minLatitude: DecimalString!
+  maxLongitude: DecimalString!
+  maxLatitude: DecimalString!
+}
+
 input CancelAccountClaimInput {
   claimId: ID!
   expectedVersion: Int!
@@ -488,6 +501,12 @@ type CommunityPayload {
 enum CommunityStatus {
   ACTIVE
   ARCHIVED
+}
+
+enum CommunityType {
+  APARTMENT
+  RESIDENTIAL
+  OTHER
 }
 
 """A genuinely feasible plan: passes at your low estimates."""
@@ -622,7 +641,7 @@ type Criterion {
   id: String!
   text: String!
 
-  """True when WaterLens evaluates this criterion deterministically."""
+  """True when WaterPilot evaluates this criterion deterministically."""
   machineCheckable: Boolean!
 }
 
@@ -1976,6 +1995,7 @@ type PlanningSession {
   goal: Goal
   scenario: Scenario
   selectedPlanOptionId: ID
+  siteProfile: SiteProfile
 
   """
   Increases whenever location, goal or scenario actually change, or a baseline value is recorded for the session; each also clears the selected plan. Derived results (plan options, funding matches, proposal previews) are keyed by it.
@@ -2012,6 +2032,7 @@ input PlanningSessionPatch {
   goal: GoalInput
   scenario: ScenarioInput
   selectedPlanOptionId: ID
+  siteProfile: SiteProfileInput
 }
 
 type PlanningSessionPayload {
@@ -2275,6 +2296,11 @@ type Report {
   planName: String
 
   """
+  The community type and occupied homes you gave, copied at finalization; null when none were given.
+  """
+  siteProfile: SiteProfile
+
+  """
   The chosen option's impact assessment, copied at finalization with its provenance; null for reports finalized before it existed.
   """
   impact: ImpactAssessment
@@ -2440,6 +2466,17 @@ input SiteConstraintsInput {
   pipedSupply: Boolean = null
   groundwaterUse: Boolean = null
   restrictions: [SiteRestriction!]! = []
+}
+
+"""What you said about the community; null fields were not stated."""
+type SiteProfile {
+  communityType: CommunityType
+  occupiedHomes: Int
+}
+
+input SiteProfileInput {
+  communityType: CommunityType = null
+  occupiedHomes: Int = null
 }
 
 enum SiteRequirement {

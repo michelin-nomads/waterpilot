@@ -29,8 +29,7 @@ const lazyTransport: SessionTransport = {
   create: async (...args) => (await loadTransport()).create(...args),
 };
 
-const CHANNEL = 'waterlens.session.v1';
-const SIGN_OUT_SAVE_MS = 4000;
+const CHANNEL = 'waterpilot.session.v1';
 
 interface SavedMessage {
   uid: string;
@@ -63,6 +62,12 @@ interface PlanningSessionProviderProps {
   transport?: SessionTransport;
   recovery?: RecoveryStore;
   online?: () => boolean;
+  /**
+   * Pick up a plan that already exists when the visit starts. The app leaves this off:
+   * plans are not kept between visits, so a fresh visit starts without one. It exists to
+   * exercise the screens against a plan that is already in progress.
+   */
+  resumeExisting?: boolean;
 }
 
 /**
@@ -75,6 +80,7 @@ export function PlanningSessionProvider({
   transport = lazyTransport,
   recovery: recoveryProp,
   online,
+  resumeExisting = false,
 }: PlanningSessionProviderProps) {
   const auth = useAuth();
   const queryClient = useQueryClient();
@@ -102,10 +108,16 @@ export function PlanningSessionProvider({
       let coordinator = registry.current.get(identity);
       if (!coordinator) {
         const previous = previousUser.current;
+        // A plan is handed over only when the previous identity of this visit was holding
+        // one (a guest signing in); otherwise the visit starts without a plan.
+        const handedOver = [...registry.current.values()].some(
+          (other) => other.getState().status === 'ready',
+        );
         coordinator = new SessionCoordinator({
           uid: user.uid,
           accountKind: user.kind,
           tabId: tabId(),
+          restore: handedOver || (resumeExisting && registry.current.size === 0),
           transport,
           recovery,
           online,
@@ -116,7 +128,7 @@ export function PlanningSessionProvider({
       }
       return coordinator;
     },
-    [transport, recovery, online, onSaved],
+    [transport, recovery, online, onSaved, resumeExisting],
   );
 
   const ready = auth.status === 'ready';
@@ -190,21 +202,6 @@ export function PlanningSessionProvider({
     };
   }, [coordinator]);
 
-  const startPlanning = useCallback(
-    async (mode: PlanningMode) => {
-      const current = auth.user ?? (await auth.startGuest());
-      const target = coordinatorFor(current);
-      await target.start();
-      if (target.getState().status === 'ready') {
-        const view = target.view() as SessionState;
-        if (view.mode !== mode) target.setMode(mode);
-        return target.view() as SessionState;
-      }
-      return target.create(mode);
-    },
-    [auth, coordinatorFor],
-  );
-
   const newReport = useCallback(
     async (mode: PlanningMode) => {
       const current = auth.user ?? (await auth.startGuest());
@@ -213,25 +210,15 @@ export function PlanningSessionProvider({
     [auth, coordinatorFor],
   );
 
-  const prepareSignOut = useCallback(async () => {
-    if (!coordinator) return true;
-    const flushed = coordinator.flush().then(() => coordinator.settled());
-    await Promise.race([flushed, new Promise((resolve) => setTimeout(resolve, SIGN_OUT_SAVE_MS))]);
-    const after = coordinator.getState();
-    return after.status !== 'ready' || Object.keys(after.pending).length === 0;
-  }, [coordinator]);
-
   const value = useMemo<PlanningSessionContextValue>(
     () => ({
       coordinator,
       state,
       view: coordinator && state.server ? coordinator.view() : null,
       inputsPending: coordinator ? coordinator.inputsPending() : false,
-      startPlanning,
       newReport,
-      prepareSignOut,
     }),
-    [coordinator, state, startPlanning, newReport, prepareSignOut],
+    [coordinator, state, newReport],
   );
 
   return (

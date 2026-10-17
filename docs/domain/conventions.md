@@ -1,4 +1,4 @@
-# WaterLens — Domain Conventions (units, precision, dates/time, currency)
+# WaterPilot — Domain Conventions (units, precision, dates/time, currency)
 
 Version 0.2 · **PROPOSED pending domain review** · Phase 01 (corrected 2026-10-08, review R3/R4)
 
@@ -112,7 +112,7 @@ currency may be added only after a recorded domain review that fixes:
   reviewed cost basis in its currency shows costs as `unavailable`, not converted guesses.
 
 **Representation implemented (Phase 04, owner instruction; ADR 0003).** The first rule above
-is now code, in `services/backend/src/waterlens/domain/values.py`:
+is now code, in `services/backend/src/waterpilot/domain/values.py`:
 
 - `Money { minorUnits: integer string, currency: ISO 4217, exponent }`.
 - The exponent comes only from the `CURRENCY_EXPONENTS` registry: INR, USD, EUR and GBP 2;

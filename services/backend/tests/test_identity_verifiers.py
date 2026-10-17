@@ -17,18 +17,18 @@ from google.auth.credentials import AnonymousCredentials
 
 from conftest import LOCAL_OK, PILOT_OK, LoadSettings
 from graphql_harness import make_harness
-from waterlens.adapters.auth_emulator import (
+from waterpilot.adapters.auth_emulator import (
     AccountStatus,
     EmulatorAccountLookup,
     EmulatorTokenVerifier,
 )
-from waterlens.adapters.auth_firebase import FirebaseAdminTokenVerifier, admin_sdk_verify
-from waterlens.adapters.factory import build_identity_verifier
-from waterlens.application.identity import AccountKind, Principal
-from waterlens.domain.errors import DomainError, ErrorCode
+from waterpilot.adapters.auth_firebase import FirebaseAdminTokenVerifier, admin_sdk_verify
+from waterpilot.adapters.factory import build_identity_verifier
+from waterpilot.application.identity import AccountKind, Principal
+from waterpilot.domain.errors import DomainError, ErrorCode
 
 NOW = datetime(2026, 10, 10, 6, 0, tzinfo=UTC)
-PROJECT = "waterlens-pilot-test"
+PROJECT = "waterpilot-pilot-test"
 
 
 def _b64(data: Mapping[str, object]) -> str:
@@ -37,8 +37,8 @@ def _b64(data: Mapping[str, object]) -> str:
 
 def emulator_token(uid: str = "u1", signed_in: datetime = NOW, provider: str = "password") -> str:
     claims = {
-        "iss": "https://securetoken.google.com/demo-waterlens",
-        "aud": "demo-waterlens",
+        "iss": "https://securetoken.google.com/demo-waterpilot",
+        "aud": "demo-waterpilot",
         "sub": uid,
         "iat": int(NOW.timestamp()),
         "auth_time": int(signed_in.timestamp()),
@@ -59,7 +59,7 @@ class FakeAccounts:
 
 
 def _verify(accounts: FakeAccounts, token: str | None = None) -> Principal:
-    return EmulatorTokenVerifier("demo-waterlens", lambda: NOW, accounts).verify(
+    return EmulatorTokenVerifier("demo-waterpilot", lambda: NOW, accounts).verify(
         token or emulator_token()
     )
 
@@ -103,8 +103,8 @@ def test_an_unreachable_emulator_is_service_unavailable_not_a_sign_out() -> None
 
 def test_emulator_lookup_is_demo_only_and_reports_unreachable_hosts() -> None:
     with pytest.raises(ValueError):
-        EmulatorAccountLookup("127.0.0.1:9099", "waterlens-pilot")
-    lookup = EmulatorAccountLookup("127.0.0.1:1", "demo-waterlens", timeout_seconds=0.5)
+        EmulatorAccountLookup("127.0.0.1:9099", "waterpilot-pilot")
+    lookup = EmulatorAccountLookup("127.0.0.1:1", "demo-waterpilot", timeout_seconds=0.5)
     with pytest.raises(DomainError) as exc:
         lookup.status("u1")
     assert exc.value.code is ErrorCode.SERVICE_UNAVAILABLE
@@ -186,7 +186,7 @@ def test_admin_verifier_rejects_incomplete_claims(claims: dict[str, Any]) -> Non
 
 def test_admin_verifier_refuses_demo_projects_and_emulator_environments() -> None:
     with pytest.raises(ValueError):
-        FirebaseAdminTokenVerifier("demo-waterlens", lambda _t: {}, environ={})
+        FirebaseAdminTokenVerifier("demo-waterpilot", lambda _t: {}, environ={})
     with pytest.raises(ValueError, match="FIREBASE_AUTH_EMULATOR_HOST"):
         FirebaseAdminTokenVerifier(
             PROJECT, lambda _t: {}, environ={"FIREBASE_AUTH_EMULATOR_HOST": "127.0.0.1:9099"}
@@ -243,7 +243,7 @@ def test_pilot_mode_builds_the_admin_sdk_verifier(
     settings = load_settings(PILOT_OK)
     sentinel = object()
     monkeypatch.setattr(
-        "waterlens.adapters.auth_firebase.admin_sdk_verify", lambda _project: sentinel
+        "waterpilot.adapters.auth_firebase.admin_sdk_verify", lambda _project: sentinel
     )
     verifier = build_identity_verifier(settings)
     assert isinstance(verifier, FirebaseAdminTokenVerifier)

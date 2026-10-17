@@ -15,6 +15,10 @@ fragment PlanningSessionFields on PlanningSession {
   areaId
   communityId
   selectedPlanOptionId
+  siteProfile {
+    communityType
+    occupiedHomes
+  }
   inputsRevision
   updatedAt
   area {

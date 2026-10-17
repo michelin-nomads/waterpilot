@@ -2,7 +2,7 @@
 
 Rules for the effects of a plan beyond the site (ADR 0013). Code:
 
-- `services/backend/src/waterlens/domain/impact.py` (engine, evidence, narrative check);
+- `services/backend/src/waterpilot/domain/impact.py` (engine, evidence, narrative check);
 - `domain/impact_records.py` (records and claim guards);
 - `domain/systems.py` (shared systems, directions, review kinds).
 
@@ -94,7 +94,7 @@ not when evidence shows the aquifer is `NOT_LINKED`.
 
 Readings come from the baseline's `water_quality` indicator. Each keeps its parameter,
 value, unit, method, observation date and citation. The fixed `WATER_QUALITY_NOTE`
-says WaterLens does not judge whether water is safe to drink. There is no score or
+says WaterPilot does not judge whether water is safe to drink. There is no score or
 potability field.
 
 ## Professional review

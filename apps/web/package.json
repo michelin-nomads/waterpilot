@@ -1,5 +1,5 @@
 {
-  "name": "@waterlens/web",
+  "name": "@waterpilot/web",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.104.1",
-    "@waterlens/contracts": "*",
+    "@waterpilot/contracts": "*",
     "axios": "^1.20.0",
     "firebase": "^13.0.0",
     "react": "^19.3.0",

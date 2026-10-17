@@ -1,8 +1,8 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "WaterLens API",
-    "description": "WaterLens HTTP API: health, authenticated event streams and authorized downloads. Application data is served by the GraphQL endpoint at /graphql (schema: packages/contracts/schema.graphql).",
+    "title": "WaterPilot API",
+    "description": "WaterPilot HTTP API: health, authenticated event streams and authorized downloads. Application data is served by the GraphQL endpoint at /graphql (schema: packages/contracts/schema.graphql).",
     "version": "0.1.0"
   },
   "paths": {

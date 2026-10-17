@@ -21,15 +21,15 @@ from sources_support import (
     make_admin,
     measured_manifest,
 )
-from waterlens.adapters.source_http import HttpSourceFetcher
-from waterlens.application.artifacts import ArtifactStore
-from waterlens.application.ports import FetchError
-from waterlens.application.sources.admin import SourceAdmin
-from waterlens.application.sources.ingestion import snapshot_id_for
-from waterlens.application.sources.parsing import ParseRejected, parse_geojson_footprint
-from waterlens.domain.errors import DomainError
-from waterlens.domain.sources import ConnectivityOutcome, IngestionStatus
-from waterlens.domain.values import EvidenceQuality
+from waterpilot.adapters.source_http import HttpSourceFetcher
+from waterpilot.application.artifacts import ArtifactStore
+from waterpilot.application.ports import FetchError
+from waterpilot.application.sources.admin import SourceAdmin
+from waterpilot.application.sources.ingestion import snapshot_id_for
+from waterpilot.application.sources.parsing import ParseRejected, parse_geojson_footprint
+from waterpilot.domain.errors import DomainError
+from waterpilot.domain.sources import ConnectivityOutcome, IngestionStatus
+from waterpilot.domain.values import EvidenceQuality
 
 
 def _series(storage: Any, snapshot_id: str) -> list[dict[str, Any]]:
@@ -98,7 +98,7 @@ def test_reimporting_identical_bytes_is_a_duplicate_not_a_second_snapshot(tmp_pa
     assert again.status is IngestionStatus.DUPLICATE
     assert again.snapshot_id == first.snapshot_id
     where = {"capability": "utility_supply"}
-    from waterlens.application.pagination import PageQuery, filter_fingerprint
+    from waterpilot.application.pagination import PageQuery, filter_fingerprint
 
     page = store.source_snapshots.page(where, PageQuery(10, None, filter_fingerprint(where)))
     assert len(page.items) == 1

@@ -23,7 +23,7 @@ $bp-wide: 1280px;
 }
 
 @mixin focus-ring {
-  outline: 3px solid var(--wl-color-focus);
+  outline: 3px solid var(--wp-color-focus);
   outline-offset: 2px;
 }
 
@@ -64,14 +64,14 @@ $bp-wide: 1280px;
 
 // Minimum 44×44 px pointer target (WCAG 2.5.5 / 2.5.8 comfortable size).
 @mixin tap-target {
-  min-width: var(--wl-tap-target);
-  min-height: var(--wl-tap-target);
+  min-width: var(--wp-tap-target);
+  min-height: var(--wp-tap-target);
 }
 
-@mixin card($padding: var(--wl-card-padding)) {
-  background: var(--wl-color-surface);
-  border: 1px solid var(--wl-color-border);
-  border-radius: var(--wl-radius-lg);
-  box-shadow: var(--wl-shadow-sm);
+@mixin card($padding: var(--wp-card-padding)) {
+  background: var(--wp-color-surface);
+  border: 1px solid var(--wp-color-border);
+  border-radius: var(--wp-radius-lg);
+  box-shadow: var(--wp-shadow-sm);
   padding: $padding;
 }

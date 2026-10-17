@@ -156,7 +156,7 @@ chosen plan; `test_resaving_the_same_scenario_keeps_the_selected_plan`.
 - Agent tools (`application/tools/options.py`): `compare_plans`, `preview_scenario` and
   `explain_option`. They call the same `OptionService` and return identical results.
 - **Scenario exploration is an Agent-mode capability** (guide: "retain scenario logic
-  internally and expose it to WaterLensAgent; remove separate what-if navigation"):
+  internally and expose it to WaterPilotAgent; remove separate what-if navigation"):
   - Agent mode: the agent pane carries the what-if tool (preview, apply, confirm a parsed
     what-if, remove). No language model is connected yet, so the change is entered as
     structured fields. The result is the same deterministic `preview_scenario` output.

@@ -1,4 +1,4 @@
-# WaterLens — Screen, State and Design-System Specification
+# WaterPilot — Screen, State and Design-System Specification
 
 > **Desktop refresh R01 (2026-10-16): current navigation supersedes the legacy screen/route tables below.**
 > The planner is **Location → Baseline → Goal → Compare → Review**. Location remains
@@ -57,7 +57,7 @@ same PR.
   - the reference images `docs/design/reference/1.png`–`8.png`;
   - the current styles (`apps/web/src/styles/*`) and components (`apps/web/src/components/*`);
   - the traceability map (`docs/product/traceability.md`) and ADR 0002.
-- **Visual status:** the supplied WaterLens design PDFs define the Welcome flow and the Estuary palette: blue-white light surfaces, navy text and teal actions, with a coordinated deep navy dark theme. The logo and scientific values remain provisional. Any number in this document is an illustrative placeholder in `{braces}`.
+- **Visual status:** the supplied WaterPilot design PDFs define the Welcome flow and the Estuary palette: blue-white light surfaces, navy text and teal actions, with a coordinated deep navy dark theme. The logo and scientific values remain provisional. Any number in this document is an illustrative placeholder in `{braces}`.
 
 Contents:
 
@@ -150,7 +150,7 @@ Dashboard ◀── sign-in ── Report details ◀─────────
 | ------- | ----------- | ---------------------------------------------------------------------------- | --------------------------------------------------------- |
 | Narrow  | 320–639 px  | Header row 1: logo + Display + account. Row 2: primary nav. Strapline hidden | **Tabs**: Conversation / Workspace (one column only)      |
 | Tablet  | 640–1023 px | Header single row with tagline; strapline hidden                             | **Tabs** (never two columns)                              |
-| Desktop | ≥ 1024 px   | Full header; content max `--wl-content-max`                                  | **Split**: conversation left (resizable), workspace right |
+| Desktop | ≥ 1024 px   | Full header; content max `--wp-content-max`                                  | **Split**: conversation left (resizable), workspace right |
 
 - **Workspace grids:**
   - Metric cards: 1 column below 640 px, 2 columns from 640 px, 4 columns from 1280 px (or 2 when the conversation pane is open on desktop).
@@ -167,7 +167,7 @@ Dashboard ◀── sign-in ── Report details ◀─────────
 - Conversation pane on the **left**, editable workspace on the **right**, separated by a resize handle.
 - **Width:**
   - Default 24 rem (384 px), minimum 18 rem (288 px), maximum the smaller of 40 rem (640 px) and 45 % of the planning area.
-  - The width persists per browser (`waterlens.agentWidth.v1`).
+  - The width persists per browser (`waterpilot.agentWidth.v1`).
 - **Resize handle** (`ResizeHandle`, built):
   - It has `role="separator"`, `aria-orientation="vertical"`, `aria-valuemin/max/now` in px, an `aria-valuetext` such as "Conversation pane 384 pixels wide", and `aria-controls` pointing at the conversation pane.
   - Focusable; ←/→ change the width by 16 px (Shift: 64 px); Home/End go to the minimum/maximum; Enter resets to the default.
@@ -204,7 +204,7 @@ Each screen below has a **Primary action** (exactly one) and lists which states 
 ### S1 Welcome
 
 - **Purpose:** introduce community water planning and let a visitor start in either Explorer or Copilot immediately.
-- **Essentials:** centered eyebrow, headline and short product statement; two equal cards with `Guide me with WaterLensAgent` first (sparkle, filled `Start with agent`) and `Explore on my own` second (exploration icon, outlined `Start exploring`); collapsed `How WaterLens works` disclosure and guest/sign-in explanation below. The header offers sign-in; planning is available as a guest. Local screen previews are a collapsed, local-only disclosure.
+- **Essentials:** centered eyebrow, headline and short product statement; two equal cards with `Guide me with WaterPilotAgent` first (sparkle, filled `Start with agent`) and `Explore on my own` second (exploration icon, outlined `Start exploring`); collapsed `How WaterPilot works` disclosure and guest/sign-in explanation below. The header offers sign-in; planning is available as a guest. Local screen previews are a collapsed, local-only disclosure.
 - **Primary action:** `Start with agent` or `Start exploring` creates a guest identity if there is none and opens the first planning stage in the chosen mode. A user who already has a session sees `Continue planning` and `New report`. There is **no** `Resume {location} · {stage}` control (removed by owner decision, 2026-10-10): the current session is recovered automatically instead — Firebase restores the identity after a reload, the planning screens load `currentPlanningSession`, and cached queries refetch on reconnect and when the tab regains focus.
 - **Secondary:** `Sign in` in the header for returning users; sign-in is required only when saving the first report.
 - **States:** loading (identity check), offline, retry (session creation failed), auth-cancel (if sign-in was cancelled from here), budget-blocked (guest creation over quota: "New guest sessions are paused right now. Try again later or sign in.").
@@ -489,7 +489,7 @@ Target: WCAG 2.2 AA.
   | Conversation          | Enter sends, Shift+Enter new line; the message list is a `log` with polite announcements of completed replies only              |
   | Charts                | "Show table" toggle (`aria-pressed`) next to every chart                                                                        |
 
-- **Visible focus:** a 3 px `--wl-color-focus` outline with 2 px offset on every interactive element, never removed. Contrast is ≥ 3:1 against the surface in all six theme/palette combinations (Playwright-checked).
+- **Visible focus:** a 3 px `--wp-color-focus` outline with 2 px offset on every interactive element, never removed. Contrast is ≥ 3:1 against the surface in both themes (Playwright-checked).
 - **Contrast:**
   - Body and muted text are ≥ 4.5:1 on surface and page background.
   - Large text, icons and UI boundaries are ≥ 3:1.
@@ -497,7 +497,7 @@ Target: WCAG 2.2 AA.
   - Checked automatically for the token pairs listed in `e2e/design-system.spec.ts`.
 - **Charts:** every chart is a `<figure>` with a caption, a units-aware value axis, a legend, and a "Show table" alternative. The table has the same values, uses "Unavailable" for gaps and has a `<caption>`. Line series use dash patterns as well as colour.
 - **Reduced motion:** `prefers-reduced-motion: reduce` removes ambient animation, the highlight motion and smooth scrolling. Skeleton shimmer is replaced by a static tone. Hidden tabs pause animation.
-- **Touch:** targets are ≥ 44 × 44 px (`--wl-tap-target`), and the visible size of icon buttons is ≥ 24 px.
+- **Touch:** targets are ≥ 44 × 44 px (`--wp-tap-target`), and the visible size of icon buttons is ≥ 24 px.
 - **Zoom:**
   - Content reflows at 320 CSS px, which equals 400 % zoom on a 1280 px window.
   - Text spacing overrides (WCAG 1.4.12) must not clip text, so card heights are fixed only by content.
@@ -538,29 +538,28 @@ Target: WCAG 2.2 AA.
 
 Tokens are CSS custom properties emitted by `apps/web/src/styles/tokens.scss` from the raw maps in
 `_token-values.scss`. Modules use tokens only (no raw hex); Sass helpers come from
-`_mixins.scss` via `@use 'mixins' as *`. Estuary follows the supplied design reference; Monsoon
-and Grove remain optional palettes.
+`_mixins.scss` via `@use 'mixins' as *`. Estuary, the only palette, follows the supplied design reference.
 
 | Group              | Tokens                                                                                                                     | Notes                                                                                       |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| Colour — neutral   | `--wl-color-bg`, `surface`, `surface-raised`, `surface-sunken`, `border`, `border-strong`, `text`, `text-muted`, `overlay` | Light/dark                                                                                  |
-| Colour — accent    | `--wl-color-accent`, `accent-strong`, `accent-soft`, `on-accent`, `focus`                                                  | Per palette (estuary, monsoon, grove) × theme                                               |
-| Colour — status    | `--wl-color-{success,warning,danger,info}` and `-soft`                                                                     | Tinted metric cards (3.png) use `-soft` backgrounds with the strong colour for icon + value |
-| Colour — data      | `--wl-color-chart-1…4`                                                                                                     | Distinct in hue **and** paired with dash patterns                                           |
-| Space              | `--wl-space-1…7` (4 px base: 4, 8, 12, 16, 24, 32, 48)                                                                     |                                                                                             |
-| Radius             | `--wl-radius-sm/md/lg/pill`                                                                                                | Cards `lg`, controls `md`, primary CTA and badges `pill` (references)                       |
-| Type               | `--wl-font-sans/mono`, `--wl-text-xs…3xl`, `--wl-leading-tight/normal`, `--wl-measure`                                     | System fonts (no download). `--wl-measure` caps prose at 68ch                               |
-| Motion             | `--wl-motion-fast/base/slow`, `--wl-ease`                                                                                  | Transform/opacity only                                                                      |
-| Elevation          | `--wl-shadow-sm/md/lg`                                                                                                     |                                                                                             |
-| Layers             | `--wl-z-header/drawer/dialog/toast`                                                                                        |                                                                                             |
-| Layout             | `--wl-content-max`, `--wl-agent-width` (default), `--wl-agent-width-min`, `--wl-agent-width-max`, `--wl-tap-target`        | Agent width bounds mirror the `ResizeHandle` limits                                         |
+| Colour — neutral   | `--wp-color-bg`, `surface`, `surface-raised`, `surface-sunken`, `border`, `border-strong`, `text`, `text-muted`, `overlay` | Light/dark                                                                                  |
+| Colour — accent    | `--wp-color-accent`, `accent-strong`, `accent-soft`, `on-accent`, `focus`                                                  | Per theme (Estuary palette)                                                                 |
+| Colour — status    | `--wp-color-{success,warning,danger,info}` and `-soft`                                                                     | Tinted metric cards (3.png) use `-soft` backgrounds with the strong colour for icon + value |
+| Colour — data      | `--wp-color-chart-1…4`                                                                                                     | Distinct in hue **and** paired with dash patterns                                           |
+| Space              | `--wp-space-1…7` (4 px base: 4, 8, 12, 16, 24, 32, 48)                                                                     |                                                                                             |
+| Radius             | `--wp-radius-sm/md/lg/pill`                                                                                                | Cards `lg`, controls `md`, primary CTA and badges `pill` (references)                       |
+| Type               | `--wp-font-sans/mono`, `--wp-text-xs…3xl`, `--wp-leading-tight/normal`, `--wp-measure`                                     | System fonts (no download). `--wp-measure` caps prose at 68ch                               |
+| Motion             | `--wp-motion-fast/base/slow`, `--wp-ease`                                                                                  | Transform/opacity only                                                                      |
+| Elevation          | `--wp-shadow-sm/md/lg`                                                                                                     |                                                                                             |
+| Layers             | `--wp-z-header/drawer/dialog/toast`                                                                                        |                                                                                             |
+| Layout             | `--wp-content-max`, `--wp-agent-width` (default), `--wp-agent-width-min`, `--wp-agent-width-max`, `--wp-tap-target`        | Agent width bounds mirror the `ResizeHandle` limits                                         |
 | Breakpoints (Sass) | `$bp-tablet` 640, `$bp-desktop` 1024, `$bp-wide` 1280; mixins `tablet-up`, `desktop-up`, `wide-up`                         | Media queries only via mixins                                                               |
 | Mixins             | `focus-ring`, `focus-visible`, `visually-hidden`, `ambient-animation`, `reduced-motion`, `card`, `tap-target`              |                                                                                             |
 
 Theming rules:
 
-- **Two independent axes:** `data-theme` and `data-palette` on `<html>` are applied before first paint and persisted.
-- **New colour tokens** must be added to both themes and all three palettes, plus the contrast test.
+- **Theme:** `data-theme` on `<html>` (System, Light or Dark) is applied before first paint and persisted; `data-palette` is always `estuary`.
+- **New colour tokens** must be added to both themes, plus the contrast test.
 
 ## 10. Component system
 

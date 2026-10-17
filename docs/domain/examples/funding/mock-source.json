@@ -9,6 +9,6 @@
   "deadline": "2027-03-31T23:59:59+05:30",
   "timezone": "Asia/Kolkata",
   "required_documents": ["Mock registration certificate", "Mock project budget"],
-  "permission": "Created for WaterLens local hackathon testing; permitted to reuse.",
+  "permission": "Created for WaterPilot local hackathon testing; permitted to reuse.",
   "unknown_fields": ["co_funding_ratio", "contact", "payment_schedule"]
 }

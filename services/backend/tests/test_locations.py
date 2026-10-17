@@ -11,19 +11,19 @@ import httpx
 import pytest
 
 from conftest import LOCAL_OK, PILOT_OK, LoadSettings
-from waterlens.adapters.catalogue_synthetic import synthetic_area_catalogue
-from waterlens.adapters.factory import build_place_search
-from waterlens.adapters.jobqueue_memory import MemoryJobQueue
-from waterlens.adapters.places_fixture import FixturePlaceSearch
-from waterlens.adapters.places_google import FIELD_MASK, GooglePlaceSearch
-from waterlens.adapters.store_memory import MemoryStore
-from waterlens.application.identity import AccountKind, Principal, RequestContext
-from waterlens.application.ports import NoPlaceSearch, PlaceSearchUnavailable
-from waterlens.application.services import Deps, Services
-from waterlens.config import ConfigError
-from waterlens.domain.errors import DomainError, ErrorCode
-from waterlens.domain.ids import IdKind, new_id
-from waterlens.domain.location import (
+from waterpilot.adapters.catalogue_synthetic import synthetic_area_catalogue
+from waterpilot.adapters.factory import build_place_search
+from waterpilot.adapters.jobqueue_memory import MemoryJobQueue
+from waterpilot.adapters.places_fixture import FixturePlaceSearch
+from waterpilot.adapters.places_google import FIELD_MASK, GooglePlaceSearch
+from waterpilot.adapters.store_memory import MemoryStore
+from waterpilot.application.identity import AccountKind, Principal, RequestContext
+from waterpilot.application.ports import NoPlaceSearch, PlaceSearchUnavailable
+from waterpilot.application.services import Deps, Services
+from waterpilot.config import ConfigError
+from waterpilot.domain.errors import DomainError, ErrorCode
+from waterpilot.domain.ids import IdKind, new_id
+from waterpilot.domain.location import (
     AreaOrigin,
     ExtentKind,
     GeographicScope,
@@ -36,9 +36,9 @@ from waterlens.domain.location import (
     timezone_at,
     unit_system_for,
 )
-from waterlens.domain.planning import PlanningMode
-from waterlens.domain.readiness import AssessmentBasis, InputId
-from waterlens.domain.values import EvidenceQuality
+from waterpilot.domain.planning import PlanningMode
+from waterpilot.domain.readiness import AssessmentBasis, InputId
+from waterpilot.domain.values import EvidenceQuality
 
 NOW = datetime(2026, 10, 10, 6, 0, tzinfo=UTC)
 ANA = Principal("ana", AccountKind.GUEST, "anonymous", NOW)
@@ -312,7 +312,7 @@ def test_unsupported_location_routes_to_a_user_input_assessment() -> None:
 def test_name_search_never_returns_chosen_locations() -> None:
     s = services()
     s.locations.confirm(ctx(), custom_input(name="Synth private"), key("k1"))
-    from waterlens.application.pagination import PageArgs
+    from waterpilot.application.pagination import PageArgs
 
     names = [a.name for a in s.areas.search("Synth", PageArgs(first=10)).items]
     assert names == ["Synthville (SYNTHETIC — not a real place)"]
@@ -386,15 +386,15 @@ def test_google_failures_are_unavailable_not_empty() -> None:
 
 def test_local_mode_uses_the_fixture_and_refuses_a_places_key(load_settings: LoadSettings) -> None:
     assert build_place_search(load_settings(LOCAL_OK)).provider == "fixture"
-    with pytest.raises(ConfigError, match="WL_PLACES_SERVER_KEY"):
-        load_settings({**LOCAL_OK, "WL_PLACES_SERVER_KEY": "abc"})
+    with pytest.raises(ConfigError, match="WP_PLACES_SERVER_KEY"):
+        load_settings({**LOCAL_OK, "WP_PLACES_SERVER_KEY": "abc"})
 
 
 def test_pilot_uses_google_only_with_a_server_key(load_settings: LoadSettings) -> None:
     unkeyed = build_place_search(load_settings(PILOT_OK))
     assert isinstance(unkeyed, NoPlaceSearch)
     assert unkeyed.provider == "google"  # browser Google ids stay valid; fixture ids never
-    keyed = load_settings({**PILOT_OK, "WL_PLACES_SERVER_KEY": "abc"})
+    keyed = load_settings({**PILOT_OK, "WP_PLACES_SERVER_KEY": "abc"})
     assert build_place_search(keyed).provider == "google"
     assert "abc" not in repr(keyed)
 

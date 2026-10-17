@@ -1,9 +1,6 @@
 import styles from './Logo.module.scss';
 
-/**
- * PROVISIONAL mark: a droplet seen through a lens ring. No approved logo was supplied
- * (docs/design/approved/ is empty); this is not a reproduction of any prior asset.
- */
+/** The WaterPilot mark: a water droplet inside a 270° ring (open at the upper right). */
 export function LogoMark({ className }: { className?: string }) {
   return (
     <svg
@@ -12,9 +9,12 @@ export function LogoMark({ className }: { className?: string }) {
       aria-hidden="true"
       focusable="false"
     >
-      <circle cx="20" cy="20" r="17" className={styles.ring} />
-      <path d="M20 8.5s-8 9.2-8 14.6a8 8 0 0 0 16 0c0-5.4-8-14.6-8-14.6Z" className={styles.drop} />
-      <path d="M16.2 23.4a3.9 3.9 0 0 0 3.6 3.9" className={styles.glint} />
+      <path d="M20 3A17 17 0 1 0 37 20" className={styles.ring} />
+      <path
+        d="M20 9.2s-7.8 8.8-7.8 14.3a7.8 7.8 0 0 0 15.6 0c0-5.5-7.8-14.3-7.8-14.3Z"
+        className={styles.drop}
+      />
+      <path d="M16.6 23.6a4 4 0 0 0 3.8 3.9" className={styles.glint} />
     </svg>
   );
 }
@@ -23,7 +23,7 @@ export function Logo() {
   return (
     <span className={styles.logo}>
       <LogoMark />
-      <span className={styles.wordmark}>WaterLens</span>
+      <span className={styles.wordmark}>WaterPilot</span>
     </span>
   );
 }

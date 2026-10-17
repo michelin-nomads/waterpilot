@@ -22,10 +22,10 @@ from google.adk.events.event_actions import EventActions
 from google.adk.sessions.base_session_service import GetSessionConfig
 from google.genai import types
 
-from waterlens.adapters.adk_session import AdkSessionService
-from waterlens.adapters.conversation_firestore import EVENTS, SESSIONS, FirestoreConversationStore
-from waterlens.adapters.store_firestore import FirestoreStore
-from waterlens.domain.conversations import (
+from waterpilot.adapters.adk_session import AdkSessionService
+from waterpilot.adapters.conversation_firestore import EVENTS, SESSIONS, FirestoreConversationStore
+from waterpilot.adapters.store_firestore import FirestoreStore
+from waterpilot.domain.conversations import (
     LEASE_TTL,
     ToolInvocation,
     ToolStatus,

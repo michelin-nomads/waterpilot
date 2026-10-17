@@ -12,15 +12,11 @@ export interface PlanningSessionContextValue {
   view: SessionState | null;
   /** True while an unsaved edit changes location, goal or scenario (derived data is stale). */
   inputsPending: boolean;
-  /** Continue the current session, or start one (as a guest if needed) in `mode`. */
-  startPlanning: (mode: PlanningMode) => Promise<SessionState>;
-  /** Close the current session and start a new one in `mode` ("New report"). */
-  newReport: (mode: PlanningMode) => Promise<SessionState>;
   /**
-   * Try to save before signing out. Resolves false if edits remain unsaved, so the
-   * caller can ask before discarding them.
+   * Start a new plan in `mode` (as a guest when nobody is signed in), replacing any current
+   * one. Plans are not kept between visits, so there is nothing to continue.
    */
-  prepareSignOut: () => Promise<boolean>;
+  newReport: (mode: PlanningMode) => Promise<SessionState>;
 }
 
 export const PlanningSessionContext = createContext<PlanningSessionContextValue | null>(null);

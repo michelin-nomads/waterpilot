@@ -95,7 +95,7 @@ conversation events. The gateway's `_dispatch` also refuses an expired run as de
 `max_tool_steps` bounds the number of committed tool steps per run; `max_tool_fanout` bounds
 how many tool calls one model turn may request (checked before any run); `max_tool_repeats`
 bounds identical repeated calls (a loop that makes no progress). All are configurable AI limits
-(`AiLimits`, `WL_AI_*` settings), proposed defaults.
+(`AiLimits`, `WP_AI_*` settings), proposed defaults.
 
 ### 6. ADK adapter binds identity on the server
 

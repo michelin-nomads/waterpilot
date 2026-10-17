@@ -15,7 +15,7 @@ import { tmpdir } from 'node:os';
 const root = execFileSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim();
 const stamp = new Date().toISOString().slice(0, 10);
 const output = resolve(
-  process.argv[2] ?? join(root, 'archives', `waterlens-source-${stamp}.tar.gz`),
+  process.argv[2] ?? join(root, 'archives', `waterpilot-source-${stamp}.tar.gz`),
 );
 
 // Defence in depth on top of .gitignore: never ship these even if tracked by mistake.
@@ -58,7 +58,7 @@ for (const required of [
 }
 
 mkdirSync(dirname(output), { recursive: true });
-const listFile = join(tmpdir(), `waterlens-archive-${process.pid}.txt`);
+const listFile = join(tmpdir(), `waterpilot-archive-${process.pid}.txt`);
 writeFileSync(listFile, files.join('\n') + '\n');
 try {
   execFileSync('tar', ['-czf', output, '-C', root, '-T', listFile], { stdio: 'inherit' });

@@ -2,30 +2,30 @@
 
 .page {
   display: grid;
-  gap: var(--wl-space-5);
+  gap: var(--wp-space-5);
 }
 
 .panel {
   @include card;
 
   display: grid;
-  gap: var(--wl-card-section-gap);
+  gap: var(--wp-card-section-gap);
 }
 
 .title {
   margin: 0;
-  font-size: var(--wl-text-xl);
+  font-size: var(--wp-text-xl);
 }
 
 .subTitle {
   margin: 0;
-  font-size: var(--wl-text-lg);
+  font-size: var(--wp-text-lg);
 }
 
 .form,
 .stack {
   display: grid;
-  gap: var(--wl-space-4);
+  gap: var(--wp-space-4);
 }
 
 .locationContext {
@@ -35,21 +35,21 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--wl-space-4);
+  gap: var(--wp-space-4);
 
   > div {
     display: grid;
-    gap: var(--wl-space-1);
+    gap: var(--wp-space-1);
   }
 }
 
 .goalLimits {
   display: grid;
-  gap: var(--wl-space-3);
-  padding: var(--wl-space-4);
-  border: 1px solid var(--wl-color-border);
-  border-radius: var(--wl-radius-lg);
-  background: var(--wl-color-surface-raised);
+  gap: var(--wp-space-3);
+  padding: var(--wp-space-4);
+  border: 1px solid var(--wp-color-border);
+  border-radius: var(--wp-radius-lg);
+  background: var(--wp-color-surface-raised);
 
   @include tablet-up {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -58,11 +58,11 @@
 
 .otherGoals {
   display: grid;
-  gap: var(--wl-space-3);
-  padding: var(--wl-space-3) var(--wl-space-4);
-  border: 1px solid var(--wl-color-border);
-  border-radius: var(--wl-radius-lg);
-  background: var(--wl-color-surface-raised);
+  gap: var(--wp-space-3);
+  padding: var(--wp-space-3) var(--wp-space-4);
+  border: 1px solid var(--wp-color-border);
+  border-radius: var(--wp-radius-lg);
+  background: var(--wp-color-surface-raised);
 
   summary {
     @include tap-target;
@@ -75,7 +75,7 @@
 
 .grid {
   display: grid;
-  gap: var(--wl-space-3);
+  gap: var(--wp-space-3);
   grid-template-columns: minmax(0, 1fr);
 
   @include tablet-up {
@@ -87,7 +87,7 @@
 .checks,
 .estimate {
   display: grid;
-  gap: var(--wl-space-3);
+  gap: var(--wp-space-3);
   margin: 0;
   padding: 0;
   border: 0;
@@ -95,12 +95,12 @@
 }
 
 .estimate {
-  padding-block-start: var(--wl-space-3);
-  border-block-start: 1px solid var(--wl-color-border);
+  padding-block-start: var(--wp-space-3);
+  border-block-start: 1px solid var(--wp-color-border);
 }
 
 .legend {
-  margin-block-end: var(--wl-space-2);
+  margin-block-end: var(--wp-space-2);
   padding: 0;
   font-weight: 600;
 }
@@ -110,37 +110,37 @@
 
   display: flex;
   align-items: center;
-  gap: var(--wl-space-2);
+  gap: var(--wp-space-2);
 }
 
 .inline {
   display: flex;
   flex-wrap: wrap;
   align-items: end;
-  gap: var(--wl-space-3);
+  gap: var(--wp-space-3);
 }
 
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--wl-card-footer-gap);
+  gap: var(--wp-card-footer-gap);
 }
 
 .error {
   margin: 0;
-  color: var(--wl-color-danger-text);
-  font-size: var(--wl-text-sm);
+  color: var(--wp-color-danger-text);
+  font-size: var(--wp-text-sm);
 }
 
 .muted {
   margin: 0;
-  color: var(--wl-color-text-muted);
-  font-size: var(--wl-text-sm);
+  color: var(--wp-color-text-muted);
+  font-size: var(--wp-text-sm);
 }
 
 .assessment {
   display: grid;
-  gap: var(--wl-space-4);
+  gap: var(--wp-space-4);
 }
 
 .assessmentHead,
@@ -149,35 +149,35 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--wl-space-2);
+  gap: var(--wp-space-2);
 }
 
 .summary {
   margin: 0;
-  font-size: var(--wl-text-md);
+  font-size: var(--wp-text-md);
 }
 
 .block {
   display: grid;
-  gap: var(--wl-space-2);
+  gap: var(--wp-space-2);
 }
 
 .blockTitle {
   margin: 0;
-  font-size: var(--wl-text-md);
+  font-size: var(--wp-text-md);
 }
 
 .list,
 .fitList {
   display: grid;
-  gap: var(--wl-space-1);
+  gap: var(--wp-space-1);
   margin: 0;
-  padding-inline-start: var(--wl-space-5);
+  padding-inline-start: var(--wp-space-5);
 }
 
 .measures {
   display: grid;
-  gap: var(--wl-space-3);
+  gap: var(--wp-space-3);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -185,9 +185,9 @@
 
 .measure {
   display: grid;
-  gap: var(--wl-space-2);
-  padding-block-start: var(--wl-space-3);
-  border-block-start: 1px solid var(--wl-color-border);
+  gap: var(--wp-space-2);
+  padding-block-start: var(--wp-space-3);
+  border-block-start: 1px solid var(--wp-color-border);
 }
 
 .measureName {

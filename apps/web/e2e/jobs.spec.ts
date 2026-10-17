@@ -6,13 +6,13 @@ import { expect, test, type Page } from '@playwright/test';
 // into the Firestore emulator (no renderer exists until Prompt 20, and no worker runs
 // here), then advanced the way the worker would advance it.
 const AUTH_EMULATOR = 'http://127.0.0.1:9099';
-const FIRESTORE = 'http://127.0.0.1:8080/v1/projects/demo-waterlens/databases/(default)/documents';
+const FIRESTORE = 'http://127.0.0.1:8080/v1/projects/demo-waterpilot/databases/(default)/documents';
 const API = 'http://127.0.0.1:8000';
 
 async function servicesUp(): Promise<boolean> {
   try {
     const [auth, api] = await Promise.all([
-      fetch(`${AUTH_EMULATOR}/emulator/v1/projects/demo-waterlens/config`),
+      fetch(`${AUTH_EMULATOR}/emulator/v1/projects/demo-waterpilot/config`),
       fetch(`${API}/healthz`),
     ]);
     return auth.ok && api.ok;
@@ -23,8 +23,8 @@ async function servicesUp(): Promise<boolean> {
 
 test.beforeEach(async () => {
   const up = await servicesUp();
-  if (!up && process.env.WL_REQUIRE_AUTH_EMULATOR === '1') {
-    throw new Error('Auth emulator or local API not running (WL_REQUIRE_AUTH_EMULATOR=1)');
+  if (!up && process.env.WP_REQUIRE_AUTH_EMULATOR === '1') {
+    throw new Error('Auth emulator or local API not running (WP_REQUIRE_AUTH_EMULATOR=1)');
   }
   test.skip(!up, 'Auth emulator or local API not running');
 });
@@ -33,14 +33,17 @@ const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 const randomId = (prefix: string) =>
   `${prefix}_${Array.from({ length: 26 }, () => ALPHABET[Math.floor(Math.random() * 32)]).join('')}`;
 
-/** The uid of the signed-in browser user, read from the bearer token it sends. */
+/** Signs up a fresh account; returns its uid, read from the bearer token the browser sends. */
 async function startAsGuest(page: Page): Promise<string> {
   const token = page
     .waitForRequest((r) => r.url().endsWith('/graphql') && !!r.headers()['authorization'])
     .then((r) => r.headers()['authorization']!.split(' ')[1]!);
   await page.goto('/');
-  await page.getByRole('button', { name: 'Start exploring' }).click();
-  await expect(page).toHaveURL(/\/area$/);
+  await page.getByRole('button', { name: 'Create an account' }).click();
+  await page.getByLabel(/^Email/).fill(`jobs-${Date.now()}@example.org`);
+  await page.getByLabel(/^Password/).fill('secret-pass');
+  await page.getByRole('button', { name: 'Create account' }).click();
+  await expect(page).toHaveURL(/\/reports$/);
   const payload = JSON.parse(Buffer.from((await token).split('.')[1]!, 'base64url').toString()) as {
     user_id: string;
   };

@@ -12,6 +12,9 @@ import { usePlanningSession } from '../../session/sessionContext';
 import { calculatePopulationEstimate } from './populationEstimateMath';
 import styles from './PopulationEstimate.module.scss';
 
+/** The most occupied homes a plan's description can hold (matches the server). */
+const MAX_OCCUPIED_HOMES = 1_000_000;
+
 interface Props {
   sessionId: string;
 }
@@ -23,7 +26,7 @@ function today(): string {
 
 export function PopulationEstimateHelper({ sessionId }: Props) {
   const navigate = useNavigate();
-  const { coordinator } = usePlanningSession();
+  const { coordinator, view } = usePlanningSession();
   const mutation = useGraphQLMutation('recordManualInput', RecordManualInputDocument);
   const [homes, setHomes] = useState('');
   const [residentsPerHome, setResidentsPerHome] = useState('');
@@ -118,6 +121,15 @@ export function PopulationEstimateHelper({ sessionId }: Props) {
       const needResult = await mutation.mutateAsync(needInput);
       unwrapPayload(needResult.recordManualInput);
       intent.current = null;
+      // The homes stated here also describe the plan on its report; the server's limit is lower
+      // than this form's, and a larger figure simply stays out of the description.
+      const occupiedHomes = Number(homes);
+      if (occupiedHomes <= MAX_OCCUPIED_HOMES) {
+        coordinator?.setSiteProfile({
+          communityType: view?.siteProfile?.communityType ?? null,
+          occupiedHomes,
+        });
+      }
       void coordinator?.refresh();
       navigate('/baseline');
     } catch (error) {
@@ -132,7 +144,7 @@ export function PopulationEstimateHelper({ sessionId }: Props) {
   return (
     <form className={styles.form} onSubmit={(event) => void save(event)} noValidate>
       <Notice kind="caution" title="This is an estimate, not a measurement" announce={false}>
-        WaterLens will label the accepted values as estimates based on your assumptions. Nothing is
+        WaterPilot will label the accepted values as estimates based on your assumptions. Nothing is
         inferred from the PDF examples or from the location alone.
       </Notice>
       <div className={styles.fields}>

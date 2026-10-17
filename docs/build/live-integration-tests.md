@@ -9,11 +9,11 @@ behaviour, and real dataset coverage, are **unverified**.
 
 These rules don't change for live testing:
 
-- `WL_ENV=local` refuses `WL_PLACES_SERVER_KEY`, and the web app's local mode refuses
-  `VITE_GOOGLE_MAPS_API_KEY` and `VITE_GOOGLE_MAPS_MAP_ID` (`services/backend/src/waterlens/config.py`,
+- `WP_ENV=local` refuses `WP_PLACES_SERVER_KEY`, and the web app's local mode refuses
+  `VITE_GOOGLE_MAPS_API_KEY` and `VITE_GOOGLE_MAPS_MAP_ID` (`services/backend/src/waterpilot/config.py`,
   `apps/web/src/config/env.ts`). Live tests never set these variables and never change
   `Settings`.
-- The backend live tests build the adapter they test directly from a `WL_LIVE_*`
+- The backend live tests build the adapter they test directly from a `WP_LIVE_*`
   variable, so a local API process can never reach Google because of them.
 - The default `pytest` run deselects the `live` marker (`addopts` in `pyproject.toml`).
   Each live test also skips unless its variable is set.
@@ -34,7 +34,7 @@ Before running this test, the owner must:
 
 ```bash
 cd services/backend
-WL_LIVE_PLACES_SERVER_KEY=... uv run pytest -m live tests/live/test_places_google_live.py -rs
+WP_LIVE_PLACES_SERVER_KEY=... uv run pytest -m live tests/live/test_places_google_live.py -rs
 ```
 
 | Test                                                       | What it shows                                                      | Requests      |
@@ -51,7 +51,7 @@ Platform pricing page before running it.
 
 Run this against a **pilot preview** served from a domain that the browser key's HTTP
 referrer restriction allows. Deploying the preview is an owner action (Prompts 25–26).
-The web build uses `VITE_WATERLENS_ENV=pilot` and the restricted browser key from
+The web build uses `VITE_WATERPILOT_ENV=pilot` and the restricted browser key from
 `infra/README.md` step 1. Never run it from a local-mode build.
 
 | #   | Step                                                                    | Expected                                                                                                                   |
@@ -79,5 +79,5 @@ those releases. The local gazetteer and the synthetic catalogue (marked "Test pl
 ## 4. Firestore indexes
 
 File: `services/backend/tests/live/test_firestore_live_indexes.py`. Run it with
-`WL_LIVE_FIRESTORE_PROJECT=...`. It is described in the file's docstring and makes read-only
+`WP_LIVE_FIRESTORE_PROJECT=...`. It is described in the file's docstring and makes read-only
 `limit(1)` probes.

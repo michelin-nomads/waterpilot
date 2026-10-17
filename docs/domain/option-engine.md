@@ -1,6 +1,6 @@
 # Scenario and option engines — rules
 
-Reference for `services/backend/src/waterlens/domain/scenario.py` (`scenario-1`) and
+Reference for `services/backend/src/waterpilot/domain/scenario.py` (`scenario-1`) and
 `domain/options.py` (`options-1`). Decision record: ADR 0012. Everything here is
 **proposed** until domain review. Changing a rule here means changing the code, bumping
 the engine version and updating the tests in `tests/domain/test_scenario.py` and

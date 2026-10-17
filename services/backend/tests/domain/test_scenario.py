@@ -8,8 +8,8 @@ from fractions import Fraction
 import pytest
 from pydantic import ValidationError
 
-from waterlens.domain.planning import ScenarioAdjustment
-from waterlens.domain.scenario import (
+from waterpilot.domain.planning import ScenarioAdjustment
+from waterpilot.domain.scenario import (
     DAILY_ASSUMPTION,
     TANKER_ASSUMPTION,
     Balance,

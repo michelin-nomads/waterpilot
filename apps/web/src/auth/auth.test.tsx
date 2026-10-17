@@ -206,7 +206,7 @@ describe('AuthProvider', () => {
     await screen.findByText('status: ready');
     let result: boolean | undefined;
     act(() => void view.auth.ensurePermanent('Needed for this.').then((r) => (result = r)));
-    const dialog = await screen.findByRole('dialog', { name: 'Sign in to WaterLens' });
+    const dialog = await screen.findByRole('dialog', { name: 'Sign in to WaterPilot' });
     expect(dialog).toHaveTextContent('Needed for this.');
     fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
     await waitFor(() => expect(result).toBe(false));
@@ -259,7 +259,7 @@ describe('SignInDialog', () => {
     await screen.findByText('status: ready');
     let result: boolean | undefined;
     act(() => void view.auth.openSignIn().then((r) => (result = r)));
-    const dialog = await screen.findByRole('dialog', { name: 'Sign in to WaterLens' });
+    const dialog = await screen.findByRole('dialog', { name: 'Sign in to WaterPilot' });
     return { dialog, result: () => result, view };
   }
 
@@ -289,6 +289,28 @@ describe('SignInDialog', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Sign in' }));
     expect(await within(dialog).findByText('Check these fields')).toBeInTheDocument();
     expect(backend.calls).toEqual([]);
+  });
+
+  it('asks for an email before sending a password-reset link, then sends it', async () => {
+    const backend = new FakeAuthBackend();
+    const { dialog } = await openDialog(backend);
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Forgot password?' }));
+    expect(await within(dialog).findAllByText(/Enter your email address/)).not.toHaveLength(0);
+    expect(backend.calls).toEqual([]);
+    fireEvent.change(within(dialog).getByLabelText(/^Email/), { target: { value: EMAIL.email } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Forgot password?' }));
+    expect(await within(dialog).findByText(/link to reset the password/)).toBeInTheDocument();
+    expect(backend.calls).toEqual([`sendPasswordReset:${EMAIL.email}`]);
+  });
+
+  it('shows and hides the password on request', async () => {
+    const { dialog } = await openDialog(new FakeAuthBackend());
+    const field = within(dialog).getByLabelText(/^Password/);
+    expect(field).toHaveAttribute('type', 'password');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Show password' }));
+    expect(field).toHaveAttribute('type', 'text');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Hide password' }));
+    expect(field).toHaveAttribute('type', 'password');
   });
 
   it('turns a duplicate signup into a sign-in suggestion', async () => {

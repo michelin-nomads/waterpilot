@@ -79,7 +79,7 @@ export async function invalidateAfter(
   );
   if (mutation === 'recordManualInput') {
     window.dispatchEvent(
-      new CustomEvent('waterlens:workspace-edit', {
+      new CustomEvent('waterpilot:workspace-edit', {
         detail: { sessionId: str(input, 'sessionId') },
       }),
     );

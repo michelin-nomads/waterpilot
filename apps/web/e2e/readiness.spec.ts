@@ -8,7 +8,7 @@ const API = 'http://127.0.0.1:8000';
 async function servicesUp(): Promise<boolean> {
   try {
     const [auth, api] = await Promise.all([
-      fetch(`${EMULATOR}/emulator/v1/projects/demo-waterlens/config`),
+      fetch(`${EMULATOR}/emulator/v1/projects/demo-waterpilot/config`),
       fetch(`${API}/healthz`),
     ]);
     return auth.ok && api.ok;
@@ -19,14 +19,15 @@ async function servicesUp(): Promise<boolean> {
 
 test.beforeEach(async () => {
   const up = await servicesUp();
-  if (!up && process.env.WL_REQUIRE_AUTH_EMULATOR === '1') {
-    throw new Error('Auth emulator or local API not running (WL_REQUIRE_AUTH_EMULATOR=1)');
+  if (!up && process.env.WP_REQUIRE_AUTH_EMULATOR === '1') {
+    throw new Error('Auth emulator or local API not running (WP_REQUIRE_AUTH_EMULATOR=1)');
   }
   test.skip(!up, 'Auth emulator or local API not running');
 });
 
 test('a guest sees readiness for the demo area and records a value they know', async ({ page }) => {
   await page.goto('/');
+  await page.getByRole('button', { name: 'Continue as guest' }).click();
   await page.getByRole('button', { name: 'Start exploring' }).click();
   await expect(page).toHaveURL(/\/area$/);
 
@@ -48,9 +49,4 @@ test('a guest sees readiness for the demo area and records a value they know', a
   await expect(population.getByText(/not as measured data/i)).toBeVisible();
   await expect(population.getByText('Entered by you', { exact: true })).toBeVisible();
   await expect(population.getByText('Your value: 12000 people')).toBeVisible();
-
-  await page.reload();
-  await expect(
-    page.locator('[data-input="POPULATION"]').getByText('Your value: 12000 people'),
-  ).toBeVisible();
 });

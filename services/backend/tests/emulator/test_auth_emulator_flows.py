@@ -37,7 +37,7 @@ from flows import (
     report_ids,
 )
 from graphql_harness import seed_plan_option
-from waterlens.domain.planning import SessionStatus
+from waterpilot.domain.planning import SessionStatus
 
 pytestmark = pytest.mark.emulator
 

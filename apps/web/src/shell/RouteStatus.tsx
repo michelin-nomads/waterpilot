@@ -45,7 +45,7 @@ export function RouteError() {
       >
         <p>
           {chunkError
-            ? 'The connection may have dropped, or a newer version of WaterLens was published. Reloading fetches the current version.'
+            ? 'The connection may have dropped, or a newer version of WaterPilot was published. Reloading fetches the current version.'
             : 'Reload the page to try again. If it keeps happening, note the time and what you were doing so it can be investigated.'}
         </p>
       </ErrorState>

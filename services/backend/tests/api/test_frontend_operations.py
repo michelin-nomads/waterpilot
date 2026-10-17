@@ -23,7 +23,7 @@ from graphql.language import Visitor
 from strawberry.extensions.max_aliases import create_validator as alias_rule
 from strawberry.extensions.query_depth_limiter import create_validator as depth_rule
 
-from waterlens.api.graphql.schema import MAX_ALIASES, MAX_DEPTH, MAX_TOKENS, build_schema
+from waterpilot.api.graphql.schema import MAX_ALIASES, MAX_DEPTH, MAX_TOKENS, build_schema
 
 OPERATIONS_DIR = Path(__file__).resolve().parents[4] / "apps/web/src/graphql/operations"
 

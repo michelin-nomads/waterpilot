@@ -15,7 +15,7 @@ from typing import Any
 
 import pytest
 
-from waterlens.domain.baseline import (
+from waterpilot.domain.baseline import (
     INDICATORS,
     METRIC_ORDER,
     MIN_SERIES_DAYS,
@@ -37,8 +37,8 @@ from waterlens.domain.baseline import (
     reliable_value,
     reporting_window,
 )
-from waterlens.domain.planning import Capability
-from waterlens.domain.units import CanonicalUnit
+from waterpilot.domain.planning import Capability
+from waterpilot.domain.units import CanonicalUnit
 
 FIXTURES = Path(__file__).resolve().parents[4] / "docs" / "domain" / "fixtures"
 MEGA = Fraction(1_000_000)
@@ -551,7 +551,7 @@ def test_indicators_match_the_registry() -> None:
 
 
 def test_definitions_and_indicator_names_match_the_registry() -> None:
-    from waterlens.domain.baseline import DEFINITIONS, REASON_TEXT
+    from waterpilot.domain.baseline import DEFINITIONS, REASON_TEXT
 
     metrics = {m["id"]: (m["name"], m["formula"]) for m in REGISTRY["metrics"]}
     assert {k: metrics[k] for k in METRIC_ORDER} == DEFINITIONS
@@ -561,8 +561,8 @@ def test_definitions_and_indicator_names_match_the_registry() -> None:
 
 
 def test_missing_days_only_exist_inside_a_recorded_window() -> None:
-    from waterlens.domain.baseline import MetricResult, Origin
-    from waterlens.domain.units import CanonicalUnit
+    from waterpilot.domain.baseline import MetricResult, Origin
+    from waterpilot.domain.units import CanonicalUnit
 
     with pytest.raises(ValueError, match="recorded window"):
         MetricResult(

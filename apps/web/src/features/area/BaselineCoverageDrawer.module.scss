@@ -2,15 +2,15 @@
 
 .content {
   display: grid;
-  gap: var(--wl-card-section-gap);
+  gap: var(--wp-card-section-gap);
   min-width: 0;
 }
 
 .tableScroller {
   overflow: auto;
   max-width: 100%;
-  border: 1px solid var(--wl-color-border);
-  border-radius: var(--wl-radius-md);
+  border: 1px solid var(--wp-color-border);
+  border-radius: var(--wp-radius-md);
 
   &:focus-visible {
     @include focus-ring;
@@ -21,12 +21,12 @@
   width: 100%;
   min-width: 48rem;
   border-collapse: collapse;
-  font-size: var(--wl-text-sm);
+  font-size: var(--wp-text-sm);
 
   th,
   td {
-    padding: var(--wl-space-3);
-    border-bottom: 1px solid var(--wl-color-border);
+    padding: var(--wp-space-3);
+    border-bottom: 1px solid var(--wp-color-border);
     text-align: start;
     vertical-align: top;
     overflow-wrap: anywhere;
@@ -35,7 +35,7 @@
   thead th {
     position: sticky;
     inset-block-start: 0;
-    background: var(--wl-color-surface-sunken);
+    background: var(--wp-color-surface-sunken);
     font-weight: 700;
   }
 
@@ -58,37 +58,37 @@
 .status {
   display: inline-flex;
   padding: 0.15em 0.55em;
-  border-radius: var(--wl-radius-pill);
-  background: var(--wl-color-surface-sunken);
+  border-radius: var(--wp-radius-pill);
+  background: var(--wp-color-surface-sunken);
   font-weight: 600;
   white-space: nowrap;
 }
 
 tr[data-status='Available'] .status {
-  background: var(--wl-color-success-soft);
-  color: var(--wl-color-success);
+  background: var(--wp-color-success-soft);
+  color: var(--wp-color-success);
 }
 
 tr[data-status='Partial'] .status {
-  background: var(--wl-color-warning-soft);
-  color: var(--wl-color-warning);
+  background: var(--wp-color-warning-soft);
+  color: var(--wp-color-warning);
 }
 
 tr[data-status='Unavailable'] .status {
-  background: var(--wl-color-surface-sunken);
-  color: var(--wl-color-text-muted);
+  background: var(--wp-color-surface-sunken);
+  color: var(--wp-color-text-muted);
 }
 
 .limitations {
   display: grid;
-  gap: var(--wl-space-2);
-  padding: var(--wl-space-4);
-  border: 1px solid var(--wl-color-border);
-  border-radius: var(--wl-radius-md);
-  background: var(--wl-color-surface-raised);
+  gap: var(--wp-space-2);
+  padding: var(--wp-space-4);
+  border: 1px solid var(--wp-color-border);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-color-surface-raised);
 
   summary {
-    min-height: var(--wl-tap-target);
+    min-height: var(--wp-tap-target);
     align-content: center;
     font-weight: 700;
     cursor: pointer;
@@ -100,13 +100,13 @@ tr[data-status='Unavailable'] .status {
 
   ul {
     display: grid;
-    gap: var(--wl-space-2);
+    gap: var(--wp-space-2);
     margin: 0;
-    padding-inline-start: var(--wl-space-5);
+    padding-inline-start: var(--wp-space-5);
   }
 
   p {
     margin: 0;
-    color: var(--wl-color-text-muted);
+    color: var(--wp-color-text-muted);
   }
 }

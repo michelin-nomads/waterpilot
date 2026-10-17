@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 
 import { apiClient } from '../../lib/apiClient';
 import { AuthTestProviders } from '../../test/AuthTestProviders';
-import { FakeAuthBackend, permanent } from '../../test/fakeAuth';
+import { FakeAuthBackend, guest, permanent } from '../../test/fakeAuth';
 import { FakeSessionServer } from '../../test/fakeSession';
 import ReviewPage from './Review';
 
@@ -60,9 +60,9 @@ afterEach(() => {
   apiClient.defaults.adapter = originalAdapter;
 });
 
-function renderReview() {
+function renderReview(account: 'guest' | 'permanent' = 'permanent') {
   const sessions = new FakeSessionServer();
-  sessions.seed('user-1', {
+  sessions.seed(account === 'guest' ? 'guest-1' : 'user-1', {
     id: 'ses_1',
     areaId: 'are_1',
     areaName: 'Test ward',
@@ -71,7 +71,10 @@ function renderReview() {
     inputsRevision: 1,
   });
   render(
-    <AuthTestProviders backend={new FakeAuthBackend(permanent())} sessions={sessions}>
+    <AuthTestProviders
+      backend={new FakeAuthBackend(account === 'guest' ? guest() : permanent())}
+      sessions={sessions}
+    >
       <MemoryRouter>
         <ReviewPage />
       </MemoryRouter>
@@ -81,13 +84,28 @@ function renderReview() {
 }
 
 describe('Review page', () => {
+  it('lets a guest review but not finalize: finalizing needs a sign-in, offered here', async () => {
+    renderReview('guest');
+    await screen.findByRole('heading', { name: 'Water-efficient fixtures' });
+    expect(screen.getByText('to finalize and create your report.')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Sign in' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Finalize report' })).toBeDisabled();
+  });
+
+  it('shows no sign-in prompt to a signed-in person', async () => {
+    renderReview();
+    await screen.findByRole('heading', { name: 'Water-efficient fixtures' });
+    expect(screen.queryByText('to finalize and create your report.')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Sign in' })).not.toBeInTheDocument();
+  });
+
   it('shows the comparison name and current figures instead of its internal option ID', async () => {
     renderReview();
     expect(await screen.findByRole('heading', { name: 'Water-efficient fixtures' })).toBeVisible();
     expect(screen.getByText('Test ward')).toBeVisible();
     expect(screen.queryByText('opt_private_id')).not.toBeInTheDocument();
     expect(screen.getByText('30.0% → 15.0%')).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Save report' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Finalize report' })).toBeEnabled();
   });
 
   it('blocks saving when the selected plan impact is stale and links back to Compare', async () => {
@@ -98,6 +116,6 @@ describe('Review page', () => {
       'href',
       '/plans',
     );
-    expect(screen.queryByRole('button', { name: 'Save report' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Finalize report' })).not.toBeInTheDocument();
   });
 });

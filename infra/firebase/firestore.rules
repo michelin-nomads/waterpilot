@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// WaterLens pilot: browser Firestore access is DENIED BY DEFAULT.
+// WaterPilot pilot: browser Firestore access is DENIED BY DEFAULT.
 // All tenant data access goes through the authenticated FastAPI backend
 // (Admin SDK bypasses these rules). See HLD §11. Do not open client access
 // without an ADR; backend tenant enforcement is the real boundary.

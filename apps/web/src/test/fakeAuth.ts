@@ -2,7 +2,8 @@ import type { ClaimApi } from '../auth/accountUpgrade';
 import { AuthFailure } from '../auth/authErrors';
 import type { AuthBackend, AuthMethod, AuthUser, LinkMethod } from '../auth/types';
 
-type Step = 'signInAsGuest' | 'signIn' | 'link' | 'signInWithPendingCredential';
+type Step =
+  'signInAsGuest' | 'signIn' | 'link' | 'signInWithPendingCredential' | 'sendPasswordReset';
 
 /** In-memory stand-in for the Firebase backend, with scriptable failures. */
 export class FakeAuthBackend implements AuthBackend {
@@ -79,6 +80,11 @@ export class FakeAuthBackend implements AuthBackend {
     this.calls.push('signInWithPendingCredential');
     this.fail('signInWithPendingCredential');
     return this.set(this.existing.get('google') ?? null) as AuthUser;
+  };
+
+  sendPasswordReset = async (email: string) => {
+    this.calls.push(`sendPasswordReset:${email}`);
+    this.fail('sendPasswordReset');
   };
 
   signOut = async () => {

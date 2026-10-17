@@ -189,17 +189,17 @@ describe('loadGoogleMaps', () => {
   const script = () => document.head.querySelector('script') as HTMLScriptElement;
 
   it('adds one async script with the key and callback, and resolves on the callback', async () => {
-    const w = window as unknown as { google?: unknown; __waterlensMapsReady?: () => void };
+    const w = window as unknown as { google?: unknown; __waterpilotMapsReady?: () => void };
     const loading = loadGoogleMaps('AIza-test');
     expect(loadGoogleMaps('AIza-test')).toBe(loading);
     const url = new URL(script().src);
     expect(url.origin + url.pathname).toBe('https://maps.googleapis.com/maps/api/js');
     expect(url.searchParams.get('key')).toBe('AIza-test');
     expect(url.searchParams.get('loading')).toBe('async');
-    expect(url.searchParams.get('callback')).toBe('__waterlensMapsReady');
+    expect(url.searchParams.get('callback')).toBe('__waterpilotMapsReady');
     const api = { importLibrary: vi.fn() };
     w.google = { maps: api };
-    w.__waterlensMapsReady?.();
+    w.__waterpilotMapsReady?.();
     await expect(loading).resolves.toBe(api);
     delete w.google;
   });

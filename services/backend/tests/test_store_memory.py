@@ -6,11 +6,11 @@ from __future__ import annotations
 import pytest
 
 from store_contract import StoreContract
-from waterlens.adapters.catalogue_synthetic import (
+from waterpilot.adapters.catalogue_synthetic import (
     synthetic_area_catalogue,
     synthetic_funding_catalogue,
 )
-from waterlens.adapters.store_memory import MemoryStore
+from waterpilot.adapters.store_memory import MemoryStore
 
 
 @pytest.fixture

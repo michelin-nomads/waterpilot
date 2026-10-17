@@ -12,6 +12,8 @@ import {
   Notice,
   Skeleton,
 } from '../../components';
+import { useAuth } from '../../auth/authContext';
+import { Icon } from '../../components/Icon/Icon';
 import { PlanComparisonDocument, type SelectedPlanStatus } from '../../graphql/generated/graphql';
 import { useGraphQLQuery } from '../../graphql/hooks';
 import { queryKeys } from '../../graphql/queryKeys';
@@ -24,11 +26,13 @@ import {
   formatRange,
   TIMING_LABEL,
 } from '../plans/plansFormat';
-import { useFinalizeReport } from './useFinalizeReport';
+import { FINALIZE_SIGN_IN_REASON, useFinalizeReport } from './useFinalizeReport';
 import styles from './Reports.module.scss';
 
 export default function ReviewPage() {
   const session = usePlanningSession();
+  const auth = useAuth();
+  const signedIn = auth.user?.kind === 'permanent';
   const { finalize, isPending, error } = useFinalizeReport();
   const navigate = useNavigate();
   const current = session.state.status === 'ready' ? session.view : null;
@@ -49,6 +53,8 @@ export default function ReviewPage() {
   );
   const [title, setTitle] = useState('Water plan');
   const [message, setMessage] = useState<string | null>(null);
+  // The report replaces the plan: show a neutral state while its page opens.
+  const [finalized, setFinalized] = useState(false);
 
   const found = comparisonQuery.data?.planningSession ?? null;
   const selected = found?.planComparison.options.find(
@@ -58,6 +64,17 @@ export default function ReviewPage() {
   const selectionCurrent = Boolean(
     selected && selectionStatus === 'CURRENT' && !session.inputsPending,
   );
+
+  if (finalized) {
+    return (
+      <div className={styles.reviewPage}>
+        <PageHeader title="Review your plan" />
+        <LoadingRegion label="Opening your report">
+          <Skeleton shape="block" />
+        </LoadingRegion>
+      </div>
+    );
+  }
 
   if (session.state.status === 'loading') {
     return (
@@ -85,7 +102,12 @@ export default function ReviewPage() {
     setMessage(null);
     try {
       const result = await finalize({ sessionId: current.id, title: title.trim() });
-      if (result.status === 'finalized') navigate(`/reports/${result.report.id}?created=1`);
+      if (result.status === 'finalized') {
+        // The finalized report replaces the plan, which is not kept as a draft.
+        setFinalized(true);
+        session.coordinator?.discard();
+        navigate(`/reports/${result.report.id}?created=1`);
+      }
       if (result.status === 'cancelled')
         setMessage('Sign-in was cancelled. Nothing was finalized.');
       if (result.status === 'busy') setMessage('Finalization is already in progress.');
@@ -258,17 +280,32 @@ export default function ReviewPage() {
                 {message ?? 'Finalization failed. Please try again.'}
               </p>
             )}
+            {!signedIn && (
+              <div className={styles.signInBar}>
+                <Icon name="lock" size="lg" className={styles.signInIcon} />
+                <p className={styles.signInText}>
+                  <strong>Sign in</strong> to finalize and create your report.
+                </p>
+                <button
+                  type="button"
+                  className={styles.signInLink}
+                  onClick={() => void auth.openSignIn(FINALIZE_SIGN_IN_REASON)}
+                >
+                  Sign in
+                </button>
+              </div>
+            )}
             <div className={styles.actions}>
-              <Button
-                loading={isPending}
-                disabled={!title.trim() || session.inputsPending || !selectionCurrent}
-                onClick={() => void submit()}
-              >
-                Save report
-              </Button>
               <ButtonLink to="/plans" variant="secondary">
                 Back to plans
               </ButtonLink>
+              <Button
+                loading={isPending}
+                disabled={!signedIn || !title.trim() || session.inputsPending || !selectionCurrent}
+                onClick={() => void submit()}
+              >
+                Finalize report
+              </Button>
             </div>
           </section>
         </>

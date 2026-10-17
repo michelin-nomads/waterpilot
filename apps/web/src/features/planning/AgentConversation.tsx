@@ -72,8 +72,8 @@ export default function AgentConversation({
         void agentCommand(`/${rid}/workspace`).catch((err) => setError(err.message));
       }
     };
-    window.addEventListener('waterlens:workspace-edit', notify);
-    return () => window.removeEventListener('waterlens:workspace-edit', notify);
+    window.addEventListener('waterpilot:workspace-edit', notify);
+    return () => window.removeEventListener('waterpilot:workspace-edit', notify);
   }, [sid, rid, coordinator]);
   useEffect(() => {
     if (!rid || !sid) return;

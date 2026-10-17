@@ -8,14 +8,14 @@ import pytest
 from firestore_support import firestore_store  # noqa: F401 - fixture injected by name
 
 from test_locations import ANA, BEN, NOW, candidate_input, ctx, key
-from waterlens.adapters.catalogue_synthetic import SYNTHETIC_AREA_ID
-from waterlens.adapters.jobqueue_memory import MemoryJobQueue
-from waterlens.adapters.places_fixture import FixturePlaceSearch
-from waterlens.adapters.store_firestore import FirestoreStore
-from waterlens.application.pagination import PageArgs
-from waterlens.application.services import Deps, Services
-from waterlens.domain.errors import DomainError, ErrorCode
-from waterlens.domain.location import AreaOrigin, ExtentKind, UnitSystem
+from waterpilot.adapters.catalogue_synthetic import SYNTHETIC_AREA_ID
+from waterpilot.adapters.jobqueue_memory import MemoryJobQueue
+from waterpilot.adapters.places_fixture import FixturePlaceSearch
+from waterpilot.adapters.store_firestore import FirestoreStore
+from waterpilot.application.pagination import PageArgs
+from waterpilot.application.services import Deps, Services
+from waterpilot.domain.errors import DomainError, ErrorCode
+from waterpilot.domain.location import AreaOrigin, ExtentKind, UnitSystem
 
 pytestmark = pytest.mark.emulator
 

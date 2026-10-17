@@ -1,7 +1,7 @@
-"""Fixtures for tests against a **running Firestore emulator** (``demo-waterlens``).
+"""Fixtures for tests against a **running Firestore emulator** (``demo-waterpilot``).
 
 ``npm run test:emulator`` starts the Auth and Firestore emulators and sets
-``WL_REQUIRE_AUTH_EMULATOR=1``, so an unreachable emulator fails instead of skipping.
+``WP_REQUIRE_AUTH_EMULATOR=1``, so an unreachable emulator fails instead of skipping.
 Every test starts from an empty database.
 """
 
@@ -12,16 +12,16 @@ import os
 import httpx
 import pytest
 
-from waterlens.adapters.catalogue_synthetic import (
+from waterpilot.adapters.catalogue_synthetic import (
     synthetic_area_catalogue,
     synthetic_funding_catalogue,
 )
-from waterlens.adapters.store_firestore import FirestoreStore, emulator_client
+from waterpilot.adapters.store_firestore import FirestoreStore, emulator_client
 
 # Read before the autouse fixture strips emulator variables from each test's environment.
 FIRESTORE_HOST = os.environ.get("FIRESTORE_EMULATOR_HOST") or "127.0.0.1:8080"
-REQUIRED = os.environ.get("WL_REQUIRE_AUTH_EMULATOR") == "1"
-PROJECT = "demo-waterlens"
+REQUIRED = os.environ.get("WP_REQUIRE_AUTH_EMULATOR") == "1"
+PROJECT = "demo-waterpilot"
 _BASE = f"http://{FIRESTORE_HOST}"
 
 
