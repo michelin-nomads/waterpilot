@@ -1,0 +1,26 @@
+@use 'mixins' as *;
+
+.panel,
+.form,
+.result {
+  display: grid;
+  min-width: 0;
+  gap: var(--wl-card-section-gap);
+}
+
+.panel {
+  @include card;
+}
+
+.result table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.result th,
+.result td {
+  padding: var(--wl-space-3);
+  text-align: left;
+  border-bottom: 1px solid var(--wl-color-border);
+  overflow-wrap: anywhere;
+}

@@ -37,6 +37,7 @@ export function LocationStep({ onConfirmed, onCancel, extraActions }: LocationSt
   const adapter = usePlaces();
   const { confirm, pending, canSave } = useConfirmLocation();
   const [phase, setPhase] = useState<Phase>({ kind: 'choose' });
+  const [previewRadius, setPreviewRadius] = useState<number | null>(null);
   const [locating, setLocating] = useState(false);
   const [geoOutcome, setGeoOutcome] = useState<Exclude<GeolocationOutcome['kind'], 'fix'> | null>(
     null,
@@ -45,6 +46,7 @@ export function LocationStep({ onConfirmed, onCancel, extraActions }: LocationSt
 
   const review = (draft: LocationDraft) => {
     setFailure(NO_FAILURE);
+    setPreviewRadius(null);
     setPhase({ kind: 'review', draft });
   };
   const back = () => {
@@ -126,8 +128,15 @@ export function LocationStep({ onConfirmed, onCancel, extraActions }: LocationSt
 
   const reviewed = phase.kind === 'review' ? phase.draft.place : null;
   const mapPoint = useMemo(
-    () => (reviewed ? { latitude: reviewed.latitude, longitude: reviewed.longitude } : null),
-    [reviewed],
+    () =>
+      reviewed
+        ? {
+            latitude: reviewed.latitude,
+            longitude: reviewed.longitude,
+            radiusMeters: previewRadius,
+          }
+        : null,
+    [reviewed, previewRadius],
   );
 
   return (
@@ -138,6 +147,7 @@ export function LocationStep({ onConfirmed, onCancel, extraActions }: LocationSt
         )}
         {phase.kind === 'review' ? (
           <CandidateReview
+            onExtentPreview={setPreviewRadius}
             draft={phase.draft}
             pending={pending}
             canSave={canSave}

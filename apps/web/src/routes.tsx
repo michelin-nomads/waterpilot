@@ -82,7 +82,13 @@ export const routes: RouteObject[] = [
             ],
           },
           ...(env.appMode === 'local'
-            ? [{ path: 'design-system', lazy: lazyPage(() => import('./features/design-system')) }]
+            ? [
+                { path: 'design-system', lazy: lazyPage(() => import('./features/design-system')) },
+                {
+                  path: 'simulations/sjr-parkway-homes',
+                  lazy: lazyPage(() => import('./features/simulation')),
+                },
+              ]
             : []),
           { path: '*', element: <NotFoundPage /> },
         ],

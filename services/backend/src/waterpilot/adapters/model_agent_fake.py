@@ -1,5 +1,6 @@
 """Local-only deterministic tool dialogue. No network or live model."""
 
+import json
 from collections.abc import Callable
 
 from waterpilot.adapters.model_fake import response
@@ -18,6 +19,21 @@ class LocalAgentProvider:
     ) -> ModelResponse:
         if is_cancelled and is_cancelled():
             raise ModelCancelled()
+        if request.task == "area_assumptions":
+            # Deliberately fixed fake values, never purported city-specific measurements.
+            return response(
+                json.dumps(
+                    {
+                        "residents_per_home": 4,
+                        "per_capita_lpd": {"low": "80", "value": "100", "high": "135"},
+                        "delivered_supply_lpd": {"low": "20000", "value": "30000", "high": "40000"},
+                        "tanker_supply_lpd": {"low": "5000", "value": "10000", "high": "15000"},
+                        "rationale": "Fixed fake example; not city research or real records.",
+                    }
+                ),
+                input_tokens=600,
+                output_tokens=250,
+            )
         conversation = request.prompt.split("Authoritative workspace:", 1)[0]
         last_user = conversation.rfind("user:")
         last_response = conversation.rfind("function_response:")

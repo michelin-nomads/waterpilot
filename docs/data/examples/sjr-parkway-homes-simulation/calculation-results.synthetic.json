@@ -1,0 +1,6105 @@
+{
+  "schema": "csv-calculations-1",
+  "calculation_id": "8982e02724a0a9f74faa4f9147db565d3f086a33a23bd763c7fe9c34fd7a7147",
+  "csv_sha256": "46050cd657eeb88481f9f5058c2398cddf08a96ad9e98d4916a127ebc343cec8",
+  "manifest": {
+    "id": "sjr-parkway-homes-illustrative-only",
+    "record_kind": "registered_source",
+    "title": "SJR Parkway Homes — SYNTHETIC SIMULATION, not operating records",
+    "publisher": "WaterLens project-authored simulation; not the society or developer",
+    "source_url": "https://example.invalid/waterlens/sjr-parkway-homes-simulation",
+    "licence": {
+      "name": "Project-authored synthetic numbers only; excludes cited websites",
+      "url": null,
+      "usage_rights": "open",
+      "attribution_text": null,
+      "authorization": {
+        "status": "authorized",
+        "authorized_uses": ["internal_analysis", "derived_metrics", "pilot_display"],
+        "reviewed_at": "2026-10-17",
+        "evidence_ref": "User authorized invented demo data; README.md and assumptions.json. No society-record licence or scientific review implied.",
+        "conditions": null
+      }
+    },
+    "capability": "utility_supply",
+    "variables": [
+      {
+        "name": "delivered_supply",
+        "parameter": null,
+        "raw_unit": "L/day",
+        "normalized_unit": "L/day",
+        "band_or_field": "delivered_supply_lpd",
+        "scale_meters": null,
+        "uncertainty": {
+          "kind": "not_quantified",
+          "value": null,
+          "basis": "Invented regime plus deterministic seven-day variation. Not a measurement or forecast."
+        }
+      },
+      {
+        "name": "tanker_supply",
+        "parameter": null,
+        "raw_unit": "L/day",
+        "normalized_unit": "L/day",
+        "band_or_field": "tanker_supply_lpd",
+        "scale_meters": null,
+        "uncertainty": {
+          "kind": "not_quantified",
+          "value": null,
+          "basis": "Invented regime plus deterministic seven-day variation. Not a measurement or forecast."
+        }
+      }
+    ],
+    "temporal_coverage": {
+      "start": "2025-10-17",
+      "end_exclusive": "2026-10-17",
+      "boundary": "half_open_start_inclusive_end_exclusive",
+      "timezone": "Asia/Kolkata"
+    },
+    "spatial_coverage": {
+      "type": "admin_area",
+      "crs": "EPSG:4326",
+      "bbox": null,
+      "geojson_object_ref": null,
+      "admin_area_id": "simulation-sjr-parkway-homes-only",
+      "admin_area_scheme": "waterlens-virtual-simulation-not-a-real-boundary"
+    },
+    "observation_timestamp": null,
+    "ingestion_timestamp": null,
+    "retrieved_at": null,
+    "quality_status": "synthetic",
+    "quality_flags": ["invented-daily-series", "not-society-evidence", "sjr-illustrative-1"],
+    "transformation_version": null,
+    "transformations": null,
+    "checksum": null,
+    "raw_object_ref": null,
+    "normalized_object_ref": null,
+    "access_tier": "local_measured",
+    "eligibility_notes": "Offline simulation only. No real service boundary is supplied. Never attach to a Google-selected area, validate as measured, or merge into real society evidence.",
+    "requires_local_measurement": false,
+    "observation_method": "model_output",
+    "supersedes": null,
+    "registered_source_id": null
+  },
+  "inputs": {
+    "start": "2025-10-17",
+    "end_exclusive": "2026-10-17",
+    "population": "3600",
+    "per_capita_lpd": "135",
+    "non_domestic_lpd": "14000",
+    "assumptions_note": "SJR Parkway Homes context only; SYNTHETIC 900 occupied homes x 4 residents, 135 L/person/day plus 14000 L/day common demand. All water/cost/effect values are invented for demonstration, not society records or reviewed local standards.",
+    "adjustments": [],
+    "goal": {
+      "kind": "reduce_tanker_dependence",
+      "description": "",
+      "target": {
+        "mode": "absolute_level",
+        "quantity": {
+          "value": "0.35",
+          "unit": "ratio"
+        }
+      },
+      "target_parameter": null,
+      "budget": null,
+      "timeline_days": null,
+      "horizon_days": 3650,
+      "water_tariff": {
+        "price": {
+          "minor_units": "90000",
+          "currency": "INR"
+        },
+        "volume": {
+          "value": "10000",
+          "unit": "L"
+        },
+        "note": "SYNTHETIC INR 900 per 10000 L; no actual invoice or quotation."
+      },
+      "contingency_ratio": "0.1",
+      "funding": [],
+      "priority": null,
+      "also": [],
+      "site": {
+        "scale": "building",
+        "roof_area": null,
+        "open_ground": null,
+        "storage_space": null,
+        "piped_supply": true,
+        "groundwater_use": null,
+        "restrictions": []
+      },
+      "preferred_interventions": [],
+      "estimates": [
+        {
+          "intervention_id": "efficient_fixtures",
+          "cost": {
+            "low": {
+              "minor_units": "180000000",
+              "currency": "INR"
+            },
+            "high": {
+              "minor_units": "240000000",
+              "currency": "INR"
+            }
+          },
+          "recurring": {
+            "low": {
+              "minor_units": "1200000",
+              "currency": "INR"
+            },
+            "high": {
+              "minor_units": "1800000",
+              "currency": "INR"
+            }
+          },
+          "build_days": {
+            "low": 30,
+            "high": 60
+          },
+          "effects": [
+            {
+              "key": "demand_reduction",
+              "low": "0.08",
+              "high": "0.12"
+            }
+          ],
+          "note": "SYNTHETIC rollout: 8–12% savings, INR 18–24 lakh capital, INR 12000–18000/year maintenance, 30–60 days. No assessment of installed fixtures or vendor quotation."
+        }
+      ],
+      "confirmed": false
+    }
+  },
+  "synthetic": true,
+  "baseline_engine_version": "baseline-1",
+  "economics_engine_version": "economics-1",
+  "baseline": {
+    "window": {
+      "start": "2025-10-17",
+      "end_exclusive": "2026-10-17"
+    },
+    "exceedance_p": {
+      "exact": "9/10",
+      "decimal": "0.9"
+    },
+    "metrics": [
+      {
+        "metric": "demand",
+        "unit": "L/day",
+        "value": {
+          "exact": "500000",
+          "decimal": "500000"
+        },
+        "reason": null,
+        "inputs": ["demand"],
+        "origin": "user_estimate",
+        "daily": false,
+        "assumptions": ["Demand is the same every day: population x per-person need."],
+        "supporting": [],
+        "missing_days": 0,
+        "period_days": null
+      },
+      {
+        "metric": "delivered_supply",
+        "unit": "L/day",
+        "value": {
+          "exact": "32918800/73",
+          "decimal": "450942.4657534246575342465753"
+        },
+        "reason": null,
+        "inputs": ["delivered_supply"],
+        "origin": "user_estimate",
+        "daily": true,
+        "assumptions": [],
+        "supporting": [],
+        "missing_days": 0,
+        "period_days": 365
+      },
+      {
+        "metric": "reliable_supply",
+        "unit": "L/day",
+        "value": {
+          "exact": "398000",
+          "decimal": "398000"
+        },
+        "reason": null,
+        "inputs": ["delivered_supply"],
+        "origin": "user_estimate",
+        "daily": true,
+        "assumptions": [],
+        "supporting": [],
+        "missing_days": 0,
+        "period_days": 365
+      },
+      {
+        "metric": "deficit",
+        "unit": "L/day",
+        "value": {
+          "exact": "102000",
+          "decimal": "102000"
+        },
+        "reason": null,
+        "inputs": ["demand", "delivered_supply"],
+        "origin": "user_estimate",
+        "daily": true,
+        "assumptions": ["Demand is the same every day: population x per-person need."],
+        "supporting": [],
+        "missing_days": 0,
+        "period_days": 365
+      },
+      {
+        "metric": "dependable_supply_ratio",
+        "unit": "ratio",
+        "value": {
+          "exact": "199/250",
+          "decimal": "0.796"
+        },
+        "reason": null,
+        "inputs": ["demand", "delivered_supply"],
+        "origin": "user_estimate",
+        "daily": true,
+        "assumptions": ["Demand is the same every day: population x per-person need."],
+        "supporting": [],
+        "missing_days": 0,
+        "period_days": 365
+      },
+      {
+        "metric": "volume_reliability",
+        "unit": "ratio",
+        "value": {
+          "exact": "16209/18250",
+          "decimal": "0.8881643835616438356164383562"
+        },
+        "reason": null,
+        "inputs": ["demand", "delivered_supply"],
+        "origin": "user_estimate",
+        "daily": true,
+        "assumptions": ["Demand is the same every day: population x per-person need."],
+        "supporting": [],
+        "missing_days": 0,
+        "period_days": 365
+      },
+      {
+        "metric": "time_reliability",
+        "unit": "ratio",
+        "value": {
+          "exact": "25/73",
+          "decimal": "0.3424657534246575342465753425"
+        },
+        "reason": null,
+        "inputs": ["demand", "delivered_supply"],
+        "origin": "user_estimate",
+        "daily": true,
+        "assumptions": ["Demand is the same every day: population x per-person need."],
+        "supporting": [],
+        "missing_days": 0,
+        "period_days": 365
+      },
+      {
+        "metric": "shortage_days",
+        "unit": "day",
+        "value": {
+          "exact": "240",
+          "decimal": "240"
+        },
+        "reason": null,
+        "inputs": ["demand", "delivered_supply"],
+        "origin": "user_estimate",
+        "daily": true,
+        "assumptions": ["Demand is the same every day: population x per-person need."],
+        "supporting": [
+          {
+            "key": "daily_deficit_total",
+            "value": {
+              "exact": "20410000",
+              "decimal": "20410000"
+            },
+            "unit": "L"
+          }
+        ],
+        "missing_days": 0,
+        "period_days": 365
+      },
+      {
+        "metric": "tanker_dependence",
+        "unit": "ratio",
+        "value": {
+          "exact": "3841/9682",
+          "decimal": "0.3967155546374715967775253047"
+        },
+        "reason": null,
+        "inputs": ["tanker_supply", "delivered_supply"],
+        "origin": "user_estimate",
+        "daily": true,
+        "assumptions": [],
+        "supporting": [],
+        "missing_days": 0,
+        "period_days": 365
+      },
+      {
+        "metric": "days_until_shortage",
+        "unit": "day",
+        "value": null,
+        "reason": "needs_forward_series",
+        "inputs": ["forward_series"],
+        "origin": null,
+        "daily": true,
+        "assumptions": [],
+        "supporting": [],
+        "missing_days": 0,
+        "period_days": null
+      }
+    ],
+    "chart": {
+      "buckets": [
+        {
+          "start": "2025-10-17",
+          "end_exclusive": "2025-11-01"
+        },
+        {
+          "start": "2025-11-01",
+          "end_exclusive": "2025-12-01"
+        },
+        {
+          "start": "2025-12-01",
+          "end_exclusive": "2026-01-01"
+        },
+        {
+          "start": "2026-01-01",
+          "end_exclusive": "2026-02-01"
+        },
+        {
+          "start": "2026-02-01",
+          "end_exclusive": "2026-03-01"
+        },
+        {
+          "start": "2026-03-01",
+          "end_exclusive": "2026-04-01"
+        },
+        {
+          "start": "2026-04-01",
+          "end_exclusive": "2026-05-01"
+        },
+        {
+          "start": "2026-05-01",
+          "end_exclusive": "2026-06-01"
+        },
+        {
+          "start": "2026-06-01",
+          "end_exclusive": "2026-07-01"
+        },
+        {
+          "start": "2026-07-01",
+          "end_exclusive": "2026-08-01"
+        },
+        {
+          "start": "2026-08-01",
+          "end_exclusive": "2026-09-01"
+        },
+        {
+          "start": "2026-09-01",
+          "end_exclusive": "2026-10-01"
+        },
+        {
+          "start": "2026-10-01",
+          "end_exclusive": "2026-10-17"
+        }
+      ],
+      "series": [
+        [
+          "delivered_supply",
+          [
+            {
+              "exact": "429600",
+              "decimal": "429600"
+            },
+            {
+              "exact": "429800",
+              "decimal": "429800"
+            },
+            {
+              "exact": "13336000/31",
+              "decimal": "430193.5483870967741935483871"
+            },
+            {
+              "exact": "13326000/31",
+              "decimal": "429870.9677419354838709677419"
+            },
+            {
+              "exact": "2897500/7",
+              "decimal": "413928.5714285714285714285714"
+            },
+            {
+              "exact": "400000",
+              "decimal": "400000"
+            },
+            {
+              "exact": "1201000/3",
+              "decimal": "400333.3333333333333333333333"
+            },
+            {
+              "exact": "12388000/31",
+              "decimal": "399612.9032258064516129032258"
+            },
+            {
+              "exact": "1404200/3",
+              "decimal": "468066.6666666666666666666667"
+            },
+            {
+              "exact": "16124000/31",
+              "decimal": "520129.0322580645161290322581"
+            },
+            {
+              "exact": "16114000/31",
+              "decimal": "519806.4516129032258064516129"
+            },
+            {
+              "exact": "520200",
+              "decimal": "520200"
+            },
+            {
+              "exact": "520000",
+              "decimal": "520000"
+            }
+          ]
+        ],
+        [
+          "demand",
+          [
+            {
+              "exact": "500000",
+              "decimal": "500000"
+            },
+            {
+              "exact": "500000",
+              "decimal": "500000"
+            },
+            {
+              "exact": "500000",
+              "decimal": "500000"
+            },
+            {
+              "exact": "500000",
+              "decimal": "500000"
+            },
+            {
+              "exact": "500000",
+              "decimal": "500000"
+            },
+            {
+              "exact": "500000",
+              "decimal": "500000"
+            },
+            {
+              "exact": "500000",
+              "decimal": "500000"
+            },
+            {
+              "exact": "500000",
+              "decimal": "500000"
+            },
+            {
+              "exact": "500000",
+              "decimal": "500000"
+            },
+            {
+              "exact": "500000",
+              "decimal": "500000"
+            },
+            {
+              "exact": "500000",
+              "decimal": "500000"
+            },
+            {
+              "exact": "500000",
+              "decimal": "500000"
+            },
+            {
+              "exact": "500000",
+              "decimal": "500000"
+            }
+          ]
+        ],
+        [
+          "tanker_supply",
+          [
+            {
+              "exact": "209800",
+              "decimal": "209800"
+            },
+            {
+              "exact": "209900",
+              "decimal": "209900"
+            },
+            {
+              "exact": "6513000/31",
+              "decimal": "210096.7741935483870967741935"
+            },
+            {
+              "exact": "6508000/31",
+              "decimal": "209935.483870967741935483871"
+            },
+            {
+              "exact": "1545000/7",
+              "decimal": "220714.2857142857142857142857"
+            },
+            {
+              "exact": "230000",
+              "decimal": "230000"
+            },
+            {
+              "exact": "690500/3",
+              "decimal": "230166.6666666666666666666667"
+            },
+            {
+              "exact": "7124000/31",
+              "decimal": "229806.4516129032258064516129"
+            },
+            {
+              "exact": "469100/3",
+              "decimal": "156366.6666666666666666666667"
+            },
+            {
+              "exact": "3102000/31",
+              "decimal": "100064.516129032258064516129"
+            },
+            {
+              "exact": "3097000/31",
+              "decimal": "99903.22580645161290322580645"
+            },
+            {
+              "exact": "100100",
+              "decimal": "100100"
+            },
+            {
+              "exact": "100000",
+              "decimal": "100000"
+            }
+          ]
+        ]
+      ],
+      "monthly": true
+    }
+  },
+  "formulas": {
+    "demand": ["Demand", "demand_day = population * per_capita_lpcd + non_domestic_demand_day"],
+    "delivered_supply": [
+      "Delivered supply",
+      "delivered_supply_day = sum(contribution_source_day) over sources"
+    ],
+    "reliable_supply": [
+      "Reliable supply (dependable yield)",
+      "max{ v : P(delivered_supply_day >= v) >= p }"
+    ],
+    "deficit": ["Deficit (reliable-supply basis)", "max(0, demand - reliable_supply)"],
+    "dependable_supply_ratio": ["Dependable-supply ratio", "reliable_supply / demand"],
+    "volume_reliability": [
+      "Volume reliability",
+      "sum(min(delivered_supply_day, demand_day)) / sum(demand_day)"
+    ],
+    "time_reliability": [
+      "Time reliability",
+      "count{ day : delivered_supply_day >= demand_day } / count{ day in window }"
+    ],
+    "shortage_days": [
+      "Shortage-day count",
+      "count{ day in [start,end) : delivered_supply_day < demand_day }"
+    ],
+    "tanker_dependence": [
+      "Tanker dependence",
+      "sum(tanker_contribution_day) / sum(delivered_supply_day)"
+    ],
+    "days_until_shortage": [
+      "Days until shortage (lead time)",
+      "min{ day - reference_date : day >= reference_date, delivered_supply_day < demand_day }"
+    ]
+  },
+  "delivered_volume_l": {
+    "exact": "164594000",
+    "decimal": "164594000"
+  },
+  "tanker_volume_l": {
+    "exact": "65297000",
+    "decimal": "65297000"
+  },
+  "scenario": {
+    "balance": {
+      "demand": {
+        "exact": "500000",
+        "decimal": "500000"
+      },
+      "piped": {
+        "exact": "19859400/73",
+        "decimal": "272046.5753424657534246575342"
+      },
+      "tanker": {
+        "exact": "13059400/73",
+        "decimal": "178895.8904109589041095890411"
+      },
+      "rainfall_per_year": null,
+      "days": [
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "217000",
+            "decimal": "217000"
+          },
+          "tanker": {
+            "exact": "207000",
+            "decimal": "207000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "218000",
+            "decimal": "218000"
+          },
+          "tanker": {
+            "exact": "208000",
+            "decimal": "208000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "219000",
+            "decimal": "219000"
+          },
+          "tanker": {
+            "exact": "209000",
+            "decimal": "209000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "220000",
+            "decimal": "220000"
+          },
+          "tanker": {
+            "exact": "210000",
+            "decimal": "210000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "221000",
+            "decimal": "221000"
+          },
+          "tanker": {
+            "exact": "211000",
+            "decimal": "211000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "222000",
+            "decimal": "222000"
+          },
+          "tanker": {
+            "exact": "212000",
+            "decimal": "212000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "223000",
+            "decimal": "223000"
+          },
+          "tanker": {
+            "exact": "213000",
+            "decimal": "213000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "217000",
+            "decimal": "217000"
+          },
+          "tanker": {
+            "exact": "207000",
+            "decimal": "207000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "218000",
+            "decimal": "218000"
+          },
+          "tanker": {
+            "exact": "208000",
+            "decimal": "208000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "219000",
+            "decimal": "219000"
+          },
+          "tanker": {
+            "exact": "209000",
+            "decimal": "209000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "220000",
+            "decimal": "220000"
+          },
+          "tanker": {
+            "exact": "210000",
+            "decimal": "210000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "221000",
+            "decimal": "221000"
+          },
+          "tanker": {
+            "exact": "211000",
+            "decimal": "211000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "222000",
+            "decimal": "222000"
+          },
+          "tanker": {
+            "exact": "212000",
+            "decimal": "212000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "223000",
+            "decimal": "223000"
+          },
+          "tanker": {
+            "exact": "213000",
+            "decimal": "213000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "217000",
+            "decimal": "217000"
+          },
+          "tanker": {
+            "exact": "207000",
+            "decimal": "207000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "218000",
+            "decimal": "218000"
+          },
+          "tanker": {
+            "exact": "208000",
+            "decimal": "208000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "219000",
+            "decimal": "219000"
+          },
+          "tanker": {
+            "exact": "209000",
+            "decimal": "209000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "220000",
+            "decimal": "220000"
+          },
+          "tanker": {
+            "exact": "210000",
+            "decimal": "210000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "221000",
+            "decimal": "221000"
+          },
+          "tanker": {
+            "exact": "211000",
+            "decimal": "211000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "222000",
+            "decimal": "222000"
+          },
+          "tanker": {
+            "exact": "212000",
+            "decimal": "212000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "223000",
+            "decimal": "223000"
+          },
+          "tanker": {
+            "exact": "213000",
+            "decimal": "213000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "217000",
+            "decimal": "217000"
+          },
+          "tanker": {
+            "exact": "207000",
+            "decimal": "207000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "218000",
+            "decimal": "218000"
+          },
+          "tanker": {
+            "exact": "208000",
+            "decimal": "208000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "219000",
+            "decimal": "219000"
+          },
+          "tanker": {
+            "exact": "209000",
+            "decimal": "209000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "220000",
+            "decimal": "220000"
+          },
+          "tanker": {
+            "exact": "210000",
+            "decimal": "210000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "221000",
+            "decimal": "221000"
+          },
+          "tanker": {
+            "exact": "211000",
+            "decimal": "211000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "222000",
+            "decimal": "222000"
+          },
+          "tanker": {
+            "exact": "212000",
+            "decimal": "212000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "223000",
+            "decimal": "223000"
+          },
+          "tanker": {
+            "exact": "213000",
+            "decimal": "213000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "217000",
+            "decimal": "217000"
+          },
+          "tanker": {
+            "exact": "207000",
+            "decimal": "207000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "218000",
+            "decimal": "218000"
+          },
+          "tanker": {
+            "exact": "208000",
+            "decimal": "208000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "219000",
+            "decimal": "219000"
+          },
+          "tanker": {
+            "exact": "209000",
+            "decimal": "209000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "220000",
+            "decimal": "220000"
+          },
+          "tanker": {
+            "exact": "210000",
+            "decimal": "210000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "221000",
+            "decimal": "221000"
+          },
+          "tanker": {
+            "exact": "211000",
+            "decimal": "211000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "222000",
+            "decimal": "222000"
+          },
+          "tanker": {
+            "exact": "212000",
+            "decimal": "212000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "223000",
+            "decimal": "223000"
+          },
+          "tanker": {
+            "exact": "213000",
+            "decimal": "213000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "217000",
+            "decimal": "217000"
+          },
+          "tanker": {
+            "exact": "207000",
+            "decimal": "207000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "218000",
+            "decimal": "218000"
+          },
+          "tanker": {
+            "exact": "208000",
+            "decimal": "208000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "219000",
+            "decimal": "219000"
+          },
+          "tanker": {
+            "exact": "209000",
+            "decimal": "209000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "220000",
+            "decimal": "220000"
+          },
+          "tanker": {
+            "exact": "210000",
+            "decimal": "210000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "221000",
+            "decimal": "221000"
+          },
+          "tanker": {
+            "exact": "211000",
+            "decimal": "211000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "222000",
+            "decimal": "222000"
+          },
+          "tanker": {
+            "exact": "212000",
+            "decimal": "212000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "223000",
+            "decimal": "223000"
+          },
+          "tanker": {
+            "exact": "213000",
+            "decimal": "213000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "217000",
+            "decimal": "217000"
+          },
+          "tanker": {
+            "exact": "207000",
+            "decimal": "207000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "218000",
+            "decimal": "218000"
+          },
+          "tanker": {
+            "exact": "208000",
+            "decimal": "208000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "219000",
+            "decimal": "219000"
+          },
+          "tanker": {
+            "exact": "209000",
+            "decimal": "209000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "220000",
+            "decimal": "220000"
+          },
+          "tanker": {
+            "exact": "210000",
+            "decimal": "210000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "221000",
+            "decimal": "221000"
+          },
+          "tanker": {
+            "exact": "211000",
+            "decimal": "211000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "222000",
+            "decimal": "222000"
+          },
+          "tanker": {
+            "exact": "212000",
+            "decimal": "212000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "223000",
+            "decimal": "223000"
+          },
+          "tanker": {
+            "exact": "213000",
+            "decimal": "213000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "217000",
+            "decimal": "217000"
+          },
+          "tanker": {
+            "exact": "207000",
+            "decimal": "207000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "218000",
+            "decimal": "218000"
+          },
+          "tanker": {
+            "exact": "208000",
+            "decimal": "208000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "219000",
+            "decimal": "219000"
+          },
+          "tanker": {
+            "exact": "209000",
+            "decimal": "209000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "220000",
+            "decimal": "220000"
+          },
+          "tanker": {
+            "exact": "210000",
+            "decimal": "210000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "221000",
+            "decimal": "221000"
+          },
+          "tanker": {
+            "exact": "211000",
+            "decimal": "211000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "222000",
+            "decimal": "222000"
+          },
+          "tanker": {
+            "exact": "212000",
+            "decimal": "212000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "223000",
+            "decimal": "223000"
+          },
+          "tanker": {
+            "exact": "213000",
+            "decimal": "213000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "217000",
+            "decimal": "217000"
+          },
+          "tanker": {
+            "exact": "207000",
+            "decimal": "207000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "218000",
+            "decimal": "218000"
+          },
+          "tanker": {
+            "exact": "208000",
+            "decimal": "208000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "219000",
+            "decimal": "219000"
+          },
+          "tanker": {
+            "exact": "209000",
+            "decimal": "209000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "220000",
+            "decimal": "220000"
+          },
+          "tanker": {
+            "exact": "210000",
+            "decimal": "210000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "221000",
+            "decimal": "221000"
+          },
+          "tanker": {
+            "exact": "211000",
+            "decimal": "211000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "222000",
+            "decimal": "222000"
+          },
+          "tanker": {
+            "exact": "212000",
+            "decimal": "212000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "223000",
+            "decimal": "223000"
+          },
+          "tanker": {
+            "exact": "213000",
+            "decimal": "213000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "217000",
+            "decimal": "217000"
+          },
+          "tanker": {
+            "exact": "207000",
+            "decimal": "207000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "218000",
+            "decimal": "218000"
+          },
+          "tanker": {
+            "exact": "208000",
+            "decimal": "208000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "219000",
+            "decimal": "219000"
+          },
+          "tanker": {
+            "exact": "209000",
+            "decimal": "209000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "220000",
+            "decimal": "220000"
+          },
+          "tanker": {
+            "exact": "210000",
+            "decimal": "210000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "221000",
+            "decimal": "221000"
+          },
+          "tanker": {
+            "exact": "211000",
+            "decimal": "211000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "222000",
+            "decimal": "222000"
+          },
+          "tanker": {
+            "exact": "212000",
+            "decimal": "212000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "223000",
+            "decimal": "223000"
+          },
+          "tanker": {
+            "exact": "213000",
+            "decimal": "213000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "217000",
+            "decimal": "217000"
+          },
+          "tanker": {
+            "exact": "207000",
+            "decimal": "207000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "218000",
+            "decimal": "218000"
+          },
+          "tanker": {
+            "exact": "208000",
+            "decimal": "208000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "219000",
+            "decimal": "219000"
+          },
+          "tanker": {
+            "exact": "209000",
+            "decimal": "209000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "220000",
+            "decimal": "220000"
+          },
+          "tanker": {
+            "exact": "210000",
+            "decimal": "210000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "221000",
+            "decimal": "221000"
+          },
+          "tanker": {
+            "exact": "211000",
+            "decimal": "211000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "222000",
+            "decimal": "222000"
+          },
+          "tanker": {
+            "exact": "212000",
+            "decimal": "212000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "223000",
+            "decimal": "223000"
+          },
+          "tanker": {
+            "exact": "213000",
+            "decimal": "213000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "217000",
+            "decimal": "217000"
+          },
+          "tanker": {
+            "exact": "207000",
+            "decimal": "207000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "218000",
+            "decimal": "218000"
+          },
+          "tanker": {
+            "exact": "208000",
+            "decimal": "208000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "219000",
+            "decimal": "219000"
+          },
+          "tanker": {
+            "exact": "209000",
+            "decimal": "209000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "220000",
+            "decimal": "220000"
+          },
+          "tanker": {
+            "exact": "210000",
+            "decimal": "210000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "221000",
+            "decimal": "221000"
+          },
+          "tanker": {
+            "exact": "211000",
+            "decimal": "211000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "222000",
+            "decimal": "222000"
+          },
+          "tanker": {
+            "exact": "212000",
+            "decimal": "212000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "223000",
+            "decimal": "223000"
+          },
+          "tanker": {
+            "exact": "213000",
+            "decimal": "213000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "217000",
+            "decimal": "217000"
+          },
+          "tanker": {
+            "exact": "207000",
+            "decimal": "207000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "218000",
+            "decimal": "218000"
+          },
+          "tanker": {
+            "exact": "208000",
+            "decimal": "208000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "219000",
+            "decimal": "219000"
+          },
+          "tanker": {
+            "exact": "209000",
+            "decimal": "209000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "220000",
+            "decimal": "220000"
+          },
+          "tanker": {
+            "exact": "210000",
+            "decimal": "210000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "221000",
+            "decimal": "221000"
+          },
+          "tanker": {
+            "exact": "211000",
+            "decimal": "211000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "222000",
+            "decimal": "222000"
+          },
+          "tanker": {
+            "exact": "212000",
+            "decimal": "212000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "223000",
+            "decimal": "223000"
+          },
+          "tanker": {
+            "exact": "213000",
+            "decimal": "213000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "217000",
+            "decimal": "217000"
+          },
+          "tanker": {
+            "exact": "207000",
+            "decimal": "207000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "218000",
+            "decimal": "218000"
+          },
+          "tanker": {
+            "exact": "208000",
+            "decimal": "208000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "219000",
+            "decimal": "219000"
+          },
+          "tanker": {
+            "exact": "209000",
+            "decimal": "209000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "220000",
+            "decimal": "220000"
+          },
+          "tanker": {
+            "exact": "210000",
+            "decimal": "210000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "221000",
+            "decimal": "221000"
+          },
+          "tanker": {
+            "exact": "211000",
+            "decimal": "211000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "222000",
+            "decimal": "222000"
+          },
+          "tanker": {
+            "exact": "212000",
+            "decimal": "212000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "223000",
+            "decimal": "223000"
+          },
+          "tanker": {
+            "exact": "213000",
+            "decimal": "213000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "217000",
+            "decimal": "217000"
+          },
+          "tanker": {
+            "exact": "207000",
+            "decimal": "207000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "218000",
+            "decimal": "218000"
+          },
+          "tanker": {
+            "exact": "208000",
+            "decimal": "208000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "219000",
+            "decimal": "219000"
+          },
+          "tanker": {
+            "exact": "209000",
+            "decimal": "209000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "220000",
+            "decimal": "220000"
+          },
+          "tanker": {
+            "exact": "210000",
+            "decimal": "210000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "221000",
+            "decimal": "221000"
+          },
+          "tanker": {
+            "exact": "211000",
+            "decimal": "211000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "222000",
+            "decimal": "222000"
+          },
+          "tanker": {
+            "exact": "212000",
+            "decimal": "212000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "223000",
+            "decimal": "223000"
+          },
+          "tanker": {
+            "exact": "213000",
+            "decimal": "213000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "217000",
+            "decimal": "217000"
+          },
+          "tanker": {
+            "exact": "207000",
+            "decimal": "207000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "218000",
+            "decimal": "218000"
+          },
+          "tanker": {
+            "exact": "208000",
+            "decimal": "208000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "219000",
+            "decimal": "219000"
+          },
+          "tanker": {
+            "exact": "209000",
+            "decimal": "209000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "220000",
+            "decimal": "220000"
+          },
+          "tanker": {
+            "exact": "210000",
+            "decimal": "210000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "221000",
+            "decimal": "221000"
+          },
+          "tanker": {
+            "exact": "211000",
+            "decimal": "211000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "222000",
+            "decimal": "222000"
+          },
+          "tanker": {
+            "exact": "212000",
+            "decimal": "212000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "223000",
+            "decimal": "223000"
+          },
+          "tanker": {
+            "exact": "213000",
+            "decimal": "213000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "217000",
+            "decimal": "217000"
+          },
+          "tanker": {
+            "exact": "207000",
+            "decimal": "207000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "218000",
+            "decimal": "218000"
+          },
+          "tanker": {
+            "exact": "208000",
+            "decimal": "208000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "219000",
+            "decimal": "219000"
+          },
+          "tanker": {
+            "exact": "209000",
+            "decimal": "209000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "220000",
+            "decimal": "220000"
+          },
+          "tanker": {
+            "exact": "210000",
+            "decimal": "210000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "221000",
+            "decimal": "221000"
+          },
+          "tanker": {
+            "exact": "211000",
+            "decimal": "211000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "222000",
+            "decimal": "222000"
+          },
+          "tanker": {
+            "exact": "212000",
+            "decimal": "212000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "223000",
+            "decimal": "223000"
+          },
+          "tanker": {
+            "exact": "213000",
+            "decimal": "213000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "217000",
+            "decimal": "217000"
+          },
+          "tanker": {
+            "exact": "207000",
+            "decimal": "207000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "168000",
+            "decimal": "168000"
+          },
+          "tanker": {
+            "exact": "228000",
+            "decimal": "228000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "169000",
+            "decimal": "169000"
+          },
+          "tanker": {
+            "exact": "229000",
+            "decimal": "229000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "170000",
+            "decimal": "170000"
+          },
+          "tanker": {
+            "exact": "230000",
+            "decimal": "230000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "171000",
+            "decimal": "171000"
+          },
+          "tanker": {
+            "exact": "231000",
+            "decimal": "231000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "172000",
+            "decimal": "172000"
+          },
+          "tanker": {
+            "exact": "232000",
+            "decimal": "232000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "173000",
+            "decimal": "173000"
+          },
+          "tanker": {
+            "exact": "233000",
+            "decimal": "233000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "167000",
+            "decimal": "167000"
+          },
+          "tanker": {
+            "exact": "227000",
+            "decimal": "227000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "168000",
+            "decimal": "168000"
+          },
+          "tanker": {
+            "exact": "228000",
+            "decimal": "228000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "169000",
+            "decimal": "169000"
+          },
+          "tanker": {
+            "exact": "229000",
+            "decimal": "229000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "170000",
+            "decimal": "170000"
+          },
+          "tanker": {
+            "exact": "230000",
+            "decimal": "230000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "171000",
+            "decimal": "171000"
+          },
+          "tanker": {
+            "exact": "231000",
+            "decimal": "231000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "172000",
+            "decimal": "172000"
+          },
+          "tanker": {
+            "exact": "232000",
+            "decimal": "232000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "173000",
+            "decimal": "173000"
+          },
+          "tanker": {
+            "exact": "233000",
+            "decimal": "233000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "167000",
+            "decimal": "167000"
+          },
+          "tanker": {
+            "exact": "227000",
+            "decimal": "227000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "168000",
+            "decimal": "168000"
+          },
+          "tanker": {
+            "exact": "228000",
+            "decimal": "228000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "169000",
+            "decimal": "169000"
+          },
+          "tanker": {
+            "exact": "229000",
+            "decimal": "229000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "170000",
+            "decimal": "170000"
+          },
+          "tanker": {
+            "exact": "230000",
+            "decimal": "230000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "171000",
+            "decimal": "171000"
+          },
+          "tanker": {
+            "exact": "231000",
+            "decimal": "231000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "172000",
+            "decimal": "172000"
+          },
+          "tanker": {
+            "exact": "232000",
+            "decimal": "232000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "173000",
+            "decimal": "173000"
+          },
+          "tanker": {
+            "exact": "233000",
+            "decimal": "233000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "167000",
+            "decimal": "167000"
+          },
+          "tanker": {
+            "exact": "227000",
+            "decimal": "227000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "168000",
+            "decimal": "168000"
+          },
+          "tanker": {
+            "exact": "228000",
+            "decimal": "228000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "169000",
+            "decimal": "169000"
+          },
+          "tanker": {
+            "exact": "229000",
+            "decimal": "229000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "170000",
+            "decimal": "170000"
+          },
+          "tanker": {
+            "exact": "230000",
+            "decimal": "230000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "171000",
+            "decimal": "171000"
+          },
+          "tanker": {
+            "exact": "231000",
+            "decimal": "231000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "172000",
+            "decimal": "172000"
+          },
+          "tanker": {
+            "exact": "232000",
+            "decimal": "232000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "173000",
+            "decimal": "173000"
+          },
+          "tanker": {
+            "exact": "233000",
+            "decimal": "233000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "167000",
+            "decimal": "167000"
+          },
+          "tanker": {
+            "exact": "227000",
+            "decimal": "227000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "168000",
+            "decimal": "168000"
+          },
+          "tanker": {
+            "exact": "228000",
+            "decimal": "228000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "169000",
+            "decimal": "169000"
+          },
+          "tanker": {
+            "exact": "229000",
+            "decimal": "229000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "170000",
+            "decimal": "170000"
+          },
+          "tanker": {
+            "exact": "230000",
+            "decimal": "230000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "171000",
+            "decimal": "171000"
+          },
+          "tanker": {
+            "exact": "231000",
+            "decimal": "231000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "172000",
+            "decimal": "172000"
+          },
+          "tanker": {
+            "exact": "232000",
+            "decimal": "232000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "173000",
+            "decimal": "173000"
+          },
+          "tanker": {
+            "exact": "233000",
+            "decimal": "233000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "167000",
+            "decimal": "167000"
+          },
+          "tanker": {
+            "exact": "227000",
+            "decimal": "227000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "168000",
+            "decimal": "168000"
+          },
+          "tanker": {
+            "exact": "228000",
+            "decimal": "228000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "169000",
+            "decimal": "169000"
+          },
+          "tanker": {
+            "exact": "229000",
+            "decimal": "229000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "170000",
+            "decimal": "170000"
+          },
+          "tanker": {
+            "exact": "230000",
+            "decimal": "230000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "171000",
+            "decimal": "171000"
+          },
+          "tanker": {
+            "exact": "231000",
+            "decimal": "231000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "172000",
+            "decimal": "172000"
+          },
+          "tanker": {
+            "exact": "232000",
+            "decimal": "232000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "173000",
+            "decimal": "173000"
+          },
+          "tanker": {
+            "exact": "233000",
+            "decimal": "233000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "167000",
+            "decimal": "167000"
+          },
+          "tanker": {
+            "exact": "227000",
+            "decimal": "227000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "168000",
+            "decimal": "168000"
+          },
+          "tanker": {
+            "exact": "228000",
+            "decimal": "228000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "169000",
+            "decimal": "169000"
+          },
+          "tanker": {
+            "exact": "229000",
+            "decimal": "229000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "170000",
+            "decimal": "170000"
+          },
+          "tanker": {
+            "exact": "230000",
+            "decimal": "230000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "171000",
+            "decimal": "171000"
+          },
+          "tanker": {
+            "exact": "231000",
+            "decimal": "231000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "172000",
+            "decimal": "172000"
+          },
+          "tanker": {
+            "exact": "232000",
+            "decimal": "232000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "173000",
+            "decimal": "173000"
+          },
+          "tanker": {
+            "exact": "233000",
+            "decimal": "233000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "167000",
+            "decimal": "167000"
+          },
+          "tanker": {
+            "exact": "227000",
+            "decimal": "227000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "168000",
+            "decimal": "168000"
+          },
+          "tanker": {
+            "exact": "228000",
+            "decimal": "228000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "169000",
+            "decimal": "169000"
+          },
+          "tanker": {
+            "exact": "229000",
+            "decimal": "229000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "170000",
+            "decimal": "170000"
+          },
+          "tanker": {
+            "exact": "230000",
+            "decimal": "230000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "171000",
+            "decimal": "171000"
+          },
+          "tanker": {
+            "exact": "231000",
+            "decimal": "231000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "172000",
+            "decimal": "172000"
+          },
+          "tanker": {
+            "exact": "232000",
+            "decimal": "232000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "173000",
+            "decimal": "173000"
+          },
+          "tanker": {
+            "exact": "233000",
+            "decimal": "233000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "167000",
+            "decimal": "167000"
+          },
+          "tanker": {
+            "exact": "227000",
+            "decimal": "227000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "168000",
+            "decimal": "168000"
+          },
+          "tanker": {
+            "exact": "228000",
+            "decimal": "228000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "169000",
+            "decimal": "169000"
+          },
+          "tanker": {
+            "exact": "229000",
+            "decimal": "229000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "170000",
+            "decimal": "170000"
+          },
+          "tanker": {
+            "exact": "230000",
+            "decimal": "230000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "171000",
+            "decimal": "171000"
+          },
+          "tanker": {
+            "exact": "231000",
+            "decimal": "231000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "172000",
+            "decimal": "172000"
+          },
+          "tanker": {
+            "exact": "232000",
+            "decimal": "232000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "173000",
+            "decimal": "173000"
+          },
+          "tanker": {
+            "exact": "233000",
+            "decimal": "233000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "167000",
+            "decimal": "167000"
+          },
+          "tanker": {
+            "exact": "227000",
+            "decimal": "227000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "168000",
+            "decimal": "168000"
+          },
+          "tanker": {
+            "exact": "228000",
+            "decimal": "228000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "169000",
+            "decimal": "169000"
+          },
+          "tanker": {
+            "exact": "229000",
+            "decimal": "229000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "170000",
+            "decimal": "170000"
+          },
+          "tanker": {
+            "exact": "230000",
+            "decimal": "230000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "171000",
+            "decimal": "171000"
+          },
+          "tanker": {
+            "exact": "231000",
+            "decimal": "231000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "172000",
+            "decimal": "172000"
+          },
+          "tanker": {
+            "exact": "232000",
+            "decimal": "232000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "173000",
+            "decimal": "173000"
+          },
+          "tanker": {
+            "exact": "233000",
+            "decimal": "233000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "167000",
+            "decimal": "167000"
+          },
+          "tanker": {
+            "exact": "227000",
+            "decimal": "227000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "168000",
+            "decimal": "168000"
+          },
+          "tanker": {
+            "exact": "228000",
+            "decimal": "228000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "169000",
+            "decimal": "169000"
+          },
+          "tanker": {
+            "exact": "229000",
+            "decimal": "229000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "170000",
+            "decimal": "170000"
+          },
+          "tanker": {
+            "exact": "230000",
+            "decimal": "230000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "171000",
+            "decimal": "171000"
+          },
+          "tanker": {
+            "exact": "231000",
+            "decimal": "231000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "172000",
+            "decimal": "172000"
+          },
+          "tanker": {
+            "exact": "232000",
+            "decimal": "232000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "173000",
+            "decimal": "173000"
+          },
+          "tanker": {
+            "exact": "233000",
+            "decimal": "233000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "167000",
+            "decimal": "167000"
+          },
+          "tanker": {
+            "exact": "227000",
+            "decimal": "227000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "168000",
+            "decimal": "168000"
+          },
+          "tanker": {
+            "exact": "228000",
+            "decimal": "228000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "169000",
+            "decimal": "169000"
+          },
+          "tanker": {
+            "exact": "229000",
+            "decimal": "229000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "170000",
+            "decimal": "170000"
+          },
+          "tanker": {
+            "exact": "230000",
+            "decimal": "230000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "171000",
+            "decimal": "171000"
+          },
+          "tanker": {
+            "exact": "231000",
+            "decimal": "231000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "172000",
+            "decimal": "172000"
+          },
+          "tanker": {
+            "exact": "232000",
+            "decimal": "232000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "173000",
+            "decimal": "173000"
+          },
+          "tanker": {
+            "exact": "233000",
+            "decimal": "233000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "167000",
+            "decimal": "167000"
+          },
+          "tanker": {
+            "exact": "227000",
+            "decimal": "227000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "168000",
+            "decimal": "168000"
+          },
+          "tanker": {
+            "exact": "228000",
+            "decimal": "228000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "169000",
+            "decimal": "169000"
+          },
+          "tanker": {
+            "exact": "229000",
+            "decimal": "229000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "170000",
+            "decimal": "170000"
+          },
+          "tanker": {
+            "exact": "230000",
+            "decimal": "230000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "171000",
+            "decimal": "171000"
+          },
+          "tanker": {
+            "exact": "231000",
+            "decimal": "231000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "172000",
+            "decimal": "172000"
+          },
+          "tanker": {
+            "exact": "232000",
+            "decimal": "232000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "173000",
+            "decimal": "173000"
+          },
+          "tanker": {
+            "exact": "233000",
+            "decimal": "233000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "167000",
+            "decimal": "167000"
+          },
+          "tanker": {
+            "exact": "227000",
+            "decimal": "227000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "168000",
+            "decimal": "168000"
+          },
+          "tanker": {
+            "exact": "228000",
+            "decimal": "228000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "169000",
+            "decimal": "169000"
+          },
+          "tanker": {
+            "exact": "229000",
+            "decimal": "229000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "170000",
+            "decimal": "170000"
+          },
+          "tanker": {
+            "exact": "230000",
+            "decimal": "230000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "171000",
+            "decimal": "171000"
+          },
+          "tanker": {
+            "exact": "231000",
+            "decimal": "231000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "172000",
+            "decimal": "172000"
+          },
+          "tanker": {
+            "exact": "232000",
+            "decimal": "232000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "173000",
+            "decimal": "173000"
+          },
+          "tanker": {
+            "exact": "233000",
+            "decimal": "233000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "167000",
+            "decimal": "167000"
+          },
+          "tanker": {
+            "exact": "227000",
+            "decimal": "227000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "168000",
+            "decimal": "168000"
+          },
+          "tanker": {
+            "exact": "228000",
+            "decimal": "228000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "169000",
+            "decimal": "169000"
+          },
+          "tanker": {
+            "exact": "229000",
+            "decimal": "229000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "170000",
+            "decimal": "170000"
+          },
+          "tanker": {
+            "exact": "230000",
+            "decimal": "230000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "171000",
+            "decimal": "171000"
+          },
+          "tanker": {
+            "exact": "231000",
+            "decimal": "231000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "172000",
+            "decimal": "172000"
+          },
+          "tanker": {
+            "exact": "232000",
+            "decimal": "232000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "173000",
+            "decimal": "173000"
+          },
+          "tanker": {
+            "exact": "233000",
+            "decimal": "233000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "167000",
+            "decimal": "167000"
+          },
+          "tanker": {
+            "exact": "227000",
+            "decimal": "227000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "168000",
+            "decimal": "168000"
+          },
+          "tanker": {
+            "exact": "228000",
+            "decimal": "228000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "169000",
+            "decimal": "169000"
+          },
+          "tanker": {
+            "exact": "229000",
+            "decimal": "229000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "170000",
+            "decimal": "170000"
+          },
+          "tanker": {
+            "exact": "230000",
+            "decimal": "230000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "171000",
+            "decimal": "171000"
+          },
+          "tanker": {
+            "exact": "231000",
+            "decimal": "231000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "172000",
+            "decimal": "172000"
+          },
+          "tanker": {
+            "exact": "232000",
+            "decimal": "232000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "173000",
+            "decimal": "173000"
+          },
+          "tanker": {
+            "exact": "233000",
+            "decimal": "233000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "167000",
+            "decimal": "167000"
+          },
+          "tanker": {
+            "exact": "227000",
+            "decimal": "227000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "168000",
+            "decimal": "168000"
+          },
+          "tanker": {
+            "exact": "228000",
+            "decimal": "228000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "169000",
+            "decimal": "169000"
+          },
+          "tanker": {
+            "exact": "229000",
+            "decimal": "229000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "170000",
+            "decimal": "170000"
+          },
+          "tanker": {
+            "exact": "230000",
+            "decimal": "230000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "171000",
+            "decimal": "171000"
+          },
+          "tanker": {
+            "exact": "231000",
+            "decimal": "231000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "172000",
+            "decimal": "172000"
+          },
+          "tanker": {
+            "exact": "232000",
+            "decimal": "232000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "173000",
+            "decimal": "173000"
+          },
+          "tanker": {
+            "exact": "233000",
+            "decimal": "233000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "167000",
+            "decimal": "167000"
+          },
+          "tanker": {
+            "exact": "227000",
+            "decimal": "227000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "168000",
+            "decimal": "168000"
+          },
+          "tanker": {
+            "exact": "228000",
+            "decimal": "228000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "419000",
+            "decimal": "419000"
+          },
+          "tanker": {
+            "exact": "99000",
+            "decimal": "99000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "420000",
+            "decimal": "420000"
+          },
+          "tanker": {
+            "exact": "100000",
+            "decimal": "100000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "421000",
+            "decimal": "421000"
+          },
+          "tanker": {
+            "exact": "101000",
+            "decimal": "101000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "422000",
+            "decimal": "422000"
+          },
+          "tanker": {
+            "exact": "102000",
+            "decimal": "102000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "423000",
+            "decimal": "423000"
+          },
+          "tanker": {
+            "exact": "103000",
+            "decimal": "103000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "417000",
+            "decimal": "417000"
+          },
+          "tanker": {
+            "exact": "97000",
+            "decimal": "97000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "418000",
+            "decimal": "418000"
+          },
+          "tanker": {
+            "exact": "98000",
+            "decimal": "98000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "419000",
+            "decimal": "419000"
+          },
+          "tanker": {
+            "exact": "99000",
+            "decimal": "99000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "420000",
+            "decimal": "420000"
+          },
+          "tanker": {
+            "exact": "100000",
+            "decimal": "100000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "421000",
+            "decimal": "421000"
+          },
+          "tanker": {
+            "exact": "101000",
+            "decimal": "101000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "422000",
+            "decimal": "422000"
+          },
+          "tanker": {
+            "exact": "102000",
+            "decimal": "102000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "423000",
+            "decimal": "423000"
+          },
+          "tanker": {
+            "exact": "103000",
+            "decimal": "103000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "417000",
+            "decimal": "417000"
+          },
+          "tanker": {
+            "exact": "97000",
+            "decimal": "97000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "418000",
+            "decimal": "418000"
+          },
+          "tanker": {
+            "exact": "98000",
+            "decimal": "98000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "419000",
+            "decimal": "419000"
+          },
+          "tanker": {
+            "exact": "99000",
+            "decimal": "99000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "420000",
+            "decimal": "420000"
+          },
+          "tanker": {
+            "exact": "100000",
+            "decimal": "100000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "421000",
+            "decimal": "421000"
+          },
+          "tanker": {
+            "exact": "101000",
+            "decimal": "101000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "422000",
+            "decimal": "422000"
+          },
+          "tanker": {
+            "exact": "102000",
+            "decimal": "102000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "423000",
+            "decimal": "423000"
+          },
+          "tanker": {
+            "exact": "103000",
+            "decimal": "103000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "417000",
+            "decimal": "417000"
+          },
+          "tanker": {
+            "exact": "97000",
+            "decimal": "97000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "418000",
+            "decimal": "418000"
+          },
+          "tanker": {
+            "exact": "98000",
+            "decimal": "98000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "419000",
+            "decimal": "419000"
+          },
+          "tanker": {
+            "exact": "99000",
+            "decimal": "99000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "420000",
+            "decimal": "420000"
+          },
+          "tanker": {
+            "exact": "100000",
+            "decimal": "100000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "421000",
+            "decimal": "421000"
+          },
+          "tanker": {
+            "exact": "101000",
+            "decimal": "101000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "422000",
+            "decimal": "422000"
+          },
+          "tanker": {
+            "exact": "102000",
+            "decimal": "102000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "423000",
+            "decimal": "423000"
+          },
+          "tanker": {
+            "exact": "103000",
+            "decimal": "103000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "417000",
+            "decimal": "417000"
+          },
+          "tanker": {
+            "exact": "97000",
+            "decimal": "97000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "418000",
+            "decimal": "418000"
+          },
+          "tanker": {
+            "exact": "98000",
+            "decimal": "98000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "419000",
+            "decimal": "419000"
+          },
+          "tanker": {
+            "exact": "99000",
+            "decimal": "99000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "420000",
+            "decimal": "420000"
+          },
+          "tanker": {
+            "exact": "100000",
+            "decimal": "100000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "421000",
+            "decimal": "421000"
+          },
+          "tanker": {
+            "exact": "101000",
+            "decimal": "101000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "422000",
+            "decimal": "422000"
+          },
+          "tanker": {
+            "exact": "102000",
+            "decimal": "102000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "423000",
+            "decimal": "423000"
+          },
+          "tanker": {
+            "exact": "103000",
+            "decimal": "103000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "417000",
+            "decimal": "417000"
+          },
+          "tanker": {
+            "exact": "97000",
+            "decimal": "97000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "418000",
+            "decimal": "418000"
+          },
+          "tanker": {
+            "exact": "98000",
+            "decimal": "98000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "419000",
+            "decimal": "419000"
+          },
+          "tanker": {
+            "exact": "99000",
+            "decimal": "99000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "420000",
+            "decimal": "420000"
+          },
+          "tanker": {
+            "exact": "100000",
+            "decimal": "100000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "421000",
+            "decimal": "421000"
+          },
+          "tanker": {
+            "exact": "101000",
+            "decimal": "101000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "422000",
+            "decimal": "422000"
+          },
+          "tanker": {
+            "exact": "102000",
+            "decimal": "102000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "423000",
+            "decimal": "423000"
+          },
+          "tanker": {
+            "exact": "103000",
+            "decimal": "103000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "417000",
+            "decimal": "417000"
+          },
+          "tanker": {
+            "exact": "97000",
+            "decimal": "97000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "418000",
+            "decimal": "418000"
+          },
+          "tanker": {
+            "exact": "98000",
+            "decimal": "98000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "419000",
+            "decimal": "419000"
+          },
+          "tanker": {
+            "exact": "99000",
+            "decimal": "99000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "420000",
+            "decimal": "420000"
+          },
+          "tanker": {
+            "exact": "100000",
+            "decimal": "100000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "421000",
+            "decimal": "421000"
+          },
+          "tanker": {
+            "exact": "101000",
+            "decimal": "101000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "422000",
+            "decimal": "422000"
+          },
+          "tanker": {
+            "exact": "102000",
+            "decimal": "102000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "423000",
+            "decimal": "423000"
+          },
+          "tanker": {
+            "exact": "103000",
+            "decimal": "103000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "417000",
+            "decimal": "417000"
+          },
+          "tanker": {
+            "exact": "97000",
+            "decimal": "97000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "418000",
+            "decimal": "418000"
+          },
+          "tanker": {
+            "exact": "98000",
+            "decimal": "98000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "419000",
+            "decimal": "419000"
+          },
+          "tanker": {
+            "exact": "99000",
+            "decimal": "99000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "420000",
+            "decimal": "420000"
+          },
+          "tanker": {
+            "exact": "100000",
+            "decimal": "100000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "421000",
+            "decimal": "421000"
+          },
+          "tanker": {
+            "exact": "101000",
+            "decimal": "101000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "422000",
+            "decimal": "422000"
+          },
+          "tanker": {
+            "exact": "102000",
+            "decimal": "102000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "423000",
+            "decimal": "423000"
+          },
+          "tanker": {
+            "exact": "103000",
+            "decimal": "103000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "417000",
+            "decimal": "417000"
+          },
+          "tanker": {
+            "exact": "97000",
+            "decimal": "97000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "418000",
+            "decimal": "418000"
+          },
+          "tanker": {
+            "exact": "98000",
+            "decimal": "98000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "419000",
+            "decimal": "419000"
+          },
+          "tanker": {
+            "exact": "99000",
+            "decimal": "99000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "420000",
+            "decimal": "420000"
+          },
+          "tanker": {
+            "exact": "100000",
+            "decimal": "100000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "421000",
+            "decimal": "421000"
+          },
+          "tanker": {
+            "exact": "101000",
+            "decimal": "101000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "422000",
+            "decimal": "422000"
+          },
+          "tanker": {
+            "exact": "102000",
+            "decimal": "102000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "423000",
+            "decimal": "423000"
+          },
+          "tanker": {
+            "exact": "103000",
+            "decimal": "103000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "417000",
+            "decimal": "417000"
+          },
+          "tanker": {
+            "exact": "97000",
+            "decimal": "97000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "418000",
+            "decimal": "418000"
+          },
+          "tanker": {
+            "exact": "98000",
+            "decimal": "98000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "419000",
+            "decimal": "419000"
+          },
+          "tanker": {
+            "exact": "99000",
+            "decimal": "99000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "420000",
+            "decimal": "420000"
+          },
+          "tanker": {
+            "exact": "100000",
+            "decimal": "100000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "421000",
+            "decimal": "421000"
+          },
+          "tanker": {
+            "exact": "101000",
+            "decimal": "101000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "422000",
+            "decimal": "422000"
+          },
+          "tanker": {
+            "exact": "102000",
+            "decimal": "102000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "423000",
+            "decimal": "423000"
+          },
+          "tanker": {
+            "exact": "103000",
+            "decimal": "103000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "417000",
+            "decimal": "417000"
+          },
+          "tanker": {
+            "exact": "97000",
+            "decimal": "97000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "418000",
+            "decimal": "418000"
+          },
+          "tanker": {
+            "exact": "98000",
+            "decimal": "98000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "419000",
+            "decimal": "419000"
+          },
+          "tanker": {
+            "exact": "99000",
+            "decimal": "99000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "420000",
+            "decimal": "420000"
+          },
+          "tanker": {
+            "exact": "100000",
+            "decimal": "100000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "421000",
+            "decimal": "421000"
+          },
+          "tanker": {
+            "exact": "101000",
+            "decimal": "101000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "422000",
+            "decimal": "422000"
+          },
+          "tanker": {
+            "exact": "102000",
+            "decimal": "102000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "423000",
+            "decimal": "423000"
+          },
+          "tanker": {
+            "exact": "103000",
+            "decimal": "103000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "417000",
+            "decimal": "417000"
+          },
+          "tanker": {
+            "exact": "97000",
+            "decimal": "97000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "418000",
+            "decimal": "418000"
+          },
+          "tanker": {
+            "exact": "98000",
+            "decimal": "98000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "419000",
+            "decimal": "419000"
+          },
+          "tanker": {
+            "exact": "99000",
+            "decimal": "99000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "420000",
+            "decimal": "420000"
+          },
+          "tanker": {
+            "exact": "100000",
+            "decimal": "100000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "421000",
+            "decimal": "421000"
+          },
+          "tanker": {
+            "exact": "101000",
+            "decimal": "101000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "422000",
+            "decimal": "422000"
+          },
+          "tanker": {
+            "exact": "102000",
+            "decimal": "102000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "423000",
+            "decimal": "423000"
+          },
+          "tanker": {
+            "exact": "103000",
+            "decimal": "103000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "417000",
+            "decimal": "417000"
+          },
+          "tanker": {
+            "exact": "97000",
+            "decimal": "97000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "418000",
+            "decimal": "418000"
+          },
+          "tanker": {
+            "exact": "98000",
+            "decimal": "98000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "419000",
+            "decimal": "419000"
+          },
+          "tanker": {
+            "exact": "99000",
+            "decimal": "99000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "420000",
+            "decimal": "420000"
+          },
+          "tanker": {
+            "exact": "100000",
+            "decimal": "100000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "421000",
+            "decimal": "421000"
+          },
+          "tanker": {
+            "exact": "101000",
+            "decimal": "101000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "422000",
+            "decimal": "422000"
+          },
+          "tanker": {
+            "exact": "102000",
+            "decimal": "102000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "423000",
+            "decimal": "423000"
+          },
+          "tanker": {
+            "exact": "103000",
+            "decimal": "103000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "417000",
+            "decimal": "417000"
+          },
+          "tanker": {
+            "exact": "97000",
+            "decimal": "97000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "418000",
+            "decimal": "418000"
+          },
+          "tanker": {
+            "exact": "98000",
+            "decimal": "98000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "419000",
+            "decimal": "419000"
+          },
+          "tanker": {
+            "exact": "99000",
+            "decimal": "99000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "420000",
+            "decimal": "420000"
+          },
+          "tanker": {
+            "exact": "100000",
+            "decimal": "100000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "421000",
+            "decimal": "421000"
+          },
+          "tanker": {
+            "exact": "101000",
+            "decimal": "101000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "422000",
+            "decimal": "422000"
+          },
+          "tanker": {
+            "exact": "102000",
+            "decimal": "102000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "423000",
+            "decimal": "423000"
+          },
+          "tanker": {
+            "exact": "103000",
+            "decimal": "103000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "417000",
+            "decimal": "417000"
+          },
+          "tanker": {
+            "exact": "97000",
+            "decimal": "97000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "418000",
+            "decimal": "418000"
+          },
+          "tanker": {
+            "exact": "98000",
+            "decimal": "98000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "419000",
+            "decimal": "419000"
+          },
+          "tanker": {
+            "exact": "99000",
+            "decimal": "99000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "420000",
+            "decimal": "420000"
+          },
+          "tanker": {
+            "exact": "100000",
+            "decimal": "100000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "421000",
+            "decimal": "421000"
+          },
+          "tanker": {
+            "exact": "101000",
+            "decimal": "101000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "422000",
+            "decimal": "422000"
+          },
+          "tanker": {
+            "exact": "102000",
+            "decimal": "102000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "423000",
+            "decimal": "423000"
+          },
+          "tanker": {
+            "exact": "103000",
+            "decimal": "103000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "417000",
+            "decimal": "417000"
+          },
+          "tanker": {
+            "exact": "97000",
+            "decimal": "97000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "418000",
+            "decimal": "418000"
+          },
+          "tanker": {
+            "exact": "98000",
+            "decimal": "98000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "419000",
+            "decimal": "419000"
+          },
+          "tanker": {
+            "exact": "99000",
+            "decimal": "99000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "420000",
+            "decimal": "420000"
+          },
+          "tanker": {
+            "exact": "100000",
+            "decimal": "100000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "421000",
+            "decimal": "421000"
+          },
+          "tanker": {
+            "exact": "101000",
+            "decimal": "101000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "422000",
+            "decimal": "422000"
+          },
+          "tanker": {
+            "exact": "102000",
+            "decimal": "102000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "423000",
+            "decimal": "423000"
+          },
+          "tanker": {
+            "exact": "103000",
+            "decimal": "103000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "417000",
+            "decimal": "417000"
+          },
+          "tanker": {
+            "exact": "97000",
+            "decimal": "97000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "418000",
+            "decimal": "418000"
+          },
+          "tanker": {
+            "exact": "98000",
+            "decimal": "98000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "419000",
+            "decimal": "419000"
+          },
+          "tanker": {
+            "exact": "99000",
+            "decimal": "99000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "420000",
+            "decimal": "420000"
+          },
+          "tanker": {
+            "exact": "100000",
+            "decimal": "100000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "421000",
+            "decimal": "421000"
+          },
+          "tanker": {
+            "exact": "101000",
+            "decimal": "101000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "422000",
+            "decimal": "422000"
+          },
+          "tanker": {
+            "exact": "102000",
+            "decimal": "102000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "423000",
+            "decimal": "423000"
+          },
+          "tanker": {
+            "exact": "103000",
+            "decimal": "103000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "417000",
+            "decimal": "417000"
+          },
+          "tanker": {
+            "exact": "97000",
+            "decimal": "97000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "418000",
+            "decimal": "418000"
+          },
+          "tanker": {
+            "exact": "98000",
+            "decimal": "98000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "419000",
+            "decimal": "419000"
+          },
+          "tanker": {
+            "exact": "99000",
+            "decimal": "99000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "420000",
+            "decimal": "420000"
+          },
+          "tanker": {
+            "exact": "100000",
+            "decimal": "100000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "421000",
+            "decimal": "421000"
+          },
+          "tanker": {
+            "exact": "101000",
+            "decimal": "101000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "422000",
+            "decimal": "422000"
+          },
+          "tanker": {
+            "exact": "102000",
+            "decimal": "102000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "423000",
+            "decimal": "423000"
+          },
+          "tanker": {
+            "exact": "103000",
+            "decimal": "103000"
+          }
+        },
+        {
+          "demand": {
+            "exact": "500000",
+            "decimal": "500000"
+          },
+          "piped": {
+            "exact": "417000",
+            "decimal": "417000"
+          },
+          "tanker": {
+            "exact": "97000",
+            "decimal": "97000"
+          }
+        }
+      ]
+    },
+    "notes": []
+  },
+  "comparison": {
+    "id": "bc53d39baf652067f4efc7c62e221b70e01fdb9b3b67ce11930012029d1de025",
+    "engine_version": "options-1",
+    "scenario_engine_version": "scenario-1",
+    "catalogue_version": "interventions-3",
+    "baseline_id": "8982e02724a0a9f74faa4f9147db565d3f086a33a23bd763c7fe9c34fd7a7147",
+    "status": "options",
+    "summary": "1 plan meets the target and every constraint even at the low end of your estimates. No other combination passes, so no more are shown.",
+    "metric": "tanker_dependence",
+    "unit": "ratio",
+    "baseline_value": {
+      "exact": "3841/9682",
+      "decimal": "0.3967155546374715967775253047"
+    },
+    "scenario_value": {
+      "exact": "3841/9682",
+      "decimal": "0.3967155546374715967775253047"
+    },
+    "target_level": {
+      "exact": "7/20",
+      "decimal": "0.35"
+    },
+    "options": [
+      {
+        "id": "pln_S11C780N2FMKP3X0H0N0DAVTT8",
+        "rank": 1,
+        "intervention_ids": ["efficient_fixtures"],
+        "name": "Water-efficient fixtures",
+        "measures": [
+          {
+            "intervention_id": "efficient_fixtures",
+            "name": "Water-efficient fixtures",
+            "water_low": {
+              "exact": "40000",
+              "decimal": "40000"
+            },
+            "water_high": {
+              "exact": "60000",
+              "decimal": "60000"
+            },
+            "cost": {
+              "low": {
+                "minor_units": "180000000",
+                "currency": "INR"
+              },
+              "high": {
+                "minor_units": "240000000",
+                "currency": "INR"
+              }
+            },
+            "recurring": {
+              "low": {
+                "minor_units": "1200000",
+                "currency": "INR"
+              },
+              "high": {
+                "minor_units": "1800000",
+                "currency": "INR"
+              }
+            },
+            "build_days": {
+              "low": 30,
+              "high": 60
+            },
+            "benefit_timing": "after_commissioning",
+            "effects": [
+              {
+                "key": "demand_reduction",
+                "label": "Share of water use the fixtures save",
+                "unit": "ratio",
+                "low": {
+                  "exact": "2/25",
+                  "decimal": "0.08"
+                },
+                "high": {
+                  "exact": "3/25",
+                  "decimal": "0.12"
+                },
+                "origin": "user_estimate"
+              }
+            ]
+          }
+        ],
+        "pessimistic": {
+          "exact": "5633/16666",
+          "decimal": "0.3379935197407896315852634105"
+        },
+        "optimistic": {
+          "exact": "43397/142694",
+          "decimal": "0.3041263122485878873673735406"
+        },
+        "margin": {
+          "exact": "2001/166660",
+          "decimal": "0.01200648025921036841473658946"
+        },
+        "water_low": {
+          "exact": "40000",
+          "decimal": "40000"
+        },
+        "water_high": {
+          "exact": "60000",
+          "decimal": "60000"
+        },
+        "uncounted_high": {
+          "exact": "0",
+          "decimal": "0"
+        },
+        "cost": {
+          "low": {
+            "minor_units": "180000000",
+            "currency": "INR"
+          },
+          "high": {
+            "minor_units": "240000000",
+            "currency": "INR"
+          }
+        },
+        "build_days": {
+          "low": 30,
+          "high": 60
+        },
+        "first_benefit": "after_commissioning",
+        "why": "Ranked 1 by: Fewest measures, then the largest margin past the target at pessimistic estimates, then measure ids.",
+        "tradeoffs": ["Clean aerators; replace worn seals."],
+        "uncertainty": [
+          "Result ranges from 33.8% to 30.4% across your estimates.",
+          "Estimates are yours, not sourced figures."
+        ],
+        "sensitivity": [
+          {
+            "intervention_id": "efficient_fixtures",
+            "key": "demand_reduction",
+            "label": "Share of water use the fixtures save",
+            "swing": {
+              "exact": "20135225/594534551",
+              "decimal": "0.03386720749220174421788986995"
+            }
+          }
+        ],
+        "stress": [
+          {
+            "key": "demand_up_10",
+            "label": "Demand 10% higher",
+            "value": {
+              "exact": "67487/166784",
+              "decimal": "0.4046371354566385264773599386"
+            },
+            "meets_target": false
+          },
+          {
+            "key": "supply_down_10",
+            "label": "Supply other than tankers 10% lower",
+            "value": {
+              "exact": "67363/166660",
+              "decimal": "0.4041941677667106684267370695"
+            },
+            "meets_target": false
+          },
+          {
+            "key": "rainfall_down_20",
+            "label": "20% less rainfall",
+            "value": null,
+            "meets_target": null
+          }
+        ],
+        "economics": {
+          "engine_version": "economics-1",
+          "currency": "INR",
+          "capex": {
+            "low": {
+              "minor_units": "180000000",
+              "currency": "INR"
+            },
+            "high": {
+              "minor_units": "240000000",
+              "currency": "INR"
+            }
+          },
+          "contingency": {
+            "ratio": "0.1",
+            "amount": {
+              "low": {
+                "minor_units": "18000000",
+                "currency": "INR"
+              },
+              "high": {
+                "minor_units": "24000000",
+                "currency": "INR"
+              }
+            }
+          },
+          "upfront_total": {
+            "low": {
+              "minor_units": "198000000",
+              "currency": "INR"
+            },
+            "high": {
+              "minor_units": "264000000",
+              "currency": "INR"
+            }
+          },
+          "recurring_annual": {
+            "low": {
+              "minor_units": "1200000",
+              "currency": "INR"
+            },
+            "high": {
+              "minor_units": "1800000",
+              "currency": "INR"
+            }
+          },
+          "recurring_reason": null,
+          "avoided_tanker_annual": {
+            "low": {
+              "minor_units": "131400000",
+              "currency": "INR"
+            },
+            "high": {
+              "minor_units": "197100000",
+              "currency": "INR"
+            }
+          },
+          "avoided_reason": null,
+          "net_annual": {
+            "low": {
+              "minor_units": "129600000",
+              "currency": "INR"
+            },
+            "high": {
+              "minor_units": "195900000",
+              "currency": "INR"
+            }
+          },
+          "payback": {
+            "outcome": "within_horizon",
+            "optimistic_days": 369,
+            "pessimistic_days": 744,
+            "note": "Costs are recovered within the planning horizon even at your pessimistic estimates."
+          },
+          "horizon": {
+            "days": 3650,
+            "avoided": {
+              "low": {
+                "minor_units": "1314000000",
+                "currency": "INR"
+              },
+              "high": {
+                "minor_units": "1971000000",
+                "currency": "INR"
+              }
+            },
+            "recurring": {
+              "low": {
+                "minor_units": "12000000",
+                "currency": "INR"
+              },
+              "high": {
+                "minor_units": "18000000",
+                "currency": "INR"
+              }
+            },
+            "net": {
+              "low": {
+                "minor_units": "1032000000",
+                "currency": "INR"
+              },
+              "high": {
+                "minor_units": "1761000000",
+                "currency": "INR"
+              }
+            },
+            "net_positive": true,
+            "reason": null
+          },
+          "funding": {
+            "total_cost": {
+              "low": {
+                "minor_units": "198000000",
+                "currency": "INR"
+              },
+              "high": {
+                "minor_units": "264000000",
+                "currency": "INR"
+              }
+            },
+            "approved": {
+              "minor_units": "0",
+              "currency": "INR"
+            },
+            "gap": {
+              "low": {
+                "minor_units": "198000000",
+                "currency": "INR"
+              },
+              "high": {
+                "minor_units": "264000000",
+                "currency": "INR"
+              }
+            },
+            "candidate": {
+              "minor_units": "0",
+              "currency": "INR"
+            },
+            "fully_funded": false,
+            "lines": [],
+            "note": "No approved funding is recorded, so the whole cost is still to find. Expected or proposed funding is shown but not counted towards affordability."
+          },
+          "assumptions": [
+            "Costs, the tariff and any funding are your own figures, labelled your estimate, not sourced or reviewed market prices.",
+            "Amounts are never converted between currencies; a different currency is reported, not applied.",
+            "No future inflation or price change is assumed; annual figures are flat and spread over 365 days.",
+            "A contingency you set is added to the cost estimates; it is not an invented margin.",
+            "Only water that replaces tanker deliveries is valued; water beyond the tanker deliveries it could replace earns nothing here."
+          ],
+          "notes": []
+        }
+      }
+    ],
+    "needs": [
+      "Greywater reuse: tell us whether there is space for a tank.",
+      "Leak detection and repair: estimate share of piped supply lost to leaks, share of those losses the repairs stop, a build time (you set a time limit or horizon).",
+      "Metering and demand awareness: estimate share of water use saved by metering and feedback, a build time (you set a time limit or horizon).",
+      "Rooftop rainwater harvesting for use: tell us the roof area you can collect from.",
+      "Additional storage: tell us whether there is space for a tank."
+    ],
+    "excluded": [],
+    "rejections": {
+      "evaluated": 1,
+      "only_optimistic": 0,
+      "missed_target": 0,
+      "over_budget": 0,
+      "budget_uncertain": 0,
+      "too_slow": 0,
+      "time_uncertain": 0,
+      "not_minimal": 0,
+      "truncated": false
+    },
+    "assumptions": [
+      "Average day: water saved or added replaces tanker deliveries first; water beyond the tanker deliveries is not counted.",
+      "Demand savings multiply; greywater replaces only the demand left after them.",
+      "Rainfall is spread evenly over the year; a tank's size and dry months are not modelled, so harvested water is an average, not a guarantee in dry weeks.",
+      "Measures in one option are assumed to be built at the same time."
+    ],
+    "ranking": "Fewest measures, then the largest margin past the target at pessimistic estimates, then measure ids."
+  },
+  "notes": [
+    "Offline preflight only; no session, report, source review or publication is changed.",
+    "Source quality, licence, footprint and timezone are declarations, not verified here.",
+    "Demand, effects, tariffs and costs are explicit assumptions, not model discoveries.",
+    "Scientific definitions and intervention effects remain subject to domain review.",
+    "No currency conversion or automatic non-INR cost reference data is supplied."
+  ]
+}

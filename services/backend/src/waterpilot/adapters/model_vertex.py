@@ -58,19 +58,26 @@ class VertexModelProvider:
         if is_cancelled is not None and is_cancelled():
             raise ModelCancelled()
         from google.api_core import exceptions as gexc
-        from google.genai import types
+        from google.genai import errors, types
 
         config = types.GenerateContentConfig(
             temperature=request.temperature,
             max_output_tokens=request.max_output_tokens,
             response_mime_type="application/json" if request.response_schema else None,
             response_schema=request.response_schema,
-            http_options=types.HttpOptions(timeout=int(request.timeout_seconds * 1000)),
+            http_options=types.HttpOptions(
+                timeout=int(request.timeout_seconds * 1000),
+                retry_options=types.HttpRetryOptions(attempts=1),
+            ),
         )
         try:
             result = self._client.models.generate_content(
                 model=request.model_id, contents=request.prompt, config=config
             )
+        except errors.APIError as err:
+            raise ModelCallError(
+                "Vertex request failed", transient=err.code in {429, 500, 503, 504}
+            ) from err
         except gexc.GoogleAPICallError as err:
             code = None if err.code is None else int(getattr(err.code, "value", err.code))
             transient = type(err).__name__ in _TRANSIENT or code in {429, 503, 504}

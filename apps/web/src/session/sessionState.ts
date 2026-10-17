@@ -1,6 +1,7 @@
 import type {
   CommunityType,
   GoalInput,
+  ExtentKind,
   PlanningMode,
   QuantityInput,
   Unit,
@@ -35,6 +36,9 @@ export interface SessionState extends SessionInputs {
   status: SessionStatus;
   communityId: string | null;
   areaName: string | null;
+  areaExtent?: ExtentKind | null;
+  areaRadiusMeters?: number | null;
+  areaHasBoundary?: boolean | null;
   inputsRevision: number;
   updatedAt: string;
 }
@@ -75,6 +79,20 @@ function canonicalGoal(goal: GoalInput | null | undefined): GoalInput | null {
       : null,
     targetParameter: goal.targetParameter ?? null,
     budget: money(goal.budget),
+    waterTariff: goal.waterTariff
+      ? {
+          price: money(goal.waterTariff.price)!,
+          volume: quantity(goal.waterTariff.volume)!,
+          note: goal.waterTariff.note ?? '',
+        }
+      : null,
+    contingencyRatio: goal.contingencyRatio ? canonicalDecimal(goal.contingencyRatio) : null,
+    funding: (goal.funding ?? []).map((f) => ({
+      label: f.label,
+      amount: money(f.amount)!,
+      status: f.status,
+      note: f.note ?? '',
+    })),
     timelineDays: goal.timelineDays ?? null,
     horizonDays: goal.horizonDays ?? null,
     priority: goal.priority ?? null,
@@ -96,6 +114,9 @@ function canonicalGoal(goal: GoalInput | null | undefined): GoalInput | null {
             low: { minorUnits: e.cost.low.minorUnits, currency: e.cost.low.currency },
             high: { minorUnits: e.cost.high.minorUnits, currency: e.cost.high.currency },
           }
+        : null,
+      recurring: e.recurring
+        ? { low: money(e.recurring.low)!, high: money(e.recurring.high)! }
         : null,
       buildDays: days(e.buildDays),
       effects: (e.effects ?? []).map((x) => ({
@@ -162,6 +183,9 @@ export function fromFragment(s: PlanningSessionFieldsFragment): SessionState {
     stage: s.stage,
     areaId: s.areaId ?? null,
     areaName: s.area?.name ?? null,
+    areaExtent: s.area?.extent ?? null,
+    areaRadiusMeters: s.area?.radiusMeters ?? null,
+    areaHasBoundary: s.area?.hasBoundary ?? null,
     communityId: s.communityId ?? null,
     goal: canonicalGoal(s.goal),
     scenario: canonicalScenario(
@@ -206,6 +230,9 @@ export function applyPatch(server: SessionState, patch: SessionPatch): SessionSt
     Object.assign(next, { [field]: canonical(field, patch[field] ?? null) });
     if (field === 'areaId') {
       next.areaName = null;
+      next.areaExtent = null;
+      next.areaRadiusMeters = null;
+      next.areaHasBoundary = null;
       if (!('scenario' in patch)) next.scenario = null;
       if (!('selectedPlanOptionId' in patch)) next.selectedPlanOptionId = null;
     }

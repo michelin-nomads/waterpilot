@@ -212,6 +212,29 @@ describe('loadEnv — maps', () => {
     expect(() => loadEnv({ ...LOCAL, VITE_GOOGLE_MAPS_MAP_ID: 'abc' })).toThrow(/Google Maps/);
   });
 
+  it('opts into browser Maps locally while retaining emulator and API guards', () => {
+    const live = {
+      ...LOCAL,
+      VITE_LOCAL_GOOGLE_MAPS_ENABLED: 'true',
+      VITE_GOOGLE_MAPS_API_KEY: KEY,
+      VITE_GOOGLE_MAPS_MAP_ID: 'test-map',
+    };
+    const configured = loadEnv(live);
+    expect(configured.maps).toEqual({ provider: 'google', apiKey: KEY, mapId: 'test-map' });
+    expect(configured.useEmulators).toBe(true);
+    expect(configured.firebase.projectId).toBe('demo-waterlens');
+    expect(() => loadEnv({ ...live, VITE_USE_EMULATORS: 'false' })).toThrow(/requires emulators/);
+    expect(() => loadEnv({ ...live, VITE_API_BASE_URL: 'https://api.example.com' })).toThrow(
+      /loopback/,
+    );
+    expect(() => loadEnv({ ...LOCAL, VITE_LOCAL_GOOGLE_MAPS_ENABLED: 'true' })).toThrow(
+      /requires a browser Maps key/,
+    );
+    expect(() => loadEnv({ ...PILOT, VITE_LOCAL_GOOGLE_MAPS_ENABLED: 'true' })).toThrow(
+      /local-only/,
+    );
+  });
+
   it('uses Google in pilot only with a well-formed browser key', () => {
     expect(loadEnv(PILOT).maps).toEqual({ provider: 'none' });
     expect(loadEnv({ ...PILOT, VITE_GOOGLE_MAPS_API_KEY: KEY }).maps).toEqual({

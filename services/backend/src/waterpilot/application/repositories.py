@@ -25,6 +25,7 @@ from typing import Protocol
 from waterpilot.application.pagination import FilterValue, Page, PageQuery
 from waterpilot.domain.accounts import AccountClaim
 from waterpilot.domain.ai import UsageCallKey, UsageDay, UsageReservation
+from waterpilot.domain.area_assumptions import AreaAssumptionPreview
 from waterpilot.domain.communities import Community, Membership
 from waterpilot.domain.embeddings import FundingEmbedding
 from waterpilot.domain.funding import FundingMatch, FundingScheme
@@ -125,6 +126,9 @@ class IdempotencyStore(Protocol):
 
 
 class Store(Protocol):
+    @property
+    def area_assumptions(self) -> RecordRepository[AreaAssumptionPreview]: ...
+
     @property
     def areas(self) -> AreaCatalogue: ...
     @property

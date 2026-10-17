@@ -739,3 +739,12 @@ Recorded now, deliberately not built yet:
   - the two new collections (`usageReservations`, `usageDays`) are now exercised on the
     Firestore emulator (`tests/emulator/test_firestore_ai.py`).
 - A very popular community's member counter serializes joins (about one write per second per document); sharded counters are the follow-up if needed.
+
+## Group 1 local close-out — 2026-10-17
+
+Desktop financial inputs and session round-trip preservation, map radius preview,
+and authoritative Review extent wording are implemented. A separate local-only SJR
+synthetic result viewer is available; it cannot publish real evidence or reports.
+See [the exact automated/manual evidence and limitations](../validation/group1-local-pilot.md#group-1-implementation-close-out--2026-10-17).
+Real society records/permission, scientific review and non-INR reference economics
+remain outstanding. This does not claim live inference or deployed cloud validation.
