@@ -43,6 +43,7 @@ PUBLIC_LABELS = {
     "inspect_baseline": "Checking water supply and demand",
     "record_manual_input": "Saving entered water measurement",
     "update_site_profile": "Updating site profile",
+    "update_community_baseline": "Updating community water baseline",
     "compare_options": "Comparing feasible plans",
     "find_funding": "Checking funding eligibility",
 }
@@ -487,6 +488,7 @@ class ConversationTool(RuntimeTool):
                     "inspect_coverage",
                     "inspect_baseline",
                     "record_manual_input",
+                    "update_community_baseline",
                     "inspect_planning_state",
                 }
                 else "/plans",
@@ -512,7 +514,7 @@ class ConversationTool(RuntimeTool):
             if self.observed_version:
                 self.observed_version[0] = refreshed.version
             keys = [["session", run.session_id], ["session", "current"]]
-            if self.name == "record_manual_input":
+            if self.name in {"record_manual_input", "update_community_baseline"}:
                 keys.extend([["readiness"], ["baseline"]])
             await asyncio.to_thread(
                 self.agent.emit,

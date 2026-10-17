@@ -69,7 +69,7 @@ export function pathForSessionStage(stage: SessionStage | null | undefined): str
   // Legacy branch stages keep their original destination; never reinterpret them as Review.
   if (stage === 'MAKE_IT_HAPPEN') return '/make-it-happen';
   if (stage === 'TRACK') return '/tracking';
-  if (stage === 'BASELINE_INPUTS') return '/baseline/inputs';
+  if (stage === 'BASELINE_INPUTS') return '/baseline';
   if (stage === 'BASELINE_OVERVIEW') return '/baseline/overview';
   return PLANNING_STAGES.find((s) => s.sessionStage === stage)?.path ?? '/area';
 }

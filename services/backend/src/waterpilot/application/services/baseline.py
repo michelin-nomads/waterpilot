@@ -68,7 +68,12 @@ ESSENTIAL = (InputId.POPULATION, InputId.PER_CAPITA_STANDARD, InputId.DELIVERED_
 OPTIONAL = (InputId.NON_DOMESTIC_DEMAND, InputId.TANKER_SUPPLY)
 
 ENGINE_INPUTS: dict[str, tuple[InputId, ...]] = {
-    "demand": (InputId.POPULATION, InputId.PER_CAPITA_STANDARD, InputId.NON_DOMESTIC_DEMAND),
+    "demand": (
+        InputId.DAILY_DEMAND,
+        InputId.POPULATION,
+        InputId.PER_CAPITA_STANDARD,
+        InputId.NON_DOMESTIC_DEMAND,
+    ),
     "delivered_supply": (InputId.DELIVERED_SUPPLY,),
     "tanker_supply": (InputId.TANKER_SUPPLY,),
     "forward_series": (InputId.FORWARD_SERIES,),
@@ -382,11 +387,21 @@ class BaselineService:
         population = b.manual_value(InputId.POPULATION)
         per_capita = b.manual_value(InputId.PER_CAPITA_STANDARD)
         non_domestic = b.manual_value(InputId.NON_DOMESTIC_DEMAND)
-        demand = (
+        demand: DemandBasis | WindowMean | None = (
             DemandBasis(population, per_capita, non_domestic)
             if population is not None and per_capita is not None
             else None
         )
+        direct = b.manual_value(InputId.DAILY_DEMAND)
+        if direct is not None:
+            demand = WindowMean(direct)
+            for key in (
+                InputId.POPULATION,
+                InputId.PER_CAPITA_STANDARD,
+                InputId.NON_DOMESTIC_DEMAND,
+            ):
+                b.links.pop(key, None)
+                b.origins.pop(key, None)
         delivered = b.rate(InputId.DELIVERED_SUPPLY)
         tanker = b.rate(InputId.TANKER_SUPPLY)
 
@@ -413,7 +428,12 @@ class BaselineService:
                 f"({window.start} to {last})."
             )
         metrics = tuple(self._metric(m, b, window, partial_window) for m in result.metrics)
-        missing_essentials = tuple(i for i in ESSENTIAL if i not in b.links)
+        missing_essentials = tuple(
+            i
+            for i in ESSENTIAL
+            if i not in b.links
+            and not (direct is not None and i in (InputId.POPULATION, InputId.PER_CAPITA_STANDARD))
+        )
         missing_optional = tuple(i for i in OPTIONAL if i not in b.links)
         chart = (
             BaselineChart(
@@ -456,9 +476,24 @@ class BaselineService:
         self, m: MetricResult, b: _Builder, window: Window | None, partial_window: bool
     ) -> BaselineMetric:
         ids = [i for name in m.inputs for i in ENGINE_INPUTS[name]]
+        if InputId.DAILY_DEMAND in b.links:
+            ids = [
+                i
+                for i in ids
+                if i
+                not in (
+                    InputId.POPULATION,
+                    InputId.PER_CAPITA_STANDARD,
+                    InputId.NON_DOMESTIC_DEMAND,
+                )
+            ]
+        else:
+            ids = [i for i in ids if i is not InputId.DAILY_DEMAND]
         provided = [i for i in ids if i in b.links]
         links = tuple(b.links[i] for i in provided)
         name, formula = DEFINITIONS[m.metric]
+        if m.metric == "demand" and InputId.DAILY_DEMAND in b.links:
+            formula = "daily demand = user-provided daily use or accepted household estimate"
         demo = any(link.demo for link in links)
         if m.value is None:
             assert m.reason is not None

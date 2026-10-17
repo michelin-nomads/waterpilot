@@ -18,6 +18,9 @@ const str = (input: Input, key: string): string => String(input[key] ?? '');
 export const invalidations: Record<MutationName, (input: Input) => QueryKey[]> = {
   createPlanningSession: () => [queryKeys.sessions.current(), ['session']],
   updatePlanningSession: (i) => [
+    queryKeys.readiness.all(),
+    queryKeys.baseline.all(),
+    queryKeys.sessions.derived(str(i, 'id')),
     queryKeys.sessions.detail(str(i, 'id')),
     queryKeys.sessions.current(),
   ],

@@ -455,6 +455,32 @@ export type CommunityArea = {
   name: Scalars['String']['output'];
 };
 
+export type CommunityBaseline = {
+  areaId: Scalars['String']['output'];
+  asOf: Scalars['LocalDate']['output'];
+  concern: Scalars['String']['output'];
+  dailyUse?: Maybe<Scalars['DecimalString']['output']>;
+  demandEstimated: Scalars['Boolean']['output'];
+  demandSource: Scalars['String']['output'];
+  notes: Scalars['String']['output'];
+  residents?: Maybe<Scalars['Int']['output']>;
+  sources: Array<WaterSource>;
+  supplyComplete: Scalars['Boolean']['output'];
+};
+
+export type CommunityBaselineInput = {
+  areaId: Scalars['String']['input'];
+  asOf: Scalars['LocalDate']['input'];
+  concern: Scalars['String']['input'];
+  dailyUse?: InputMaybe<Scalars['DecimalString']['input']>;
+  demandEstimated: Scalars['Boolean']['input'];
+  demandSource: Scalars['String']['input'];
+  notes: Scalars['String']['input'];
+  residents?: InputMaybe<Scalars['Int']['input']>;
+  sources: Array<WaterSourceInput>;
+  supplyComplete: Scalars['Boolean']['input'];
+};
+
 export type CommunityConnection = {
   nodes: Array<Community>;
   pageInfo: PageInfo;
@@ -1859,6 +1885,7 @@ export type PlanningSession = {
   area?: Maybe<Area>;
   areaId?: Maybe<Scalars['ID']['output']>;
   baselineReviewed: Scalars['Boolean']['output'];
+  communityBaseline?: Maybe<CommunityBaseline>;
   communityId?: Maybe<Scalars['ID']['output']>;
   createdAt: Scalars['UtcDateTime']['output'];
   goal?: Maybe<Goal>;
@@ -1887,6 +1914,7 @@ export type PlanningSession = {
 export type PlanningSessionPatch = {
   areaId?: InputMaybe<Scalars['ID']['input']>;
   baselineReviewed?: InputMaybe<Scalars['Boolean']['input']>;
+  communityBaseline?: InputMaybe<CommunityBaselineInput>;
   goal?: InputMaybe<GoalInput>;
   mode?: InputMaybe<PlanningMode>;
   scenario?: InputMaybe<ScenarioInput>;
@@ -2198,6 +2226,7 @@ export type QuerySearchAreasArgs = {
 };
 
 export type ReadinessInput =
+  | 'DAILY_DEMAND'
   | 'DELIVERED_SUPPLY'
   | 'FORWARD_SERIES'
   | 'INTERVENTION_COSTS'
@@ -2555,6 +2584,28 @@ export type ValueOrigin =
 export type Viewer = {
   kind: AccountKind;
   uid: Scalars['ID']['output'];
+};
+
+export type WaterSource = {
+  estimated: Scalars['Boolean']['output'];
+  kind: Scalars['String']['output'];
+  method: Scalars['String']['output'];
+  multiplier: Scalars['DecimalString']['output'];
+  name: Scalars['String']['output'];
+  periodDays: Scalars['Int']['output'];
+  quantity?: Maybe<Scalars['DecimalString']['output']>;
+  source: Scalars['String']['output'];
+};
+
+export type WaterSourceInput = {
+  estimated: Scalars['Boolean']['input'];
+  kind: Scalars['String']['input'];
+  method: Scalars['String']['input'];
+  multiplier: Scalars['DecimalString']['input'];
+  name: Scalars['String']['input'];
+  periodDays: Scalars['Int']['input'];
+  quantity?: InputMaybe<Scalars['DecimalString']['input']>;
+  source: Scalars['String']['input'];
 };
 
 /** The tanker-water price you pay now; your estimate, never converted. */

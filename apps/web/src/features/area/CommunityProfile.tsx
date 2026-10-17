@@ -21,11 +21,7 @@ export function CommunityProfile() {
   };
 
   return (
-    <Field
-      id="community-type"
-      label="Community type"
-      hint="Shown on your report. It does not change any result."
-    >
+    <Field hintPosition="after" id="community-type" label="Community type">
       {(props) => (
         <Select {...props} value={profile?.communityType ?? ''} onChange={change}>
           <option value="">Not stated</option>

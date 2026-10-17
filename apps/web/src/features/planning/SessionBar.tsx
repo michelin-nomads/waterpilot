@@ -20,6 +20,7 @@ const FIELD_LABEL: Record<SessionField, string> = {
   scenario: 'what-if changes',
   selectedPlanOptionId: 'chosen plan',
   siteProfile: 'community details',
+  communityBaseline: 'water baseline',
 };
 
 function listFields(fields: readonly SessionField[]): string {

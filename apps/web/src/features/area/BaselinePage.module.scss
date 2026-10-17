@@ -1,19 +1,23 @@
+.baseline {
+  container-type: inline-size;
+  container-name: baseline;
+  min-width: 0;
+}
 .overviewLayout {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  align-items: start;
-  gap: var(--wp-card-section-gap);
-}
-
-.overviewMain,
-.overviewContext {
-  display: grid;
+  gap: var(--wp-space-4);
   min-width: 0;
-  gap: var(--wp-card-section-gap);
 }
-
-@media (min-width: 64rem) {
-  .overviewLayout {
-    grid-template-columns: minmax(0, 1.75fr) minmax(15rem, 1fr);
+.review {
+  h1 {
+    font-size: clamp(1.5rem, 2.5cqw, 2rem);
+    line-height: 1.2;
+  }
+  header > div > p:last-child {
+    font-size: var(--wp-text-md);
+  }
+  section {
+    min-width: 0;
   }
 }

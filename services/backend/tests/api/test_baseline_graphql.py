@@ -94,7 +94,7 @@ def test_public_baseline_is_all_unavailable_with_reasons(h: Harness) -> None:
         365,
         "0.9",
     )
-    assert b["engineVersion"] == "baseline-1" and b["id"].startswith("bsl_")
+    assert b["engineVersion"] == "baseline-2" and b["id"].startswith("bsl_")
     for m in b["metrics"]:
         assert m["availability"] == "UNAVAILABLE"
         assert m["value"] is None and m["exact"] is None and m["reason"] and m["reasons"]
@@ -140,3 +140,90 @@ def test_session_baseline_is_owner_only(h: Harness) -> None:
     assert other["errors"][0]["extensions"]["code"] == "NOT_FOUND"
     anonymous = h.gql(BASELINE, {"id": AREA_ID, "sessionId": sid})
     assert anonymous["errors"][0]["extensions"]["code"] == "UNAUTHENTICATED"
+
+
+def _save_community(h: Harness, sid: str, details: dict[str, Any]) -> dict[str, Any]:
+    query = """query($id: ID!) { planningSession(id: $id) { version } }"""
+    body = h.gql(query, {"id": sid}, "t-guest")
+    version = body["data"]["planningSession"]["version"]
+    mutation = """mutation($input: UpdatePlanningSessionInput!) {
+      updatePlanningSession(input: $input) {
+        session { id version inputsRevision baselineReviewed communityBaseline {
+          concern dailyUse supplyComplete sources { name quantity source }
+        }} error {code message}
+      }
+    }"""
+    return h.gql(
+        mutation,
+        {"input": {"id": sid, "expectedVersion": version, "patch": {"communityBaseline": details}}},
+        "t-guest",
+    )["data"]["updatePlanningSession"]
+
+
+def _details() -> dict[str, Any]:
+    return {
+        "areaId": AREA_ID,
+        "concern": "Summer pressure drops",
+        "notes": "",
+        "residents": 240,
+        "dailyUse": "32400",
+        "demandEstimated": True,
+        "demandSource": "80 homes × 3 residents × 135 litres per person",
+        "asOf": "2026-09-01",
+        "supplyComplete": True,
+        "sources": [
+            {
+                "name": "Community tanker",
+                "kind": "tanker",
+                "method": "tanker_deliveries",
+                "quantity": "10000",
+                "multiplier": "5",
+                "periodDays": 2,
+                "estimated": False,
+                "source": "Delivery log for the same period",
+            }
+        ],
+    }
+
+
+def test_community_baseline_is_persisted_and_computes_an_average_gap(h: Harness) -> None:
+    sid = _session(h, "t-guest")
+    result = _save_community(h, sid, _details())
+    assert result["error"] is None, result
+    assert result["session"]["communityBaseline"]["concern"] == "Summer pressure drops"
+    assert result["session"]["inputsRevision"] == 1
+    baseline = _baseline(h, sid, "t-guest")
+    assert _metric(baseline, "demand")["value"] == "32400"
+    assert _metric(baseline, "delivered_supply")["value"] == "25000"
+    assert _metric(baseline, "average_supply_gap")["value"] == "7400"
+    # An average is not enough to establish dependable daily supply.
+    assert _metric(baseline, "deficit")["value"] is None
+    assert _metric(baseline, "demand")["origin"] == "USER_ESTIMATE"
+    assert any("80 homes" in e["note"] for e in _metric(baseline, "demand")["evidence"])
+
+
+def test_incomplete_or_cleared_supply_never_reuses_an_old_total(h: Harness) -> None:
+    sid = _session(h, "t-guest")
+    details = _details()
+    assert _save_community(h, sid, details)["error"] is None
+    first = _baseline(h, sid, "t-guest")
+    details["supplyComplete"] = False
+    assert _save_community(h, sid, details)["error"] is None
+    second = _baseline(h, sid, "t-guest")
+    assert second["id"] != first["id"]
+    assert _metric(second, "delivered_supply")["value"] is None
+    assert _metric(second, "average_supply_gap")["value"] is None
+    details["sources"] = []
+    details["dailyUse"] = None
+    assert _save_community(h, sid, details)["error"] is None
+    assert _metric(_baseline(h, sid, "t-guest"), "demand")["value"] is None
+
+
+def test_complete_supply_rejects_unknown_quantities_and_bad_dates(h: Harness) -> None:
+    sid = _session(h, "t-guest")
+    details = _details()
+    details["sources"][0]["quantity"] = None
+    assert _save_community(h, sid, details)["error"]["code"] == "VALIDATION_FAILED"
+    details = _details()
+    details["asOf"] = "2099-01-01"
+    assert _save_community(h, sid, details)["error"]["code"] == "VALIDATION_FAILED"

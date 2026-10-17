@@ -1,4 +1,5 @@
 import type {
+  CommunityBaselineInput,
   CommunityType,
   GoalInput,
   ExtentKind,
@@ -22,6 +23,7 @@ export interface SessionInputs {
   scenario: ScenarioInput | null;
   selectedPlanOptionId: string | null;
   siteProfile: SiteProfile | null;
+  communityBaseline?: CommunityBaselineInput | null;
 }
 
 /** What the person says about their community; descriptive only, never an input to results. */
@@ -56,10 +58,16 @@ export const SESSION_FIELDS: readonly SessionField[] = [
   'scenario',
   'selectedPlanOptionId',
   'siteProfile',
+  'communityBaseline',
 ];
 
 /** Inputs whose change makes plan comparisons, matches and proposal previews out of date. */
-export const UPSTREAM_FIELDS: ReadonlySet<SessionField> = new Set(['areaId', 'goal', 'scenario']);
+export const UPSTREAM_FIELDS: ReadonlySet<SessionField> = new Set([
+  'areaId',
+  'goal',
+  'scenario',
+  'communityBaseline',
+]);
 
 const NAVIGATION_FIELDS: ReadonlySet<SessionField> = new Set(['mode', 'stage']);
 
@@ -155,11 +163,38 @@ function canonicalSiteProfile(
   return communityType === null && occupiedHomes === null ? null : { communityType, occupiedHomes };
 }
 
+function canonicalCommunityBaseline(value: CommunityBaselineInput | null | undefined) {
+  if (!value) return null;
+  return {
+    areaId: value.areaId,
+    concern: value.concern,
+    notes: value.notes,
+    residents: value.residents ?? null,
+    dailyUse: value.dailyUse == null ? null : canonicalDecimal(value.dailyUse),
+    demandEstimated: value.demandEstimated,
+    demandSource: value.demandSource,
+    asOf: value.asOf,
+    supplyComplete: value.supplyComplete,
+    sources: value.sources.map((source) => ({
+      name: source.name,
+      kind: source.kind,
+      method: source.method,
+      quantity: source.quantity == null ? null : canonicalDecimal(source.quantity),
+      multiplier: canonicalDecimal(source.multiplier),
+      periodDays: source.periodDays,
+      estimated: source.estimated,
+      source: source.source,
+    })),
+  };
+}
+
 /** One canonical form per field, so equal inputs compare equal however they were built. */
 export function canonical<F extends SessionField>(
   field: F,
   value: SessionInputs[F] | null,
 ): unknown {
+  if (field === 'communityBaseline')
+    return canonicalCommunityBaseline(value as CommunityBaselineInput | null);
   if (field === 'baselineReviewed') return value === true;
   if (field === 'goal') return canonicalGoal(value as GoalInput | null);
   if (field === 'scenario') return canonicalScenario(value as ScenarioInput | null);
@@ -207,6 +242,7 @@ export function fromFragment(s: PlanningSessionFieldsFragment): SessionState {
     ),
     selectedPlanOptionId: s.selectedPlanOptionId ?? null,
     siteProfile: canonicalSiteProfile(s.siteProfile),
+    communityBaseline: canonicalCommunityBaseline(s.communityBaseline),
     inputsRevision: s.inputsRevision,
     updatedAt: s.updatedAt,
   };
@@ -232,7 +268,9 @@ export function applyPatch(server: SessionState, patch: SessionPatch): SessionSt
   for (const field of patchFields(patch)) {
     if (sameValue(field, server[field], patch[field])) continue;
     Object.assign(next, { [field]: canonical(field, patch[field] ?? null) });
+    if (field === 'communityBaseline') next.baselineReviewed = false;
     if (field === 'areaId') {
+      next.communityBaseline = null;
       next.baselineReviewed = false;
       next.areaName = null;
       next.areaExtent = null;

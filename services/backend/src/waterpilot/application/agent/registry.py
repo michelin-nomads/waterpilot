@@ -45,6 +45,7 @@ from waterpilot.application.tools.options import (
     scenario_json,
 )
 from waterpilot.domain import baseline as bl
+from waterpilot.domain.community_baseline import CommunityBaseline
 from waterpilot.domain.errors import DomainError, ErrorCode, not_found
 from waterpilot.domain.funding import ApplicantInformation
 from waterpilot.domain.planning import CommunityType, PlanningSession, SiteProfile
@@ -447,14 +448,10 @@ def _inspect_proposal(rc: RunContext, a: ProposalArgs) -> Json:
         "proposal": proposal.model_dump(mode="json"),
         "isReady": ready,
         "downloadUrl": (
-            f"/v1/proposals/{proposal.id}/download"
-            if ready and proposal.artifact_key
-            else None
+            f"/v1/proposals/{proposal.id}/download" if ready and proposal.artifact_key else None
         ),
         "previewUrl": (
-            f"/v1/proposals/{proposal.id}/preview"
-            if ready and proposal.html_artifact_key
-            else None
+            f"/v1/proposals/{proposal.id}/preview" if ready and proposal.html_artifact_key else None
         ),
         "note": "Proposal downloads are private and scoped strictly to the report owner.",
     }
@@ -579,6 +576,14 @@ def _update_site_profile(rc: RunContext, a: UpdateSiteProfileArgs) -> Json:
     )
     updated = rc.services.sessions.update(
         rc.ctx, session.id, session.version, {"site_profile": profile}
+    )
+    return updated.model_dump(mode="json")
+
+
+def _update_community_baseline(rc: RunContext, a: CommunityBaseline) -> Json:
+    session = rc.session()
+    updated = rc.services.sessions.update(
+        rc.ctx, session.id, session.version, {"community_baseline": a}
     )
     return updated.model_dump(mode="json")
 
@@ -994,6 +999,16 @@ TOOLS: tuple[ToolSpec, ...] = (
         ToolKind.EDIT,
         UpdateSiteProfileArgs,
         _update_site_profile,
+    ),
+    _spec(
+        "update_community_baseline",
+        "Save the shared Baseline form. Read current state first and preserve unchanged fields. "
+        "Use only owner-provided values or explicitly accepted assumptions. Leave unknown daily "
+        "use null and supply_complete false until every source is quantified and the owner "
+        "confirms the list is complete. Sources include provenance and calculation method.",
+        ToolKind.EDIT,
+        CommunityBaseline,
+        _update_community_baseline,
     ),
     # prepare-only (irreversible / meaningful; require explicit UI confirmation)
     _spec(

@@ -482,6 +482,32 @@ type CommunityArea {
   countryCode: String!
 }
 
+type CommunityBaseline {
+  areaId: String!
+  concern: String!
+  notes: String!
+  residents: Int
+  dailyUse: DecimalString
+  demandEstimated: Boolean!
+  demandSource: String!
+  asOf: LocalDate!
+  supplyComplete: Boolean!
+  sources: [WaterSource!]!
+}
+
+input CommunityBaselineInput {
+  areaId: String!
+  concern: String!
+  notes: String!
+  residents: Int
+  dailyUse: DecimalString
+  demandEstimated: Boolean!
+  demandSource: String!
+  asOf: LocalDate!
+  supplyComplete: Boolean!
+  sources: [WaterSourceInput!]!
+}
+
 type CommunityConnection {
   nodes: [Community!]!
   pageInfo: PageInfo!
@@ -1997,6 +2023,7 @@ type PlanningSession {
   scenario: Scenario
   selectedPlanOptionId: ID
   siteProfile: SiteProfile
+  communityBaseline: CommunityBaseline
 
   """
   Increases whenever location, goal or scenario actually change, or a baseline value is recorded for the session; each also clears the selected plan. Derived results (plan options, funding matches, proposal previews) are keyed by it.
@@ -2035,6 +2062,7 @@ input PlanningSessionPatch {
   scenario: ScenarioInput
   selectedPlanOptionId: ID
   siteProfile: SiteProfileInput
+  communityBaseline: CommunityBaselineInput
 }
 
 type PlanningSessionPayload {
@@ -2219,6 +2247,7 @@ type Query {
 }
 
 enum ReadinessInput {
+  DAILY_DEMAND
   POPULATION
   PER_CAPITA_STANDARD
   NON_DOMESTIC_DEMAND
@@ -2618,6 +2647,28 @@ enum ValueOrigin {
 type Viewer {
   uid: ID!
   kind: AccountKind!
+}
+
+type WaterSource {
+  name: String!
+  kind: String!
+  method: String!
+  quantity: DecimalString
+  multiplier: DecimalString!
+  periodDays: Int!
+  estimated: Boolean!
+  source: String!
+}
+
+input WaterSourceInput {
+  name: String!
+  kind: String!
+  method: String!
+  quantity: DecimalString
+  multiplier: DecimalString!
+  periodDays: Int!
+  estimated: Boolean!
+  source: String!
 }
 
 """The tanker-water price you pay now; your estimate, never converted."""

@@ -43,6 +43,7 @@ shown as zero.
 
 | Input               | Label                                | Unit      | Source capability | Manual entry | Max age   | Arrives with |
 | ------------------- | ------------------------------------ | --------- | ----------------- | ------------ | --------- | ------------ |
+| daily_demand        | Daily water use                      | L/day     | none defined      | yes          | 365 days  | -            |
 | population          | Population served                    | count     | none defined      | yes          | 3653 days | -            |
 | per_capita_standard | Per-person daily water need          | L/day     | none defined      | yes          | none      | -            |
 | non_domestic_demand | Non-domestic demand                  | L/day     | none defined      | yes          | 365 days  | -            |
@@ -57,6 +58,7 @@ shown as zero.
 
 | Metric                  | Required inputs                                   | Optional inputs     | Daily series | Typed-in values only |
 | ----------------------- | ------------------------------------------------- | ------------------- | ------------ | -------------------- |
+| average_supply_gap      | delivered_supply, population, per_capita_standard | non_domestic_demand | no           | user_entered         |
 | demand                  | population, per_capita_standard                   | non_domestic_demand | no           | user_entered         |
 | delivered_supply        | delivered_supply                                  | -                   | no           | user_entered         |
 | reliable_supply         | delivered_supply                                  | -                   | yes          | unavailable          |

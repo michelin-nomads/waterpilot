@@ -290,3 +290,14 @@
   color: var(--wp-color-text-muted);
   font-size: var(--wp-text-sm);
 }
+
+.compact {
+  padding: var(--wp-space-4) var(--wp-space-5);
+  gap: var(--wp-space-2);
+}
+.compact .summaryHead {
+  justify-content: space-between;
+}
+.compact .summaryHead > button {
+  color: var(--wp-color-accent-strong);
+}

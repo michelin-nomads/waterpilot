@@ -124,6 +124,7 @@ REVIEWED_MODELS: frozenset[Capability] = frozenset()
 
 
 class InputId(StrEnum):
+    DAILY_DEMAND = "daily_demand"
     POPULATION = "population"
     PER_CAPITA_STANDARD = "per_capita_standard"
     NON_DOMESTIC_DEMAND = "non_domestic_demand"
@@ -155,6 +156,16 @@ class InputRequirement:
 INPUTS: dict[InputId, InputRequirement] = {
     r.id: r
     for r in (
+        InputRequirement(
+            InputId.DAILY_DEMAND,
+            "Daily water use",
+            CanonicalUnit.LITRES_PER_DAY,
+            None,
+            frozenset(),
+            True,
+            365,
+            "Enter daily water use with its source or assumptions.",
+        ),
         InputRequirement(
             InputId.POPULATION,
             "Population served",
@@ -270,6 +281,9 @@ class MetricRequirement:
 
 
 METRICS: tuple[MetricRequirement, ...] = (
+    MetricRequirement(
+        "average_supply_gap", (InputId.DELIVERED_SUPPLY, *_DEMAND), (InputId.NON_DOMESTIC_DEMAND,)
+    ),
     MetricRequirement("demand", _DEMAND, (InputId.NON_DOMESTIC_DEMAND,)),
     MetricRequirement("delivered_supply", (InputId.DELIVERED_SUPPLY,)),
     MetricRequirement("reliable_supply", (InputId.DELIVERED_SUPPLY,), daily_series=True),
@@ -706,7 +720,20 @@ def assess_metric(
     states: list[ReadinessState] = []
     reasons: list[str] = []
     blocked: list[InputId] = []
-    for input_id in metric.required:
+    required = metric.required
+    direct = inputs.get(InputId.DAILY_DEMAND)
+    if (
+        direct is not None
+        and direct.state
+        in {ReadinessState.USER_ENTERED, ReadinessState.AVAILABLE, ReadinessState.PARTIAL}
+        and InputId.POPULATION in required
+        and InputId.PER_CAPITA_STANDARD in required
+    ):
+        required = (
+            InputId.DAILY_DEMAND,
+            *(i for i in required if i not in {InputId.POPULATION, InputId.PER_CAPITA_STANDARD}),
+        )
+    for input_id in required:
         item = inputs[input_id]
         label = INPUTS[input_id].label
         state = item.state
@@ -725,7 +752,7 @@ def assess_metric(
         if state in {_U_, _ST}:
             blocked.append(input_id)
         states.append(state)
-    for input_id in metric.optional:
+    for input_id in () if InputId.DAILY_DEMAND in required else metric.optional:
         if inputs[input_id].state is _U_:
             states.append(_PA)
             reasons.append(f"{INPUTS[input_id].label} not provided; the result would omit it.")
@@ -734,7 +761,7 @@ def assess_metric(
         state=worst(states),
         reasons=tuple(reasons),
         blocked_inputs=tuple(blocked),
-        demo=any(inputs[i].demo for i in metric.required),
+        demo=any(inputs[i].demo for i in required),
     )
 
 

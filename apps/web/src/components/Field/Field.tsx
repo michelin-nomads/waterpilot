@@ -22,6 +22,7 @@ interface FieldProps {
   id?: string;
   label: ReactNode;
   hint?: ReactNode;
+  hintPosition?: 'before' | 'after';
   /** Optional contextual help beside the label, outside its click target. */
   labelAction?: ReactNode;
   /** Actionable message: say what is wrong and how to fix it. */
@@ -37,6 +38,7 @@ export function Field({
   id: idProp,
   label,
   hint,
+  hintPosition = 'before',
   labelAction,
   error,
   required = false,
@@ -73,7 +75,7 @@ export function Field({
       ) : (
         fieldLabel
       )}
-      {hint && (
+      {hint && hintPosition === 'before' && (
         <p id={hintId} className={styles.hint}>
           {hint}
         </p>
@@ -84,6 +86,11 @@ export function Field({
         'aria-invalid': error ? true : undefined,
         required: required || undefined,
       })}
+      {hint && hintPosition === 'after' && (
+        <p id={hintId} className={styles.hint}>
+          {hint}
+        </p>
+      )}
       {error && (
         <p id={errorId} className={styles.error}>
           {error}

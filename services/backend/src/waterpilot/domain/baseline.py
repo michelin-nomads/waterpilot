@@ -35,7 +35,7 @@ from fractions import Fraction
 from waterpilot.domain.planning import Capability
 from waterpilot.domain.units import CanonicalUnit
 
-ENGINE_VERSION = "baseline-1"
+ENGINE_VERSION = "baseline-2"
 """Bumped whenever a definition or rounding rule changes, so cached results are not
 reused across versions."""
 
@@ -238,6 +238,7 @@ METRIC_ORDER = (
     "shortage_days",
     "tanker_dependence",
     "days_until_shortage",
+    "average_supply_gap",
 )
 """Registry metrics the baseline reports. Cost metrics belong to Prompt 13."""
 
@@ -253,6 +254,10 @@ DEFINITIONS: dict[str, tuple[str, str]] = {
     "reliable_supply": (
         "Reliable supply (dependable yield)",
         "max{ v : P(delivered_supply_day >= v) >= p }",
+    ),
+    "average_supply_gap": (
+        "Average daily supply gap",
+        "max(0, average_daily_demand - average_daily_supply)",
     ),
     "deficit": (
         "Deficit (reliable-supply basis)",
@@ -613,6 +618,24 @@ def compute(inputs: BaselineInputs, p: Fraction = EXCEEDANCE_P) -> BaselineResul
             daily=True,
         )
     )
+    average_gap = (
+        demand_card
+        if isinstance(demand_card, Reason)
+        else delivered_card
+        if isinstance(delivered_card, Reason)
+        else max(Fraction(0), demand_card - delivered_card)
+    )
+    out.append(
+        result(
+            "average_supply_gap",
+            LPD,
+            average_gap,
+            (*D, *S),
+            daily=False,
+            assumptions=("Compares daily averages; this is not a reliable-supply assessment.",),
+        )
+    )
+
     return BaselineResult(
         window=w,
         exceedance_p=p,

@@ -13,6 +13,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import Field, field_validator, model_validator
 
+from waterpilot.domain.community_baseline import CommunityBaseline
 from waterpilot.domain.economics import OptionEconomics
 from waterpilot.domain.impact_records import OptionImpact
 from waterpilot.domain.location import (
@@ -456,6 +457,7 @@ class PlanningSession(Record):
     scenario: Scenario | None = None
     selected_plan_option_id: str | None = None
     site_profile: SiteProfile | None = None
+    community_baseline: CommunityBaseline | None = None
     inputs_revision: int = Field(default=0, ge=0)
     """Bumped whenever an upstream input (location, goal, scenario) actually changes.
     Derived results (plan options, matches, previews) record the revision they used."""

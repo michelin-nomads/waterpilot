@@ -16,6 +16,27 @@ fragment PlanningSessionFields on PlanningSession {
   areaId
   communityId
   selectedPlanOptionId
+  communityBaseline {
+    areaId
+    concern
+    notes
+    residents
+    dailyUse
+    demandEstimated
+    demandSource
+    asOf
+    supplyComplete
+    sources {
+      name
+      kind
+      method
+      quantity
+      multiplier
+      periodDays
+      estimated
+      source
+    }
+  }
   siteProfile {
     communityType
     occupiedHomes

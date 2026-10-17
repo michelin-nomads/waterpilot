@@ -165,9 +165,12 @@ describe('SessionCoordinator saving', () => {
     coordinator.setGoal(GOAL_A);
     await vi.waitFor(() => expect(env.server.applied).toHaveLength(1));
     coordinator.setStage('GOAL');
+    const saving = coordinator.flush();
     env.server.hold = null;
     release();
-    await vi.waitFor(() => expect(coordinator.getState().save).toBe('saved'));
+    await saving;
+    expect(coordinator.getState().save).toBe('saved');
+    expect(coordinator.getState().pending).toEqual({});
     expect(env.server.calls.filter((c) => c.startsWith('update'))).toEqual([
       `update:${session.id}:1:goal`,
       `update:${session.id}:2:stage`,

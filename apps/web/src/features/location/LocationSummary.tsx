@@ -18,6 +18,7 @@ interface LocationSummaryProps {
   areaId: string;
   onChange: () => void;
   actionLabel?: string;
+  compact?: boolean;
 }
 
 /** The confirmed location, its area treatment and its region settings. */
@@ -25,6 +26,7 @@ export function LocationSummary({
   areaId,
   onChange,
   actionLabel = 'Change area',
+  compact = false,
 }: LocationSummaryProps) {
   const query = useGraphQLQuery(queryKeys.areas.detail(areaId), AreaLocationDocument, {
     id: areaId,
@@ -73,9 +75,17 @@ export function LocationSummary({
   }
 
   return (
-    <section aria-labelledby="location-summary-title" className={styles.card}>
+    <section
+      aria-labelledby="location-summary-title"
+      className={`${styles.card} ${compact ? styles.compact : ''}`}
+    >
       <div className={styles.summaryHead}>
         <LocationSummaryName area={area} onChange={onChange} />
+        {compact && (
+          <Button variant="ghost" size="sm" onClick={onChange}>
+            {actionLabel}
+          </Button>
+        )}
       </div>
       {area.providerContentExpired && (
         <Notice
@@ -91,50 +101,60 @@ export function LocationSummary({
           again to refresh them; your other inputs are kept.
         </Notice>
       )}
-      <dl className={styles.facts}>
-        <div>
-          <dt>Area used for calculations</dt>
-          <dd>
-            {EXTENT_LABEL[area.extent]}
-            {area.radiusMeters != null && `, ${formatDistance(area.radiusMeters)} radius`}
-          </dd>
-        </div>
-        {area.accuracyMeters != null && (
+      {compact ? (
+        <p className={styles.hint}>
+          {area.radiusMeters != null
+            ? `${formatDistance(area.radiusMeters)} planning radius`
+            : EXTENT_LABEL[area.extent]}
+        </p>
+      ) : (
+        <dl className={styles.facts}>
           <div>
-            <dt>Device accuracy</dt>
-            <dd>within about {formatDistance(area.accuracyMeters)}</dd>
+            <dt>Area used for calculations</dt>
+            <dd>
+              {EXTENT_LABEL[area.extent]}
+              {area.radiusMeters != null && `, ${formatDistance(area.radiusMeters)} radius`}
+            </dd>
           </div>
-        )}
-        <div>
-          <dt>Country</dt>
-          <dd>{area.admin.countryName ?? area.countryCode}</dd>
-        </div>
-        <div>
-          <dt>Currency</dt>
-          <dd>
-            {area.currency ?? 'Not known for this country'}
-            {area.regionSetByUser.includes('currency') && ' (set by you)'}
-          </dd>
-        </div>
-        <div>
-          <dt>Time zone</dt>
-          <dd>
-            {area.timezone}
-            {area.regionSetByUser.includes('timezone') && ' (set by you)'}
-          </dd>
-        </div>
-      </dl>
-      {!area.hasBoundary && (
+          {area.accuracyMeters != null && (
+            <div>
+              <dt>Device accuracy</dt>
+              <dd>within about {formatDistance(area.accuracyMeters)}</dd>
+            </div>
+          )}
+          <div>
+            <dt>Country</dt>
+            <dd>{area.admin.countryName ?? area.countryCode}</dd>
+          </div>
+          <div>
+            <dt>Currency</dt>
+            <dd>
+              {area.currency ?? 'Not known for this country'}
+              {area.regionSetByUser.includes('currency') && ' (set by you)'}
+            </dd>
+          </div>
+          <div>
+            <dt>Time zone</dt>
+            <dd>
+              {area.timezone}
+              {area.regionSetByUser.includes('timezone') && ' (set by you)'}
+            </dd>
+          </div>
+        </dl>
+      )}
+      {!compact && !area.hasBoundary && (
         <p className={styles.hint}>
           No boundary is drawn for this location. Steps that need an area use your radius or ask you
           for one.
         </p>
       )}
-      <div className={styles.actions}>
-        <Button variant="secondary" startIcon="map" onClick={onChange}>
-          {actionLabel}
-        </Button>
-      </div>
+      {!compact && (
+        <div className={styles.actions}>
+          <Button variant="secondary" startIcon="map" onClick={onChange}>
+            {actionLabel}
+          </Button>
+        </div>
+      )}
     </section>
   );
 }

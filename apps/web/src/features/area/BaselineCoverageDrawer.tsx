@@ -1,3 +1,4 @@
+import { usePlanningSession } from '../../session/sessionContext';
 import { ErrorState, LoadingRegion, PermissionState, Skeleton } from '../../components';
 import { AreaBaselineDocument } from '../../graphql/generated/graphql';
 import { useGraphQLQuery } from '../../graphql/hooks';
@@ -22,6 +23,8 @@ function sourceLabel(publisher: string | null, title: string, note: string | nul
 
 /** Shows the current backend's provenance and coverage without filling unknown fields. */
 export function BaselineCoverageDrawer({ areaId, sessionId }: Props) {
+  const { view } = usePlanningSession();
+  const record = view?.communityBaseline;
   const query = useGraphQLQuery(queryKeys.baseline.area(areaId, sessionId), AreaBaselineDocument, {
     areaId,
     sessionId,
@@ -70,36 +73,22 @@ export function BaselineCoverageDrawer({ areaId, sessionId }: Props) {
   }
 
   const baseline = area.baseline;
-  const rows = [
+  const evidenceRows = [
     ...baseline.metrics.flatMap((metric) =>
       metric.evidence.length > 0
-        ? metric.evidence.map((evidence, index) => ({
-            id: `${metric.metric}-${evidence.snapshotId ?? evidence.manualInputId ?? index}`,
-            dataset: metric.name,
-            source: sourceLabel(evidence.publisher, evidence.title, evidence.note),
-            url: evidence.url,
-            date: evidence.asOf ?? metric.asOf,
-            resolution: evidence.method
-              ? evidence.method.toLowerCase().replace(/_/g, ' ')
-              : metric.daily
-                ? 'Daily records'
-                : 'Summary value',
-            coverage:
-              metric.periodDays !== null
-                ? metric.recordedDays !== null
-                  ? `${metric.recordedDays} of ${metric.periodDays} days`
-                  : `Not reported within ${metric.periodDays} days`
-                : 'Not reported',
-            status: statusLabel(metric.availability),
-          }))
-        : [
-            {
-              id: `${metric.metric}-no-source`,
+        ? metric.evidence
+            .filter((evidence) => !record || evidence.manualInputId === null)
+            .map((evidence, index) => ({
+              id: `${metric.metric}-${evidence.snapshotId ?? evidence.manualInputId ?? index}`,
               dataset: metric.name,
-              source: 'Source not recorded',
-              url: null,
-              date: metric.asOf,
-              resolution: metric.daily ? 'Daily records' : 'Summary value',
+              source: sourceLabel(evidence.publisher, evidence.title, evidence.note),
+              url: evidence.url,
+              date: evidence.asOf ?? metric.asOf,
+              resolution: evidence.method
+                ? evidence.method.toLowerCase().replace(/_/g, ' ')
+                : metric.daily
+                  ? 'Daily records'
+                  : 'Summary value',
               coverage:
                 metric.periodDays !== null
                   ? metric.recordedDays !== null
@@ -107,52 +96,93 @@ export function BaselineCoverageDrawer({ areaId, sessionId }: Props) {
                     : `Not reported within ${metric.periodDays} days`
                   : 'Not reported',
               status: statusLabel(metric.availability),
-            },
-          ],
+            }))
+        : [],
     ),
     ...baseline.indicators.flatMap((indicator) =>
       indicator.evidence.length > 0
-        ? indicator.evidence.map((evidence, index) => ({
-            id: `${indicator.indicator}-${evidence.snapshotId ?? evidence.manualInputId ?? index}`,
-            dataset: indicator.parameter
-              ? `${indicator.name} · ${indicator.parameter}`
-              : indicator.name,
-            source: sourceLabel(evidence.publisher, evidence.title, evidence.note),
-            url: evidence.url,
-            date: evidence.asOf ?? indicator.observedOn,
-            resolution:
-              evidence.method?.toLowerCase().replace(/_/g, ' ') ??
-              (indicator.statistic === 'LATEST' ? 'Most recent reading' : 'Summary window'),
-            coverage: indicator.window ? `${indicator.window.days}-day window` : 'Not reported',
-            status: statusLabel(indicator.availability),
-          }))
-        : [
-            {
-              id: `${indicator.indicator}-no-source`,
+        ? indicator.evidence
+            .filter((evidence) => !record || evidence.manualInputId === null)
+            .map((evidence, index) => ({
+              id: `${indicator.indicator}-${evidence.snapshotId ?? evidence.manualInputId ?? index}`,
               dataset: indicator.parameter
                 ? `${indicator.name} · ${indicator.parameter}`
                 : indicator.name,
-              source: 'Source not recorded',
-              url: null,
-              date: indicator.observedOn,
+              source: sourceLabel(evidence.publisher, evidence.title, evidence.note),
+              url: evidence.url,
+              date: evidence.asOf ?? indicator.observedOn,
               resolution:
-                indicator.statistic === 'LATEST' ? 'Most recent reading' : 'Summary window',
+                evidence.method?.toLowerCase().replace(/_/g, ' ') ??
+                (indicator.statistic === 'LATEST' ? 'Most recent reading' : 'Summary window'),
               coverage: indicator.window ? `${indicator.window.days}-day window` : 'Not reported',
               status: statusLabel(indicator.availability),
-            },
-          ],
+            }))
+        : [],
     ),
   ];
+  const recordedRows = record
+    ? [
+        ...(record.dailyUse !== null
+          ? [
+              {
+                id: 'community-demand',
+                dataset: 'Daily water use',
+                source: record.demandSource,
+                url: null,
+                date: record.asOf,
+                resolution: 'Community daily average',
+                coverage: 'Owner supplied',
+                status: record.demandEstimated ? 'Estimated' : 'User provided',
+              },
+            ]
+          : []),
+        ...record.sources.map((source, index) => ({
+          id: `community-source-${index}`,
+          dataset: source.name,
+          source: source.source,
+          url: null,
+          date: record.asOf,
+          resolution: 'Community daily average',
+          coverage:
+            source.quantity === null
+              ? 'Quantity unknown'
+              : `${source.periodDays} day(s) · ${source.method.replaceAll('_', ' ')}`,
+          status:
+            source.quantity === null ? 'Unknown' : source.estimated ? 'Estimated' : 'User provided',
+        })),
+      ]
+    : [];
+  const seen = new Set<string>();
+  const rows = [
+    ...recordedRows,
+    ...evidenceRows.filter((row) => {
+      const identity = `${row.source}:${row.date}`;
+      if (seen.has(identity)) return false;
+      seen.add(identity);
+      return true;
+    }),
+  ];
+  if (!rows.length)
+    rows.push({
+      id: 'no-evidence',
+      dataset: 'Community baseline',
+      source: 'Source not recorded',
+      url: null,
+      date: null,
+      resolution: 'Not reported',
+      coverage: 'No usable source records',
+      status: 'Unavailable',
+    });
   const limitations = [
     ...baseline.notes,
-    ...baseline.metrics.flatMap((metric) => [
-      ...metric.reasons.map((reason) => `${metric.name}: ${reason}`),
-      ...metric.assumptions.map((assumption) => `${metric.name}: ${assumption}`),
-      ...metric.evidence.map((evidence) => `${metric.name}: ${evidence.uncertainty}`),
-    ]),
-    ...baseline.indicators.flatMap((indicator) =>
-      indicator.reasons.map((reason) => `${indicator.name}: ${reason}`),
-    ),
+    'User-provided records are not independently verified. Estimates retain their stated assumptions.',
+    'Unknown or incomplete supply cannot establish a daily gap. Missing values are never zero.',
+    'A gap based on daily averages does not establish reliable supply or account for seasonal variations.',
+    ...baseline.metrics
+      .filter((metric) =>
+        ['demand', 'delivered_supply', 'average_supply_gap'].includes(metric.metric),
+      )
+      .flatMap((metric) => [...metric.assumptions, ...metric.reasons]),
   ];
 
   return (

@@ -3,6 +3,7 @@ new session closes the previous active one; the client confirms before doing so.
 
 from __future__ import annotations
 
+from datetime import date
 from typing import Any
 
 from waterpilot.application.idempotency import run_once
@@ -18,6 +19,7 @@ from waterpilot.application.services.options import (
     require_valid_scenario,
 )
 from waterpilot.domain.communities import CommunityStatus
+from waterpilot.domain.community_baseline import CommunityBaseline
 from waterpilot.domain.errors import DomainError, ErrorCode, not_found
 from waterpilot.domain.ids import IdKind, new_id, require_id
 from waterpilot.domain.planning import (
@@ -50,6 +52,7 @@ class SessionPatch(Frozen):
     scenario: ScenarioInput | None = None
     selected_plan_option_id: str | None = None
     site_profile: SiteProfile | None = None
+    community_baseline: CommunityBaseline | None = None
 
 
 _REQUIRED_WHEN_SET = ("mode", "stage", "baseline_reviewed")
@@ -201,11 +204,41 @@ class SessionService:
         # Upstream inputs. Only a real change counts, so re-sending the same value (a
         # retried or merged edit) never invalidates derived results.
         upstream_changed = False
+        if (
+            "community_baseline" in provided
+            and patch.community_baseline != session.community_baseline
+        ):
+            details = patch.community_baseline
+            if details is not None:
+                if details.area_id != (patch.area_id or session.area_id):
+                    raise DomainError(
+                        ErrorCode.VALIDATION_FAILED,
+                        "baseline must describe the selected area",
+                        field="communityBaseline",
+                    )
+                area = self._d.store.areas.get(details.area_id)
+                from waterpilot.domain.readiness import local_date
+
+                if area is None or not date(1900, 1, 1) <= details.as_of <= local_date(
+                    self._d.clock(), area.timezone
+                ):
+                    raise DomainError(
+                        ErrorCode.VALIDATION_FAILED,
+                        "baseline date must not be in the future",
+                        field="communityBaseline",
+                    )
+            update |= {
+                "community_baseline": details,
+                "baseline_reviewed": False,
+                "selected_plan_option_id": None,
+            }
+            upstream_changed = True
         if "area_id" in provided and patch.area_id != session.area_id:
             self._validate_area(patch.area_id, session.owner_uid)
             # A new location invalidates the scenario and any selected plan.
             update |= {
                 "area_id": patch.area_id,
+                "community_baseline": None,
                 "scenario": None,
                 "selected_plan_option_id": None,
                 "baseline_reviewed": False,

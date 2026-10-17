@@ -660,7 +660,7 @@ describe('planning modes', () => {
 describe('corrected journey compatibility', () => {
   it.each([
     ['BASELINE', '/baseline'],
-    ['BASELINE_INPUTS', '/baseline/inputs'],
+    ['BASELINE_INPUTS', '/baseline'],
     ['BASELINE_OVERVIEW', '/baseline/overview'],
     ['REVIEW', '/reports/review'],
     ['MAKE_IT_HAPPEN', '/make-it-happen'],
@@ -688,11 +688,11 @@ describe('corrected journey compatibility', () => {
     if (isBranch) {
       expect(screen.queryByRole('navigation', { name: 'Planning stages' })).not.toBeInTheDocument();
     } else {
-      expect(sessionStageForPath(path)).toBe(stage);
+      expect(sessionStageForPath(path)).toBe(stage === 'BASELINE_INPUTS' ? 'BASELINE' : stage);
       expect(screen.getByRole('navigation', { name: 'Planning stages' })).toBeInTheDocument();
       await screen.findByRole('radio', { name: /WaterPilot Agent: Plan with AI assistance/ });
     }
-    expect(sessions.active(uid)?.stage).toBe(stage);
+    expect(sessions.active(uid)?.stage).toBe(stage === 'BASELINE_INPUTS' ? 'BASELINE' : stage);
     expect(sessions.calls.filter((call) => call.startsWith('create'))).toEqual([]);
     expect(stageForPath('/reports/reviewer')).toBeNull();
     expect(stageForPath('/area-other')).toBeNull();

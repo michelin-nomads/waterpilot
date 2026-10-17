@@ -484,125 +484,121 @@ describe('AreaPage', () => {
 });
 
 describe('Baseline community setup', () => {
-  it('keeps Baseline active and Continue opens water inputs without skipping the overview', async () => {
-    renderBaseline();
+  it('reviews the combined form inside Baseline and preserves a custom concern', async () => {
+    const sessions = renderBaseline();
+    await screen.findByRole('heading', { level: 1, name: 'Build your community baseline' });
+    expect(screen.queryByRole('navigation', { name: 'Baseline sections' })).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Primary water concern'), {
+      target: { value: 'other' },
+    });
+    fireEvent.change(screen.getByLabelText(/Your water concern/), {
+      target: { value: 'Summer pressure drops' },
+    });
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Review Baseline' })));
+    await screen.findByRole('heading', { level: 1, name: 'Your water baseline' });
+    expect(screen.getByTestId('route-path')).toHaveTextContent('/baseline/overview');
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Build your community baseline' }),
-    ).toBeVisible();
-    const baselineSections = screen.getByRole('navigation', { name: 'Baseline sections' });
-    expect(screen.getByRole('button', { name: 'Community inputs' })).toHaveAttribute(
-      'aria-current',
-      'step',
-    );
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    expect(
-      await screen.findByRole('heading', { level: 1, name: 'Build your water baseline' }),
-    ).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Water inputs' })).toHaveAttribute(
-      'aria-current',
-      'step',
-    );
-    expect(screen.getByText('Missing does not mean zero')).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'View data availability' }));
-    expect(await screen.findByRole('dialog', { name: 'Data coverage and sources' })).toBeVisible();
-    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
-    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    expect(screen.getByTestId('route-path')).toHaveTextContent('/baseline/inputs');
-    fireEvent.click(screen.getByRole('button', { name: 'Overview' }));
-    expect(
-      await screen.findByRole('heading', { level: 1, name: 'Your water baseline' }),
-    ).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Overview' })).toHaveAttribute(
-      'aria-current',
-      'step',
-    );
-    expect(screen.getByRole('button', { name: 'Edit' })).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
-    expect(
-      await screen.findByRole('heading', { level: 1, name: 'Build your water baseline' }),
-    ).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
-    expect(
-      await screen.findByRole('heading', { level: 1, name: 'Build your community baseline' }),
-    ).toBeVisible();
-    expect(baselineSections).toBeInTheDocument();
+      sessions.applied.some(
+        (item) => item.patch.communityBaseline?.concern === 'Summer pressure drops',
+      ),
+    ).toBe(true);
+    expect(await screen.findByText('Supply unknown')).toBeVisible();
+    expect(screen.getByText('Cannot calculate yet')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Edit community details' }));
+    expect(await screen.findByLabelText(/Your water concern/)).toHaveValue('Summer pressure drops');
   });
 
-  it('offers the estimate route and Back leaves saved inputs unchanged', async () => {
-    renderBaseline();
-    expect(await screen.findByText('Population served')).toBeVisible();
-    fireEvent.click(screen.getByRole('link', { name: /i don’t know yet — estimate/i }));
+  it('enables estimate acceptance with three visible numeric inputs and no extra text requirement', async () => {
+    const sessions = renderBaseline();
+    fireEvent.click(await screen.findByText('Community details', { exact: true }));
+    fireEvent.click(screen.getByRole('heading', { name: 'Daily water use' }));
+    expect(screen.getByRole('spinbutton', { name: 'Daily water use' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Help me estimate daily use' }));
+    const calculator = screen.getByRole('dialog', { name: 'Estimate daily water use' });
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Estimate your community baseline' }),
-    ).toBeVisible();
-    fireEvent.change(screen.getByLabelText(/occupied homes/i), { target: { value: '10' } });
-    fireEvent.change(screen.getByLabelText(/residents per occupied home/i), {
-      target: { value: '2' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+      screen.getByRole('heading', { name: 'Build your community baseline', level: 1 }),
+    ).toBeInTheDocument();
+    expect(within(calculator).getByRole('button', { name: 'Accept estimate' })).toBeDisabled();
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Build your community baseline' }),
-    ).toBeVisible();
-    expect(sent.some((item) => item.op === 'RecordManualInput')).toBe(false);
-  });
-
-  it('accepts exact estimated population and per-person demand with stated provenance', async () => {
-    handlers.RecordManualInput = (variables) => {
-      const input = variables.input as Record<string, unknown>;
-      return {
-        data: {
-          recordManualInput: {
-            manualInput: {
-              id: `min_${String(input.input)}`,
-              input: input.input,
-              value: input.value,
-              unit: input.unit,
-              enteredValue: input.value,
-              enteredUnit: input.unit,
-              asOf: input.asOf,
-              note: input.note,
-            },
-            error: null,
-          },
-        },
-      };
-    };
-    const sessions = renderBaseline('/baseline/estimate');
-    await screen.findByRole('heading', { level: 1, name: 'Estimate your community baseline' });
-    fireEvent.change(screen.getByLabelText(/occupied homes/i), { target: { value: '10' } });
-    fireEvent.change(screen.getByLabelText(/residents per occupied home/i), {
-      target: { value: '2' },
+      within(calculator).queryByRole('region', { name: 'Estimated daily water use' }),
+    ).not.toBeInTheDocument();
+    fireEvent.change(within(calculator).getByRole('spinbutton', { name: /Occupied homes/ }), {
+      target: { value: '10' },
     });
-    fireEvent.change(screen.getByLabelText(/daily use per person/i), {
+    fireEvent.change(screen.getByLabelText(/Residents per home/), { target: { value: '2' } });
+    fireEvent.change(screen.getByLabelText(/Litres per person per day/), {
       target: { value: '135.5' },
     });
-    fireEvent.change(screen.getByLabelText(/source and assumptions/i), {
-      target: { value: 'Housing register; stated occupancy assumption' },
+    expect(screen.getByRole('button', { name: 'Accept estimate' })).toBeEnabled();
+    expect(screen.getByText(/2710 litres \/ day/)).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Accept estimate' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('spinbutton', { name: 'Daily water use' })).toHaveValue(2710);
+    expect(screen.getByTestId('route-path')).toHaveTextContent('/baseline');
+    expect(sessions.applied.some((item) => item.patch.communityBaseline)).toBe(false);
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Review Baseline' })));
+    await screen.findByRole('heading', { name: 'Your water baseline', level: 1 });
+    expect(
+      sessions.applied.find((item) => item.patch.communityBaseline)?.patch.communityBaseline,
+    ).toMatchObject({ dailyUse: '2710', demandEstimated: true, residents: 20 });
+  });
+
+  it('allows daily water use immediately and saves kilolitres as litres', async () => {
+    const sessions = renderBaseline();
+    fireEvent.click(await screen.findByRole('heading', { name: 'Daily water use' }));
+    const use = screen.getByRole('spinbutton', { name: 'Daily water use' });
+    expect(use).toBeVisible();
+    fireEvent.change(screen.getByLabelText('Unit'), { target: { value: 'kL/day' } });
+    fireEvent.change(use, { target: { value: '32.4' } });
+    expect(screen.getByLabelText(/I don’t know my daily use/)).not.toBeChecked();
+    expect(screen.queryByLabelText(/Source or assumptions/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Help me estimate daily use' }),
+    ).not.toBeInTheDocument();
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Review Baseline' })));
+    await screen.findByRole('heading', { name: 'Your water baseline', level: 1 });
+    expect(
+      sessions.applied.find((item) => item.patch.communityBaseline)?.patch.communityBaseline
+        ?.dailyUse,
+    ).toBe('32400');
+  });
+
+  it('preserves community entries when leaving the optional estimate without accepting', async () => {
+    renderBaseline();
+    fireEvent.click(await screen.findByText('Community details', { exact: true }));
+    fireEvent.click(screen.getByRole('heading', { name: 'Daily water use' }));
+    fireEvent.change(screen.getByLabelText('Community notes'), {
+      target: { value: 'Keep this note' },
     });
-    expect(screen.getByRole('region', { name: 'Estimated baseline result' })).toHaveTextContent(
-      '20 people · 2710 L/day',
-    );
-    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Accept estimate' })));
-    await waitFor(() => expect(screen.getByTestId('route-path')).toHaveTextContent('/baseline'));
-    const writes = sent
-      .filter((item) => item.op === 'RecordManualInput')
-      .map((item) => item.variables.input as Record<string, unknown>);
-    expect(writes).toHaveLength(2);
-    expect(writes[0]).toMatchObject({ input: 'POPULATION', value: '20', unit: 'COUNT' });
-    expect(writes[1]).toMatchObject({
-      input: 'PER_CAPITA_STANDARD',
-      value: '135.5',
-      unit: 'LITRES_PER_DAY',
+    fireEvent.click(screen.getByRole('button', { name: 'Help me estimate daily use' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(screen.getByLabelText('Community notes')).toHaveValue('Keep this note');
+    expect(screen.getByRole('spinbutton', { name: 'Daily water use' })).toHaveValue(null);
+  });
+
+  it('edits water sources inline and clears completeness when a quantity becomes unknown', async () => {
+    renderBaseline();
+    await screen.findByLabelText('Primary water concern');
+    expect(screen.queryByText('Know what each value means')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Date these figures describe/)).not.toBeInTheDocument();
+    expect(screen.getByText('Not added')).toBeVisible();
+    fireEvent.click(screen.getByText('Water sources and supply details'));
+    fireEvent.click(screen.getByRole('button', { name: 'Add water source' }));
+    fireEvent.change(screen.getByLabelText('Daily average (litres / day)'), {
+      target: { value: '500' },
     });
-    expect(writes[0]?.note).toBe(
-      'Estimate from Housing register; stated occupancy assumption; 10 occupied homes × 2 residents/home; 135.5 L/person/day; estimated demand 2710 L/day.',
-    );
-    expect(writes[1]?.note).toBe(writes[0]?.note);
-    await waitFor(() =>
-      expect(sessions.applied.at(-1)?.patch).toEqual({
-        siteProfile: { communityType: null, occupiedHomes: 10 },
-      }),
-    );
+    expect(screen.queryByText('Know what each value means')).not.toBeInTheDocument();
+    const complete = screen.getByLabelText(/I have added every water source and its quantity/);
+    fireEvent.click(complete);
+    expect(complete).toBeChecked();
+    fireEvent.change(screen.getByLabelText('Daily average (litres / day)'), {
+      target: { value: '' },
+    });
+    expect(complete).not.toBeChecked();
+    expect(complete).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Remove source 1' }));
+    expect(screen.queryByText('Know what each value means')).not.toBeInTheDocument();
+    expect(screen.getByTestId('route-path')).toHaveTextContent('/baseline');
   });
 
   it.each([
@@ -621,8 +617,8 @@ describe('Baseline community setup', () => {
 
 describe('Baseline data coverage drawer', () => {
   it('shows real coverage fields and closes on Escape without changing the current baseline route', async () => {
-    renderBaseline('/baseline/inputs');
-    const trigger = await screen.findByRole('button', { name: 'View data availability' });
+    renderBaseline('/baseline/overview');
+    const trigger = await screen.findByRole('button', { name: 'Data coverage and sources' });
     trigger.focus();
     fireEvent.click(trigger);
     const drawer = await screen.findByRole('dialog', { name: 'Data coverage and sources' });
@@ -635,13 +631,13 @@ describe('Baseline data coverage drawer', () => {
     fireEvent.keyDown(drawer, { key: 'Escape' });
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(trigger).toHaveFocus();
-    expect(screen.getByTestId('route-path')).toHaveTextContent('/baseline/inputs');
+    expect(screen.getByTestId('route-path')).toHaveTextContent('/baseline/overview');
   });
 
   it('keeps entered-source provenance and provisional status visible in the evidence table', async () => {
     handlers.AreaBaseline = () => baselineReply(manualBaseline());
-    renderBaseline('/baseline/inputs');
-    fireEvent.click(await screen.findByRole('button', { name: 'View data availability' }));
+    renderBaseline('/baseline/overview');
+    fireEvent.click(await screen.findByRole('button', { name: 'Data coverage and sources' }));
     const drawer = await screen.findByRole('dialog', { name: 'Data coverage and sources' });
     const table = await within(drawer).findByRole('table');
     expect(within(table).getAllByText('Demand').length).toBeGreaterThan(0);

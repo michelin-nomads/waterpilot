@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, localcontext
 from typing import Any
 
 from pydantic import Field
@@ -22,19 +22,22 @@ from waterpilot.application.policies import owned_session
 from waterpilot.application.services.areas import AreaService, viewer_uid
 from waterpilot.application.services.common import Deps, build
 from waterpilot.domain.errors import DomainError, ErrorCode, FieldError, not_found
-from waterpilot.domain.ids import IdKind, new_id, require_id
+from waterpilot.domain.ids import IdKind, derived_id, new_id, require_id
 from waterpilot.domain.planning import Area, Capability, Coverage, CoverageItem
 from waterpilot.domain.readiness import (
     INPUTS,
+    METRICS,
     AreaReadiness,
     InputId,
+    InputReadiness,
     ManualInput,
     ReadinessState,
     assess_area,
+    assess_metric,
     local_date,
 )
 from waterpilot.domain.sources import SourceRegistration, SourceSnapshot
-from waterpilot.domain.units import UnitConversionError, normalize, render
+from waterpilot.domain.units import CanonicalUnit, UnitConversionError, normalize, render
 from waterpilot.domain.values import Availability, DecimalString, Frozen
 
 MAX_REGISTRATIONS = 200
@@ -136,7 +139,86 @@ class ReadinessService:
         )
         if session.area_id != area.id:
             raise not_found("planning session")
-        return self._evaluate(area, session.id, self._manual(session.id, area.id))
+        manual = self._manual(session.id, area.id)
+        details = session.community_baseline
+        if details is None or details.area_id != area.id:
+            return self._evaluate(area, session.id, manual)
+        # One atomically saved record replaces this form's former values, including clears.
+        for key in (
+            InputId.DAILY_DEMAND,
+            InputId.POPULATION,
+            InputId.PER_CAPITA_STANDARD,
+            InputId.NON_DOMESTIC_DEMAND,
+            InputId.DELIVERED_SUPPLY,
+            InputId.TANKER_SUPPLY,
+        ):
+            manual.pop(key, None)
+
+        def entered(key: InputId, value: Decimal, note: str) -> None:
+            with localcontext() as precision:
+                precision.prec = 50
+                text = render(value.quantize(Decimal("0.000000000001")))
+            manual[key] = ManualInput(
+                id=derived_id(IdKind.MANUAL_INPUT, f"{session.id}:{session.inputs_revision}:{key}"),
+                session_id=session.id,
+                owner_uid=session.owner_uid,
+                area_id=area.id,
+                input=key,
+                value=text,
+                unit=CanonicalUnit.LITRES_PER_DAY,
+                entered_value=text,
+                entered_unit="L/day",
+                as_of=details.as_of,
+                note=note[:500],
+                created_at=session.created_at,
+                updated_at=session.updated_at,
+            )
+
+        if details.daily_use is not None:
+            entered(
+                InputId.DAILY_DEMAND,
+                Decimal(details.daily_use),
+                ("Estimate: " if details.demand_estimated else "User provided: ")
+                + details.demand_source,
+            )
+        total = details.supply_total()
+        if total is not None:
+            note = "; ".join(
+                f"{s.name}: {s.daily_litres()} L/day; "
+                f"{'estimated' if s.estimated else 'user provided'}; {s.source}"
+                for s in details.sources
+            )
+            entered(InputId.DELIVERED_SUPPLY, total, note)
+            tanker = sum(
+                (s.daily_litres() or Decimal(0) for s in details.sources if s.kind == "tanker"),
+                Decimal(0),
+            )
+            entered(InputId.TANKER_SUPPLY, tanker, "Tanker component of total supply. " + note)
+        ev = self._evaluate(area, session.id, manual)
+        # An explicitly incomplete source list must not fall back to older totals or snapshots.
+        blocked = {InputId.POPULATION, InputId.PER_CAPITA_STANDARD, InputId.NON_DOMESTIC_DEMAND}
+        if details.daily_use is None:
+            blocked.add(InputId.DAILY_DEMAND)
+        if total is None:
+            blocked |= {InputId.DELIVERED_SUPPLY, InputId.TANKER_SUPPLY}
+        inputs = tuple(
+            InputReadiness(
+                input=i.input,
+                state=ReadinessState.UNAVAILABLE,
+                reasons=("Not provided, or the source list is incomplete.",),
+            )
+            if i.input in blocked
+            else i
+            for i in ev.readiness.inputs
+        )
+        # Direct daily use is an alternative to population × per-person demand.
+        metrics = tuple(assess_metric(m, {i.input: i for i in inputs}) for m in METRICS)
+        return Evidence(
+            ev.area,
+            ev.readiness.model_copy(update={"inputs": inputs, "metrics": metrics}),
+            manual,
+            ev.snapshots,
+        )
 
     def assess(self, ctx: RequestContext, area_id: str, session_id: str | None) -> AreaReadiness:
         return self.evaluate(ctx, area_id, session_id).readiness
@@ -182,6 +264,19 @@ class ReadinessService:
             session = owned_session(store, session_id, principal)
             if session.area_id is None:
                 raise _field_error("sessionId", "choose a location for this session first")
+            if session.community_baseline is not None and payload.input in {
+                InputId.DAILY_DEMAND,
+                InputId.POPULATION,
+                InputId.PER_CAPITA_STANDARD,
+                InputId.NON_DOMESTIC_DEMAND,
+                InputId.DELIVERED_SUPPLY,
+                InputId.TANKER_SUPPLY,
+            }:
+                raise _field_error(
+                    "input",
+                    "edit the shared Community baseline form or use update_community_baseline "
+                    "so saved source details stay consistent",
+                )
             area = self._areas.get(session.area_id, principal.uid)
             if not EARLIEST_AS_OF <= payload.as_of <= local_date(now, area.timezone):
                 raise _field_error("asOf", "the date must not be in the future")

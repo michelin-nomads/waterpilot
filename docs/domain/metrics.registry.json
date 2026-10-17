@@ -6,24 +6,24 @@
   "status": "proposed",
   "generatedBy": "Phase 01 (corrected after review R3)",
   "conventionsRef": "docs/domain/conventions.md",
-  "nullRule": "A missing/unverified input, or a zero denominator, yields availability 'unavailable' — never 0 or a fabricated value.",
+  "nullRule": "A missing/unverified input, or a zero denominator, yields availability 'unavailable' \u2014 never 0 or a fabricated value.",
   "precision": {
     "rawValues": "Exact rationals, integer base units, or decimal with 28 significant digits; no binary float; no intermediate rounding except money quantized to integer paise per cash-flow line item per period.",
     "goldenRepresentation": "Exact decimal string (e.g. '10.1') or reduced fraction (e.g. '27/101').",
     "comparisonTolerance": "Exact rational equality; a 28-digit Decimal approximation of a non-terminating value must be within 1e-20 of the exact value.",
     "displayRounding": "Applied only at the presentation boundary, ROUND_HALF_EVEN; never fed back into computation.",
-    "ref": "conventions.md §2"
+    "ref": "conventions.md \u00a72"
   },
   "statusVocabularies": {
     "definitionStatus": ["proposed", "approved"],
     "availability": ["available", "provisional", "unavailable"],
     "evidenceQualityStatus": ["unreviewed", "validated", "provisional", "quarantined", "synthetic"],
-    "ref": "conventions.md §5"
+    "ref": "conventions.md \u00a75"
   },
   "windowKinds": {
     "calendar_year": "[start, start + 1 calendar year): 365 or 366 days; 29 Feb start rejected",
     "fixed_days": "[start, start + N days) with explicit N",
-    "ref": "conventions.md §3a"
+    "ref": "conventions.md \u00a73a"
   },
   "methodTypes": {
     "deterministic": "Computable now from validated inputs by pure engine code.",
@@ -325,6 +325,26 @@
       },
       "status": "proposed",
       "rawValue": "exact years and months (e.g. 20/7 years, 240/7 months); integer months is the display value"
+    },
+    {
+      "id": "average_supply_gap",
+      "name": "Average daily supply gap",
+      "unit": "MLD",
+      "storedUnit": "L/day",
+      "valueType": "rate",
+      "timeWindow": "daily_averages",
+      "geography": "area_polygon",
+      "direction": "lower_better",
+      "methodType": "deterministic",
+      "formula": "max(0, average_daily_demand - average_daily_supply)",
+      "provenance": ["demand_provenance", "supply_provenance"],
+      "nullSemantics": "unavailable if demand or complete supply is unknown; never zero by default",
+      "displayRounding": {
+        "type": "decimal_places",
+        "value": 1,
+        "unit": "MLD"
+      },
+      "status": "proposed"
     }
   ],
   "indicators": [

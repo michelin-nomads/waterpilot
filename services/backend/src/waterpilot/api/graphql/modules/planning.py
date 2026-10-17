@@ -95,6 +95,70 @@ class BoundingBox:
         )
 
 
+@strawberry.type
+class WaterSource:
+    name: str
+    kind: str
+    method: str
+    quantity: DecimalString | None
+    multiplier: DecimalString
+    period_days: int
+    estimated: bool
+    source: str
+
+
+@strawberry.input
+class WaterSourceInput:
+    name: str
+    kind: str
+    method: str
+    quantity: DecimalString | None
+    multiplier: DecimalString
+    period_days: int
+    estimated: bool
+    source: str
+
+
+@strawberry.type
+class CommunityBaseline:
+    area_id: str
+    concern: str
+    notes: str
+    residents: int | None
+    daily_use: DecimalString | None
+    demand_estimated: bool
+    demand_source: str
+    as_of: LocalDate
+    supply_complete: bool
+    sources: list[WaterSource]
+
+    @staticmethod
+    def of(value: object) -> CommunityBaseline:
+        from waterpilot.domain.community_baseline import CommunityBaseline as Record
+
+        assert isinstance(value, Record)
+        return CommunityBaseline(
+            **{
+                **value.model_dump(exclude={"sources"}),
+                "sources": [WaterSource(**s.model_dump()) for s in value.sources],
+            }
+        )
+
+
+@strawberry.input
+class CommunityBaselineInput:
+    area_id: str
+    concern: str
+    notes: str
+    residents: int | None
+    daily_use: DecimalString | None
+    demand_estimated: bool
+    demand_source: str
+    as_of: LocalDate
+    supply_complete: bool
+    sources: list[WaterSourceInput]
+
+
 @strawberry.type(description="What you said about the community; null fields were not stated.")
 class SiteProfile:
     community_type: dp.CommunityType | None
@@ -479,6 +543,7 @@ class PlanningSession:
     scenario: Scenario | None
     selected_plan_option_id: strawberry.ID | None
     site_profile: SiteProfile | None
+    community_baseline: CommunityBaseline | None
     inputs_revision: int = strawberry.field(
         description="Increases whenever location, goal or scenario actually change, or a "
         "baseline value is recorded for the session; each also clears the selected plan. "
@@ -504,6 +569,9 @@ class PlanningSession:
             if s.selected_plan_option_id
             else None,
             site_profile=SiteProfile.of(s.site_profile) if s.site_profile else None,
+            community_baseline=CommunityBaseline.of(s.community_baseline)
+            if s.community_baseline
+            else None,
             inputs_revision=s.inputs_revision,
             created_at=UtcDateTime(s.created_at),
             updated_at=UtcDateTime(s.updated_at),
@@ -607,6 +675,7 @@ class PlanningSessionPatch:
     scenario: ScenarioInput | None = strawberry.UNSET
     selected_plan_option_id: strawberry.ID | None = strawberry.UNSET
     site_profile: SiteProfileInput | None = strawberry.UNSET
+    community_baseline: CommunityBaselineInput | None = strawberry.UNSET
 
 
 @strawberry.input

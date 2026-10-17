@@ -286,3 +286,36 @@ def test_reserved_identity_keys_are_rejected():
         with pytest.raises(DomainError) as exc:
             runtime.call("inspect_planning_state", hostile_arg)
         assert exc.value.code is ErrorCode.FORBIDDEN
+
+
+def test_agent_edits_the_same_structured_baseline_and_preserves_unknown_supply():
+    store, services, session, _, runtime, _ = _world()
+    record = {
+        "area_id": AREA_ID,
+        "concern": "Seasonal shortages",
+        "notes": "Owner supplied",
+        "residents": 240,
+        "daily_use": "32400",
+        "demand_estimated": True,
+        "demand_source": "80 homes × 3 residents × 135 litres per person",
+        "as_of": "2026-10-12",
+        "supply_complete": True,
+        "sources": [
+            {
+                "name": "Tanker",
+                "kind": "tanker",
+                "method": "daily_average",
+                "quantity": "25000",
+                "source": "Owner delivery records",
+            }
+        ],
+    }
+    saved = runtime.call("update_community_baseline", record)
+    assert saved.data["communityBaseline"]["dailyUse"] == "32400"
+    baseline = services.baseline.baseline(CTX, AREA_ID, session.id)
+    assert next(m for m in baseline.metrics if m.metric == "average_supply_gap").value == 7400
+    record["supply_complete"] = False
+    runtime.call("update_community_baseline", record)
+    baseline = services.baseline.baseline(CTX, AREA_ID, session.id)
+    assert next(m for m in baseline.metrics if m.metric == "average_supply_gap").value is None
+    assert store.sessions.get(session.id).inputs_revision == 2

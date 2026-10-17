@@ -301,10 +301,14 @@ export class SessionCoordinator {
     }
     this.editedAt ??= this.now();
     if (isEmptyPatch(pending)) this.editedAt = null;
-    this.set({ pending, message: null });
+    this.set({ pending, message: null, save: isEmptyPatch(pending) ? this.state.save : 'saving' });
     void this.flush();
   }
 
+  setCommunityBaseline = (
+    communityBaseline: SessionState['communityBaseline'],
+    siteProfile?: SessionState['siteProfile'],
+  ) => this.edit({ communityBaseline, ...(siteProfile !== undefined ? { siteProfile } : {}) });
   setSiteProfile = (siteProfile: SessionState['siteProfile']) => this.edit({ siteProfile });
   setMode = (mode: PlanningMode) => this.edit({ mode });
   markBaselineReviewed = () => this.edit({ baselineReviewed: true });
@@ -323,15 +327,21 @@ export class SessionCoordinator {
   /** Send pending edits. Safe to call at any time; one request is in flight at most. */
   flush(): Promise<void> {
     if (this.inflight) return this.inflight;
-    this.inflight = this.saveOnce().finally(() => {
+    if (isEmptyPatch(this.state.pending)) return Promise.resolve();
+    const drain = async () => {
+      do {
+        await this.saveOnce();
+      } while (
+        this.state.status === 'ready' &&
+        !this.state.conflict &&
+        !isEmptyPatch(this.state.pending) &&
+        this.state.save === 'saving'
+      );
+    };
+    this.inflight = drain().finally(() => {
       this.inflight = null;
     });
-    return this.inflight.then(() => {
-      const { status, conflict, pending, save } = this.state;
-      if (status === 'ready' && !conflict && !isEmptyPatch(pending) && save === 'saving') {
-        return this.flush();
-      }
-    });
+    return this.inflight;
   }
 
   private async saveOnce(): Promise<void> {
