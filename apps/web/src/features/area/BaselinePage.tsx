@@ -25,10 +25,22 @@ import { AreaAssumptionPreview } from './AreaAssumptionPreview';
 /** One route-owned Baseline flow. Hidden input panels retain in-progress edits on Back. */
 export default function BaselinePage() {
   const { section = 'community' } = useParams();
-  const { state, view, inputsPending } = usePlanningSession();
+  const { state, view, inputsPending, coordinator } = usePlanningSession();
   const navigate = useNavigate();
   const [coverageOpen, setCoverageOpen] = useState(false);
-  const saving = useIsMutating() > 0 || inputsPending;
+  const [completing, setCompleting] = useState(false);
+  const saving = useIsMutating() > 0 || inputsPending || completing;
+  async function completeBaseline() {
+    if (!coordinator) return;
+    setCompleting(true);
+    try {
+      coordinator.markBaselineReviewed();
+      await coordinator.flush();
+      if (coordinator.getState().server?.baselineReviewed) navigate('/goals');
+    } finally {
+      setCompleting(false);
+    }
+  }
   if (!['community', 'inputs', 'overview', 'estimate'].includes(section))
     return <Navigate to="/baseline" replace />;
   if (state.status === 'loading')
@@ -175,7 +187,7 @@ export default function BaselinePage() {
                     Continue
                   </Button>
                 ) : (
-                  <Button disabled={saving} onClick={() => navigate('/goals')}>
+                  <Button disabled={saving} onClick={() => void completeBaseline()}>
                     Continue to goal
                   </Button>
                 )

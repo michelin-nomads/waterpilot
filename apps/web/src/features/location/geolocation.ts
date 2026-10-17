@@ -52,13 +52,13 @@ export function requestDevicePosition({
 
 export const GEOLOCATION_MESSAGE: Record<Exclude<GeolocationOutcome['kind'], 'fix'>, string> = {
   denied:
-    'Location permission was not given, so nothing was shared. Search for the place or enter it yourself instead. You can allow location later in your browser settings.',
+    'Location permission was not given, so nothing was shared. Search for the place or pick a point on the map instead. You can allow location later in your browser settings.',
   timeout:
     'Your device did not report a location in time. Try again outdoors or near a window, or search for the place instead.',
   unavailable:
-    'Your device could not determine a location. Search for the place or enter it yourself instead.',
+    'Your device could not determine a location. Search for the place or pick a point on the map instead.',
   unsupported:
-    'This browser cannot share a device location. Search for the place or enter it yourself instead.',
+    'This browser cannot share a device location. Search for the place or pick a point on the map instead.',
   insecure:
-    'Device location needs a secure (https) connection. Search for the place or enter it yourself instead.',
+    'Device location needs a secure (https) connection. Search for the place or pick a point on the map instead.',
 };

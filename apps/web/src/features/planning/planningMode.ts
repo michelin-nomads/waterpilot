@@ -29,7 +29,7 @@ export const PLANNING_MODE_OPTIONS: readonly PlanningModeOption[] = [
   },
   {
     id: 'agent',
-    label: 'Copilot',
+    label: 'WaterPilot Agent',
     description: 'Build your plan with AI assistance. Every step stays editable.',
     icon: 'sparkle',
   },

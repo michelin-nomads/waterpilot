@@ -5,53 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light dark" />
     <title>WaterPilot</title>
-    <!-- Critical launch-state CSS only; shown until the app script replaces #root. -->
+    <!-- Match the app background before JavaScript loads; the app owns the startup splash. -->
     <style>
-      .wp-boot {
-        display: grid;
-        place-content: center;
-        justify-items: center;
-        gap: 1rem;
-        min-height: 100vh;
+      html {
+        background: #f4f9fc;
+      }
+      body {
         margin: 0;
-        font-family:
-          system-ui,
-          -apple-system,
-          'Segoe UI',
-          Roboto,
-          sans-serif;
-        color: #485864;
-        background: #f3f8f8;
-      }
-      .wp-boot svg {
-        width: min(220px, 58vw);
-        height: auto;
-      }
-      .wp-boot svg path {
-        fill: #d9f2ee;
       }
       @media (prefers-color-scheme: dark) {
-        .wp-boot {
-          color: #9bbfbd;
-          background: #0a1417;
-        }
-        .wp-boot svg path {
-          fill: #16383a;
+        html {
+          background: #081724;
         }
       }
     </style>
   </head>
   <body>
-    <div id="root">
-      <div class="wp-boot" role="status">
-        <svg viewBox="0 0 240 300" aria-hidden="true">
-          <path
-            d="M120 18 C107 52 34 121 34 186 C34 237 71 276 120 276 C169 276 206 237 206 186 C206 121 133 52 120 18Z"
-          />
-        </svg>
-        <p>Preparing your water plan…</p>
-      </div>
-    </div>
+    <div id="root"></div>
     <noscript>WaterPilot needs JavaScript enabled.</noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>

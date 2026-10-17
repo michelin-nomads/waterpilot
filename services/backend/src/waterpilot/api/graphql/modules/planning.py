@@ -467,6 +467,7 @@ class PlanOption:
 
 @strawberry.type
 class PlanningSession:
+    baseline_reviewed: bool
     id: strawberry.ID
     version: int
     mode: dp.PlanningMode
@@ -492,6 +493,7 @@ class PlanningSession:
             id=strawberry.ID(s.id),
             version=s.version,
             mode=s.mode,
+            baseline_reviewed=s.baseline_reviewed,
             stage=s.stage,
             status=s.status,
             area_id=strawberry.ID(s.area_id) if s.area_id else None,
@@ -597,6 +599,7 @@ class CreatePlanningSessionInput:
 
 @strawberry.input(description="Omitted fields are left unchanged; null clears a field.")
 class PlanningSessionPatch:
+    baseline_reviewed: bool | None = strawberry.UNSET
     area_id: strawberry.ID | None = strawberry.UNSET
     mode: dp.PlanningMode | None = strawberry.UNSET
     stage: dp.PlanningStage | None = strawberry.UNSET

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 const EMULATOR = 'http://127.0.0.1:9099';
-const API = 'http://127.0.0.1:8000';
+const API = process.env.WP_E2E_API_URL ?? 'http://127.0.0.1:8000';
 
 async function emulatorUp(): Promise<boolean> {
   try {
@@ -24,8 +24,8 @@ test('home offers both planning modes and navigates to the dedicated sign-in pag
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(mainHeading);
   await expect(header(page).getByText('Guest', { exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Start exploring' })).toBeEnabled();
-  await expect(page.getByRole('button', { name: 'Start with agent' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Start Exploring' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Start with Agent' })).toBeEnabled();
   await header(page).getByRole('link', { name: 'Sign in' }).click();
   await expect(page).toHaveURL(/\/signin$/);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Welcome to WaterPilot');
@@ -39,7 +39,7 @@ test('home offers both planning modes and navigates to the dedicated sign-in pag
 test('a failed guest start keeps the main screen and allows retry', async ({ page }) => {
   await page.route('**/identitytoolkit.googleapis.com/**', (route) => route.abort());
   await page.goto('/');
-  await page.getByRole('button', { name: 'Start exploring' }).click();
+  await page.getByRole('button', { name: 'Start Exploring' }).click();
   await expect(page.getByText(/your plan could not be started/i)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Try again' })).toBeEnabled();
   await expect(header(page).getByRole('link', { name: 'Sign in' })).toBeVisible();
@@ -94,24 +94,22 @@ test.describe('with the Auth emulator', () => {
       throw new Error('Auth emulator or local API not running (WP_REQUIRE_AUTH_EMULATOR=1)');
     }
     test.skip(!up, 'Auth emulator or local API not running');
-    await fetch(`${EMULATOR}/emulator/v1/projects/demo-waterpilot/accounts`, { method: 'DELETE' });
   });
 
   test('guests plan directly, and modal sign-up preserves unfinished location input', async ({
     page,
   }) => {
     await page.goto('/');
-    await page.getByRole('button', { name: 'Start exploring' }).click();
+    await page.getByRole('button', { name: 'Start Exploring' }).click();
     await expect(page).toHaveURL(/\/area$/);
     await expect(header(page).getByText('Guest')).toBeVisible();
     await expect(page.getByRole('navigation', { name: 'Primary' })).toHaveCount(0);
-    await page.getByRole('button', { name: 'Enter it yourself' }).click();
-    const name = page.getByRole('textbox', { name: /^Name/ });
+    const name = page.getByRole('combobox', { name: 'Search for a place' });
     await name.fill('Our village well');
     await header(page).getByRole('button', { name: 'Sign in' }).click();
     const dialog = page.getByRole('dialog', { name: 'Sign in to WaterPilot' });
     await dialog.getByRole('button', { name: 'Create an account' }).click();
-    await dialog.getByLabel(/^Email/).fill('plan@example.org');
+    await dialog.getByLabel(/^Email/).fill(`plan-${Date.now()}@example.org`);
     await dialog.getByLabel(/^Password/).fill('secret-pass');
     await dialog.getByRole('button', { name: 'Create account' }).click();
     await expect(dialog).toHaveCount(0);
@@ -126,7 +124,7 @@ test.describe('with the Auth emulator', () => {
     page,
   }) => {
     await page.goto('/');
-    await page.getByRole('button', { name: 'Start exploring' }).click();
+    await page.getByRole('button', { name: 'Start Exploring' }).click();
     await page
       .getByRole('navigation', { name: 'Planning stages' })
       .getByRole('link', { name: /goal/i })
@@ -143,7 +141,7 @@ test.describe('with the Auth emulator', () => {
     await header(page).getByRole('button', { name: 'Sign in' }).click();
     dialog = page.getByRole('dialog', { name: 'Sign in to WaterPilot' });
     await dialog.getByRole('button', { name: 'Create an account' }).click();
-    await dialog.getByLabel(/^Email/).fill('goal@example.org');
+    await dialog.getByLabel(/^Email/).fill(`goal-${Date.now()}@example.org`);
     await dialog.getByLabel(/^Password/).fill('secret-pass');
     await dialog.getByRole('button', { name: 'Create account' }).click();
     await expect(dialog).toHaveCount(0);
@@ -168,7 +166,7 @@ test.describe('with the Auth emulator', () => {
   }) => {
     await page.goto('/signin');
     await page.getByRole('button', { name: 'Create an account' }).click();
-    await page.getByLabel(/^Email/).fill('e2e@example.org');
+    await page.getByLabel(/^Email/).fill(`e2e-${Date.now()}@example.org`);
     await page.getByLabel(/^Password/).fill('secret-pass');
     await page.getByRole('button', { name: 'Create account' }).click();
     await expect(page).toHaveURL(/\/$/);

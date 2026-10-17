@@ -212,6 +212,7 @@ class ReadinessService:
                     update={
                         "inputs_revision": session.inputs_revision + 1,
                         "selected_plan_option_id": None,
+                        "baseline_reviewed": False,
                         "updated_at": now,
                     }
                 ),

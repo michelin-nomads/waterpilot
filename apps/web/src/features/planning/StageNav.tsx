@@ -2,14 +2,13 @@ import { NavLink, useLocation } from 'react-router-dom';
 
 import { PLANNING_STAGES, stageForPath } from '../../shell/stages';
 import styles from './StageNav.module.scss';
+import { usePlanningSession } from '../../session/sessionContext';
+import { canOpenStage } from './stageAccess';
 
-/**
- * Five-stage stepper. The current stage carries aria-current="step". Completion markers
- * are not shown yet: they need the planning session (Phase 04/05), and the UI does not
- * guess progress.
- */
+/** Only stages unlocked by saved completion are links. */
 export function StageNav() {
   const { pathname } = useLocation();
+  const { state } = usePlanningSession();
   const currentIndex = PLANNING_STAGES.findIndex(
     (stage) => stage.id === stageForPath(pathname)?.id,
   );
@@ -24,12 +23,25 @@ export function StageNav() {
       <ol className={styles.list}>
         {PLANNING_STAGES.map((stage, index) => (
           <li key={stage.id} className={styles.item}>
-            <NavLink to={stage.path} aria-current="step" className={styles.link}>
-              <span className={styles.number} aria-hidden="true">
-                {index + 1}
+            {canOpenStage(stage, state.server) ? (
+              <NavLink to={stage.path} aria-current="step" className={styles.link}>
+                <span className={styles.number} aria-hidden="true">
+                  {index + 1}
+                </span>
+                <span className={styles.label}>{stage.label}</span>
+              </NavLink>
+            ) : (
+              <span
+                className={styles.link}
+                aria-disabled="true"
+                title="Complete the previous step first"
+              >
+                <span className={styles.number} aria-hidden="true">
+                  {index + 1}
+                </span>
+                <span className={styles.label}>{stage.label}</span>
               </span>
-              <span className={styles.label}>{stage.label}</span>
-            </NavLink>
+            )}
           </li>
         ))}
       </ol>

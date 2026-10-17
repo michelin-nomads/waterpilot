@@ -12,15 +12,14 @@ interface MapPanelProps {
 
 const NO_MAP: Record<PlacesAdapter['provider'], string> = {
   fixture:
-    'Local mode shows no map, so no map service is called. Search, use your device location or enter coordinates.',
-  server:
-    'No map is configured for this deployment. Search, use your device location or enter coordinates.',
+    'Local mode shows no map, so no map service is called. Search, use your device location.',
+  server: 'No map is configured for this deployment. Search, use your device location.',
   google: '',
 };
 
 /**
  * Optional map. Loaded only when this step is shown; an outage, rejected key or timeout
- * leaves search, device location and typed coordinates fully usable.
+ * leaves search, device location and device location fully usable.
  */
 export function MapPanel({ adapter, point, onPick }: MapPanelProps) {
   const element = useRef<HTMLDivElement>(null);
@@ -80,8 +79,8 @@ export function MapPanel({ adapter, point, onPick }: MapPanelProps) {
     <div className={styles.mapWrap}>
       {status === 'failed' ? (
         <Notice kind="offline" title="The map is unavailable">
-          The map could not load. Search, use your device location or enter coordinates instead;
-          nothing else is affected.
+          The map could not load. Search for a place or use your device location instead; nothing
+          else is affected.
         </Notice>
       ) : (
         <>

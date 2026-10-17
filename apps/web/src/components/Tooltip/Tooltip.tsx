@@ -18,6 +18,8 @@ interface TooltipProps {
   label: string;
   /** Short explanatory text; also exposed as the button's description. */
   children: ReactNode;
+  /** Optional text trigger in place of the information icon. */
+  trigger?: ReactNode;
 }
 
 /**
@@ -25,7 +27,7 @@ interface TooltipProps {
  * always linked through `aria-describedby`, so screen readers get it without hovering.
  * An open tip shifts sideways to stay inside the viewport.
  */
-export function Tooltip({ label, children }: TooltipProps) {
+export function Tooltip({ label, children, trigger }: TooltipProps) {
   const id = useId();
   const tipRef = useRef<HTMLSpanElement>(null);
   const [open, setOpen] = useState(false);
@@ -56,20 +58,20 @@ export function Tooltip({ label, children }: TooltipProps) {
 
   return (
     <span
-      className={styles.wrapper}
+      className={`${styles.wrapper} ${trigger ? styles.textWrapper : ''}`}
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
     >
       <button
         type="button"
-        className={styles.trigger}
+        className={trigger ? styles.textTrigger : styles.trigger}
         aria-label={label}
         aria-describedby={id}
         onFocus={() => setOpen(true)}
         onBlur={() => setOpen(false)}
         onClick={() => setOpen((value) => !value)}
       >
-        <Icon name="info" size="sm" />
+        {trigger ?? <Icon name="info" size="sm" />}
       </button>
       <span
         ref={tipRef}

@@ -11,7 +11,10 @@ from conftest import LOCAL_OK, LoadSettings
 from graphql_harness import Harness, make_harness, seed_plan_option
 from waterpilot.adapters.catalogue_synthetic import SYNTHETIC_AREA_ID
 
-FIELDS = "id version mode stage areaId selectedPlanOptionId inputsRevision goal { kind }"
+FIELDS = (
+    "id version mode stage baselineReviewed areaId selectedPlanOptionId "
+    "inputsRevision goal { kind }"
+)
 CREATE = f"""mutation($input: CreatePlanningSessionInput!) {{
   createPlanningSession(input: $input) {{ session {{ {FIELDS} }} error {{ code }} }} }}"""
 UPDATE = f"""mutation($input: UpdatePlanningSessionInput!) {{
@@ -139,3 +142,17 @@ def test_a_goal_change_and_a_stale_selection_in_one_patch_is_refused(h: Harness)
         h, session, {"goal": {"kind": "IMPROVE_GROUNDWATER"}, "selectedPlanOptionId": option}
     )
     assert result["error"]["code"] == "PRECONDITION_FAILED"
+
+
+def test_baseline_review_is_explicit_persistent_and_resets_with_location(h: Harness) -> None:
+    session = create(h)
+    assert session["baselineReviewed"] is False
+    result = patch(h, session, {"baselineReviewed": True})
+    assert result["error"]["code"] == "VALIDATION_FAILED"
+    session = ok(patch(h, session, {"areaId": SYNTHETIC_AREA_ID}))
+    session = ok(patch(h, session, {"baselineReviewed": True}))
+    assert session["baselineReviewed"] is True
+    session = ok(patch(h, session, {"stage": "UNDERSTAND"}))
+    assert session["baselineReviewed"] is True
+    session = ok(patch(h, session, {"areaId": None}))
+    assert session["baselineReviewed"] is False

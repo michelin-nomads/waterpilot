@@ -22,6 +22,8 @@ interface FieldProps {
   id?: string;
   label: ReactNode;
   hint?: ReactNode;
+  /** Optional contextual help beside the label, outside its click target. */
+  labelAction?: ReactNode;
   /** Actionable message: say what is wrong and how to fix it. */
   error?: ReactNode;
   required?: boolean;
@@ -35,6 +37,7 @@ export function Field({
   id: idProp,
   label,
   hint,
+  labelAction,
   error,
   required = false,
   hideLabel = false,
@@ -46,15 +49,30 @@ export function Field({
   const errorId = error ? `${id}-error` : undefined;
   const describedBy = [hintId, errorId].filter(Boolean).join(' ') || undefined;
 
+  const fieldLabel = (
+    <label
+      className={[styles.label, hideLabel && styles.hidden].filter(Boolean).join(' ')}
+      htmlFor={id}
+    >
+      {label}
+      {required && (
+        <span className={styles.required} aria-hidden="true">
+          {' '}
+          *
+        </span>
+      )}
+    </label>
+  );
   return (
     <div className={styles.field}>
-      <label
-        className={[styles.label, hideLabel && styles.hidden].filter(Boolean).join(' ')}
-        htmlFor={id}
-      >
-        {label}
-        {required && <span className={styles.required}> (required)</span>}
-      </label>
+      {labelAction ? (
+        <div className={styles.labelRow}>
+          {fieldLabel}
+          {labelAction}
+        </div>
+      ) : (
+        fieldLabel
+      )}
       {hint && (
         <p id={hintId} className={styles.hint}>
           {hint}

@@ -1,3 +1,4 @@
+import { chooseFixtureLocation } from './locationHelpers';
 import { expect, test, type Page } from '@playwright/test';
 
 // The water baseline on the area step, against the local API and the Firebase emulators
@@ -54,8 +55,8 @@ const card = (page: Page, metric: string) => page.locator(`[data-baseline-metric
 
 test('a guest builds a baseline from values they know and revises it', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Start exploring' }).click();
-  await page.getByRole('button', { name: 'Use the synthetic demo area' }).click();
+  await page.getByRole('button', { name: 'Start Exploring' }).click();
+  await chooseFixtureLocation(page);
 
   await page.getByRole('button', { name: 'Confirm location' }).click();
   await page.getByRole('button', { name: 'Overview', exact: true }).click();

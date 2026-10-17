@@ -288,6 +288,8 @@ def test_a_radius_is_a_user_defined_extent() -> None:
         ({"place_id": "fixture:nairobi"}, "placeId"),
         ({"extent": ExtentKind.USER_RADIUS}, "radiusMeters"),
         ({"extent": ExtentKind.USER_RADIUS, "radius_meters": 60_000}, "radiusMeters"),
+        ({"extent": ExtentKind.USER_RADIUS, "radius_meters": 999}, "radiusMeters"),
+        ({"extent": ExtentKind.USER_RADIUS, "radius_meters": 10_001}, "radiusMeters"),
         ({"radius_meters": 500}, "radiusMeters"),
         ({"extent": ExtentKind.REVIEWED_BOUNDARY}, "extent"),
         ({"origin": AreaOrigin.CATALOGUE}, "origin"),
@@ -525,3 +527,24 @@ def test_explicit_local_maps_accepts_browser_google_without_server_calls(
     assert area.place_id == "google:ChIJlocal" and area.evidence is EvidenceQuality.PROVISIONAL
     with pytest.raises(ConfigError, match="local-only"):
         load_settings({**PILOT_OK, "WP_LOCAL_GOOGLE_MAPS_ENABLED": "true"})
+
+
+@pytest.mark.parametrize("radius", [1000, 10_000])
+def test_confirmation_accepts_planning_radius_limits(radius: int) -> None:
+    area = services().locations.confirm(
+        ctx(),
+        custom_input(extent=ExtentKind.USER_RADIUS, radius_meters=radius),
+        key("radius-limit"),
+    )
+    assert area.radius_m == radius
+
+
+def test_private_google_address_has_a_provider_expiry() -> None:
+    svc = services()
+    area = svc.locations.confirm(
+        ctx(),
+        custom_input(formatted_address="Our village well, Minnesota, United States"),
+        key("private-address-expiry"),
+    )
+    assert area.owner_uid == ANA.uid
+    assert area.provider_expires_at == NOW + timedelta(days=30)

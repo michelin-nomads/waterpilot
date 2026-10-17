@@ -4,7 +4,8 @@ import { Navigate, Outlet, useLocation, useOutletContext } from 'react-router-do
 import { ResizeHandle } from '../../components/ResizeHandle/ResizeHandle';
 import { DESKTOP_QUERY, useMediaQuery } from '../../lib/useMediaQuery';
 import { usePlanningSession } from '../../session/sessionContext';
-import { sessionStageForPath } from '../../shell/stages';
+import { PLANNING_STAGES, stageForPath, sessionStageForPath } from '../../shell/stages';
+import { canOpenStage, unlockedStageIndex } from './stageAccess';
 import { AgentPanel } from './AgentPanel';
 import { AGENT_WIDTH, useAgentMaxWidth, useAgentWidth } from './agentWidth';
 import { PlanExitGuard } from './PlanExitGuard';
@@ -39,7 +40,12 @@ export default function PlanningLayout() {
 
   // The session remembers the step the user is on, so Continue resumes it anywhere. Only
   // this tab's navigation writes it; a step saved by another tab never pulls this one back.
-  const routeStage = sessionStageForPath(pathname);
+  const requestedStage = stageForPath(pathname);
+  const blockedStage =
+    state.status === 'ready' &&
+    requestedStage !== null &&
+    !canOpenStage(requestedStage, state.server);
+  const routeStage = blockedStage ? undefined : sessionStageForPath(pathname);
   const syncedRoute = useRef<string | null>(null);
   const sessionId = view?.id;
   const sessionStage = view?.stage;
@@ -98,6 +104,9 @@ export default function PlanningLayout() {
     : undefined;
 
   if (state.status === 'none' && !hadPlan) return <Navigate to="/" replace />;
+
+  if (blockedStage)
+    return <Navigate to={PLANNING_STAGES[unlockedStageIndex(state.server)]!.path} replace />;
 
   return (
     <div className={styles.planning}>

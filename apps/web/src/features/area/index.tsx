@@ -8,12 +8,9 @@ import { LocationStep } from '../location/LocationStep';
 import { LocationSummary } from '../location/LocationSummary';
 import { StagePage } from '../planning/StagePage';
 
-/** The synthetic demo area served by local mode only; never present in the pilot. */
-export const DEMO_AREA_ID = 'are_SYNTH01SYNTH01SYNTH01SYNTH';
-
 function Body() {
   const navigate = useNavigate();
-  const { coordinator, state, view, inputsPending } = usePlanningSession();
+  const { state, view, inputsPending } = usePlanningSession();
   const [changing, setChanging] = useState(false);
   if (state.status === 'loading') {
     return (
@@ -32,20 +29,6 @@ function Body() {
           navigate('/baseline');
         }}
         onCancel={areaId ? () => setChanging(false) : undefined}
-        extraActions={
-          env.appMode === 'local' && view && coordinator ? (
-            <Button
-              variant="ghost"
-              loading={inputsPending}
-              onClick={() => {
-                coordinator.setArea(DEMO_AREA_ID);
-                setChanging(false);
-              }}
-            >
-              Use the synthetic demo area
-            </Button>
-          ) : undefined
-        }
       />
     );
   }

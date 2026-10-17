@@ -62,3 +62,31 @@
     opacity: 0;
   }
 }
+
+.textWrapper {
+  max-width: 100%;
+  min-width: 0;
+  vertical-align: bottom;
+}
+
+.textTrigger {
+  @include focus-visible;
+  display: block;
+  max-width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--wp-radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: help;
+
+  > span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

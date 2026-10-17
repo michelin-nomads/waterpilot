@@ -1,3 +1,4 @@
+import { chooseFixtureLocation } from './locationHelpers';
 import { expect, test, type Page } from '@playwright/test';
 
 // Compare, and what-ifs explored in Agent mode, against the local API and the
@@ -45,8 +46,9 @@ test('a guest compares only feasible plans, chooses one, and tests a what-if in 
   page,
 }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Start exploring' }).click();
-  await page.getByRole('button', { name: 'Use the synthetic demo area' }).click();
+  await page.getByRole('button', { name: 'Start Exploring' }).click();
+  await chooseFixtureLocation(page);
+  await page.getByRole('button', { name: 'Confirm location', exact: true }).click();
   // 12000 people x 135 L = 1,620,000 L/day demand; 300,000 L/day from tankers (30%).
   await enter(page, 'POPULATION', '12000', null, 'Ward census table, 2011');
   await enter(page, 'PER_CAPITA_STANDARD', '135', null, 'National design standard');
@@ -107,7 +109,7 @@ test('a guest compares only feasible plans, chooses one, and tests a what-if in 
   await expect(page.getByRole('group', { name: 'Water demand' })).toHaveCount(0);
 
   // Agent mode explores the what-if against the same baseline.
-  await page.getByRole('radio', { name: 'Copilot' }).check();
+  await page.getByRole('radio', { name: 'WaterPilot Agent' }).check();
   const agent = page.locator('[data-agent-scenario]');
   const demand = agent.getByRole('group', { name: 'Water demand' });
   await demand.getByLabel('Change').selectOption('INCREASE_BY');

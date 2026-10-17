@@ -2231,7 +2231,7 @@ guide text and eight owner points, and closed the gaps found. Prompt 12 was not 
 ### Gaps found and fixed
 
 - **What-if lived in Traditional mode.** The guide says to expose scenario logic to
-  WaterPilotAgent and remove separate what-if navigation. The what-if tool now lives in
+  WaterPilot Agent and remove separate what-if navigation. The what-if tool now lives in
   the Agent pane (`AgentScenario`, which wraps `WhatIfPanel`). Traditional mode has no
   what-if controls. The Plans page shows a saved what-if read-only, labelled "What-if
   from Agent mode · Agent-generated", with "Open Agent mode" (`ScenarioResult`).

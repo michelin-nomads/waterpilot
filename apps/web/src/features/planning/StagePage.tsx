@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { EmptyState } from '../../components/StatePanel/StatePanel';
 import { PageHeader } from '../../shell/PageHeader';
 import { getStage, PLANNING_STAGES, type PlanningStage } from '../../shell/stages';
-import { PlanSummary } from './PlanSummary';
+import { PlanInputNotice } from './PlanInputNotice';
 import styles from './StagePage.module.scss';
 
 interface StagePageProps {
@@ -24,7 +24,7 @@ export function StagePage({ stageId, children, title, subtitle }: StagePageProps
         subtitle={subtitle ?? stage.subtitle}
       />
       <div className={styles.content}>
-        <PlanSummary />
+        <PlanInputNotice />
         <div className={styles.sections}>{children}</div>
       </div>
     </div>

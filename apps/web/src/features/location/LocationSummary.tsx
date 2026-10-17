@@ -1,8 +1,6 @@
 import {
-  Badge,
   Button,
   ErrorState,
-  EvidenceBadge,
   LoadingRegion,
   Notice,
   PermissionState,
@@ -12,9 +10,9 @@ import { AreaLocationDocument } from '../../graphql/generated/graphql';
 import { useGraphQLQuery } from '../../graphql/hooks';
 import { queryKeys } from '../../graphql/queryKeys';
 import { GraphQLRequestError } from '../../graphql/requestError';
-import { evidenceFromApi } from '../../lib/status';
-import { EXTENT_LABEL, formatDistance, ORIGIN_LABEL, UNIT_SYSTEM_LABEL } from './locationLabels';
+import { EXTENT_LABEL, formatDistance } from './locationLabels';
 import styles from './Location.module.scss';
+import { LocationSummaryName } from './LocationSummaryName';
 
 interface LocationSummaryProps {
   areaId: string;
@@ -74,22 +72,11 @@ export function LocationSummary({
     );
   }
 
-  const region = [area.admin.locality, area.admin.admin1, area.admin.countryName]
-    .filter(Boolean)
-    .join(', ');
   return (
     <section aria-labelledby="location-summary-title" className={styles.card}>
       <div className={styles.summaryHead}>
-        <h2 id="location-summary-title" className={styles.title}>
-          {area.name}
-        </h2>
-        <Badge tone="neutral">{ORIGIN_LABEL[area.origin]}</Badge>
-        <EvidenceBadge quality={evidenceFromApi(area.evidence)} />
-        {area.private && <Badge tone="neutral">Private to you</Badge>}
+        <LocationSummaryName area={area} onChange={onChange} />
       </div>
-      {(area.formattedAddress || region) && (
-        <p className={styles.hint}>{area.formattedAddress ?? region}</p>
-      )}
       {area.providerContentExpired && (
         <Notice
           kind="stale"
@@ -135,10 +122,6 @@ export function LocationSummary({
             {area.timezone}
             {area.regionSetByUser.includes('timezone') && ' (set by you)'}
           </dd>
-        </div>
-        <div>
-          <dt>Units</dt>
-          <dd>{UNIT_SYSTEM_LABEL[area.unitSystem]}</dd>
         </div>
       </dl>
       {!area.hasBoundary && (

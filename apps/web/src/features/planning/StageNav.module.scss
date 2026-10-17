@@ -40,7 +40,12 @@
 
   @include focus-visible;
 
-  &:hover {
+  &[aria-disabled='true'] {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  &:not([aria-disabled='true']):hover {
     background: var(--wp-color-accent-soft);
     color: var(--wp-color-text);
   }

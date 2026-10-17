@@ -66,7 +66,12 @@ for (const row of rows) {
       `      ${row.name.padEnd(36)} ${kb(row.raw).padStart(10)} raw  ${kb(row.gzip).padStart(10)} gzip  (initial)`,
     );
   } else {
-    report(row.name, row.raw, row.gzip, BUDGETS[`lazy${row.kind}`]);
+    // On-demand global country boundaries; rationale and measured size: docs/dependencies.md.
+    const budget =
+      row.name.startsWith('country-coder-') && row.kind === 'Js'
+        ? 240 * KB
+        : BUDGETS[`lazy${row.kind}`];
+    report(row.name, row.raw, row.gzip, budget);
   }
 }
 

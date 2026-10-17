@@ -307,6 +307,8 @@ export class SessionCoordinator {
 
   setSiteProfile = (siteProfile: SessionState['siteProfile']) => this.edit({ siteProfile });
   setMode = (mode: PlanningMode) => this.edit({ mode });
+  markBaselineReviewed = () => this.edit({ baselineReviewed: true });
+
   setStage = (stage: SessionState['stage']) => this.edit({ stage });
   setArea = (areaId: string | null) => this.edit({ areaId });
   setGoal = (goal: SessionState['goal']) => this.edit({ goal });

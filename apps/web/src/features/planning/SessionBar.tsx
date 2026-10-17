@@ -14,6 +14,7 @@ import styles from './SessionBar.module.scss';
 const FIELD_LABEL: Record<SessionField, string> = {
   mode: 'planning mode',
   stage: 'step',
+  baselineReviewed: 'baseline review',
   areaId: 'location',
   goal: 'goal',
   scenario: 'what-if changes',
@@ -28,7 +29,7 @@ function listFields(fields: readonly SessionField[]): string {
     : (labels[0] ?? '');
 }
 
-/** "Changes saved" appears only after the server acknowledged the save. */
+/** Keep pending and failed saves visible; successful saves need no status message. */
 function SaveStatus({ state, onRetry }: { state: CoordinatorState; onRetry: () => void }) {
   const content = (() => {
     switch (state.save) {
@@ -39,14 +40,7 @@ function SaveStatus({ state, onRetry }: { state: CoordinatorState; onRetry: () =
           </>
         );
       case 'saved':
-        return (
-          <>
-            <Icon name="check" size="sm" /> Changes saved
-            {state.savedAt !== null && (
-              <span className={styles.muted}> at {formatWhen(state.savedAt)}</span>
-            )}
-          </>
-        );
+        return null;
       case 'offline':
         return (
           <>

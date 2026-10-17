@@ -22,8 +22,6 @@ from waterpilot.application.services.common import Deps, build
 from waterpilot.domain.errors import DomainError, ErrorCode, FieldError
 from waterpilot.domain.ids import IdKind, derived_id
 from waterpilot.domain.location import (
-    MAX_RADIUS_M,
-    MIN_RADIUS_M,
     PLACE_ID,
     PRIVATE_ORIGINS,
     PROVIDER_CONTENT_DAYS,
@@ -45,6 +43,8 @@ from waterpilot.domain.values import DecimalString, EvidenceQuality, Frozen
 
 MAX_CANDIDATES = 5
 COORD_PLACES = 7
+MIN_RADIUS_M = 1000
+MAX_RADIUS_M = 10_000
 
 
 class ConfirmLocationInput(Frozen):
@@ -177,7 +177,7 @@ class LocationService:
                 errors.append(
                     (
                         "radiusMeters",
-                        f"enter a radius from {MIN_RADIUS_M} m to {MAX_RADIUS_M // 1000} km",
+                        f"enter a radius from {MIN_RADIUS_M // 1000} to {MAX_RADIUS_M // 1000} km",
                     )
                 )
         elif p.radius_meters is not None:
@@ -215,6 +215,7 @@ class LocationService:
             raise _invalid(("radiusMeters", str(err))) from None
         now = self._d.clock()
         existing = self._d.store.areas.get(area_id)
+        has_provider_address = p.origin in PRIVATE_ORIGINS and p.formatted_address is not None
         from_provider = p.origin is AreaOrigin.PLACE_SEARCH and self._d.places.provider == "google"
         evidence = {
             AreaOrigin.PLACE_SEARCH: (
@@ -246,7 +247,9 @@ class LocationService:
             unit_system=inferred.unit_system,
             region_set_by_user=set_by_user,
             provider_expires_at=(
-                now + timedelta(days=PROVIDER_CONTENT_DAYS) if from_provider else None
+                now + timedelta(days=PROVIDER_CONTENT_DAYS)
+                if from_provider or has_provider_address
+                else None
             ),
         )
 

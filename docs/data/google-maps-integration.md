@@ -236,3 +236,20 @@ Actual results:
 Vite served stale transformed modules during edits; a clean server restart was needed
 before verifying the lifecycle fix. No secret was logged or committed. Live Maps usage
 may be metered; no invoice amount or global spend cap was verified.
+
+
+### Live lookup failure checked 2026-10-17
+
+An explicit lookup using the configured local browser key returned:
+
+- Geocoder: `REQUEST_DENIED` — “The webpage is not allowed to use the geocoder.”
+- Places Nearby Search: `PERMISSION_DENIED` — `Places.SearchNearby` is blocked.
+
+A working map load does not establish permission to reverse-geocode. The project must
+have Geocoding API enabled and the website-restricted browser key must allow it.
+The existing Nearby fallback also needs Places API (New) / `SearchNearby` permission.
+Keep website/referrer restrictions in place; do not make the key unrestricted.
+See [Google's API key error guidance](https://developers.google.com/maps/documentation/javascript/error-messages).
+The current Cloud CLI login requires reauthentication, so cloud settings could not be
+inspected or changed during this check. No APIs, key restrictions, or billing settings
+were modified.

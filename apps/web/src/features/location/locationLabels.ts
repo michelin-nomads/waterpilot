@@ -17,9 +17,9 @@ export const SCOPE_LABEL: Record<GeographicScope, string> = {
 
 export const ORIGIN_LABEL: Record<AreaOrigin, string> = {
   CATALOGUE: 'Reviewed WaterPilot area',
-  PLACE_SEARCH: 'Searched place',
-  GEOLOCATION: 'Your device location',
-  CUSTOM: 'Entered by you',
+  PLACE_SEARCH: 'Place search',
+  GEOLOCATION: 'Device location',
+  CUSTOM: 'Selected on the map',
 };
 
 export const EXTENT_LABEL: Record<ExtentKind, string> = {
@@ -35,4 +35,21 @@ export const UNIT_SYSTEM_LABEL: Record<UnitSystem, string> = {
 
 export function formatDistance(meters: number): string {
   return meters >= 1000 ? `${Number((meters / 1000).toFixed(1))} km` : `${meters} m`;
+}
+
+const GENERIC_PLACE_NAMES = new Set([
+  'Device location',
+  'My device location',
+  'Selected map location',
+  'Unnamed place',
+  'Location name unavailable',
+]);
+
+/** A device's source is separate from its geographic name. */
+export function placeName(place: Pick<import('./types').Place, 'name' | 'admin'>): string | null {
+  const neighbourhood = place.admin.sublocality;
+  const city = place.admin.locality;
+  const parts = [neighbourhood, city].filter((part): part is string => Boolean(part?.trim()));
+  if (parts.length) return [...new Set(parts)].join(', ');
+  return GENERIC_PLACE_NAMES.has(place.name) ? null : place.name;
 }

@@ -1,0 +1,276 @@
+@use 'mixins' as *;
+
+.scene {
+  display: block;
+  width: min(100%, 44rem);
+  overflow: visible;
+  color: var(--wp-color-accent);
+}
+
+.orbit,
+.orbitOuter {
+  fill: none;
+  stroke: var(--wp-color-accent);
+  stroke-width: 1;
+  opacity: 0.16;
+}
+
+.orbitOuter {
+  stroke-dasharray: 3 9;
+  opacity: 0.1;
+}
+
+.shadow {
+  fill: var(--wp-color-accent);
+  opacity: 0.09;
+  transform-origin: 400px 440px;
+  animation: shadow-breathe 7s ease-in-out infinite;
+  @include ambient-animation;
+}
+
+.world {
+  animation: world-float 7s ease-in-out infinite;
+  @include ambient-animation;
+}
+
+.sky {
+  fill: var(--wp-color-accent-soft);
+  stroke: var(--wp-color-border);
+  stroke-width: 1;
+}
+
+.sun {
+  fill: var(--wp-color-surface);
+  opacity: 0.75;
+}
+
+.earthTurn {
+  transform-origin: 400px 276px;
+  animation: earth-turn 12s ease-in-out infinite alternate;
+  @include ambient-animation;
+}
+
+.meridian {
+  fill: none;
+  stroke: var(--wp-color-accent);
+  stroke-width: 0.8;
+  opacity: 0.13;
+}
+
+.farHills {
+  animation: hills-drift 10s ease-in-out infinite alternate;
+  @include ambient-animation;
+}
+
+.hillBack {
+  fill: color-mix(in srgb, var(--wp-color-accent) 22%, var(--wp-color-accent-soft));
+}
+
+.hillMid {
+  fill: color-mix(in srgb, var(--wp-color-accent) 42%, var(--wp-color-accent-soft));
+}
+
+.land {
+  fill: color-mix(in srgb, var(--wp-color-accent) 63%, var(--wp-color-accent-soft));
+}
+
+.riverBank {
+  fill: var(--wp-color-accent-soft);
+}
+
+.river {
+  fill: var(--wp-color-surface);
+}
+
+.farBuildings {
+  fill: color-mix(in srgb, var(--wp-color-accent) 30%, var(--wp-color-accent-soft));
+}
+
+.farRoof {
+  fill: color-mix(in srgb, var(--wp-color-accent) 45%, var(--wp-color-accent-soft));
+}
+
+.tower {
+  fill: var(--wp-color-surface);
+  stroke: var(--wp-color-accent);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+.windows {
+  fill: none;
+  stroke: var(--wp-color-accent);
+  stroke-width: 4;
+  stroke-linecap: round;
+  opacity: 0.65;
+}
+
+.house,
+.houseRight {
+  fill: var(--wp-color-surface);
+  stroke: var(--wp-color-accent-strong);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+.houseRight {
+  fill: var(--wp-color-accent-soft);
+}
+
+.roof {
+  fill: none;
+  stroke: var(--wp-color-accent-strong);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+
+.door,
+.houseWindow {
+  fill: color-mix(in srgb, var(--wp-color-accent) 55%, var(--wp-color-accent-soft));
+  stroke: none;
+}
+
+.solar {
+  fill: var(--wp-color-accent);
+  stroke-width: 0.5;
+}
+
+.trees {
+  fill: var(--wp-color-accent-strong);
+}
+
+.trunks {
+  fill: none;
+  stroke: var(--wp-color-accent-strong);
+  stroke-width: 3;
+}
+
+.oceanBase {
+  fill: color-mix(in srgb, var(--wp-color-accent) 24%, var(--wp-color-accent-soft));
+}
+
+.wave {
+  animation: water-flow 7s linear infinite;
+  @include ambient-animation;
+}
+
+.waveBack {
+  fill: color-mix(in srgb, var(--wp-color-accent) 48%, var(--wp-color-accent-soft));
+  animation-duration: 10s;
+  animation-direction: reverse;
+}
+
+.waveFront {
+  fill: var(--wp-color-accent);
+}
+
+.ripples {
+  fill: none;
+  stroke: var(--wp-color-on-accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  opacity: 0.45;
+  animation: ripple-drift 5s ease-in-out infinite alternate;
+  @include ambient-animation;
+}
+
+.worldEdge {
+  fill: none;
+  stroke: var(--wp-color-accent);
+  stroke-width: 1.5;
+  opacity: 0.35;
+}
+
+.cloud {
+  fill: var(--wp-color-surface);
+  stroke: var(--wp-color-border);
+  stroke-width: 1;
+}
+
+.cloudLeft,
+.cloudRight {
+  animation: cloud-drift 9s ease-in-out infinite alternate;
+  @include ambient-animation;
+}
+
+.cloudRight {
+  animation-delay: -4s;
+  animation-duration: 12s;
+}
+
+.dropFloat {
+  animation: droplet-float 5s ease-in-out infinite;
+  @include ambient-animation;
+}
+
+.dropHalo {
+  fill: var(--wp-color-surface);
+  stroke: var(--wp-color-border);
+  stroke-width: 1;
+}
+
+.drop {
+  fill: var(--wp-color-accent);
+}
+
+.dropShine {
+  fill: none;
+  stroke: var(--wp-color-on-accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.orbitDots {
+  fill: var(--wp-color-accent);
+  opacity: 0.35;
+}
+
+@keyframes world-float {
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+@keyframes shadow-breathe {
+  50% {
+    transform: scaleX(0.9);
+    opacity: 0.05;
+  }
+}
+
+@keyframes earth-turn {
+  to {
+    transform: scaleX(0.4);
+  }
+}
+
+@keyframes hills-drift {
+  to {
+    transform: translateX(-15px);
+  }
+}
+
+@keyframes water-flow {
+  to {
+    transform: translateX(-160px);
+  }
+}
+
+@keyframes ripple-drift {
+  to {
+    transform: translateX(12px);
+    opacity: 0.25;
+  }
+}
+
+@keyframes cloud-drift {
+  to {
+    transform: translateX(16px);
+  }
+}
+
+@keyframes droplet-float {
+  50% {
+    transform: translateY(-10px);
+  }
+}

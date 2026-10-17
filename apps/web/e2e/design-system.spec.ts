@@ -47,7 +47,7 @@ async function openPlanner(page: Page, mode: 'traditional' | 'agent' = 'traditio
   test.skip(!(await stackUp()), 'Needs the local API and Auth emulator');
   await page.goto('/');
   await page
-    .getByRole('button', { name: mode === 'agent' ? 'Start with agent' : 'Start exploring' })
+    .getByRole('button', { name: mode === 'agent' ? 'Start with Agent' : 'Start Exploring' })
     .click();
   await expect(page).toHaveURL(/\/area$/);
 }

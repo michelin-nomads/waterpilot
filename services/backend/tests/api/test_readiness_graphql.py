@@ -148,3 +148,16 @@ def test_manual_input_replays_and_rejects_key_reuse(h: Harness) -> None:
     assert _record(h, "t-guest", sid)["manualInput"]["id"] == first["id"]
     reused = _record(h, "t-guest", sid, value="13000")
     assert reused["error"]["code"] == "IDEMPOTENCY_KEY_REUSED"
+
+
+def test_a_new_baseline_input_requires_review_again(h: Harness) -> None:
+    sid = _session(h, "t-guest")
+    session = h.store.sessions.get(sid)
+    assert session is not None
+    h.store.sessions.replace(
+        session.model_copy(update={"baseline_reviewed": True}), session.version
+    )
+    assert _record(h, "t-guest", sid)["error"] is None
+    updated = h.store.sessions.get(sid)
+    assert updated is not None
+    assert updated.baseline_reviewed is False

@@ -235,3 +235,19 @@ documents). Before the layout was made lazy, initial JS measured 150.28 kB gzip.
   advisories at each bump; record behaviour-changing upgrades as ADRs.
 - Regenerate contracts (`npm run contracts`) after API changes; the backend test
   `test_export_matches_committed_contract` fails on drift.
+
+
+### Country detection when reverse geocoding is unavailable (2026-10-17)
+
+`@rapideditor/country-coder` 5.6.1 (ISC) resolves the selected coordinates against bundled
+country polygons. It is dynamically imported only when the place provider returns no
+country or fails. This preserves device location when Google's Geocoding API is unavailable;
+Maps and Places can be enabled independently. No new service receives device coordinates.
+Provider country/address information takes precedence. Unresolved ocean points still need
+a different location; no country is guessed from language, browser timezone, or a nearby city.
+The polygons are generalized and are used only for regional defaults, never planning boundaries.
+See the [upstream documentation](https://github.com/rapideditor/country-coder#caveats).
+
+The fallback chunk is approximately 230 kB gzip, mostly the global boundary dataset. It has
+a dedicated 240 kB gzip budget; all other chunks retain their existing budgets. It is absent
+from initial page loads and normal successful place searches/reverse lookups.

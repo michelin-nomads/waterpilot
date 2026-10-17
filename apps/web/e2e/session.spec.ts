@@ -5,7 +5,7 @@ import { expect, test, type Page, type Request } from '@playwright/test';
 // reconnect, mode switch and account switch. Conflicting edits to the same input need the location
 // and goal editors (later prompts); their choice UI is covered in Vitest.
 const EMULATOR = 'http://127.0.0.1:9099';
-const API = 'http://127.0.0.1:8000';
+const API = process.env.WP_E2E_API_URL ?? 'http://127.0.0.1:8000';
 
 async function servicesUp(): Promise<boolean> {
   try {
@@ -55,7 +55,7 @@ async function expectSettled(count: () => number, expected: number) {
 
 async function startPlanning(page: Page, mode: 'Traditional' | 'With the assistant') {
   await page.goto('/');
-  const button = mode === 'Traditional' ? 'Start exploring' : 'Start with agent';
+  const button = mode === 'Traditional' ? 'Start Exploring' : 'Start with Agent';
   await page.getByRole('button', { name: button }).click();
   await expect(page).toHaveURL(/\/area$/);
 }
@@ -85,18 +85,22 @@ async function recoveryRecords(page: Page): Promise<Array<{ uid: string; pending
 test('a plan is not kept: reloading ends it and Welcome offers a fresh start', async ({ page }) => {
   await startPlanning(page, 'With the assistant');
   await expect(page.getByRole('complementary', { name: 'Conversation' })).toBeVisible();
+  const saved = page.waitForResponse((response) => isUpdate(response.request()) && response.ok());
   await stageLink(page, /goal/i).click();
-  await expect(saveStatus(page)).toContainText('Changes saved');
+  await saved;
+  await expect(saveStatus(page)).toHaveCount(0);
 
   await page.reload();
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole('button', { name: 'Continue planning' })).toHaveCount(0);
   await expect(page.getByText(/in progress/i)).toHaveCount(0);
   // The guest account stays, so the start screen is the choice of how to plan.
-  await expect(page.getByRole('button', { name: 'Start exploring' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Start Exploring' })).toBeVisible();
 });
 
-test('"Changes saved" waits for the server to acknowledge', async ({ page }) => {
+test('saving remains until the server acknowledges, then the status disappears', async ({
+  page,
+}) => {
   await startPlanning(page, 'Traditional');
   let release!: () => void;
   const held = new Promise<void>((resolve) => (release = resolve));
@@ -111,7 +115,7 @@ test('"Changes saved" waits for the server to acknowledge', async ({ page }) => 
   await page.waitForTimeout(500);
   await expect(page.getByText('Changes saved')).toHaveCount(0);
   release();
-  await expect(saveStatus(page)).toContainText('Changes saved');
+  await expect(saveStatus(page)).toHaveCount(0);
 });
 
 test('edits made while the API is unreachable save once on reconnect', async ({ page }) => {
@@ -123,7 +127,7 @@ test('edits made while the API is unreachable save once on reconnect', async ({ 
 
   await page.unroute(`${API}/graphql`);
   await page.evaluate(() => window.dispatchEvent(new Event('online')));
-  await expect(saveStatus(page)).toContainText('Changes saved');
+  await expect(saveStatus(page)).toHaveCount(0);
   await expectSettled(() => counts.applied, 1);
 });
 
@@ -136,9 +140,11 @@ test('switching mode keeps the same session', async ({ page }) => {
       created.push(request.url());
     }
   });
-  await page.locator('label', { has: page.getByRole('radio', { name: 'Copilot' }) }).click();
-  await expect(saveStatus(page)).toContainText('Changes saved');
-  await expect(page.getByRole('radio', { name: 'Copilot' })).toBeChecked();
+  await page
+    .locator('label', { has: page.getByRole('radio', { name: 'WaterPilot Agent' }) })
+    .click();
+  await expect(saveStatus(page)).toHaveCount(0);
+  await expect(page.getByRole('radio', { name: 'WaterPilot Agent' })).toBeChecked();
   expect(created).toEqual([]);
   await expectSettled(() => counts.applied, 1);
 });
@@ -154,7 +160,7 @@ test('a signed-in person plans with an avatar in the header; signing out asks fi
   await page.getByRole('button', { name: 'Create account' }).click();
   await expect(page).toHaveURL(/\/$/);
 
-  await page.getByRole('button', { name: 'Start exploring' }).click();
+  await page.getByRole('button', { name: 'Start Exploring' }).click();
   await expect(page).toHaveURL(/\/area$/);
   const header = page
     .getByRole('link', { name: 'WaterPilot home' })
@@ -167,7 +173,7 @@ test('a signed-in person plans with an avatar in the header; signing out asks fi
   await header.getByRole('button', { name: 'Sign out' }).click();
   const confirm = page.getByRole('dialog', { name: 'Sign out and lose your plan?' });
   await confirm.getByRole('button', { name: 'Sign out and lose plan' }).click();
-  await expect(page.getByRole('button', { name: 'Start exploring' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Start Exploring' })).toBeVisible();
   await expect.poll(async () => (await recoveryRecords(page)).length).toBe(0);
 });
 

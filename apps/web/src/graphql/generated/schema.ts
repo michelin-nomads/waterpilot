@@ -1858,6 +1858,7 @@ export type PlanningMode =
 export type PlanningSession = {
   area?: Maybe<Area>;
   areaId?: Maybe<Scalars['ID']['output']>;
+  baselineReviewed: Scalars['Boolean']['output'];
   communityId?: Maybe<Scalars['ID']['output']>;
   createdAt: Scalars['UtcDateTime']['output'];
   goal?: Maybe<Goal>;
@@ -1885,6 +1886,7 @@ export type PlanningSession = {
 /** Omitted fields are left unchanged; null clears a field. */
 export type PlanningSessionPatch = {
   areaId?: InputMaybe<Scalars['ID']['input']>;
+  baselineReviewed?: InputMaybe<Scalars['Boolean']['input']>;
   goal?: InputMaybe<GoalInput>;
   mode?: InputMaybe<PlanningMode>;
   scenario?: InputMaybe<ScenarioInput>;

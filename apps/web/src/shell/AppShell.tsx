@@ -90,21 +90,18 @@ export default function AppShell() {
       <main id="main" tabIndex={-1} className={styles.main}>
         <Outlet context={{ planningMode, setPlanningMode }} />
       </main>
-      <footer className={styles.footer}>
-        <p>WaterPilot helps communities plan for a more water-secure future.</p>
-        <div className={styles.footerMeta}>
-          {env.appMode === 'local' && (
-            <>
-              <Badge tone="info">
-                {env.maps.provider === 'google'
-                  ? 'Local backend · live Google Maps'
-                  : 'Local mode · emulators only'}
-              </Badge>
-              <Link to="/design-system">Design system (UI fixtures)</Link>
-            </>
-          )}
-        </div>
-      </footer>
+      {env.appMode === 'local' && (
+        <footer className={styles.footer}>
+          <div className={styles.footerMeta}>
+            <Badge tone="info">
+              {env.maps.provider === 'google'
+                ? 'Local backend · live Google Maps'
+                : 'Local mode · emulators only'}
+            </Badge>
+            <Link to="/design-system">Design system (UI fixtures)</Link>
+          </div>
+        </footer>
+      )}
     </div>
   );
 }

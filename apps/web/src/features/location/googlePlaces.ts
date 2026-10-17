@@ -42,6 +42,18 @@ interface PlacesLibrary {
   };
 }
 
+interface NearbyLibrary {
+  Place: {
+    searchNearby(request: {
+      fields: string[];
+      locationRestriction: { center: { lat: number; lng: number }; radius: number };
+      maxResultCount: number;
+      rankPreference: unknown;
+    }): Promise<{ places: PlaceData[] }>;
+  };
+  SearchNearbyRankPreference: { DISTANCE: unknown };
+}
+
 interface GeocoderResult {
   place_id: string;
   formatted_address: string;
@@ -243,14 +255,44 @@ export function googlePlaces(
     },
 
     async reverse(latitude, longitude) {
+      let candidates: Place[] = [];
       try {
         const { Geocoder } = await library<GeocodingLibrary>(load, 'geocoding');
         const { results } = await bounded(
           new Geocoder().geocode({ location: { lat: Number(latitude), lng: Number(longitude) } }),
         );
-        return results.slice(0, MAX_GEOCODE_RESULTS).map(fromGeocode);
+        candidates = results.map(fromGeocode);
+        if (candidates.some((place) => place.admin.sublocality || place.admin.locality)) {
+          return candidates
+            .sort((a, b) => Number(Boolean(b.countryCode)) - Number(Boolean(a.countryCode)))
+            .slice(0, MAX_GEOCODE_RESULTS);
+        }
       } catch {
-        return [];
+        // Maps/Places may work while the separate Geocoding API is unavailable.
+      }
+      try {
+        const { Place, SearchNearbyRankPreference } = await library<NearbyLibrary>(load, 'places');
+        const { places } = await bounded(
+          Place.searchNearby({
+            fields: ['id', 'location', 'addressComponents', 'formattedAddress'],
+            locationRestriction: {
+              center: { lat: Number(latitude), lng: Number(longitude) },
+              radius: 1000,
+            },
+            maxResultCount: 3,
+            rankPreference: SearchNearbyRankPreference.DISTANCE,
+          }),
+        );
+        // Use nearby addresses only for neighbourhood/city context, never the business
+        // name or its coordinates as the user's selected location.
+        const nearby = places
+          .map(fromPlace)
+          .filter(
+            (place) => place.countryCode && (place.admin.sublocality || place.admin.locality),
+          );
+        return nearby.length ? nearby : candidates.slice(0, MAX_GEOCODE_RESULTS);
+      } catch {
+        return candidates.slice(0, MAX_GEOCODE_RESULTS);
       }
     },
 

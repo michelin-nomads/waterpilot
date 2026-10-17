@@ -1,103 +1,132 @@
 import { expect, test, type Page } from '@playwright/test';
 
-// The location step against the local API (fixture gazetteer, no map, no Google calls)
-// and the Firebase emulators (`npm run test:e2e:emulator`).
+const API = process.env.WP_E2E_API_URL ?? 'http://127.0.0.1:8000';
 const EMULATOR = 'http://127.0.0.1:9099';
-const API = 'http://127.0.0.1:8000';
-
-async function servicesUp(): Promise<boolean> {
-  try {
-    const [auth, api] = await Promise.all([
-      fetch(`${EMULATOR}/emulator/v1/projects/demo-waterpilot/config`),
-      fetch(`${API}/healthz`),
-    ]);
-    return auth.ok && api.ok;
-  } catch {
-    return false;
-  }
-}
 
 test.beforeEach(async ({ page }) => {
-  const up = await servicesUp();
-  if (!up && process.env.WP_REQUIRE_AUTH_EMULATOR === '1') {
-    throw new Error('Auth emulator or local API not running (WP_REQUIRE_AUTH_EMULATOR=1)');
+  let up = false;
+  try {
+    const services = await Promise.all([
+      fetch(`${API}/healthz`),
+      fetch(`${EMULATOR}/emulator/v1/projects/demo-waterpilot/config`),
+    ]);
+    up = services.every((response) => response.ok);
+  } catch {
+    /* Local integration services may not be running. */
   }
-  test.skip(!up, 'Auth emulator or local API not running');
-  // Fail loudly if anything tries a real Google Maps host (emulator URLs only contain one
-  // in their path).
+  test.skip(!up, 'Needs the local API and Auth emulator');
   await page.route(
     (url) => /(^|\.)(googleapis|gstatic)\.com$/.test(url.hostname),
     (route) => route.abort(),
   );
 });
 
-async function choosePointOnly(page: Page) {
-  const option = page.getByRole('radio', { name: /Just this point/ });
-  await page.locator('label', { has: option }).click();
-  await expect(option).toBeChecked();
-}
-
 async function startPlanning(page: Page) {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Start exploring' }).click();
+  await page.getByRole('button', { name: 'Start Exploring' }).click();
   await expect(page).toHaveURL(/\/area$/);
-  await expect(page.getByText(/local mode shows no map/i)).toBeVisible();
 }
 
-test('an ambiguous name asks which place, and a place outside India completes the step', async ({
+async function confirm(page: Page) {
+  const selectedName = await page.getByTestId('review-name').innerText();
+  const response = page.waitForResponse((result) =>
+    (result.request().postData() ?? '').includes('mutation ConfirmLocation'),
+  );
+  await page.getByRole('button', { name: 'Confirm location', exact: true }).click();
+  const body = await (await response).json();
+  expect(body.data.confirmLocation.error).toBeNull();
+  await expect(page).toHaveURL(/\/baseline$/);
+  await expect(page.getByTestId('summary-name')).toHaveText(selectedName);
+  expect(
+    (
+      body.data.confirmLocation.area.formattedAddress ?? body.data.confirmLocation.area.name
+    ).startsWith(selectedName),
+  ).toBe(true);
+  const summary = page.locator('section[aria-labelledby="location-summary-title"]');
+  await expect(summary.getByText('Units', { exact: true })).toHaveCount(0);
+  await expect(summary.getByText('Private to you', { exact: true })).toHaveCount(0);
+  await expect(summary.getByText('Unreviewed source', { exact: true })).toHaveCount(0);
+  return body.data.confirmLocation.area;
+}
+
+test('search reviews a circle and automatically determines currency and timezone', async ({
   page,
 }) => {
   await startPlanning(page);
   const search = page.getByRole('combobox', { name: 'Search for a place' });
-  await search.fill('Koramangala');
-  await expect(page.getByText(/2 places match “Koramangala”/)).toBeVisible();
-  await expect(page.getByRole('option')).toHaveCount(2);
-
+  const locate = page.getByRole('button', { name: 'Use my location' });
+  const searchBox = (await search.boundingBox())!;
+  const locateBox = (await locate.boundingBox())!;
+  expect(locateBox.x).toBeGreaterThanOrEqual(searchBox.x + searchBox.width);
+  await expect(
+    page.getByRole('button', { name: /Enter it yourself|synthetic demo area/ }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole('definition').filter({ hasText: /Not chosen yet|Not set yet/ }),
+  ).toHaveCount(0);
   await search.fill('Nairobi');
   await page.getByRole('option', { name: /Nairobi/ }).click();
-  await expect(page.getByRole('heading', { name: 'Is this the right location?' })).toBeVisible();
-  await expect(page.getByText(/not a water catchment/i)).toBeVisible();
-  await expect(page.getByText('Test place, not real data')).toBeVisible();
-  await expect(page.getByRole('combobox', { name: 'Currency' })).toHaveValue('KES');
-  await page.getByRole('button', { name: 'Confirm location' }).click();
-  await expect(page.getByText('Choose how calculations should treat this place.')).toBeVisible();
-  await choosePointOnly(page);
-  await page.getByRole('button', { name: 'Confirm location' }).click();
-
-  await expect(page.getByRole('heading', { name: 'Nairobi' })).toBeVisible();
-  await expect(page.getByText('KES', { exact: true })).toBeVisible();
-  await expect(page.getByText('Africa/Nairobi')).toBeVisible();
-  await expect(page.getByText('User-input assessment')).toBeVisible();
+  const review = page.getByRole('form', { name: 'Confirm your location' });
+  await expect(review).toBeVisible();
+  await expect(review.getByRole('radio')).toHaveCount(0);
+  for (const name of [/Country/i, /Currency/i, /Time zone/i])
+    await expect(review.getByRole('combobox', { name })).toHaveCount(0);
+  await expect(page.getByText('A place is not a catchment', { exact: true })).toHaveCount(0);
+  const radius = review.getByRole('textbox', { name: /Radius/ });
+  await expect(radius).toHaveValue('1');
+  await radius.fill('0.5');
+  await review.getByRole('button', { name: 'Confirm location', exact: true }).click();
+  await expect(page.getByText('Enter a radius from 1 to 10 km.', { exact: true })).toBeVisible();
+  await radius.fill('10.1');
+  await review.getByRole('button', { name: 'Confirm location', exact: true }).click();
+  await expect(page.getByText('Enter a radius from 1 to 10 km.', { exact: true })).toBeVisible();
+  await radius.fill('2.5');
+  await review.getByRole('button', { name: 'About the planning radius' }).focus();
+  await expect(
+    review.getByRole('button', { name: 'About the planning radius' }),
+  ).toHaveAccessibleDescription(/from 1 to 10 km/);
+  await page.keyboard.press('Escape');
+  for (const width of [320, 390, 1440]) {
+    await page.setViewportSize({ width, height: 1000 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      width,
+    );
+  }
+  await page.screenshot({ path: test.info().outputPath('location-review.png') });
+  const area = await confirm(page);
+  expect(area).toMatchObject({
+    countryCode: 'KE',
+    currency: 'KES',
+    timezone: 'Africa/Nairobi',
+    extent: 'USER_RADIUS',
+    radiusMeters: 2500,
+  });
+  await expect(page.getByText(/Changes saved/)).toHaveCount(0);
 });
 
-test.describe('device location denied', () => {
-  test.use({ permissions: [] });
-
-  test('explains the denial and a typed-in location still completes the step', async ({ page }) => {
-    await page.addInitScript(() => {
-      const denied = { code: 1, PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3 };
-      navigator.geolocation.getCurrentPosition = (_ok, fail) => fail?.(denied as never);
-    });
-    await startPlanning(page);
-    await page.getByRole('button', { name: 'Use my current location' }).click();
-    await expect(
-      page.getByRole('alert').filter({ hasText: 'permission was not given' }),
-    ).toBeVisible();
-
-    await page.getByRole('button', { name: 'Enter it yourself' }).first().click();
-    const form = page.getByRole('form', { name: 'Enter a location yourself' });
-    await form.getByLabel(/^Name/).fill('Our well');
-    await form.getByLabel(/^Latitude/).fill('39.78');
-    await form.getByLabel(/^Longitude/).fill('-89.65');
-    await form.getByRole('combobox', { name: /Country/ }).selectOption('US');
-    await form.getByRole('button', { name: 'Review this location' }).click();
-    await expect(page.getByText('Please check', { exact: true })).toBeVisible();
-    await choosePointOnly(page);
-    await page.getByRole('button', { name: 'Confirm location' }).click();
-
-    await expect(page.getByRole('heading', { name: 'Our well' })).toBeVisible();
-    await expect(page.getByText('Private to you')).toBeVisible();
-    await expect(page.getByText('US customary', { exact: true })).toBeVisible();
+test('a denied device permission keeps search usable without a manual-entry fallback', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    navigator.geolocation.getCurrentPosition = (_ok, fail) =>
+      fail?.({
+        code: 1,
+        PERMISSION_DENIED: 1,
+        POSITION_UNAVAILABLE: 2,
+        TIMEOUT: 3,
+      } as GeolocationPositionError);
+  });
+  await startPlanning(page);
+  await page.getByRole('button', { name: 'Use my location' }).click();
+  await expect(
+    page.getByRole('alert').filter({ hasText: /permission was not given/ }),
+  ).toBeVisible();
+  await page.getByRole('combobox', { name: 'Search for a place' }).fill('Nairobi');
+  await page.getByRole('option', { name: /Nairobi/ }).click();
+  expect(await confirm(page)).toMatchObject({
+    countryCode: 'KE',
+    extent: 'USER_RADIUS',
+    radiusMeters: 1000,
   });
 });
 
@@ -106,16 +135,118 @@ test.describe('device location granted', () => {
     permissions: ['geolocation'],
     geolocation: { latitude: -12.0464, longitude: -77.0428, accuracy: 30 },
   });
-
-  test('asks the person to confirm the device location before saving it', async ({ page }) => {
+  test('names the location, explains accuracy, and resolves region settings automatically', async ({
+    page,
+  }) => {
     await startPlanning(page);
-    await page.getByRole('button', { name: 'Use my current location' }).click();
-    await expect(page.getByRole('heading', { name: 'Is this the right location?' })).toBeVisible();
-    await expect(page.getByText('Your device location', { exact: true }).first()).toBeVisible();
-    await expect(page.getByText(/within about 30 m/)).toBeVisible();
-    await choosePointOnly(page);
-    await page.getByRole('button', { name: 'Confirm location' }).click();
-    await expect(page.getByRole('heading', { name: 'My device location' })).toBeVisible();
-    await expect(page.getByText('PEN', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Use my location' }).click();
+    const review = page.getByRole('form', { name: 'Confirm your location' });
+    await expect(review.getByTestId('review-name')).toContainText('Lima');
+    await expect(review.getByText('Device location', { exact: true })).toBeVisible();
+    await expect(review.getByText('Approximately ±30 m')).toBeVisible();
+    await expect(
+      review.getByRole('button', { name: 'About location accuracy' }),
+    ).toHaveAccessibleDescription(/separate from the planning radius/);
+    expect(await confirm(page)).toMatchObject({
+      countryCode: 'PE',
+      currency: 'PEN',
+      timezone: 'America/Lima',
+      private: true,
+    });
   });
+});
+
+test.describe('device position without reverse-geocoding results', () => {
+  test.use({
+    permissions: ['geolocation'],
+    geolocation: { latitude: 12.8676256, longitude: 77.6838009, accuracy: 35 },
+  });
+  test('confirms the actual device coordinates with automatic Indian regional settings', async ({
+    page,
+  }) => {
+    let lookupCount = 0;
+    await page.route(`${API}/graphql`, async (route) => {
+      if ((route.request().postData() ?? '').includes('query ReverseLocation')) {
+        lookupCount += 1;
+        const candidates =
+          lookupCount === 1
+            ? []
+            : [
+                {
+                  placeId: 'fixture:hsr',
+                  name: 'HSR Layout',
+                  formattedAddress: 'HSR Layout, Bengaluru, Karnataka 560102, India',
+                  latitude: '12.8676256',
+                  longitude: '77.6838009',
+                  countryCode: 'IN',
+                  scope: 'SUBLOCALITY',
+                  types: ['sublocality'],
+                  admin: {
+                    countryName: 'India',
+                    locality: 'Bengaluru',
+                    sublocality: 'HSR Layout',
+                    admin1: 'Karnataka',
+                    admin2: null,
+                  },
+                },
+              ];
+        await route.fulfill({ json: { data: { reverseLocation: { candidates } } } });
+      } else {
+        await route.continue();
+      }
+    });
+    await startPlanning(page);
+    await page.getByRole('button', { name: 'Use my location' }).click();
+    const review = page.getByRole('form', { name: 'Confirm your location' });
+    await expect(
+      review.getByRole('button', { name: 'Confirm location', exact: true }),
+    ).toBeDisabled();
+    await review.getByRole('button', { name: 'Try again', exact: true }).click();
+    await expect(review.getByTestId('review-name')).toHaveText('HSR Layout, Bengaluru');
+    const locationName = review.getByRole('button', { name: 'HSR Layout, Bengaluru', exact: true });
+    await locationName.hover();
+    await expect(
+      review.getByRole('tooltip', {
+        name: 'HSR Layout, Bengaluru, Karnataka 560102, India',
+        exact: true,
+      }),
+    ).toBeVisible();
+    await page.screenshot({
+      path: test.info().outputPath('location-name-tooltip.png'),
+      animations: 'disabled',
+    });
+    await page.keyboard.press('Escape');
+    await expect(review.getByText('12.86763, 77.68380')).toBeVisible();
+    expect(await confirm(page)).toMatchObject({
+      countryCode: 'IN',
+      currency: 'INR',
+      timezone: 'Asia/Kolkata',
+      private: true,
+      accuracyMeters: 35,
+      extent: 'USER_RADIUS',
+      radiusMeters: 1000,
+    });
+    const summary = page.locator('section[aria-labelledby="location-summary-title"]');
+    await expect(summary.getByText('India', { exact: true })).toHaveCount(1);
+  });
+});
+
+test('future steps stay locked until their preceding stage is completed', async ({ page }) => {
+  await startPlanning(page);
+  const nav = page.getByRole('navigation', { name: 'Planning stages' });
+  await expect(nav.getByRole('link')).toHaveCount(1);
+  await expect(nav.locator('[aria-disabled="true"]')).toHaveCount(4);
+  await page.getByRole('combobox', { name: 'Search for a place' }).fill('Nairobi');
+  await page.getByRole('option', { name: /Nairobi/ }).click();
+  await confirm(page);
+  await expect(nav.getByRole('link', { name: /Baseline/ })).toBeVisible();
+  await expect(nav.locator('[aria-disabled="true"]')).toHaveCount(3);
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue to goal', exact: true }).click();
+  await expect(page).toHaveURL(/\/goals$/);
+  await expect(nav.getByRole('link', { name: /Goal/ })).toBeVisible();
+  await expect(nav.locator('[aria-disabled="true"]')).toHaveCount(2);
+  await nav.getByRole('link', { name: /Baseline/ }).click();
+  await expect(nav.getByRole('link', { name: /Goal/ })).toBeVisible();
 });

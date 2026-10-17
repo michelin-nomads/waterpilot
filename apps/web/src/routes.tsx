@@ -16,6 +16,7 @@ const lazyPage = (load: () => Promise<{ default: ComponentType }>) => async () =
  * PlanningLayout (stepper, Traditional/Agent mode, agent + workspace panes).
  */
 export const routes: RouteObject[] = [
+  ...(env.appMode === 'local' ? [{ path: '/splash', element: <Navigate to="/" replace /> }] : []),
   {
     path: '/',
     element: <AppShell />,

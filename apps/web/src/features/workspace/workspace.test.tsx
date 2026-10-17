@@ -149,16 +149,16 @@ describe('signed-in home', () => {
     expect(screen.getByRole('button', { name: 'New report' })).toBeVisible();
   });
 
-  it('offers Explorer and Copilot stacked in the New report dialog', async () => {
+  it('offers Explorer and WaterPilot Agent stacked in the New report dialog', async () => {
     nodes = [];
     renderHome();
     await screen.findByRole('heading', { name: 'No reports found' });
     fireEvent.click(screen.getByRole('button', { name: 'New report' }));
     const dialog = await screen.findByRole('dialog', { name: 'New report' });
-    const choices = within(dialog).getAllByRole('button', { name: /Explorer|Copilot/ });
+    const choices = within(dialog).getAllByRole('button', { name: /Explorer|WaterPilot Agent/ });
     expect(choices.map((choice) => choice.textContent)).toEqual([
       expect.stringContaining('Explorer'),
-      expect.stringContaining('Copilot'),
+      expect.stringContaining('WaterPilot Agent'),
     ]);
     expect(within(dialog).queryByText(/draft|in progress/i)).not.toBeInTheDocument();
   });

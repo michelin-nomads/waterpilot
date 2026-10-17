@@ -1,4 +1,4 @@
-import { useId, useState, type KeyboardEvent } from 'react';
+import { useId, useState, type KeyboardEvent, type ReactNode } from 'react';
 
 import { Badge, Button, Spinner } from '../../components';
 import {
@@ -14,7 +14,7 @@ import styles from './Location.module.scss';
 interface LocationSearchProps {
   adapter: PlacesAdapter;
   onSelect: (place: Place) => void;
-  onEnterManually: () => void;
+  action?: ReactNode;
 }
 
 function statusText(
@@ -28,12 +28,11 @@ function statusText(
     case 'loading':
       return 'Searching…';
     case 'unavailable':
-      return 'Place search is unavailable right now. Use your device location or enter the place yourself.';
+      return 'Place search is unavailable right now. Use your device location.';
     case 'error':
       return 'Search failed. Check your connection and try again.';
     case 'ready':
-      if (count === 0)
-        return `No place matched “${query}”. Check the spelling, or enter it yourself.`;
+      if (count === 0) return `No place matched “${query}”. Check the spelling.`;
       if (count === 1) return `1 place matches “${query}”. Choose it to review it.`;
       return `${count} places match “${query}”. Choose the one you mean.`;
   }
@@ -43,7 +42,7 @@ function statusText(
  * Accessible place search (WAI-ARIA combobox with a listbox popup). Accepts any country.
  * Choosing a result opens a review; nothing is saved until the person confirms.
  */
-export function LocationSearch({ adapter, onSelect, onEnterManually }: LocationSearchProps) {
+export function LocationSearch({ adapter, onSelect, action }: LocationSearchProps) {
   const id = useId();
   const listId = `${id}-list`;
   const [text, setText] = useState('');
@@ -67,8 +66,8 @@ export function LocationSearch({ adapter, onSelect, onEnterManually }: LocationS
     } catch (error) {
       setSelectError(
         error instanceof PlacesUnavailable
-          ? `${error.message} Try again, or enter the place yourself.`
-          : 'Could not load that place. Try again, or enter it yourself.',
+          ? `${error.message} Try again,.`
+          : 'Could not load that place. Try again.',
       );
     } finally {
       setSelecting(false);
@@ -100,32 +99,34 @@ export function LocationSearch({ adapter, onSelect, onEnterManually }: LocationS
         Search for a place
       </label>
       <p id={`${id}-hint`} className={styles.hint}>
-        Any country. Type at least {MIN_CHARS} characters, for example a town, district or
-        neighbourhood.
+        Type at least {MIN_CHARS} characters, for example a town, district or neighbourhood.
       </p>
       <div className={styles.inputRow}>
-        <input
-          id={id}
-          className={styles.input}
-          type="search"
-          role="combobox"
-          autoComplete="off"
-          spellCheck={false}
-          aria-autocomplete="list"
-          aria-expanded={expanded}
-          aria-controls={listId}
-          aria-describedby={`${id}-hint ${id}-status`}
-          aria-activedescendant={expanded && active >= 0 ? `${listId}-${active}` : undefined}
-          value={text}
-          onChange={(e) => {
-            setText(e.target.value);
-            setActive(-1);
-            setOpen(true);
-            setSelectError(null);
-          }}
-          onKeyDown={onKeyDown}
-        />
-        {(state.status === 'loading' || selecting) && <Spinner size="sm" />}
+        <div className={styles.searchControl}>
+          <input
+            id={id}
+            className={styles.input}
+            type="search"
+            role="combobox"
+            autoComplete="off"
+            spellCheck={false}
+            aria-autocomplete="list"
+            aria-expanded={expanded}
+            aria-controls={listId}
+            aria-describedby={`${id}-hint ${id}-status`}
+            aria-activedescendant={expanded && active >= 0 ? `${listId}-${active}` : undefined}
+            value={text}
+            onChange={(e) => {
+              setText(e.target.value);
+              setActive(-1);
+              setOpen(true);
+              setSelectError(null);
+            }}
+            onKeyDown={onKeyDown}
+          />
+          {(state.status === 'loading' || selecting) && <Spinner size="sm" />}
+        </div>
+        {action}
       </div>
       <p id={`${id}-status`} role="status" className={styles.hint}>
         {status}
@@ -165,11 +166,6 @@ export function LocationSearch({ adapter, onSelect, onEnterManually }: LocationS
         {(state.status === 'error' || state.status === 'unavailable') && (
           <Button size="sm" variant="secondary" onClick={() => setAttempt((n) => n + 1)}>
             Search again
-          </Button>
-        )}
-        {state.status === 'ready' && suggestions.length === 0 && (
-          <Button size="sm" variant="secondary" onClick={onEnterManually}>
-            Enter it yourself
           </Button>
         )}
       </div>

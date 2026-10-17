@@ -80,7 +80,7 @@ export default function WelcomePage() {
               <span className={styles.choiceIcon}>
                 <Icon name="sparkle" size="lg" />
               </span>
-              <h2 className={styles.choiceTitle}>Guide me with WaterPilotAgent</h2>
+              <h2 className={styles.choiceTitle}>Guide me with WaterPilot</h2>
               <p className={styles.choiceText}>
                 Tell us what you need. Your agent will guide you while the workspace updates beside
                 it.
@@ -94,7 +94,7 @@ export default function WelcomePage() {
                 aria-describedby={!online ? offlineNoteId : undefined}
                 onClick={() => void start('agent')}
               >
-                {failed && mode === 'agent' ? 'Try again' : 'Start with agent'}
+                {failed && mode === 'agent' ? 'Try again' : 'Start with Agent'}
               </Button>
             </article>
             <article className={styles.choice}>
@@ -115,7 +115,7 @@ export default function WelcomePage() {
                 aria-describedby={!online ? offlineNoteId : undefined}
                 onClick={() => void start('traditional')}
               >
-                {failed && mode === 'traditional' ? 'Try again' : 'Start exploring'}
+                {failed && mode === 'traditional' ? 'Try again' : 'Start Exploring'}
               </Button>
             </article>
           </section>

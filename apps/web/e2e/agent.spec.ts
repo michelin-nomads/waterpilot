@@ -7,7 +7,7 @@ test.skip(
 
 async function start(page: Page) {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Start with agent' }).click();
+  await page.getByRole('button', { name: 'Start with Agent' }).click();
   await expect(page).toHaveURL(/\/area$/);
 }
 
@@ -39,7 +39,7 @@ test('live events, token headers, reconnect and mode switching keep one run and 
   );
   await page.getByRole('button', { name: 'Open normal mode' }).click();
   await expect(page.getByRole('log')).toBeHidden();
-  const agent = page.getByRole('radio', { name: 'Copilot', exact: true });
+  const agent = page.getByRole('radio', { name: 'WaterPilot Agent', exact: true });
   await page.locator('label', { has: agent }).click();
   await expect(page.getByRole('log')).toContainText('You: Check the rainfall data');
   // Switching modes keeps the same conversation rather than starting another run.

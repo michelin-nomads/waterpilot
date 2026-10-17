@@ -1985,6 +1985,7 @@ enum PlanningMode {
 }
 
 type PlanningSession {
+  baselineReviewed: Boolean!
   id: ID!
   version: Int!
   mode: PlanningMode!
@@ -2026,6 +2027,7 @@ type PlanningSession {
 
 """Omitted fields are left unchanged; null clears a field."""
 input PlanningSessionPatch {
+  baselineReviewed: Boolean
   areaId: ID
   mode: PlanningMode
   stage: PlanningStage

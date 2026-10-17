@@ -10,6 +10,7 @@ import { FakeAuthBackend, permanent } from '../../test/fakeAuth';
 import { FakeSessionServer } from '../../test/fakeSession';
 import AreaPage from '../area/index';
 import { requestDevicePosition } from './geolocation';
+import { googlePlaces } from './googlePlaces';
 import { PlacesContext } from './placesContext';
 import { serverPlaces } from './serverPlaces';
 import {
@@ -216,7 +217,7 @@ afterEach(() => {
   apiClient.defaults.adapter = originalAdapter;
 });
 
-function renderStep(places = new FakePlaces()) {
+function renderStep(places: PlacesAdapter = new FakePlaces()) {
   const sessions = new FakeSessionServer();
   sessions.seed('user-1', { id: 'ses_1', areaId: null });
   render(
@@ -237,12 +238,8 @@ async function search(text: string) {
   return box;
 }
 
-async function confirmReview({ chooseExtent = true } = {}) {
+async function confirmReview() {
   await screen.findByRole('form', { name: 'Confirm your location' });
-  const radios = screen.getAllByRole('radio');
-  if (chooseExtent && !radios.some((r) => (r as HTMLInputElement).checked)) {
-    fireEvent.click(screen.getByRole('radio', { name: /just this point/i }));
-  }
   await act(async () => fireEvent.click(screen.getByRole('button', { name: /confirm location/i })));
 }
 
@@ -254,8 +251,7 @@ describe('location step', () => {
     expect(
       await screen.findByRole('heading', { level: 2, name: 'Confirm your location' }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/this is a city or town/i)).toBeInTheDocument();
-    expect(screen.getByText(/not a water catchment/i)).toBeInTheDocument();
+    expect(screen.queryByText('A place is not a catchment')).not.toBeInTheDocument();
     expect(confirms()).toHaveLength(0);
     await confirmReview();
     expect(confirms()[0]).toMatchObject({
@@ -263,8 +259,8 @@ describe('location step', () => {
       placeId: 'fixture:nairobi',
       countryCode: 'KE',
       latitude: '-1.2864',
-      extent: 'REFERENCE_POINT',
-      radiusMeters: null,
+      extent: 'USER_RADIUS',
+      radiusMeters: 1000,
       currency: null,
       timezone: null,
     });
@@ -299,7 +295,8 @@ describe('location step', () => {
   });
 
   it('debounces and needs three characters before searching', async () => {
-    const { places } = renderStep();
+    const places = new FakePlaces();
+    renderStep(places);
     await search('Na');
     await new Promise((r) => setTimeout(r, 400));
     expect(places.suggestCalls).toEqual([]);
@@ -310,7 +307,7 @@ describe('location step', () => {
     expect(places.suggestCalls).toEqual(['Nairobi']);
   });
 
-  it('offers manual entry when nothing matches or search is down', async () => {
+  it('keeps device location and retry available when search has no matches or is down', async () => {
     const places = new FakePlaces();
     renderStep(places);
     await search('Atlantis');
@@ -339,7 +336,7 @@ describe('location step', () => {
     );
     expect(await screen.findByRole('alert')).toHaveTextContent(/permission was not given/i);
     expect(screen.getByRole('combobox')).toBeEnabled();
-    expect(screen.getByRole('button', { name: /enter it yourself/i })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: /enter it yourself/i })).not.toBeInTheDocument();
     expect(confirms()).toHaveLength(0);
   });
 
@@ -376,7 +373,9 @@ describe('location step', () => {
     );
     expect(await screen.findByText('This device location is imprecise')).toBeInTheDocument();
     expect(screen.getByText(/stays private to you/i)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: KORAMANGALA.formattedAddress ?? '' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Change area' }));
+    await search('Koramangala');
+    fireEvent.click(await screen.findByRole('option', { name: /^Koramangala Test place/ }));
     expect(await screen.findByTestId('review-name')).toHaveTextContent('Koramangala');
     await confirmReview();
     expect(confirms()[0]).toMatchObject({ origin: 'PLACE_SEARCH', placeId: 'fixture:koramangala' });
@@ -406,68 +405,157 @@ describe('location step', () => {
       latitude: '-1.2864123',
       countryCode: 'KE',
       accuracyMeters: 25,
-      formattedAddress: null,
+      formattedAddress: 'Nairobi, Kenya',
     });
   });
 
-  it('asks for the country when a device fix has no nearby place', async () => {
-    renderStep();
+  it('keeps the device point and retries fetching its geographic name before confirming', async () => {
+    const places = new FakePlaces();
+    renderStep(places);
     await screen.findByRole('combobox');
     geolocation.getCurrentPosition.mockImplementation((ok: PositionCallback) =>
-      ok({ coords: { latitude: -12.04, longitude: -77.04, accuracy: 30 } } as GeolocationPosition),
+      ok({
+        coords: { latitude: 12.8676256, longitude: 77.6838009, accuracy: 35 },
+      } as GeolocationPosition),
     );
-    await act(async () =>
-      fireEvent.click(screen.getByRole('button', { name: /use my location/i })),
-    );
+    fireEvent.click(screen.getByRole('button', { name: /use my location/i }));
+    expect(await screen.findByRole('button', { name: /^Confirm location$/ })).toBeDisabled();
+    places.reverseResult = [
+      {
+        ...KORAMANGALA,
+        formattedAddress: 'HSR Layout, Bengaluru, Karnataka, India',
+        admin: {
+          ...NO_ADMIN,
+          sublocality: 'HSR Layout',
+          locality: 'Bengaluru',
+          countryName: 'India',
+        },
+      },
+    ];
+    fireEvent.click(screen.getByRole('button', { name: /^Try again$/ }));
+    expect(await screen.findByText('HSR Layout, Bengaluru')).toBeVisible();
     await confirmReview();
-    expect(await screen.findByText('Choose the country this place is in.')).toBeInTheDocument();
-    expect(confirms()).toHaveLength(0);
-    const country = await screen.findByRole('combobox', { name: /country/i });
-    await waitFor(() => expect(country).toBeEnabled());
-    fireEvent.change(country, { target: { value: 'PE' } });
-    await confirmReview();
-    expect(confirms()[0]).toMatchObject({ origin: 'GEOLOCATION', countryCode: 'PE' });
+    expect(confirms()[0]).toMatchObject({
+      name: 'HSR Layout, Bengaluru',
+      origin: 'GEOLOCATION',
+      countryCode: 'IN',
+      latitude: '12.8676256',
+      longitude: '77.6838009',
+      accuracyMeters: 35,
+    });
   });
 
-  it('completes a custom location with a user radius', async () => {
+  it('reviews a device fix with the Google adapter when the Geocoding API rejects the request', async () => {
+    const geocode = vi.fn().mockRejectedValue(new Error('REQUEST_DENIED'));
+    const adapter = googlePlaces(
+      async () => ({
+        importLibrary: async (name) => {
+          if (name === 'geocoding')
+            return {
+              Geocoder: class {
+                geocode = geocode;
+              },
+            };
+          if (name === 'places')
+            return {
+              Place: {
+                searchNearby: async () => ({
+                  places: [
+                    {
+                      id: 'near',
+                      location: { lat: () => 12.86, lng: () => 77.68 },
+                      addressComponents: [
+                        { shortText: 'IN', longText: 'India', types: ['country'] },
+                        { shortText: 'HSR Layout', longText: 'HSR Layout', types: ['sublocality'] },
+                        { shortText: 'Bengaluru', longText: 'Bengaluru', types: ['locality'] },
+                      ],
+                    },
+                  ],
+                }),
+              },
+              SearchNearbyRankPreference: { DISTANCE: 'DISTANCE' },
+            };
+          throw new Error('Map unavailable in this test');
+        },
+      }),
+      { mapId: null },
+    );
+    renderStep(adapter);
+    await screen.findByRole('combobox');
+    geolocation.getCurrentPosition.mockImplementation((ok: PositionCallback) =>
+      ok({
+        coords: { latitude: 12.8676256, longitude: 77.6838009, accuracy: 35 },
+      } as GeolocationPosition),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /use my location/i }));
+    expect(await screen.findByTestId('review-name')).toHaveTextContent('HSR Layout, Bengaluru');
+    expect(geocode).toHaveBeenCalledWith({ location: { lat: 12.8676256, lng: 77.6838009 } });
+    await confirmReview();
+    expect(confirms()[0]).toMatchObject({
+      origin: 'GEOLOCATION',
+      countryCode: 'IN',
+      accuracyMeters: 35,
+    });
+  });
+
+  it('retries country detection without asking the user to enter a country', async () => {
+    const places = new FakePlaces();
+    renderStep(places);
+    await screen.findByRole('combobox');
+    geolocation.getCurrentPosition.mockImplementation((ok: PositionCallback) =>
+      ok({
+        coords: { latitude: 0, longitude: 0, accuracy: 30 },
+      } as GeolocationPosition),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /use my location/i }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/could not identify the country/i);
+    expect(screen.queryByRole('combobox', { name: /country/i })).not.toBeInTheDocument();
+    expect(confirms()).toHaveLength(0);
+    places.reverseResult = [NAIROBI];
+    geolocation.getCurrentPosition.mockImplementation((ok: PositionCallback) =>
+      ok({
+        coords: { latitude: -1.2864, longitude: 36.8172, accuracy: 30 },
+      } as GeolocationPosition),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /use my location/i }));
+    await confirmReview();
+    expect(confirms()[0]).toMatchObject({ origin: 'GEOLOCATION', countryCode: 'KE' });
+  });
+
+  it('reviews map clicks directly with an automatic country and a 1–10 km circle', async () => {
     const places = new FakePlaces();
     const show = vi.fn();
+    let pick!: (latitude: string, longitude: string) => void;
     places.hasMap = true;
-    places.mapView = { show, destroy: vi.fn() };
+    places.reverseResult = [NAIROBI];
+    places.mountMap = async (_host?: HTMLElement, options?: { onPick: typeof pick }) => {
+      pick = options!.onPick;
+      return { show, destroy: vi.fn() };
+    };
     renderStep(places);
-    fireEvent.click(await screen.findByRole('button', { name: /enter it yourself/i }));
-    const form = screen.getByRole('form', { name: /enter a location yourself/i });
-    fireEvent.click(within(form).getByRole('button', { name: /review this location/i }));
-    expect(await within(form).findAllByText(/give the location a name/i)).not.toHaveLength(0);
-    fireEvent.change(within(form).getByLabelText(/^name/i), { target: { value: 'Our well' } });
-    fireEvent.change(within(form).getByLabelText(/^latitude/i), { target: { value: '39.78' } });
-    fireEvent.change(within(form).getByLabelText(/^longitude/i), { target: { value: '-89.65' } });
-    const country = within(form).getByRole('combobox', { name: /country/i });
-    await waitFor(() => expect(country).toBeEnabled());
-    fireEvent.change(country, { target: { value: 'US' } });
-    fireEvent.click(within(form).getByRole('button', { name: /review this location/i }));
-    expect(await screen.findByTestId('review-name')).toHaveTextContent('Our well');
-    fireEvent.click(screen.getByRole('radio', { name: /a circle around it/i }));
-    fireEvent.change(screen.getByRole('textbox', { name: /radius \(km\)/i }), {
-      target: { value: '80' },
-    });
-    await confirmReview();
-    expect(await screen.findAllByText(/from 0.1 to 50 km/i)).not.toHaveLength(0);
-    fireEvent.change(screen.getByRole('textbox', { name: /radius \(km\)/i }), {
-      target: { value: '2.5' },
-    });
+    await waitFor(() => expect(pick).toBeDefined());
+    await act(async () => pick('-1.2864', '36.8172'));
+    expect(await screen.findByTestId('review-name')).toHaveTextContent('Nairobi');
+    const radius = screen.getByRole('textbox', { name: /radius/i });
+    expect(radius).toHaveValue('1');
+    for (const value of ['0.5', '10.1']) {
+      fireEvent.change(radius, { target: { value } });
+      await confirmReview();
+      expect(screen.getByText('Enter a radius from 1 to 10 km.')).toBeVisible();
+      expect(confirms()).toHaveLength(0);
+    }
+    fireEvent.change(radius, { target: { value: '2.5' } });
     await waitFor(() =>
       expect(show).toHaveBeenLastCalledWith(expect.objectContaining({ radiusMeters: 2500 })),
     );
-    expect(confirms()).toHaveLength(0);
     await confirmReview();
     expect(confirms()[0]).toMatchObject({
       origin: 'CUSTOM',
-      placeId: null,
-      name: 'Our well',
-      countryCode: 'US',
+      countryCode: 'KE',
       extent: 'USER_RADIUS',
       radiusMeters: 2500,
+      currency: null,
+      timezone: null,
     });
   });
 
@@ -535,14 +623,16 @@ describe('location review (Prompt 08 review)', () => {
     return rendered;
   }
 
-  it('never preselects how calculations treat the place', async () => {
+  it('uses a circle by default and provides radius guidance through a tooltip', async () => {
     await reviewNairobi();
-    for (const radio of screen.getAllByRole('radio')) expect(radio).not.toBeChecked();
-    await confirmReview({ chooseExtent: false });
+    expect(screen.queryByRole('radio')).not.toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: /radius/i })).toHaveValue('1');
+    expect(screen.getByRole('textbox', { name: /radius/i })).toBeRequired();
     expect(
-      await screen.findByText('Choose how calculations should treat this place.'),
-    ).toBeVisible();
-    expect(confirms()).toHaveLength(0);
+      screen.getByRole('button', { name: 'About the planning radius' }),
+    ).toHaveAccessibleDescription(/from 1 to 10 km/);
+    await confirmReview();
+    expect(confirms()[0]).toMatchObject({ extent: 'USER_RADIUS', radiusMeters: 1000 });
   });
 
   it('marks test gazetteer places in search results and the review', async () => {
@@ -552,39 +642,27 @@ describe('location review (Prompt 08 review)', () => {
     expect(within(option).getByText('Test place')).toBeInTheDocument();
     fireEvent.click(option);
     expect(await screen.findByText('Test place, not real data')).toBeInTheDocument();
-    expect(screen.getByText(/local test gazetteer/i)).toBeInTheDocument();
   });
 
-  it('previews certain region settings and sends no override when untouched', async () => {
+  it('uses the resolved country and leaves currency and timezone inference to the server', async () => {
     await reviewNairobi();
-    const currency = await screen.findByRole('combobox', { name: /currency/i });
-    expect(currency).toHaveValue('KES');
-    expect(screen.getByRole('combobox', { name: /time zone/i })).toHaveValue('Africa/Nairobi');
-    expect(screen.queryByText('Please check')).not.toBeInTheDocument();
-    expect(screen.getByRole('combobox', { name: /country/i })).toHaveValue('KE');
-  });
-
-  it('flags an uncertain currency after a country correction and records the choice', async () => {
-    await reviewNairobi();
-    const country = screen.getByRole('combobox', { name: /country/i });
-    await waitFor(() => expect(country).toBeEnabled());
-    fireEvent.change(country, { target: { value: 'BT' } });
-    expect(await screen.findByText('Please check')).toBeInTheDocument();
-    const currency = screen.getByRole('combobox', { name: /currency/i });
-    expect(currency).toHaveValue('INR');
-    fireEvent.change(currency, { target: { value: 'BTN' } });
+    for (const name of [/country/i, /currency/i, /time zone/i]) {
+      expect(screen.queryByRole('combobox', { name })).not.toBeInTheDocument();
+    }
     await confirmReview();
-    expect(confirms()[0]).toMatchObject({ countryCode: 'BT', currency: 'BTN', timezone: null });
+    expect(confirms()[0]).toMatchObject({ countryCode: 'KE', currency: null, timezone: null });
+    expect(
+      sent.some((request) => request.op === 'Countries' || request.op === 'RegionSettings'),
+    ).toBe(false);
   });
 
-  it('keeps confirming possible when the region preview fails', async () => {
-    handlers.RegionSettings = () => ({
-      errors: [{ message: 'x', extensions: { code: 'INTERNAL' } }],
-    });
-    await reviewNairobi();
-    expect(await screen.findByText('Region settings not previewed')).toBeInTheDocument();
+  it('automatically resolves country metadata missing from a searched place', async () => {
+    const places = new FakePlaces();
+    places.select = async () => ({ ...NAIROBI, countryCode: null });
+    places.reverseResult = [NAIROBI];
+    await reviewNairobi(places);
     await confirmReview();
-    expect(confirms()[0]).toMatchObject({ currency: null, timezone: null });
+    expect(confirms()[0]).toMatchObject({ countryCode: 'KE', origin: 'PLACE_SEARCH' });
   });
 });
 

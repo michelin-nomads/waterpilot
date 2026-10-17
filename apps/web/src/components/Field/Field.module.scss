@@ -102,3 +102,9 @@ select.control {
   display: flex;
   transform: translateY(-50%);
 }
+
+.labelRow {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+}

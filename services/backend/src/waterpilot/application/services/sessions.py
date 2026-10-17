@@ -45,13 +45,14 @@ class SessionPatch(Frozen):
     area_id: str | None = None
     mode: PlanningMode | None = None
     stage: PlanningStage | None = None
+    baseline_reviewed: bool | None = None
     goal: GoalInput | None = None
     scenario: ScenarioInput | None = None
     selected_plan_option_id: str | None = None
     site_profile: SiteProfile | None = None
 
 
-_REQUIRED_WHEN_SET = ("mode", "stage")
+_REQUIRED_WHEN_SET = ("mode", "stage", "baseline_reviewed")
 
 
 class SessionService:
@@ -188,6 +189,12 @@ class SessionService:
             update["mode"] = patch.mode
         if "stage" in provided:
             update["stage"] = patch.stage
+        if "baseline_reviewed" in provided:
+            if patch.baseline_reviewed and not (patch.area_id or session.area_id):
+                raise DomainError(
+                    ErrorCode.VALIDATION_FAILED, "choose a location first", field="baselineReviewed"
+                )
+            update["baseline_reviewed"] = patch.baseline_reviewed
         if "site_profile" in provided:
             # Descriptive only: it changes no calculation, so it never bumps the revision.
             update["site_profile"] = patch.site_profile
@@ -197,7 +204,12 @@ class SessionService:
         if "area_id" in provided and patch.area_id != session.area_id:
             self._validate_area(patch.area_id, session.owner_uid)
             # A new location invalidates the scenario and any selected plan.
-            update |= {"area_id": patch.area_id, "scenario": None, "selected_plan_option_id": None}
+            update |= {
+                "area_id": patch.area_id,
+                "scenario": None,
+                "selected_plan_option_id": None,
+                "baseline_reviewed": False,
+            }
             upstream_changed = True
         if "goal" in provided:
             if patch.goal is not None:

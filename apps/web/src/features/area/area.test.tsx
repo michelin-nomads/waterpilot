@@ -16,7 +16,7 @@ import { BaselinePanel } from './BaselinePanel';
 import { calculatePopulationEstimate } from './populationEstimateMath';
 import { ReadinessPanel } from './ReadinessPanel';
 import BaselinePage from './BaselinePage';
-import AreaPage, { DEMO_AREA_ID } from './index';
+import AreaPage from './index';
 
 const AREA = 'are_0000000000000000000000AREA';
 
@@ -239,15 +239,16 @@ describe('AreaPage', () => {
     await screen.findByRole('heading', { name: /data coverage/i });
   });
 
-  it('asks for a location when the session has none, offering the demo area locally', async () => {
-    const sessions = renderArea(null);
+  it('asks for a location without offering manual entry or the synthetic demo area', async () => {
+    renderArea(null);
     expect(
       await screen.findByRole('combobox', { name: /search for a place/i }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/local mode shows no map/i)).toBeInTheDocument();
+    expect(screen.getByRole('complementary', { name: 'Map' })).toBeInTheDocument();
     expect(sent).toHaveLength(0);
-    fireEvent.click(screen.getByRole('button', { name: /use the synthetic demo area/i }));
-    await waitFor(() => expect(sessions.applied.at(-1)?.patch).toEqual({ areaId: DEMO_AREA_ID }));
+    expect(
+      screen.queryByRole('button', { name: /synthetic demo area|enter it yourself/i }),
+    ).not.toBeInTheDocument();
   });
 
   it('shows readiness states with reasons and never a number as a result', async () => {
@@ -326,7 +327,9 @@ describe('AreaPage', () => {
 
   it('shows the confirmed location with region settings and a user-input banner', async () => {
     renderArea();
-    expect(await screen.findByRole('heading', { name: 'Test ward' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Test ward, Bengaluru' }),
+    ).toBeInTheDocument();
     expect(screen.getByText(/^INR \(set by you\)$/)).toBeInTheDocument();
     expect(screen.getByText('Asia/Kolkata')).toBeInTheDocument();
     expect(screen.getByText(/reference point only/i)).toBeInTheDocument();
@@ -345,7 +348,9 @@ describe('AreaPage', () => {
       await screen.findByRole('combobox', { name: /search for a place/i }),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /keep the current location/i }));
-    expect(await screen.findByRole('heading', { name: 'Test ward' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Test ward, Bengaluru' }),
+    ).toBeInTheDocument();
   });
 
   it('labels demo sources as synthetic', async () => {

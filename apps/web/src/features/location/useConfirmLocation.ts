@@ -29,8 +29,13 @@ export function useConfirmLocation() {
     const data = await mutation.mutateAsync({ ...input, idempotencyKey: intent.current.key });
     const { area } = unwrapPayload(data.confirmLocation);
     if (!area) throw new Error('The server did not return the location.');
+    if (coordinator) {
+      coordinator.setArea(area.id);
+      await coordinator.flush();
+      if (coordinator.getState().server?.areaId !== area.id)
+        throw new Error('The location is waiting to be saved. Try again.');
+    }
     intent.current = null;
-    coordinator?.setArea(area.id);
     return area;
   }
 

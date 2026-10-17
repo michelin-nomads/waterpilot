@@ -117,8 +117,10 @@ behind an adapter so tests make no calls. It asks for:
      region choice) create a new area, so a client can never overwrite a shared area
      that another session points at. The server does not verify browser-supplied place
      details against Google; it records them as `place_search` provenance.
-   - A device fix keeps only administrative context. The reverse-geocoded street address
-     is not stored.
+   - Device and map selections remain owner-only. At the owner's request (2026-10-17),
+     the confirmed Google address is retained for a full-address tooltip, while the card
+     shows only neighbourhood/city. Address-bearing private areas expire provider content
+     after 30 days, matching searched Google places.
 9. **Single writer.** `confirmLocation` (idempotent) only creates the area. The client
    then calls `coordinator.setArea(id)`, so the session coordinator remains the only
    writer of the session (ADR 0006).

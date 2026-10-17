@@ -83,7 +83,7 @@ beforeEach(() => {
 });
 
 describe('planning session in the app', () => {
-  it('shows "Changes saved" only once the server has acknowledged the edit', async () => {
+  it('shows saving until acknowledgement, then removes routine status', async () => {
     const sessions = new FakeSessionServer();
     sessions.seed('user-1');
     renderApp({ sessions });
@@ -94,10 +94,11 @@ describe('planning session in the app', () => {
     act(() => session().coordinator?.setGoal(GOAL_A));
     expect(await screen.findByText('Saving…')).toBeInTheDocument();
     expect(screen.queryByText('Changes saved')).not.toBeInTheDocument();
-    expect(screen.getByText(GOAL_A.description)).toBeInTheDocument();
+    expect(session().view?.goal?.description).toBe(GOAL_A.description);
 
     await act(async () => release());
-    expect(await screen.findByText('Changes saved')).toBeInTheDocument();
+    await vi.waitFor(() => expect(session().state.save).toBe('saved'));
+    expect(screen.queryByText('Changes saved')).not.toBeInTheDocument();
   });
 
   it('offers a clear choice when another tab changed the same input', async () => {
@@ -114,7 +115,8 @@ describe('planning session in the app', () => {
     expect(screen.getByText(/not saved · choose a version/i)).toBeInTheDocument();
 
     fireEvent.click(within(notice).getByRole('button', { name: 'Keep my changes' }));
-    expect(await screen.findByText('Changes saved')).toBeInTheDocument();
+    await vi.waitFor(() => expect(session().state.save).toBe('saved'));
+    expect(screen.queryByText('Changes saved')).not.toBeInTheDocument();
     expect(sessions.sessions.get(id)?.goal?.description).toBe(GOAL_A.description);
   });
 
@@ -123,7 +125,7 @@ describe('planning session in the app', () => {
     const sessions = new FakeSessionServer();
     const { id } = sessions.seed('user-1', { areaId: 'area-1', goal: GOAL_A });
     renderApp({ sessions });
-    await screen.findByText(GOAL_A.description);
+    await vi.waitFor(() => expect(session().view?.goal?.description).toBe(GOAL_A.description));
     const explorer = screen.getByRole('radio', {
       name: /Explorer: Build your plan yourself, step by step/i,
     });
@@ -131,18 +133,26 @@ describe('planning session in the app', () => {
     expect(
       screen.getByText('Plan with AI assistance. You can make changes yourself anytime.'),
     ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('radio', { name: /Copilot: Plan with AI assistance/i }));
-    expect(screen.getByRole('radio', { name: /Copilot: Plan with AI assistance/i })).toBeChecked();
+    fireEvent.click(
+      screen.getByRole('radio', { name: /WaterPilot Agent: Plan with AI assistance/i }),
+    );
+    expect(
+      screen.getByRole('radio', { name: /WaterPilot Agent: Plan with AI assistance/i }),
+    ).toBeChecked();
     expect(screen.getByRole('complementary', { name: 'Conversation' })).toBeInTheDocument();
     await vi.waitFor(() => expect(sessions.sessions.get(id)?.mode).toBe('AGENT'));
-    expect(screen.getByText(GOAL_A.description)).toBeInTheDocument();
+    expect(session().view?.goal?.description).toBe(GOAL_A.description);
     expect(session().view?.id).toBe(id);
     expect(sessions.calls.some((c) => c.startsWith('create'))).toBe(false);
   });
 
   it('records the step the user navigates to on the session', async () => {
     const sessions = new FakeSessionServer();
-    const { id } = sessions.seed('user-1');
+    const { id } = sessions.seed('user-1', {
+      areaId: 'area-1',
+      baselineReviewed: true,
+      goal: GOAL_A,
+    });
     renderApp({ sessions });
     await vi.waitFor(() => expect(session().state.status).toBe('ready'));
     const stages = await screen.findByRole('navigation', { name: 'Planning stages' });
@@ -180,14 +190,14 @@ describe('planning session in the app', () => {
     const recovery = new MemoryRecoveryStore();
     const queryClient = new QueryClient();
     renderApp({ backend, sessions, recovery, queryClient });
-    await screen.findByText(GOAL_A.description);
+    await vi.waitFor(() => expect(session().view?.goal?.description).toBe(GOAL_A.description));
     await vi.waitFor(async () => expect(await recovery.forUid('user-1')).toHaveLength(1));
     queryClient.setQueryData(queryKeys.sessions.detail(first.id), { cached: true });
 
     await act(async () => {
       await backend.signIn({ kind: 'email-sign-in', email: 'bo@example.org', password: 'x' });
     });
-    expect(await screen.findByText(GOAL_B.description)).toBeInTheDocument();
+    await vi.waitFor(() => expect(session().view?.goal?.description).toBe(GOAL_B.description));
     expect(screen.queryByText(GOAL_A.description)).not.toBeInTheDocument();
     expect(seen.some((s) => s.uid === 'user-2' && s.sessionId === first.id)).toBe(false);
     expect(seen.some((s) => s.uid === 'user-2' && s.sessionId === second.id)).toBe(true);
@@ -200,7 +210,7 @@ describe('planning session in the app', () => {
     sessions.seed('user-1', { goal: GOAL_A });
     const recovery = new MemoryRecoveryStore();
     const { backend } = renderApp({ sessions, recovery });
-    await screen.findByText(GOAL_A.description);
+    await vi.waitFor(() => expect(session().view?.goal?.description).toBe(GOAL_A.description));
     await vi.waitFor(async () => expect(await recovery.forUid('user-1')).toHaveLength(1));
 
     chooseSignOut();
@@ -220,9 +230,14 @@ describe('planning session in the app', () => {
 
   it('asks before signing out of a plan, and signing out ends it', async () => {
     const sessions = new FakeSessionServer();
-    sessions.seed('user-1', { goal: GOAL_A, stage: 'GOAL' });
+    sessions.seed('user-1', {
+      goal: GOAL_A,
+      stage: 'GOAL',
+      areaId: 'area-1',
+      baselineReviewed: true,
+    });
     const { backend } = renderApp({ sessions, path: '/goals' });
-    await screen.findByText(GOAL_A.description);
+    await vi.waitFor(() => expect(session().view?.goal?.description).toBe(GOAL_A.description));
 
     chooseSignOut();
     const dialog = await screen.findByRole('dialog', { name: 'Sign out and lose your plan?' });
@@ -247,13 +262,13 @@ describe('planning session in the app', () => {
     const sessions = new FakeSessionServer();
     const { id } = sessions.seed('guest-1', { goal: GOAL_A });
     renderApp({ backend, sessions, path: '/goals' });
-    await screen.findByText(GOAL_A.description);
+    await vi.waitFor(() => expect(session().view?.goal?.description).toBe(GOAL_A.description));
     await act(async () => {
       await backend.link({ kind: 'email-create', email: 'g@example.org', password: 'secret1' });
     });
     await vi.waitFor(() => expect(session().state.status).toBe('ready'));
     expect(session().view?.id).toBe(id);
-    expect(screen.getByText(GOAL_A.description)).toBeInTheDocument();
+    expect(session().view?.goal?.description).toBe(GOAL_A.description);
   });
 
   it('New report starts the chosen mode from the workspace and replaces the old plan', async () => {
@@ -265,7 +280,7 @@ describe('planning session in the app', () => {
     fireEvent.click(screen.getByRole('button', { name: 'New report' }));
     const dialog = await screen.findByRole('dialog', { name: 'New report' });
     expect(within(dialog).getByRole('button', { name: /Explorer/ })).toBeInTheDocument();
-    expect(within(dialog).getByRole('button', { name: /Copilot/ })).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: /WaterPilot Agent/ })).toBeInTheDocument();
     expect(screen.queryByText('Replace your current plan?')).not.toBeInTheDocument();
 
     fireEvent.click(within(dialog).getByRole('button', { name: /Explorer/ }));
@@ -283,13 +298,17 @@ describe('planning session in the app', () => {
     fireEvent.click(screen.getByRole('button', { name: 'New report' }));
     const dialog = await screen.findByRole('dialog', { name: 'New report' });
     sessions.dropResponses = 1;
-    await act(async () => fireEvent.click(within(dialog).getByRole('button', { name: /Copilot/ })));
+    await act(async () =>
+      fireEvent.click(within(dialog).getByRole('button', { name: /WaterPilot Agent/ })),
+    );
     expect(
       await screen.findByText(
         'A new report could not be started. Check your connection and try again.',
       ),
     ).toBeInTheDocument();
-    await act(async () => fireEvent.click(within(dialog).getByRole('button', { name: /Copilot/ })));
+    await act(async () =>
+      fireEvent.click(within(dialog).getByRole('button', { name: /WaterPilot Agent/ })),
+    );
 
     await screen.findByRole('heading', { level: 1, name: 'Confirm your location' });
     expect(router.state.location.pathname).toBe('/area');
@@ -301,7 +320,12 @@ describe('planning session in the app', () => {
 
   it('does not resume a plan from an earlier visit', async () => {
     const sessions = new FakeSessionServer();
-    const { id } = sessions.seed('user-1', { goal: GOAL_A, stage: 'GOAL' });
+    const { id } = sessions.seed('user-1', {
+      goal: GOAL_A,
+      stage: 'GOAL',
+      areaId: 'area-1',
+      baselineReviewed: true,
+    });
     const recovery = new MemoryRecoveryStore();
     const { router } = renderApp({ sessions, recovery, path: '/goals', resumeExisting: false });
 
@@ -316,9 +340,14 @@ describe('planning session in the app', () => {
 
   it('asks before leaving a plan and discards it only when confirmed', async () => {
     const sessions = new FakeSessionServer();
-    sessions.seed('user-1', { goal: GOAL_A, stage: 'GOAL' });
+    sessions.seed('user-1', {
+      goal: GOAL_A,
+      stage: 'GOAL',
+      areaId: 'area-1',
+      baselineReviewed: true,
+    });
     const { router } = renderApp({ sessions, path: '/goals' });
-    await screen.findByText(GOAL_A.description);
+    await vi.waitFor(() => expect(session().view?.goal?.description).toBe(GOAL_A.description));
 
     await vi.waitFor(() => expect(session().state.status).toBe('ready'));
     // Let the router register its leave-guard, as the moments before a real click do.
@@ -349,9 +378,14 @@ describe('planning session in the app', () => {
 
   it('moving between planning steps never asks', async () => {
     const sessions = new FakeSessionServer();
-    sessions.seed('user-1', { goal: GOAL_A, stage: 'GOAL' });
+    sessions.seed('user-1', {
+      goal: GOAL_A,
+      stage: 'GOAL',
+      areaId: 'area-1',
+      baselineReviewed: true,
+    });
     const { router } = renderApp({ sessions, path: '/goals' });
-    await screen.findByText(GOAL_A.description);
+    await vi.waitFor(() => expect(session().view?.goal?.description).toBe(GOAL_A.description));
 
     await act(async () => {
       await router.navigate('/plans');

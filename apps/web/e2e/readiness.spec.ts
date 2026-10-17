@@ -1,3 +1,4 @@
+import { chooseFixtureLocation } from './locationHelpers';
 import { expect, test } from '@playwright/test';
 
 // Data readiness on the area step, against the local API and the Firebase emulators
@@ -27,13 +28,13 @@ test.beforeEach(async () => {
 
 test('a guest sees readiness for the demo area and records a value they know', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Start exploring' }).click();
+  await page.getByRole('button', { name: 'Start Exploring' }).click();
   await expect(page).toHaveURL(/\/area$/);
 
   await expect(page.getByRole('combobox', { name: 'Search for a place' })).toBeVisible();
-  await page.getByRole('button', { name: 'Use the synthetic demo area' }).click();
+  await chooseFixtureLocation(page);
 
-  await page.getByRole('link', { name: 'Continue to baseline' }).click();
+  await page.getByRole('button', { name: 'Confirm location', exact: true }).click();
   await page.getByRole('button', { name: 'Overview', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Data coverage' })).toBeVisible();
   const demand = page.locator('[data-metric="demand"]');

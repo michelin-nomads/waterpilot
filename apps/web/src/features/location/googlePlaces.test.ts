@@ -249,6 +249,57 @@ describe('googlePlaces adapter', () => {
     await expect(broken.reverse('0', '0')).resolves.toEqual([]);
   });
 
+  it('gets locality context from Places when Geocoding is denied', async () => {
+    const searchNearby = vi.fn().mockResolvedValue({
+      places: [
+        {
+          id: 'nearby-building',
+          displayName: 'A nearby shop',
+          location: latLng(12.87, 77.68),
+          addressComponents: [
+            {
+              shortText: 'Doddakannelli',
+              longText: 'Doddakannelli',
+              types: ['sublocality_level_1'],
+            },
+            { shortText: 'Bengaluru', longText: 'Bengaluru', types: ['locality'] },
+            { shortText: 'IN', longText: 'India', types: ['country'] },
+          ],
+        },
+      ],
+    });
+    const adapter = googlePlaces(
+      async () => ({
+        importLibrary: async (name) => {
+          if (name === 'geocoding')
+            return {
+              Geocoder: class {
+                geocode = () => Promise.reject(new Error('REQUEST_DENIED'));
+              },
+            };
+          if (name === 'places')
+            return {
+              Place: { searchNearby },
+              SearchNearbyRankPreference: { DISTANCE: 'DISTANCE' },
+            };
+          throw new Error('unexpected library');
+        },
+      }),
+      { mapId: null },
+    );
+    const result = await adapter.reverse('12.8676256', '77.6838009');
+    expect(result[0]).toMatchObject({
+      countryCode: 'IN',
+      admin: { sublocality: 'Doddakannelli', locality: 'Bengaluru' },
+    });
+    expect(searchNearby).toHaveBeenCalledWith({
+      fields: ['id', 'location', 'addressComponents', 'formattedAddress'],
+      locationRestriction: { center: { lat: 12.8676256, lng: 77.6838009 }, radius: 1000 },
+      maxResultCount: 3,
+      rankPreference: 'DISTANCE',
+    });
+  });
+
   it('turns a load failure into PlacesUnavailable for search and the map', async () => {
     const adapter = googlePlaces(() => Promise.reject(new Error('blocked')), { mapId: null });
     const signal = new AbortController().signal;

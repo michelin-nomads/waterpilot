@@ -16,6 +16,7 @@ import { canonicalDecimal } from '../lib/format';
 export interface SessionInputs {
   mode: PlanningMode;
   stage: PlanningStage;
+  baselineReviewed?: boolean;
   areaId: string | null;
   goal: GoalInput | null;
   scenario: ScenarioInput | null;
@@ -49,6 +50,7 @@ export type SessionPatch = Partial<SessionInputs>;
 export const SESSION_FIELDS: readonly SessionField[] = [
   'mode',
   'stage',
+  'baselineReviewed',
   'areaId',
   'goal',
   'scenario',
@@ -158,6 +160,7 @@ export function canonical<F extends SessionField>(
   field: F,
   value: SessionInputs[F] | null,
 ): unknown {
+  if (field === 'baselineReviewed') return value === true;
   if (field === 'goal') return canonicalGoal(value as GoalInput | null);
   if (field === 'scenario') return canonicalScenario(value as ScenarioInput | null);
   if (field === 'siteProfile') return canonicalSiteProfile(value as SiteProfile | null);
@@ -181,6 +184,7 @@ export function fromFragment(s: PlanningSessionFieldsFragment): SessionState {
     status: s.status,
     mode: s.mode,
     stage: s.stage,
+    baselineReviewed: s.baselineReviewed ?? false,
     areaId: s.areaId ?? null,
     areaName: s.area?.name ?? null,
     areaExtent: s.area?.extent ?? null,
@@ -229,6 +233,7 @@ export function applyPatch(server: SessionState, patch: SessionPatch): SessionSt
     if (sameValue(field, server[field], patch[field])) continue;
     Object.assign(next, { [field]: canonical(field, patch[field] ?? null) });
     if (field === 'areaId') {
+      next.baselineReviewed = false;
       next.areaName = null;
       next.areaExtent = null;
       next.areaRadiusMeters = null;

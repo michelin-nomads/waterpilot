@@ -445,6 +445,7 @@ class Scenario(Frozen):
 
 
 class PlanningSession(Record):
+    baseline_reviewed: bool = False
     owner_uid: str
     community_id: str | None = None
     area_id: str | None = None
