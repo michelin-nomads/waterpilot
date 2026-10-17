@@ -208,6 +208,7 @@ class ModelTask(StrEnum):
     PROPOSAL_NARRATIVE = "proposal_narrative"
     EMBEDDING_QUERY = "embedding_query"
     EMBEDDING_DOCUMENT = "embedding_document"
+    AREA_ASSUMPTIONS = "area_assumptions"
 
 
 TASK_OUTPUT_LIMIT: dict[ModelTask, int] = {
@@ -218,6 +219,7 @@ TASK_OUTPUT_LIMIT: dict[ModelTask, int] = {
     ModelTask.OPTION_EXPLANATION: 1024,
     ModelTask.IMPACT_SUMMARY: 1024,
     ModelTask.PROPOSAL_NARRATIVE: 2048,
+    ModelTask.AREA_ASSUMPTIONS: 2048,
 }
 
 

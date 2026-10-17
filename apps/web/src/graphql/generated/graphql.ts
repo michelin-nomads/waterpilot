@@ -1002,7 +1002,7 @@ export type ConfirmLocationMutation = { confirmLocation: { area: { id: string, n
 
 export type AreaFieldsFragment = { id: string, name: string, countryCode: string, timezone: string, evidence: EvidenceQuality };
 
-export type PlanningSessionFieldsFragment = { id: string, version: number, mode: PlanningMode, stage: PlanningStage, status: SessionStatus, areaId: string | null, communityId: string | null, selectedPlanOptionId: string | null, inputsRevision: number, updatedAt: string, area: { id: string, name: string } | null, goal: { id: string, kind: GoalKind, description: string, targetParameter: string | null, timelineDays: number | null, horizonDays: number | null, priority: Priority | null, also: Array<GoalKind>, confirmed: boolean, preferredInterventions: Array<string>, budget: { minorUnits: string, currency: string, exponent: number } | null, target: { mode: TargetMode, quantity: { value: string, unit: Unit } } | null, site: { scale: SiteScale | null, storageSpace: boolean | null, pipedSupply: boolean | null, groundwaterUse: boolean | null, restrictions: Array<SiteRestriction>, roofArea: { value: string, unit: Unit } | null, openGround: { value: string, unit: Unit } | null }, estimates: Array<{ interventionId: string, note: string, cost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, buildDays: { low: number, high: number } | null, effects: Array<{ key: string, low: string, high: string }> }> } | null, scenario: { id: string, confirmed: boolean, interpretedFrom: string | null, adjustments: Array<{ parameter: string, change: AdjustmentChange, quantity: { value: string, unit: Unit } }> } | null };
+export type PlanningSessionFieldsFragment = { id: string, version: number, mode: PlanningMode, stage: PlanningStage, status: SessionStatus, areaId: string | null, communityId: string | null, selectedPlanOptionId: string | null, inputsRevision: number, updatedAt: string, area: { id: string, name: string, extent: ExtentKind, radiusMeters: number | null, hasBoundary: boolean } | null, goal: { id: string, kind: GoalKind, description: string, targetParameter: string | null, timelineDays: number | null, horizonDays: number | null, priority: Priority | null, also: Array<GoalKind>, confirmed: boolean, preferredInterventions: Array<string>, contingencyRatio: string | null, waterTariff: { note: string, price: { minorUnits: string, currency: string, exponent: number }, volume: { value: string, unit: Unit } } | null, funding: Array<{ label: string, status: FundingStatus, note: string, amount: { minorUnits: string, currency: string, exponent: number } }>, budget: { minorUnits: string, currency: string, exponent: number } | null, target: { mode: TargetMode, quantity: { value: string, unit: Unit } } | null, site: { scale: SiteScale | null, storageSpace: boolean | null, pipedSupply: boolean | null, groundwaterUse: boolean | null, restrictions: Array<SiteRestriction>, roofArea: { value: string, unit: Unit } | null, openGround: { value: string, unit: Unit } | null }, estimates: Array<{ interventionId: string, note: string, cost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, recurring: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, buildDays: { low: number, high: number } | null, effects: Array<{ key: string, low: string, high: string }> }> } | null, scenario: { id: string, confirmed: boolean, interpretedFrom: string | null, adjustments: Array<{ parameter: string, change: AdjustmentChange, quantity: { value: string, unit: Unit } }> } | null };
 
 export type ViewerQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1028,14 +1028,14 @@ export type AreaCoverageQuery = { area: { id: string, name: string, countryCode:
 export type CurrentPlanningSessionQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type CurrentPlanningSessionQuery = { currentPlanningSession: { id: string, version: number, mode: PlanningMode, stage: PlanningStage, status: SessionStatus, areaId: string | null, communityId: string | null, selectedPlanOptionId: string | null, inputsRevision: number, updatedAt: string, area: { id: string, name: string } | null, goal: { id: string, kind: GoalKind, description: string, targetParameter: string | null, timelineDays: number | null, horizonDays: number | null, priority: Priority | null, also: Array<GoalKind>, confirmed: boolean, preferredInterventions: Array<string>, budget: { minorUnits: string, currency: string, exponent: number } | null, target: { mode: TargetMode, quantity: { value: string, unit: Unit } } | null, site: { scale: SiteScale | null, storageSpace: boolean | null, pipedSupply: boolean | null, groundwaterUse: boolean | null, restrictions: Array<SiteRestriction>, roofArea: { value: string, unit: Unit } | null, openGround: { value: string, unit: Unit } | null }, estimates: Array<{ interventionId: string, note: string, cost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, buildDays: { low: number, high: number } | null, effects: Array<{ key: string, low: string, high: string }> }> } | null, scenario: { id: string, confirmed: boolean, interpretedFrom: string | null, adjustments: Array<{ parameter: string, change: AdjustmentChange, quantity: { value: string, unit: Unit } }> } | null } | null };
+export type CurrentPlanningSessionQuery = { currentPlanningSession: { id: string, version: number, mode: PlanningMode, stage: PlanningStage, status: SessionStatus, areaId: string | null, communityId: string | null, selectedPlanOptionId: string | null, inputsRevision: number, updatedAt: string, area: { id: string, name: string, extent: ExtentKind, radiusMeters: number | null, hasBoundary: boolean } | null, goal: { id: string, kind: GoalKind, description: string, targetParameter: string | null, timelineDays: number | null, horizonDays: number | null, priority: Priority | null, also: Array<GoalKind>, confirmed: boolean, preferredInterventions: Array<string>, contingencyRatio: string | null, waterTariff: { note: string, price: { minorUnits: string, currency: string, exponent: number }, volume: { value: string, unit: Unit } } | null, funding: Array<{ label: string, status: FundingStatus, note: string, amount: { minorUnits: string, currency: string, exponent: number } }>, budget: { minorUnits: string, currency: string, exponent: number } | null, target: { mode: TargetMode, quantity: { value: string, unit: Unit } } | null, site: { scale: SiteScale | null, storageSpace: boolean | null, pipedSupply: boolean | null, groundwaterUse: boolean | null, restrictions: Array<SiteRestriction>, roofArea: { value: string, unit: Unit } | null, openGround: { value: string, unit: Unit } | null }, estimates: Array<{ interventionId: string, note: string, cost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, recurring: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, buildDays: { low: number, high: number } | null, effects: Array<{ key: string, low: string, high: string }> }> } | null, scenario: { id: string, confirmed: boolean, interpretedFrom: string | null, adjustments: Array<{ parameter: string, change: AdjustmentChange, quantity: { value: string, unit: Unit } }> } | null } | null };
 
 export type PlanningSessionQueryVariables = Exact<{
   id: string;
 }>;
 
 
-export type PlanningSessionQuery = { planningSession: { id: string, version: number, mode: PlanningMode, stage: PlanningStage, status: SessionStatus, areaId: string | null, communityId: string | null, selectedPlanOptionId: string | null, inputsRevision: number, updatedAt: string, area: { id: string, name: string } | null, goal: { id: string, kind: GoalKind, description: string, targetParameter: string | null, timelineDays: number | null, horizonDays: number | null, priority: Priority | null, also: Array<GoalKind>, confirmed: boolean, preferredInterventions: Array<string>, budget: { minorUnits: string, currency: string, exponent: number } | null, target: { mode: TargetMode, quantity: { value: string, unit: Unit } } | null, site: { scale: SiteScale | null, storageSpace: boolean | null, pipedSupply: boolean | null, groundwaterUse: boolean | null, restrictions: Array<SiteRestriction>, roofArea: { value: string, unit: Unit } | null, openGround: { value: string, unit: Unit } | null }, estimates: Array<{ interventionId: string, note: string, cost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, buildDays: { low: number, high: number } | null, effects: Array<{ key: string, low: string, high: string }> }> } | null, scenario: { id: string, confirmed: boolean, interpretedFrom: string | null, adjustments: Array<{ parameter: string, change: AdjustmentChange, quantity: { value: string, unit: Unit } }> } | null } | null };
+export type PlanningSessionQuery = { planningSession: { id: string, version: number, mode: PlanningMode, stage: PlanningStage, status: SessionStatus, areaId: string | null, communityId: string | null, selectedPlanOptionId: string | null, inputsRevision: number, updatedAt: string, area: { id: string, name: string, extent: ExtentKind, radiusMeters: number | null, hasBoundary: boolean } | null, goal: { id: string, kind: GoalKind, description: string, targetParameter: string | null, timelineDays: number | null, horizonDays: number | null, priority: Priority | null, also: Array<GoalKind>, confirmed: boolean, preferredInterventions: Array<string>, contingencyRatio: string | null, waterTariff: { note: string, price: { minorUnits: string, currency: string, exponent: number }, volume: { value: string, unit: Unit } } | null, funding: Array<{ label: string, status: FundingStatus, note: string, amount: { minorUnits: string, currency: string, exponent: number } }>, budget: { minorUnits: string, currency: string, exponent: number } | null, target: { mode: TargetMode, quantity: { value: string, unit: Unit } } | null, site: { scale: SiteScale | null, storageSpace: boolean | null, pipedSupply: boolean | null, groundwaterUse: boolean | null, restrictions: Array<SiteRestriction>, roofArea: { value: string, unit: Unit } | null, openGround: { value: string, unit: Unit } | null }, estimates: Array<{ interventionId: string, note: string, cost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, recurring: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, buildDays: { low: number, high: number } | null, effects: Array<{ key: string, low: string, high: string }> }> } | null, scenario: { id: string, confirmed: boolean, interpretedFrom: string | null, adjustments: Array<{ parameter: string, change: AdjustmentChange, quantity: { value: string, unit: Unit } }> } | null } | null };
 
 export type PlanOptionsQueryVariables = Exact<{
   sessionId: string;
@@ -1051,14 +1051,14 @@ export type CreatePlanningSessionMutationVariables = Exact<{
 }>;
 
 
-export type CreatePlanningSessionMutation = { createPlanningSession: { session: { id: string, version: number, mode: PlanningMode, stage: PlanningStage, status: SessionStatus, areaId: string | null, communityId: string | null, selectedPlanOptionId: string | null, inputsRevision: number, updatedAt: string, area: { id: string, name: string } | null, goal: { id: string, kind: GoalKind, description: string, targetParameter: string | null, timelineDays: number | null, horizonDays: number | null, priority: Priority | null, also: Array<GoalKind>, confirmed: boolean, preferredInterventions: Array<string>, budget: { minorUnits: string, currency: string, exponent: number } | null, target: { mode: TargetMode, quantity: { value: string, unit: Unit } } | null, site: { scale: SiteScale | null, storageSpace: boolean | null, pipedSupply: boolean | null, groundwaterUse: boolean | null, restrictions: Array<SiteRestriction>, roofArea: { value: string, unit: Unit } | null, openGround: { value: string, unit: Unit } | null }, estimates: Array<{ interventionId: string, note: string, cost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, buildDays: { low: number, high: number } | null, effects: Array<{ key: string, low: string, high: string }> }> } | null, scenario: { id: string, confirmed: boolean, interpretedFrom: string | null, adjustments: Array<{ parameter: string, change: AdjustmentChange, quantity: { value: string, unit: Unit } }> } | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
+export type CreatePlanningSessionMutation = { createPlanningSession: { session: { id: string, version: number, mode: PlanningMode, stage: PlanningStage, status: SessionStatus, areaId: string | null, communityId: string | null, selectedPlanOptionId: string | null, inputsRevision: number, updatedAt: string, area: { id: string, name: string, extent: ExtentKind, radiusMeters: number | null, hasBoundary: boolean } | null, goal: { id: string, kind: GoalKind, description: string, targetParameter: string | null, timelineDays: number | null, horizonDays: number | null, priority: Priority | null, also: Array<GoalKind>, confirmed: boolean, preferredInterventions: Array<string>, contingencyRatio: string | null, waterTariff: { note: string, price: { minorUnits: string, currency: string, exponent: number }, volume: { value: string, unit: Unit } } | null, funding: Array<{ label: string, status: FundingStatus, note: string, amount: { minorUnits: string, currency: string, exponent: number } }>, budget: { minorUnits: string, currency: string, exponent: number } | null, target: { mode: TargetMode, quantity: { value: string, unit: Unit } } | null, site: { scale: SiteScale | null, storageSpace: boolean | null, pipedSupply: boolean | null, groundwaterUse: boolean | null, restrictions: Array<SiteRestriction>, roofArea: { value: string, unit: Unit } | null, openGround: { value: string, unit: Unit } | null }, estimates: Array<{ interventionId: string, note: string, cost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, recurring: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, buildDays: { low: number, high: number } | null, effects: Array<{ key: string, low: string, high: string }> }> } | null, scenario: { id: string, confirmed: boolean, interpretedFrom: string | null, adjustments: Array<{ parameter: string, change: AdjustmentChange, quantity: { value: string, unit: Unit } }> } | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
 export type UpdatePlanningSessionMutationVariables = Exact<{
   input: UpdatePlanningSessionInput;
 }>;
 
 
-export type UpdatePlanningSessionMutation = { updatePlanningSession: { session: { id: string, version: number, mode: PlanningMode, stage: PlanningStage, status: SessionStatus, areaId: string | null, communityId: string | null, selectedPlanOptionId: string | null, inputsRevision: number, updatedAt: string, area: { id: string, name: string } | null, goal: { id: string, kind: GoalKind, description: string, targetParameter: string | null, timelineDays: number | null, horizonDays: number | null, priority: Priority | null, also: Array<GoalKind>, confirmed: boolean, preferredInterventions: Array<string>, budget: { minorUnits: string, currency: string, exponent: number } | null, target: { mode: TargetMode, quantity: { value: string, unit: Unit } } | null, site: { scale: SiteScale | null, storageSpace: boolean | null, pipedSupply: boolean | null, groundwaterUse: boolean | null, restrictions: Array<SiteRestriction>, roofArea: { value: string, unit: Unit } | null, openGround: { value: string, unit: Unit } | null }, estimates: Array<{ interventionId: string, note: string, cost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, buildDays: { low: number, high: number } | null, effects: Array<{ key: string, low: string, high: string }> }> } | null, scenario: { id: string, confirmed: boolean, interpretedFrom: string | null, adjustments: Array<{ parameter: string, change: AdjustmentChange, quantity: { value: string, unit: Unit } }> } | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
+export type UpdatePlanningSessionMutation = { updatePlanningSession: { session: { id: string, version: number, mode: PlanningMode, stage: PlanningStage, status: SessionStatus, areaId: string | null, communityId: string | null, selectedPlanOptionId: string | null, inputsRevision: number, updatedAt: string, area: { id: string, name: string, extent: ExtentKind, radiusMeters: number | null, hasBoundary: boolean } | null, goal: { id: string, kind: GoalKind, description: string, targetParameter: string | null, timelineDays: number | null, horizonDays: number | null, priority: Priority | null, also: Array<GoalKind>, confirmed: boolean, preferredInterventions: Array<string>, contingencyRatio: string | null, waterTariff: { note: string, price: { minorUnits: string, currency: string, exponent: number }, volume: { value: string, unit: Unit } } | null, funding: Array<{ label: string, status: FundingStatus, note: string, amount: { minorUnits: string, currency: string, exponent: number } }>, budget: { minorUnits: string, currency: string, exponent: number } | null, target: { mode: TargetMode, quantity: { value: string, unit: Unit } } | null, site: { scale: SiteScale | null, storageSpace: boolean | null, pipedSupply: boolean | null, groundwaterUse: boolean | null, restrictions: Array<SiteRestriction>, roofArea: { value: string, unit: Unit } | null, openGround: { value: string, unit: Unit } | null }, estimates: Array<{ interventionId: string, note: string, cost: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, recurring: { low: { minorUnits: string, currency: string, exponent: number }, high: { minorUnits: string, currency: string, exponent: number } } | null, buildDays: { low: number, high: number } | null, effects: Array<{ key: string, low: string, high: string }> }> } | null, scenario: { id: string, confirmed: boolean, interpretedFrom: string | null, adjustments: Array<{ parameter: string, change: AdjustmentChange, quantity: { value: string, unit: Unit } }> } | null } | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
 export type ExactNumberFieldsFragment = { exact: string, value: string };
 
@@ -1664,6 +1664,9 @@ export const PlanningSessionFieldsFragmentDoc = new TypedDocumentString(`
   area {
     id
     name
+    extent
+    radiusMeters
+    hasBoundary
   }
   goal {
     id
@@ -1676,6 +1679,24 @@ export const PlanningSessionFieldsFragmentDoc = new TypedDocumentString(`
     also
     confirmed
     preferredInterventions
+    waterTariff {
+      price {
+        ...MoneyFields
+      }
+      volume {
+        ...QuantityFields
+      }
+      note
+    }
+    contingencyRatio
+    funding {
+      label
+      amount {
+        ...MoneyFields
+      }
+      status
+      note
+    }
     budget {
       ...MoneyFields
     }
@@ -1702,6 +1723,14 @@ export const PlanningSessionFieldsFragmentDoc = new TypedDocumentString(`
       interventionId
       note
       cost {
+        low {
+          ...MoneyFields
+        }
+        high {
+          ...MoneyFields
+        }
+      }
+      recurring {
         low {
           ...MoneyFields
         }
@@ -3821,6 +3850,9 @@ fragment PlanningSessionFields on PlanningSession {
   area {
     id
     name
+    extent
+    radiusMeters
+    hasBoundary
   }
   goal {
     id
@@ -3833,6 +3865,24 @@ fragment PlanningSessionFields on PlanningSession {
     also
     confirmed
     preferredInterventions
+    waterTariff {
+      price {
+        ...MoneyFields
+      }
+      volume {
+        ...QuantityFields
+      }
+      note
+    }
+    contingencyRatio
+    funding {
+      label
+      amount {
+        ...MoneyFields
+      }
+      status
+      note
+    }
     budget {
       ...MoneyFields
     }
@@ -3859,6 +3909,14 @@ fragment PlanningSessionFields on PlanningSession {
       interventionId
       note
       cost {
+        low {
+          ...MoneyFields
+        }
+        high {
+          ...MoneyFields
+        }
+      }
+      recurring {
         low {
           ...MoneyFields
         }
@@ -3919,6 +3977,9 @@ fragment PlanningSessionFields on PlanningSession {
   area {
     id
     name
+    extent
+    radiusMeters
+    hasBoundary
   }
   goal {
     id
@@ -3931,6 +3992,24 @@ fragment PlanningSessionFields on PlanningSession {
     also
     confirmed
     preferredInterventions
+    waterTariff {
+      price {
+        ...MoneyFields
+      }
+      volume {
+        ...QuantityFields
+      }
+      note
+    }
+    contingencyRatio
+    funding {
+      label
+      amount {
+        ...MoneyFields
+      }
+      status
+      note
+    }
     budget {
       ...MoneyFields
     }
@@ -3957,6 +4036,14 @@ fragment PlanningSessionFields on PlanningSession {
       interventionId
       note
       cost {
+        low {
+          ...MoneyFields
+        }
+        high {
+          ...MoneyFields
+        }
+      }
+      recurring {
         low {
           ...MoneyFields
         }
@@ -4107,6 +4194,9 @@ fragment PlanningSessionFields on PlanningSession {
   area {
     id
     name
+    extent
+    radiusMeters
+    hasBoundary
   }
   goal {
     id
@@ -4119,6 +4209,24 @@ fragment PlanningSessionFields on PlanningSession {
     also
     confirmed
     preferredInterventions
+    waterTariff {
+      price {
+        ...MoneyFields
+      }
+      volume {
+        ...QuantityFields
+      }
+      note
+    }
+    contingencyRatio
+    funding {
+      label
+      amount {
+        ...MoneyFields
+      }
+      status
+      note
+    }
     budget {
       ...MoneyFields
     }
@@ -4145,6 +4253,14 @@ fragment PlanningSessionFields on PlanningSession {
       interventionId
       note
       cost {
+        low {
+          ...MoneyFields
+        }
+        high {
+          ...MoneyFields
+        }
+      }
+      recurring {
         low {
           ...MoneyFields
         }
@@ -4220,6 +4336,9 @@ fragment PlanningSessionFields on PlanningSession {
   area {
     id
     name
+    extent
+    radiusMeters
+    hasBoundary
   }
   goal {
     id
@@ -4232,6 +4351,24 @@ fragment PlanningSessionFields on PlanningSession {
     also
     confirmed
     preferredInterventions
+    waterTariff {
+      price {
+        ...MoneyFields
+      }
+      volume {
+        ...QuantityFields
+      }
+      note
+    }
+    contingencyRatio
+    funding {
+      label
+      amount {
+        ...MoneyFields
+      }
+      status
+      note
+    }
     budget {
       ...MoneyFields
     }
@@ -4258,6 +4395,14 @@ fragment PlanningSessionFields on PlanningSession {
       interventionId
       note
       cost {
+        low {
+          ...MoneyFields
+        }
+        high {
+          ...MoneyFields
+        }
+      }
+      recurring {
         low {
           ...MoneyFields
         }

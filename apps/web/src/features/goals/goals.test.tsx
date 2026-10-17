@@ -212,6 +212,49 @@ describe('goal draft', () => {
     expect(again).toEqual(first);
   });
 
+  it('preserves exact tariff, maintenance, contingency and funding currencies through editing', () => {
+    const draft = {
+      ...tanker()!,
+      tariffAmount: '900.25',
+      tariffLitres: '10000',
+      tariffCurrency: 'INR',
+      tariffNote: 'Illustrative quote',
+      contingencyPercent: '10',
+      funding: [
+        {
+          label: 'Unverified grant',
+          amount: '100.05',
+          currency: 'USD',
+          status: 'EXPECTED' as const,
+          note: 'Not approved',
+        },
+      ],
+      estimates: [
+        {
+          interventionId: 'storage_tank',
+          costLow: '40000',
+          costHigh: '',
+          costCurrency: 'JPY',
+          recurringLow: '12.34',
+          recurringHigh: '18.56',
+          recurringCurrency: 'USD',
+          buildLow: '7',
+          buildHigh: '14',
+          effects: [],
+          note: 'Estimate',
+        },
+      ],
+    };
+    const { input, errors } = toGoalInput(draft);
+    expect(errors).toEqual({});
+    expect(input?.waterTariff?.price).toEqual({ minorUnits: '90025', currency: 'INR' });
+    expect(toGoalInput({ ...draft, tariffCurrency: '' }).input?.waterTariff?.price.currency).toBe(
+      'INR',
+    );
+    expect(input?.estimates?.[0]?.recurring?.low).toEqual({ minorUnits: '1234', currency: 'USD' });
+    expect(toGoalInput(fromGoalInput(input!, 'EUR')).input).toEqual(input);
+  });
+
   it('asks for a cost or a build time on every estimate', () => {
     const draft = {
       ...tanker()!,

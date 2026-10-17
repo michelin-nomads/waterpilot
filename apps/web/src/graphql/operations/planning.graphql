@@ -20,6 +20,9 @@ fragment PlanningSessionFields on PlanningSession {
   area {
     id
     name
+    extent
+    radiusMeters
+    hasBoundary
   }
   goal {
     id
@@ -32,6 +35,24 @@ fragment PlanningSessionFields on PlanningSession {
     also
     confirmed
     preferredInterventions
+    waterTariff {
+      price {
+        ...MoneyFields
+      }
+      volume {
+        ...QuantityFields
+      }
+      note
+    }
+    contingencyRatio
+    funding {
+      label
+      amount {
+        ...MoneyFields
+      }
+      status
+      note
+    }
     budget {
       ...MoneyFields
     }
@@ -58,6 +79,14 @@ fragment PlanningSessionFields on PlanningSession {
       interventionId
       note
       cost {
+        low {
+          ...MoneyFields
+        }
+        high {
+          ...MoneyFields
+        }
+      }
+      recurring {
         low {
           ...MoneyFields
         }

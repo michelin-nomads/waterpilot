@@ -1,0 +1,58 @@
+{
+  "id": "sjr-parkway-homes-illustrative-only",
+  "recordKind": "registered_source",
+  "title": "SJR Parkway Homes — SYNTHETIC SIMULATION, not operating records",
+  "publisher": "WaterLens project-authored simulation; not the society or developer",
+  "sourceUrl": "https://example.invalid/waterlens/sjr-parkway-homes-simulation",
+  "licence": {
+    "name": "Project-authored synthetic numbers only; excludes cited websites",
+    "usageRights": "open",
+    "authorization": {
+      "status": "authorized",
+      "authorizedUses": ["internal_analysis", "derived_metrics", "pilot_display"],
+      "reviewedAt": "2026-10-17",
+      "evidenceRef": "User authorized invented demo data; README.md and assumptions.json. No society-record licence or scientific review implied."
+    }
+  },
+  "capability": "utility_supply",
+  "variables": [
+    {
+      "name": "delivered_supply",
+      "rawUnit": "L/day",
+      "normalizedUnit": "L/day",
+      "bandOrField": "delivered_supply_lpd",
+      "uncertainty": {
+        "kind": "not_quantified",
+        "basis": "Invented regime plus deterministic seven-day variation. Not a measurement or forecast."
+      }
+    },
+    {
+      "name": "tanker_supply",
+      "rawUnit": "L/day",
+      "normalizedUnit": "L/day",
+      "bandOrField": "tanker_supply_lpd",
+      "uncertainty": {
+        "kind": "not_quantified",
+        "basis": "Invented regime plus deterministic seven-day variation. Not a measurement or forecast."
+      }
+    }
+  ],
+  "temporalCoverage": {
+    "start": "2025-10-17",
+    "endExclusive": "2026-10-17",
+    "boundary": "half_open_start_inclusive_end_exclusive",
+    "timezone": "Asia/Kolkata"
+  },
+  "spatialCoverage": {
+    "type": "admin_area",
+    "crs": "EPSG:4326",
+    "adminAreaId": "simulation-sjr-parkway-homes-only",
+    "adminAreaScheme": "waterlens-virtual-simulation-not-a-real-boundary"
+  },
+  "qualityStatus": "synthetic",
+  "accessTier": "local_measured",
+  "observationMethod": "model_output",
+  "requiresLocalMeasurement": false,
+  "eligibilityNotes": "Offline simulation only. No real service boundary is supplied. Never attach to a Google-selected area, validate as measured, or merge into real society evidence.",
+  "qualityFlags": ["invented-daily-series", "not-society-evidence", "sjr-illustrative-1"]
+}

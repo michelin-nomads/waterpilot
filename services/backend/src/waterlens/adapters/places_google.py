@@ -90,9 +90,19 @@ class GooglePlaceSearch:
             raise PlaceSearchUnavailable(f"place search failed: {type(err).__name__}") from None
         if response.status_code != 200:
             raise PlaceSearchUnavailable(f"place search failed: HTTP {response.status_code}")
-        places = response.json().get("places") or []
+        try:
+            body = response.json()
+        except ValueError:
+            raise PlaceSearchUnavailable("place search returned an invalid response") from None
+        if not isinstance(body, dict):
+            raise PlaceSearchUnavailable("place search returned an invalid response")
+        places = body.get("places", [])
+        if not isinstance(places, list):
+            raise PlaceSearchUnavailable("place search returned an invalid response")
         out: list[PlaceCandidate] = []
         for place in places[:limit]:
+            if not isinstance(place, dict):
+                continue
             try:
                 out.append(candidate(place))
             except (KeyError, TypeError, ValueError):

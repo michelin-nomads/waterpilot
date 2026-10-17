@@ -38,6 +38,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/area-assumptions/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Status */
+        get: operations["status_v1_area_assumptions_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/area-assumptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Generate */
+        post: operations["generate_v1_area_assumptions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/area-assumptions/{session_id}/{request_key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get */
+        get: operations["get_v1_area_assumptions__session_id___request_key__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/admin/funding-catalogue": {
         parameters: {
             query?: never;
@@ -278,6 +329,114 @@ export interface components {
             message: string;
             /** Request Id */
             request_id?: string | null;
+        };
+        /** AreaAssumptionPreview */
+        AreaAssumptionPreview: {
+            /** Id */
+            id: string;
+            /**
+             * Version
+             * @default 1
+             */
+            version: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Owner Uid */
+            owner_uid: string;
+            /** Session Id */
+            session_id: string;
+            /** Area Id */
+            area_id: string;
+            /** Inputs Revision */
+            inputs_revision: number;
+            /** Households */
+            households: number;
+            /** Request Hash */
+            request_hash: string;
+            /**
+             * Status
+             * @default pending
+             * @enum {string}
+             */
+            status: "pending" | "completed" | "failed";
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /**
+             * Prompt Version
+             * @default area-assumptions-1
+             */
+            prompt_version: string;
+            /**
+             * Evidence
+             * @default synthetic
+             * @constant
+             */
+            evidence: "synthetic";
+            /** Model Id */
+            model_id?: string | null;
+            assumptions?: components["schemas"]["AreaAssumptions"] | null;
+            /** Population */
+            population?: number | null;
+            /** Demand Lpd */
+            demand_lpd?: string | null;
+            /** Average Gap Lpd */
+            average_gap_lpd?: string | null;
+            /** Tanker Dependence */
+            tanker_dependence?: string | null;
+            /** Error */
+            error?: string | null;
+        };
+        /** AreaAssumptionRequest */
+        AreaAssumptionRequest: {
+            /** Session Id */
+            session_id: string;
+            /** Inputs Revision */
+            inputs_revision: number;
+            /** Households */
+            households: number;
+            /** Idempotency Key */
+            idempotency_key: string;
+        };
+        /** AreaAssumptions */
+        AreaAssumptions: {
+            /** Residents Per Home */
+            residents_per_home: number;
+            per_capita_lpd: components["schemas"]["AssumedRange"];
+            delivered_supply_lpd: components["schemas"]["AssumedRange"];
+            tanker_supply_lpd: components["schemas"]["AssumedRange"];
+            /** Rationale */
+            rationale: string;
+        };
+        /** AssumedRange */
+        AssumedRange: {
+            /** Low */
+            low: string;
+            /** Value */
+            value: string;
+            /** High */
+            high: string;
+        };
+        /** AssumptionStatus */
+        AssumptionStatus: {
+            /** Enabled */
+            enabled: boolean;
+            /** Available */
+            available: boolean;
+            /** Fake */
+            fake: boolean;
+            /** Reason */
+            reason: string | null;
         };
         /**
          * CatalogueStatus
@@ -525,6 +684,17 @@ export interface components {
             /** Currency */
             currency: string;
         };
+        /** PreviewResponse */
+        PreviewResponse: {
+            preview: components["schemas"]["AreaAssumptionPreview"];
+            /** Stale */
+            stale: boolean;
+            /**
+             * Notice
+             * @default Illustrative scenario — generated assumptions, not measured local data. No web research or verified city records were used. Baseline inputs are unchanged. Groundwater levels, daily history, reliable yield and shortage days remain unknown.
+             */
+            notice: string;
+        };
         /** ReadyStatus */
         ReadyStatus: {
             /** Ready */
@@ -607,6 +777,106 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReadyStatus"];
+                };
+            };
+        };
+    };
+    status_v1_area_assumptions_status_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssumptionStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    generate_v1_area_assumptions_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AreaAssumptionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreviewResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_v1_area_assumptions__session_id___request_key__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                session_id: string;
+                request_key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreviewResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

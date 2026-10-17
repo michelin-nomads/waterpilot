@@ -1,4 +1,6 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { StrictMode } from 'react';
+import { MapPanel } from './MapPanel';
 import { MemoryRouter } from 'react-router-dom';
 import type { AxiosAdapter, InternalAxiosRequestConfig } from 'axios';
 
@@ -10,7 +12,13 @@ import AreaPage from '../area/index';
 import { requestDevicePosition } from './geolocation';
 import { PlacesContext } from './placesContext';
 import { serverPlaces } from './serverPlaces';
-import { PlacesUnavailable, type Place, type PlacesAdapter, type Suggestion } from './types';
+import {
+  PlacesUnavailable,
+  type Place,
+  type PlacesAdapter,
+  type Suggestion,
+  type MapView,
+} from './types';
 
 const NO_ADMIN = {
   countryName: null,
@@ -66,6 +74,7 @@ class FakePlaces implements PlacesAdapter {
   readonly provider = 'fixture' as const;
   readonly attribution = 'Test places';
   hasMap = false;
+  mapView?: MapView;
   suggestCalls: string[] = [];
   reverseResult: Place[] = [];
   suggestError: Error | null = null;
@@ -93,7 +102,8 @@ class FakePlaces implements PlacesAdapter {
     return Promise.resolve(this.reverseResult);
   }
 
-  mountMap(): Promise<never> {
+  mountMap(): Promise<MapView> {
+    if (this.mapView) return Promise.resolve(this.mapView);
     return Promise.reject(this.mapError ?? new PlacesUnavailable());
   }
 }
@@ -420,7 +430,11 @@ describe('location step', () => {
   });
 
   it('completes a custom location with a user radius', async () => {
-    renderStep();
+    const places = new FakePlaces();
+    const show = vi.fn();
+    places.hasMap = true;
+    places.mapView = { show, destroy: vi.fn() };
+    renderStep(places);
     fireEvent.click(await screen.findByRole('button', { name: /enter it yourself/i }));
     const form = screen.getByRole('form', { name: /enter a location yourself/i });
     fireEvent.click(within(form).getByRole('button', { name: /review this location/i }));
@@ -442,6 +456,10 @@ describe('location step', () => {
     fireEvent.change(screen.getByRole('textbox', { name: /radius \(km\)/i }), {
       target: { value: '2.5' },
     });
+    await waitFor(() =>
+      expect(show).toHaveBeenLastCalledWith(expect.objectContaining({ radiusMeters: 2500 })),
+    );
+    expect(confirms()).toHaveLength(0);
     await confirmReview();
     expect(confirms()[0]).toMatchObject({
       origin: 'CUSTOM',
@@ -617,4 +635,37 @@ describe('serverPlaces (local fixture through the API)', () => {
     );
     await expect(adapter.reverse('1', '2')).resolves.toEqual([]);
   });
+});
+
+it('a cancelled StrictMode map mount cannot erase the active map canvas', async () => {
+  const pending: Array<() => void> = [];
+  const adapter: PlacesAdapter = {
+    ...new FakePlaces(),
+    provider: 'google',
+    attribution: 'test',
+    hasMap: true,
+    suggest: async () => [],
+    select: async () => GAZETTEER[0],
+    reverse: async () => [],
+    mountMap: (host) =>
+      new Promise((resolve) => {
+        const marker = document.createElement('span');
+        marker.textContent = 'map canvas';
+        host.append(marker);
+        pending.push(() => resolve({ show: () => {}, destroy: () => host.replaceChildren() }));
+      }),
+  };
+  render(
+    <StrictMode>
+      <MapPanel adapter={adapter} point={null} onPick={() => {}} />
+    </StrictMode>,
+  );
+  expect(pending).toHaveLength(2);
+  await act(async () => {
+    pending[1]();
+  });
+  await act(async () => {
+    pending[0]();
+  });
+  expect(screen.getByText('map canvas')).toBeInTheDocument();
 });

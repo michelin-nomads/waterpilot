@@ -102,7 +102,7 @@ class _Dispatched:
     reservation: UsageReservation
     response: ModelResponse
     retries: int
-    run_id: str
+    run_id: str | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -388,7 +388,7 @@ class AiGateway:
         self,
         ctx: RequestContext,
         *,
-        run_id: str,
+        run_id: str | None,
         task: ModelTask,
         prompt: str,
         response_model: type[BaseModel],
@@ -482,7 +482,7 @@ class AiGateway:
         self,
         ctx: RequestContext,
         *,
-        run_id: str,
+        run_id: str | None,
         task: ModelTask,
         prompt: str,
         call_key: str,
@@ -500,20 +500,26 @@ class AiGateway:
         if info is None:  # pragma: no cover - settings validation guarantees a known model
             raise DomainError(ErrorCode.SERVICE_UNAVAILABLE, "AI help is currently unavailable")
         limits = self._d.ai.limits
-        rid = require_id(run_id, IdKind.AGENT_RUN)
-        run = self._owned_run(rid, principal.uid)
-        if run.is_expired(self._d.clock()):
-            self._expire_run(rid)
-            raise DomainError(
-                ErrorCode.PRECONDITION_FAILED, "this run has expired; start a new one"
-            )
-        if run.status is not AgentRunStatus.RUNNING:
-            raise DomainError(ErrorCode.PRECONDITION_FAILED, "this run has ended; start a new one")
-        if run.needs_continue:
-            raise DomainError(
-                ErrorCode.PRECONDITION_FAILED,
-                "the assistant paused for you to review; choose Continue to go on",
-            )
+        rid = require_id(run_id, IdKind.AGENT_RUN) if run_id is not None else None
+        if rid is None:
+            if task is not ModelTask.AREA_ASSUMPTIONS or deadline.get() is None:
+                raise DomainError(ErrorCode.PRECONDITION_FAILED, "this task needs a bounded run")
+        else:
+            run = self._owned_run(rid, principal.uid)
+            if run.is_expired(self._d.clock()):
+                self._expire_run(rid)
+                raise DomainError(
+                    ErrorCode.PRECONDITION_FAILED, "this run has expired; start a new one"
+                )
+            if run.status is not AgentRunStatus.RUNNING:
+                raise DomainError(
+                    ErrorCode.PRECONDITION_FAILED, "this run has ended; start a new one"
+                )
+            if run.needs_continue:
+                raise DomainError(
+                    ErrorCode.PRECONDITION_FAILED,
+                    "the assistant paused for you to review; choose Continue to go on",
+                )
         max_out = limits.output_limit(task, max_output_tokens)
         est_in = (
             estimated_input_tokens
@@ -567,6 +573,13 @@ class AiGateway:
             raise DomainError(
                 ErrorCode.SERVICE_UNAVAILABLE, "the model could not be reached; please try again"
             ) from err
+        except Exception:
+            # Deadline failures and unexpected provider errors may follow dispatch too.
+            # They must not leave an apparently unused hold or leak provider details.
+            self._resolve_failure(reservation, rid, state)
+            raise DomainError(
+                ErrorCode.SERVICE_UNAVAILABLE, "the model request did not complete"
+            ) from None
         return _Dispatched(
             info=info,
             reservation=reservation,
@@ -631,7 +644,7 @@ class AiGateway:
         return store.transaction(tx)
 
     def _resolve_failure(
-        self, reservation: UsageReservation, run_id: str, state: _CallState
+        self, reservation: UsageReservation, run_id: str | None, state: _CallState
     ) -> None:
         """Resolve the hold for a failed or cancelled call. If no request ever reached the
         provider, release the hold (nothing was billed). If a request was dispatched, the

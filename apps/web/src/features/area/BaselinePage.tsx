@@ -19,6 +19,7 @@ import { BaselineCoverageDrawer } from './BaselineCoverageDrawer';
 import { PopulationEstimateHelper } from './PopulationEstimate';
 import styles from './BaselinePage.module.scss';
 import { ReadinessPanel } from './ReadinessPanel';
+import { AreaAssumptionPreview } from './AreaAssumptionPreview';
 
 /** One route-owned Baseline flow. Hidden input panels retain in-progress edits on Back. */
 export default function BaselinePage() {
@@ -103,7 +104,14 @@ export default function BaselinePage() {
               Data coverage and sources
             </Button>
           )}
-          {section === 'estimate' && <PopulationEstimateHelper sessionId={view.id} />}
+          {section === 'estimate' && (
+            <>
+              <PopulationEstimateHelper sessionId={view.id} />
+              {state.server && (
+                <AreaAssumptionPreview key={state.server.id} session={state.server} />
+              )}
+            </>
+          )}
           {section !== 'estimate' && (
             <div hidden={section !== 'community'}>
               <h2>Community baseline inputs</h2>

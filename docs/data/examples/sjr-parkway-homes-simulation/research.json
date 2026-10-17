@@ -1,0 +1,104 @@
+{
+  "subject": "SJR Parkway Homes, Rayasandra, Bengaluru",
+  "checked_on": "2026-10-17",
+  "scope": "Public property context only; no statement about any resident or actual water service.",
+  "sources": [
+    {
+      "id": "developer-project",
+      "publisher": "SJR Primecorp",
+      "url": "https://sjrprime.com/projects/parkway_homes",
+      "checked_on": "2026-10-17",
+      "authority": "developer-published description; not a survey or water audit"
+    },
+    {
+      "id": "developer-history",
+      "publisher": "SJR Primecorp",
+      "url": "https://sjrprime.com/aboutus",
+      "checked_on": "2026-10-17",
+      "authority": "developer-published locality context"
+    },
+    {
+      "id": "association-directory",
+      "publisher": "ApnaComplex public directory",
+      "url": "https://www.apnacomplex.com/complex/sjr-parkway-homes1",
+      "checked_on": "2026-10-17",
+      "authority": "public association-directory address; no private records accessed"
+    }
+  ],
+  "facts": [
+    {
+      "field": "project_name",
+      "value": "SJR Parkway Homes",
+      "status": "publisher_reported",
+      "source_id": "developer-project"
+    },
+    {
+      "field": "locality",
+      "value": "Rayasandra, Bengaluru",
+      "status": "publisher_reported",
+      "source_id": "developer-history"
+    },
+    {
+      "field": "site_area",
+      "value": "9.5",
+      "unit": "acre",
+      "status": "publisher_reported_not_surveyed",
+      "source_id": "developer-project"
+    },
+    {
+      "field": "blocks",
+      "value": 7,
+      "status": "publisher_reported",
+      "source_id": "developer-project"
+    },
+    {
+      "field": "tower_configuration",
+      "value": "G+14",
+      "status": "publisher_reported",
+      "source_id": "developer-project"
+    },
+    {
+      "field": "residential_configurations",
+      "value": ["1 BHK", "2 BHK", "2.5 BHK", "3 BHK"],
+      "status": "publisher_reported",
+      "source_id": "developer-project"
+    },
+    {
+      "field": "amenities_context",
+      "value": ["swimming pool", "clubhouse"],
+      "status": "publisher_reported_not_operationally_verified",
+      "source_id": "developer-project"
+    },
+    {
+      "field": "directory_address",
+      "value": "Rayasandra Main Road, off Hosa Road, Bengaluru 560099",
+      "status": "directory_reported",
+      "source_id": "association-directory"
+    }
+  ],
+  "secondary_claims_not_calculation_inputs": [
+    {
+      "claim": "1010 total units",
+      "url": "https://dm8.in/project/sjr-primecorp-parkway-homes",
+      "status": "unverified secondary claim; not used as occupancy or population"
+    },
+    {
+      "claim": "Rainwater harvesting and STP amenities",
+      "url": "https://settlin.in/projects/sjr-parkway-homes-2bhk-3bhk-3.5bhk-2.5bhk-apartments-for-sale-rayasandra-electronic-city-bengaluru-Z6xRNmDdmdTReGvfw",
+      "status": "secondary listing only; existence, capacity, operation and net additional benefit not verified"
+    }
+  ],
+  "unknown": [
+    "Current occupied and total homes",
+    "Confirmed service/campus polygon",
+    "Water source split and daily volumes",
+    "Tanker invoices and current tariff",
+    "Borewell levels, yield and extraction",
+    "STP capacity, operation and actual reuse",
+    "Water quality and rainfall records",
+    "Intervention quotations and measured savings"
+  ],
+  "licence_note": "Short factual research notes with attribution. No raw webpage, brochure or permission to ingest society records is supplied.",
+  "research_notes_sha256": "8f4bb3afa35bba60f0feb260771f3f76cae1d622e6316c268ad7237b0c1bfe40",
+  "hash_scope": "Hash of the canonical sources/facts notes, not a hash of downloaded publisher HTML or an authenticity guarantee."
+}

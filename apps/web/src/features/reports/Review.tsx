@@ -141,8 +141,13 @@ export default function ReviewPage() {
               </ButtonLink>
             </div>
             <p className={styles.meta}>
-              This is the confirmed planning area. No boundary map is available for this location;
-              calculations use the selected point or radius.
+              {current.areaExtent === 'REVIEWED_BOUNDARY'
+                ? 'Calculations use the confirmed catalogue boundary. A map is not shown in this review.'
+                : current.areaExtent === 'USER_RADIUS'
+                  ? `Calculations use your declared ${current.areaRadiusMeters ?? 'unknown'} m radius. This is your planning assumption, not a surveyed society or catchment boundary.`
+                  : current.areaExtent === 'REFERENCE_POINT'
+                    ? 'Calculations use a reference point only. No area boundary has been established.'
+                    : 'This is the confirmed planning location. Review Location for its authoritative boundary details.'}
             </p>
           </section>
 

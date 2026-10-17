@@ -1,0 +1,73 @@
+{
+  "start": "2025-10-17",
+  "end_exclusive": "2026-10-17",
+  "population": "3600",
+  "per_capita_lpd": "135",
+  "non_domestic_lpd": "14000",
+  "assumptions_note": "SJR Parkway Homes context only; SYNTHETIC 900 occupied homes x 4 residents, 135 L/person/day plus 14000 L/day common demand. All water/cost/effect values are invented for demonstration, not society records or reviewed local standards.",
+  "goal": {
+    "kind": "reduce_tanker_dependence",
+    "target": {
+      "mode": "absolute_level",
+      "quantity": {
+        "value": "0.35",
+        "unit": "ratio"
+      }
+    },
+    "site": {
+      "scale": "building",
+      "piped_supply": true
+    },
+    "horizon_days": 3650,
+    "water_tariff": {
+      "price": {
+        "minor_units": "90000",
+        "currency": "INR"
+      },
+      "volume": {
+        "value": "10000",
+        "unit": "L"
+      },
+      "note": "SYNTHETIC INR 900 per 10000 L; no actual invoice or quotation."
+    },
+    "funding": [],
+    "estimates": [
+      {
+        "intervention_id": "efficient_fixtures",
+        "effects": [
+          {
+            "key": "demand_reduction",
+            "low": "0.08",
+            "high": "0.12"
+          }
+        ],
+        "cost": {
+          "low": {
+            "minor_units": "180000000",
+            "currency": "INR"
+          },
+          "high": {
+            "minor_units": "240000000",
+            "currency": "INR"
+          }
+        },
+        "recurring": {
+          "low": {
+            "minor_units": "1200000",
+            "currency": "INR"
+          },
+          "high": {
+            "minor_units": "1800000",
+            "currency": "INR"
+          }
+        },
+        "note": "SYNTHETIC rollout: 8–12% savings, INR 18–24 lakh capital, INR 12000–18000/year maintenance, 30–60 days. No assessment of installed fixtures or vendor quotation.",
+        "build_days": {
+          "low": 30,
+          "high": 60
+        }
+      }
+    ],
+    "contingency_ratio": "0.1"
+  }
+}

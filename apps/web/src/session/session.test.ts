@@ -70,6 +70,33 @@ describe('mergeEdits', () => {
     expect(Object.keys(result.pending).sort()).toEqual(['goal', 'scenario']);
   });
 
+  it('keeps financial edits and clears a plan chosen before a tariff change', () => {
+    const goal = {
+      ...GOAL_A,
+      waterTariff: {
+        price: { minorUnits: '90000', currency: 'INR' },
+        volume: { value: '10000', unit: 'LITRE' as const },
+        note: 'Synthetic quote',
+      },
+      contingencyRatio: '0.1',
+      funding: [
+        {
+          label: 'Grant',
+          amount: { minorUnits: '10000', currency: 'USD' },
+          status: 'EXPECTED' as const,
+          note: 'Unapproved',
+        },
+      ],
+    };
+    const changed = applyPatch({ ...base, goal: GOAL_A, selectedPlanOptionId: 'pln_1' }, { goal });
+    expect(changed.goal).toMatchObject(goal);
+    expect(changed.selectedPlanOptionId).toBeNull();
+    expect(
+      applyPatch({ ...base, areaExtent: 'USER_RADIUS', areaRadiusMeters: 1000 }, { areaId: 'new' })
+        .areaRadiusMeters,
+    ).toBeNull();
+  });
+
   it('lets the latest mode and step win without a conflict', () => {
     const latest: SessionState = { ...base, version: 2, stage: 'COMPARE', mode: 'AGENT' };
     const result = mergeEdits(base, latest, { stage: 'GOAL', mode: 'TRADITIONAL' });

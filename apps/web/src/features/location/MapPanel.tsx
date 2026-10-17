@@ -35,8 +35,12 @@ export function MapPanel({ adapter, point, onPick }: MapPanelProps) {
   useEffect(() => {
     if (!adapter.hasMap || !element.current) return;
     let cancelled = false;
+    let owned: MapView | null = null;
+    const host = document.createElement('div');
+    host.className = styles.mapCanvas;
+    element.current.append(host);
     adapter
-      .mountMap(element.current, {
+      .mountMap(host, {
         onPick: (lat, lon) => pick.current(lat, lon),
         onFailure: () => setStatus('failed'),
       })
@@ -44,6 +48,7 @@ export function MapPanel({ adapter, point, onPick }: MapPanelProps) {
         (mounted) => {
           if (cancelled) mounted.destroy();
           else {
+            owned = mounted;
             view.current = mounted;
             setStatus('ready');
           }
@@ -54,8 +59,9 @@ export function MapPanel({ adapter, point, onPick }: MapPanelProps) {
       );
     return () => {
       cancelled = true;
-      view.current?.destroy();
-      view.current = null;
+      owned?.destroy();
+      if (view.current === owned) view.current = null;
+      host.remove();
     };
   }, [adapter]);
 

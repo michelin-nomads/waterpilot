@@ -20,6 +20,7 @@ from waterlens.application.pagination import Page, PageQuery, Position, paginate
 from waterlens.application.repositories import IdempotencyRecord, Where
 from waterlens.domain.accounts import AccountClaim
 from waterlens.domain.ai import UsageCallKey, UsageDay, UsageReservation
+from waterlens.domain.area_assumptions import AreaAssumptionPreview
 from waterlens.domain.communities import Community, CommunityStatus, Membership
 from waterlens.domain.embeddings import FundingEmbedding
 from waterlens.domain.errors import DomainError, ErrorCode
@@ -211,6 +212,9 @@ class MemoryStore:
         funding_schemes: MemoryFundingCatalogue | None = None,
     ) -> None:
         self._lock = threading.RLock()
+        self.area_assumptions: MemoryRecordRepository[AreaAssumptionPreview] = (
+            MemoryRecordRepository()
+        )
         self.areas = areas or MemoryAreaCatalogue()
         self.funding_schemes = funding_schemes or MemoryFundingCatalogue()
         self.plan_options: MemoryCatalogue[PlanOption] = MemoryCatalogue(

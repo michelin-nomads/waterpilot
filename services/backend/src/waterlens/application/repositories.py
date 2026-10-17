@@ -25,6 +25,7 @@ from typing import Protocol
 from waterlens.application.pagination import FilterValue, Page, PageQuery
 from waterlens.domain.accounts import AccountClaim
 from waterlens.domain.ai import UsageCallKey, UsageDay, UsageReservation
+from waterlens.domain.area_assumptions import AreaAssumptionPreview
 from waterlens.domain.communities import Community, Membership
 from waterlens.domain.embeddings import FundingEmbedding
 from waterlens.domain.funding import FundingMatch, FundingScheme
@@ -125,6 +126,9 @@ class IdempotencyStore(Protocol):
 
 
 class Store(Protocol):
+    @property
+    def area_assumptions(self) -> RecordRepository[AreaAssumptionPreview]: ...
+
     @property
     def areas(self) -> AreaCatalogue: ...
     @property

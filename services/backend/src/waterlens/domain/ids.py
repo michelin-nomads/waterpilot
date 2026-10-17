@@ -49,6 +49,7 @@ class IdKind(StrEnum):
     USAGE_CALL_KEY = "uck"
     AGENT_SESSION = "ags"
     SCOPED_STATE = "sst"
+    AREA_ASSUMPTION = "aap"
 
 
 _ID_RE = re.compile(rf"^([a-z]{{3}})_[{_ALPHABET}]{{{_BODY_LEN}}}$")

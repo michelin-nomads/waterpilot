@@ -16,6 +16,9 @@ Current contents:
 Local mode refuses both keys and uses the fixture gazetteer (ADR 0009). Nothing here is
 applied automatically. Before setting either key, an owner should:
 
+Implementation paths, exact environment names and remaining live prerequisites are in
+[`docs/data/google-maps-integration.md`](../docs/data/google-maps-integration.md).
+
 1. Create a **browser key** for `VITE_GOOGLE_MAPS_API_KEY`:
    - **Application restriction:** HTTP referrers, limited to the Hosting domains (for
      example `https://PROJECT_ID.web.app/*` and the custom domain).
@@ -26,14 +29,15 @@ applied automatically. Before setting either key, an owner should:
 3. Create a **server key** for `WL_PLACES_SERVER_KEY`, only if server-side search is
    wanted (agent and fallback search):
    - **API restriction:** Places API (New) only.
-   - Restrict it to the API's service account or egress, and store it in Secret Manager.
+   - Apply supported application restrictions, such as fixed public egress IPs, and store
+     it in Secret Manager. This API-key adapter does not use service-account OAuth.
      Never put it in a `VITE_` variable.
 4. Set **per-API daily quotas** and a **billing budget with alerts**. Check current SKUs,
    free caps and prices on the Google Maps Platform pricing page: they change, and usage
    beyond them is billed.
-5. Review the Google Maps Platform terms. ADR 0009 assumes place ids may be kept and that
-   other Places content is cached for at most 30 days. A purge job for expired provider
-   content is still pending.
+5. Review the Google Maps Platform terms. Do not apply ADR 0009's broad 30-day caching
+   assumption to all Places content: allowed exceptions are content- and service-specific.
+   A purge job for expired provider content is still pending; the expiry flag is not cleanup.
 6. Add the Maps origins to the Content-Security-Policy (Prompt 25):
    - `https://maps.googleapis.com` and `https://maps.gstatic.com` for script, image and
      connect;

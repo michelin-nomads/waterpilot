@@ -1,18 +1,20 @@
 # Live integration tests (opt-in, owner-run)
 
-Nothing on this page runs in CI, in `npm test`, or in any local mode. Every check here
+The backend live test commands on this page do not run in CI or in `npm test`. Every check here
 calls a real Google service, may be metered, and needs credentials that live only in the
-operator's shell. **None of them has been run yet**, so real Google Maps and Places
-behaviour, and real dataset coverage, are **unverified**.
+operator's shell. The backend live suites and real dataset coverage remain unverified. Separately authorized
+browser Maps checks and the explicit local browser opt-in are recorded in
+`docs/data/google-maps-integration.md`.
 
 ## Guards that stay in place
 
 These rules don't change for live testing:
 
-- `WL_ENV=local` refuses `WL_PLACES_SERVER_KEY`, and the web app's local mode refuses
-  `VITE_GOOGLE_MAPS_API_KEY` and `VITE_GOOGLE_MAPS_MAP_ID` (`services/backend/src/waterlens/config.py`,
-  `apps/web/src/config/env.ts`). Live tests never set these variables and never change
-  `Settings`.
+- `WL_APP_MODE=local` still refuses `WL_PLACES_SERVER_KEY`. Browser Maps locally requires
+  explicit `VITE_LOCAL_GOOGLE_MAPS_ENABLED=true` and matching
+  `WL_LOCAL_GOOGLE_MAPS_ENABLED=true`; these default off and never enable server-side
+  Google calls. Demo-project, emulator and loopback guards remain enforced. Backend
+  live tests do not change these settings.
 - The backend live tests build the adapter they test directly from a `WL_LIVE_*`
   variable, so a local API process can never reach Google because of them.
 - The default `pytest` run deselects the `live` marker (`addopts` in `pyproject.toml`).
@@ -22,7 +24,7 @@ These rules don't change for live testing:
   suite.
 - No key, response body or coordinate is printed. Assertions are structural.
 
-## 1. Server-side Places (New) and Geocoding
+## 1. Server-side Places (New)
 
 File: `services/backend/tests/live/test_places_google_live.py`.
 
@@ -41,17 +43,18 @@ WL_LIVE_PLACES_SERVER_KEY=... uv run pytest -m live tests/live/test_places_googl
 | ---------------------------------------------------------- | ------------------------------------------------------------------ | ------------- |
 | `test_a_place_outside_india_resolves_with_country_and_...` | Text Search with the field mask; worldwide; normalized id/country  | 1 Text Search |
 | `test_an_ambiguous_name_returns_more_than_one_candidate`   | Ambiguous names come back as several candidates                    | 1 Text Search |
-| `test_a_point_reverse_geocodes_to_named_context`           | Reverse geocoding of a point outside India                         | 1 Geocoding   |
+| `test_server_reverse_lookup_is_explicitly_unavailable`     | Server reverse lookup refuses; the browser owns Geocoder           | 0             |
 | `test_a_rejected_key_is_unavailable_and_never_echoed`      | A bad key becomes `PlaceSearchUnavailable` without echoing the key | 1 (rejected)  |
 
-A full run makes at most four requests. Check current SKU prices on the Google Maps
+A full run makes at most three requests. Check current SKU prices on the Google Maps
 Platform pricing page before running it.
 
 ## 2. Browser Maps JavaScript, Places autocomplete and Geocoder (manual)
 
 Run this against a **pilot preview** served from a domain that the browser key's HTTP
 referrer restriction allows. Deploying the preview is an owner action (Prompts 25–26).
-The web build uses `VITE_WATERLENS_ENV=pilot` and the restricted browser key from
+The web build uses `VITE_APP_MODE=pilot`, `VITE_USE_EMULATORS=false`, the normal pilot
+Firebase/API configuration, and the restricted browser key from
 `infra/README.md` step 1. Never run it from a local-mode build.
 
 | #   | Step                                                                    | Expected                                                                                                                   |
@@ -64,6 +67,7 @@ The web build uses `VITE_WATERLENS_ENV=pilot` and the restricted browser key fro
 | B6  | Use a key from another referrer (or remove the referrer)                | `gm_authFailure` leads to the map-unavailable fallback. No key appears in the page text.                                   |
 | B7  | Deny location permission, then let the location request time out (slow) | Each failure gives a specific message. Search and manual entry stay open.                                                  |
 | B8  | Leave a search idle for more than 3 minutes, then keep typing           | A new session token is used.                                                                                               |
+| B9  | Pick a map point, then review its nearby context                        | Browser Geocoder provides context; coordinates and extent still require confirmation.                                      |
 
 Record the date, the build commit and the result of each step in `docs/progress.md`.
 Mark each step verified only after it has been observed.

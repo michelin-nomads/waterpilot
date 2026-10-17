@@ -113,6 +113,8 @@ class Settings(BaseSettings):
     # Server-side Google Places (ADR 0009): pilot only, from Secret Manager. Local mode and
     # tests use the fixture gazetteer and refuse a key, so no billable call can happen.
     places_server_key: SecretStr | None = None
+    local_google_maps_enabled: bool = False
+    """Accept browser Google place confirmations locally; no server Google calls."""
     # Local worker loop (`npm run dev:worker`).
     local_worker_poll_seconds: float = Field(default=1.0, gt=0, le=60)
     local_worker_reconcile_seconds: float = Field(default=30.0, gt=0, le=3600)
@@ -121,6 +123,8 @@ class Settings(BaseSettings):
     # can happen here. In a pilot the gateway builds the Vertex provider through ADC and a
     # dedicated runtime service account. Every field below is a proposed, overridable bound.
     ai_enabled: bool = False
+    area_assumptions_enabled: bool = False
+    area_assumptions_fake: bool = False
     agent_fake_inference: bool = False
     """Owner opt-in. Even when true, local mode has no live provider, and a budget must be
     set before any spend is permitted."""
@@ -255,6 +259,10 @@ class Settings(BaseSettings):
 
     def _pilot_problems(self) -> list[str]:
         problems: list[str] = []
+        if self.local_google_maps_enabled:
+            problems.append("WL_LOCAL_GOOGLE_MAPS_ENABLED is local-only")
+        if self.area_assumptions_fake:
+            problems.append("WL_AREA_ASSUMPTIONS_FAKE must be false in pilot mode")
         if self.use_emulators:
             problems.append("WL_USE_EMULATORS must be false")
         for name, value in (

@@ -1,4 +1,4 @@
-import { useId, useState, type FormEvent } from 'react';
+import { useEffect, useId, useState, type FormEvent } from 'react';
 
 import { Badge, Button, ChoiceCards, Field, Input, Notice } from '../../components';
 import type { AreaOrigin, ExtentKind } from '../../graphql/generated/graphql';
@@ -29,6 +29,7 @@ interface CandidateReviewProps {
   onConfirm: (input: LocationDraftInput) => void;
   onChoosePlace: (place: Place) => void;
   onBack: () => void;
+  onExtentPreview?: (radiusMeters: number | null) => void;
 }
 
 const MIN_KM = 0.1;
@@ -59,6 +60,7 @@ export function CandidateReview({
   onConfirm,
   onChoosePlace,
   onBack,
+  onExtentPreview,
 }: CandidateReviewProps) {
   const id = useId();
   const { place, origin } = draft;
@@ -70,6 +72,14 @@ export function CandidateReview({
   const privateOrigin = origin !== 'PLACE_SEARCH';
   const inaccurate = (draft.accuracyMeters ?? 0) > INACCURATE_FIX_M;
   const fixture = isFixturePlace(place);
+
+  useEffect(() => {
+    onExtentPreview?.(
+      extent === 'USER_RADIUS' && radiusError(radiusKm) === null
+        ? Math.round(Number(radiusKm) * 1000)
+        : null,
+    );
+  }, [extent, radiusKm, onExtentPreview]);
 
   function submit(event: FormEvent) {
     event.preventDefault();
