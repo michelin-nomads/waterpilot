@@ -4,7 +4,8 @@
  * Keys are hierarchical so one prefix invalidates a whole family, e.g.
  * `['session', id]` covers the session, its plan options and funding matches.
  * Keys never contain the user id: the whole cache is cleared on sign-in, sign-out
- * and account linking, so cached data can never cross identities.
+ * and account linking (except the static intervention catalogue), so account data
+ * can never cross identities.
  */
 export type Page = { first?: number; after?: string | null };
 

@@ -16,9 +16,10 @@ const PlanningModeToggle = lazy(() =>
   })),
 );
 import { usePlanningMode } from '../features/planning/planningMode';
-import { usePlanningSession } from '../session/sessionContext';
-import { pathForSessionStage, stageForPath } from './stages';
+import { stageForPath } from './stages';
 import { useRouteFocus } from './useRouteFocus';
+
+const SIGN_IN_PATH = '/signin';
 
 function navClass({ isActive }: { isActive: boolean }): string {
   return isActive ? `${styles.navLink} ${styles.active}` : styles.navLink;
@@ -27,13 +28,14 @@ function navClass({ isActive }: { isActive: boolean }): string {
 export default function AppShell() {
   useRouteFocus();
   const { pathname } = useLocation();
-  const { view } = usePlanningSession();
   const [planningMode, setPlanningMode] = usePlanningMode();
   const auth = useAuth();
   const signedIn = auth.status === 'ready' && auth.user?.kind === 'permanent';
   const inPlanning = stageForPath(pathname) !== null;
-  const welcomeFlow = pathname === '/' && !signedIn;
-  const planPath = pathForSessionStage(view?.stage);
+  const welcomeFlow = (pathname === '/' || pathname === SIGN_IN_PATH) && !signedIn;
+  // On the sign-in screen the page is the sign-in; inside the planner it is a dialog, so the
+  // plan stays exactly as it is; anywhere else it opens the sign-in screen.
+  const signInPresentation = pathname === SIGN_IN_PATH ? null : inPlanning ? 'dialog' : 'page';
 
   return (
     <div
@@ -47,22 +49,15 @@ export default function AppShell() {
       <RouteProgress />
       <header className={styles.header}>
         <div className={styles.headerInner}>
-          <Link to="/" className={styles.brand} aria-label="WaterPilot home">
-            <Logo />
-          </Link>
-          <p className={styles.tagline}>Smarter Communities. More Water Secure.</p>
+          <div className={styles.start}>
+            <Link to="/" className={styles.brand} aria-label="WaterPilot home">
+              <Logo />
+            </Link>
+            <p className={styles.tagline}>Smarter Communities. More Water Secure.</p>
+          </div>
           {signedIn && (
             <nav aria-label="Primary" className={styles.primaryNav}>
-              {inPlanning && (
-                <Link
-                  to={planPath}
-                  className={`${styles.navLink} ${styles.active}`}
-                  aria-current="true"
-                >
-                  Plan
-                </Link>
-              )}
-              {/* Review lives under /reports; inside the planner only Plan is current. */}
+              {/* Review lives under /reports; inside the planner Reports is not current. */}
               <NavLink to="/reports" end={inPlanning} className={navClass}>
                 Reports
               </NavLink>
@@ -71,17 +66,21 @@ export default function AppShell() {
               </NavLink>
             </nav>
           )}
-          <p className={styles.strapline}>From insight to action for water-resilient communities</p>
-          <div className={styles.tools}>
-            {inPlanning && (
-              <div className={styles.modeSlot}>
-                <Suspense fallback={null}>
-                  <PlanningModeToggle mode={planningMode} onChange={setPlanningMode} />
-                </Suspense>
-              </div>
-            )}
-            <DisplayMenu />
-            <AccountMenu guestSignIn={!inPlanning} />
+          <div className={styles.end}>
+            <p className={styles.strapline}>
+              From insight to action for water-resilient communities
+            </p>
+            <div className={styles.tools}>
+              {inPlanning && (
+                <div className={styles.modeSlot}>
+                  <Suspense fallback={null}>
+                    <PlanningModeToggle mode={planningMode} onChange={setPlanningMode} />
+                  </Suspense>
+                </div>
+              )}
+              <DisplayMenu />
+              <AccountMenu signIn={signInPresentation} showGuestLabel={pathname !== SIGN_IN_PATH} />
+            </div>
           </div>
         </div>
       </header>

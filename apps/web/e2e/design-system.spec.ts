@@ -46,7 +46,6 @@ async function stackUp(): Promise<boolean> {
 async function openPlanner(page: Page, mode: 'traditional' | 'agent' = 'traditional') {
   test.skip(!(await stackUp()), 'Needs the local API and Auth emulator');
   await page.goto('/');
-  await page.getByRole('button', { name: 'Continue as guest' }).click();
   await page
     .getByRole('button', { name: mode === 'agent' ? 'Start with agent' : 'Start exploring' })
     .click();
@@ -56,12 +55,12 @@ async function openPlanner(page: Page, mode: 'traditional' | 'agent' = 'traditio
 /** Sign up a fresh account, then open a signed-in screen. */
 async function openSignedIn(page: Page, path: string) {
   test.skip(!(await stackUp()), 'Needs the local API and Auth emulator');
-  await page.goto('/');
+  await page.goto('/signin');
   await page.getByRole('button', { name: 'Create an account' }).click();
   await page.getByLabel(/^Email/).fill(`ds-${Date.now()}-${Math.random()}@example.org`);
   await page.getByLabel(/^Password/).fill('secret-pass');
   await page.getByRole('button', { name: 'Create account' }).click();
-  await expect(page).toHaveURL(/\/reports$/);
+  await expect(page).toHaveURL(/\/$/);
   await page.goto(path);
 }
 
@@ -241,6 +240,8 @@ const VIEWPORTS = [
   { name: 'mobile', width: 390, height: 844 },
   { name: 'tablet', width: 820, height: 1180 },
   { name: 'desktop', width: 1440, height: 900 },
+  { name: 'large desktop', width: 1920, height: 1080 },
+  { name: 'ultrawide', width: 2560, height: 1440 },
 ] as const;
 
 for (const viewport of VIEWPORTS) {
@@ -248,15 +249,17 @@ for (const viewport of VIEWPORTS) {
     await page.setViewportSize(viewport);
     await usePreferences(page, 'light', 'estuary', 'agent');
     await openPlanner(page, 'agent');
-    const heading = page.getByRole('heading', { level: 1, name: 'Location' });
+    const heading = page.getByRole('heading', { level: 1, name: 'Confirm your location' });
     await expect(heading).toBeVisible();
+    const mainBox = await page.getByRole('main').boundingBox();
+    expect(mainBox!.width).toBeGreaterThan(viewport.width * 0.95);
 
     const horizontalOverflow = await page.evaluate(
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
     );
     expect(horizontalOverflow, 'page must not scroll sideways').toBeLessThanOrEqual(0);
 
-    if (viewport.name === 'desktop') {
+    if (viewport.width >= 1024) {
       const agent = page.getByRole('complementary', { name: 'Conversation' });
       await expect(agent).toBeVisible();
       const agentBox = await agent.boundingBox();
@@ -273,6 +276,8 @@ for (const viewport of VIEWPORTS) {
       await tabs.getByRole('tab', { name: 'Workspace' }).click();
       await expect(heading).toBeVisible();
     }
+    if (viewport.width === 1920)
+      await page.screenshot({ path: test.info().outputPath('planner.png') });
     await capture(page, `area-agent-${viewport.name}`);
   });
 }
@@ -282,10 +287,10 @@ const pageOverflow = (page: Page) =>
 
 test.describe('320 px reflow', () => {
   const ROUTES = [
-    { path: '/area', heading: 'Location', mode: 'traditional' },
-    { path: '/area', heading: 'Location', mode: 'agent' },
+    { path: '/area', heading: 'Confirm your location', mode: 'traditional' },
+    { path: '/area', heading: 'Confirm your location', mode: 'agent' },
     { path: '/make-it-happen', heading: 'Funding opportunities', mode: 'agent' },
-    { path: '/communities', heading: 'Your water planning workspace', mode: 'traditional' },
+    { path: '/communities', heading: 'Communities', mode: 'traditional' },
     { path: '/design-system', heading: 'Design system', mode: 'traditional' },
   ] as const;
 
@@ -305,7 +310,7 @@ test.describe('320 px reflow', () => {
 
   test('the sign-in screen has no sideways scroll at 320 px', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 640 });
-    await page.goto('/');
+    await page.goto('/signin');
     await expect(
       page.getByRole('heading', { level: 1, name: 'Welcome to WaterPilot' }),
     ).toBeVisible();

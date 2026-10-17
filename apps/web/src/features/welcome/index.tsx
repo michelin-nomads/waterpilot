@@ -1,18 +1,16 @@
 import { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
-import { AuthFailure, toAuthFailure } from '../../auth/authErrors';
+import { AuthFailure } from '../../auth/authErrors';
 import { useAuth } from '../../auth/authContext';
 import { Button } from '../../components/Button/Button';
 import { Icon, type IconName } from '../../components/Icon/Icon';
-import { Notice } from '../../components/Notice/Notice';
 import { LoadingRegion, Skeleton } from '../../components/Skeleton/Skeleton';
 import { ErrorState } from '../../components/StatePanel/StatePanel';
 import { useOnlineStatus } from '../../lib/useOnlineStatus';
 import { usePlanningSession } from '../../session/sessionContext';
 import { pathForSessionStage } from '../../shell/stages';
 import { toSessionMode, usePreferredPlanningMode } from '../planning/planningMode';
-import { SignInScreen } from './SignInScreen';
 import styles from './Welcome.module.scss';
 
 const BENEFITS: ReadonlyArray<{ icon: IconName; text: string }> = [
@@ -34,9 +32,9 @@ const GUEST_PAUSED = 'New guest sessions are paused right now. Try again later o
 const START_FAILED = 'Your plan could not be started. Check your connection and try again.';
 
 /**
- * S1 Welcome. Without an account the first screen is sign-in, with "Continue as guest";
- * signed-in accounts go to their workspace; a guest chooses Explorer or Copilot here.
- * Plans are not kept as drafts, so there is never a plan to continue.
+ * The main screen (`/`), for everyone: choose Explorer or Copilot. Nobody has to sign in to
+ * plan; starting without an account begins a guest session. Plans are not kept as drafts, so
+ * there is never a plan to continue. Signing in is its own screen (`/signin`).
  */
 export default function WelcomePage() {
   const auth = useAuth();
@@ -45,25 +43,7 @@ export default function WelcomePage() {
   const navigate = useNavigate();
   const [mode, setMode] = usePreferredPlanningMode();
   const [starting, setStarting] = useState(false);
-  const [failure, setFailure] = useState<AuthFailure | null>(null);
   const [startError, setStartError] = useState<string | null>(null);
-
-  if (auth.status === 'ready' && auth.user?.kind === 'permanent') {
-    return <Navigate to="/reports" replace />;
-  }
-
-  const continueAsGuest = async () => {
-    if (!online) return;
-    setStarting(true);
-    setFailure(null);
-    try {
-      await auth.startGuest();
-    } catch (error) {
-      setFailure(toAuthFailure(error));
-    } finally {
-      setStarting(false);
-    }
-  };
 
   const start = async (selectedMode = mode) => {
     setMode(selectedMode);
@@ -72,15 +52,17 @@ export default function WelcomePage() {
     try {
       const started = await session.newReport(toSessionMode(selectedMode));
       navigate(pathForSessionStage(started.stage));
-    } catch {
-      setStartError(START_FAILED);
+    } catch (error) {
+      const paused =
+        error instanceof AuthFailure &&
+        (error.kind === 'method-disabled' || error.kind === 'rate-limited');
+      setStartError(paused ? GUEST_PAUSED : START_FAILED);
     } finally {
       setStarting(false);
     }
   };
 
   const offlineNoteId = 'welcome-offline-note';
-  const guestPaused = failure?.kind === 'method-disabled' || failure?.kind === 'rate-limited';
   const failed = startError;
 
   if (auth.status === 'loading') {
@@ -90,26 +72,6 @@ export default function WelcomePage() {
       </LoadingRegion>
     );
   }
-
-  if (auth.status === 'ready' && !auth.user) {
-    return (
-      <SignInScreen
-        onContinueAsGuest={() => void continueAsGuest()}
-        starting={starting}
-        offline={!online}
-        notice={
-          guestPaused ? (
-            <Notice kind="budget">{GUEST_PAUSED}</Notice>
-          ) : failure ? (
-            <div role="alert" className={styles.error}>
-              {failure.message}
-            </div>
-          ) : null
-        }
-      />
-    );
-  }
-
   return (
     <div className={styles.page}>
       <header className={styles.hero}>

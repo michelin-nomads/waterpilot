@@ -7,7 +7,6 @@ test.skip(
 
 async function start(page: Page) {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Continue as guest' }).click();
   await page.getByRole('button', { name: 'Start with agent' }).click();
   await expect(page).toHaveURL(/\/area$/);
 }

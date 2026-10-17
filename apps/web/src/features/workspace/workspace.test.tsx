@@ -108,6 +108,26 @@ describe('signed-in home', () => {
     expect(within(south).queryByText(/occupied home/)).not.toBeInTheDocument();
   });
 
+  it('has no tab navigation: Reports is a page of its own with New report at the top right', async () => {
+    nodes = [NORTH];
+    renderHome();
+    const title = await screen.findByRole('heading', {
+      level: 1,
+      name: 'Your water planning workspace',
+    });
+    expect(screen.queryByRole('navigation', { name: 'Workspace' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+    const pageHeader = title.closest('header')!;
+    expect(within(pageHeader).getByRole('button', { name: 'New report' })).toBeVisible();
+    // The header links are the way between Reports and Communities.
+    const primary = screen.getByRole('navigation', { name: 'Primary' });
+    expect(within(primary).getByRole('link', { name: 'Reports' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    expect(within(primary).getByRole('link', { name: 'Communities' })).toBeVisible();
+  });
+
   it('filters the loaded reports by search', async () => {
     nodes = [NORTH, SOUTH];
     renderHome();
@@ -146,7 +166,7 @@ describe('signed-in home', () => {
   it('is not available to guests', async () => {
     nodes = [NORTH];
     const router = renderHome(new FakeAuthBackend(guest()));
-    await screen.findByRole('heading', { level: 1, name: 'A better water plan starts here.' });
-    expect(router.state.location.pathname).toBe('/');
+    await screen.findByRole('heading', { level: 1, name: 'Welcome to WaterPilot' });
+    expect(router.state.location.pathname).toBe('/signin');
   });
 });

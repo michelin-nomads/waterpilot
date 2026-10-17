@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
+import { queryKeys } from '../graphql/queryKeys';
 import { invalidateAfter } from '../graphql/invalidation';
 import { setAuthTokenProvider } from '../lib/authToken';
 import {
@@ -50,6 +51,8 @@ export function AuthProvider({
   const dialogWaiters = useRef<Array<(permanent: boolean) => void>>([]);
   const backendRef = useRef<Promise<AuthBackend> | null>(null);
   const userRef = useRef<AuthUser | null>(null);
+  const authenticating = useRef(false);
+  const pendingClaimRef = useRef<PendingClaim | null>(null);
 
   // Cached data belongs to one identity. Dropping it here, before the new user renders,
   // means no screen can show the previous identity's data even for one frame.
@@ -60,7 +63,11 @@ export function AuthProvider({
     (next: AuthUser | null) => {
       const identity = next ? `${next.uid}:${next.kind}` : '';
       if (identityRef.current !== undefined && identityRef.current !== identity) {
+        // This catalogue is static per deployment and contains no account data. Keep it
+        // mounted so a guest's unfinished goal form survives the account transition.
+        const catalogue = queryClient.getQueryData(queryKeys.goals.catalogue());
         queryClient.clear();
+        if (catalogue) queryClient.setQueryData(queryKeys.goals.catalogue(), catalogue);
       }
       identityRef.current = identity;
       userRef.current = next;
@@ -82,7 +89,11 @@ export function AuthProvider({
       (backend) => {
         if (!active) return;
         applyUser(backend.currentUser());
-        unsubscribe = backend.onUserChanged(applyUser);
+        unsubscribe = backend.onUserChanged((next) => {
+          // Firebase changes identity before a guest claim completes. Publish the result
+          // together with pendingClaim, so the planner cannot load the target's old plan.
+          if (!authenticating.current) applyUser(next);
+        });
         setStatus('ready');
       },
       () => {
@@ -130,11 +141,17 @@ export function AuthProvider({
         applyUser(signedIn);
         return { user: signedIn, pendingClaim: null };
       }
-      const result = await upgradeGuest(auth, claimApi, method);
-      applyUser(result.user);
-      setPendingClaim(result.pendingClaim);
-      if (!result.pendingClaim) await afterClaim();
-      return result;
+      authenticating.current = true;
+      try {
+        const result = await upgradeGuest(auth, claimApi, method);
+        applyUser(result.user);
+        pendingClaimRef.current = result.pendingClaim;
+        setPendingClaim(result.pendingClaim);
+        if (!result.pendingClaim) await afterClaim();
+        return result;
+      } finally {
+        authenticating.current = false;
+      }
     },
     [backend, claimApi, afterClaim, applyUser],
   );
@@ -142,6 +159,7 @@ export function AuthProvider({
   const retryPendingClaim = useCallback(async () => {
     if (!pendingClaim) return;
     await completeClaim(claimApi, pendingClaim);
+    pendingClaimRef.current = null;
     setPendingClaim(null);
     await afterClaim();
   }, [claimApi, pendingClaim, afterClaim]);
@@ -158,13 +176,15 @@ export function AuthProvider({
   const ensurePermanent = useCallback(
     async (reason?: string) => {
       await backend().catch(() => undefined);
-      return userRef.current?.kind === 'permanent' ? true : openSignIn(reason);
+      return userRef.current?.kind === 'permanent' && !pendingClaimRef.current
+        ? true
+        : openSignIn(reason);
     },
     [backend, openSignIn],
   );
 
   const closeDialog = useCallback(() => {
-    const permanent = userRef.current?.kind === 'permanent';
+    const permanent = userRef.current?.kind === 'permanent' && !pendingClaimRef.current;
     const waiters = dialogWaiters.current;
     dialogWaiters.current = [];
     waiters.forEach((resolve) => resolve(permanent));
@@ -177,6 +197,7 @@ export function AuthProvider({
   );
 
   const signOut = useCallback(async () => {
+    pendingClaimRef.current = null;
     setPendingClaim(null);
     await (await backend()).signOut();
     applyUser(null);
@@ -191,7 +212,10 @@ export function AuthProvider({
       authenticate,
       pendingClaim,
       retryPendingClaim,
-      discardPendingClaim: () => setPendingClaim(null),
+      discardPendingClaim: () => {
+        pendingClaimRef.current = null;
+        setPendingClaim(null);
+      },
       openSignIn,
       ensurePermanent,
       sendPasswordReset,

@@ -45,7 +45,6 @@ test('a guest compares only feasible plans, chooses one, and tests a what-if in 
   page,
 }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Continue as guest' }).click();
   await page.getByRole('button', { name: 'Start exploring' }).click();
   await page.getByRole('button', { name: 'Use the synthetic demo area' }).click();
   // 12000 people x 135 L = 1,620,000 L/day demand; 300,000 L/day from tankers (30%).

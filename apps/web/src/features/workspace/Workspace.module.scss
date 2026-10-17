@@ -5,56 +5,9 @@
   // Let the single column shrink below its widest child, so narrow screens never scroll sideways.
   grid-template-columns: minmax(0, 1fr);
   gap: var(--wp-card-section-gap);
-  width: min(100%, 76rem);
+  width: min(100%, var(--wp-content-max));
   margin: 0 auto;
-  padding: var(--wp-space-5);
-}
-
-.bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--wp-space-3);
-}
-
-.tabs {
-  display: inline-flex;
-  max-width: 100%;
-  gap: var(--wp-space-1);
-  padding: var(--wp-space-1);
-  border: 1px solid var(--wp-color-border);
-  border-radius: var(--wp-radius-lg);
-  background: var(--wp-color-surface-sunken);
-}
-
-.tab {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--wp-space-2);
-  min-height: 2.75rem;
-  padding: 0 var(--wp-space-3);
-  border-bottom: 3px solid transparent;
-  border-radius: var(--wp-radius-md);
-  color: var(--wp-color-text-muted);
-  font-weight: 600;
-  text-decoration: none;
-
-  &:hover {
-    color: var(--wp-color-text);
-  }
-
-  &[aria-current='page'] {
-    border-bottom-color: var(--wp-color-accent);
-    background: var(--wp-color-surface);
-    color: var(--wp-color-accent-strong);
-  }
-
-  @include tablet-up {
-    padding: 0 var(--wp-space-4);
-  }
-
-  @include focus-visible;
+  padding: 0;
 }
 
 .toolbar {
@@ -117,7 +70,7 @@
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
   gap: var(--wp-space-4);
   margin: 0;
   padding: 0;

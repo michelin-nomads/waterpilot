@@ -56,7 +56,6 @@ async function expectSettled(count: () => number, expected: number) {
 async function startPlanning(page: Page, mode: 'Traditional' | 'With the assistant') {
   await page.goto('/');
   const button = mode === 'Traditional' ? 'Start exploring' : 'Start with agent';
-  await page.getByRole('button', { name: 'Continue as guest' }).click();
   await page.getByRole('button', { name: button }).click();
   await expect(page).toHaveURL(/\/area$/);
 }
@@ -148,18 +147,14 @@ test('a signed-in person plans with an avatar in the header; signing out asks fi
   page,
 }) => {
   const email = `switch-${Date.now()}@example.org`;
-  await page.goto('/');
+  await page.goto('/signin');
   await page.getByRole('button', { name: 'Create an account' }).click();
   await page.getByLabel(/^Email/).fill(email);
   await page.getByLabel(/^Password/).fill('secret-pass');
   await page.getByRole('button', { name: 'Create account' }).click();
-  await expect(page).toHaveURL(/\/reports$/);
+  await expect(page).toHaveURL(/\/$/);
 
-  await page.getByRole('button', { name: 'New report' }).click();
-  await page
-    .getByRole('dialog', { name: 'New report' })
-    .getByRole('button', { name: /Explorer/ })
-    .click();
+  await page.getByRole('button', { name: 'Start exploring' }).click();
   await expect(page).toHaveURL(/\/area$/);
   const header = page
     .getByRole('link', { name: 'WaterPilot home' })
@@ -172,13 +167,13 @@ test('a signed-in person plans with an avatar in the header; signing out asks fi
   await header.getByRole('button', { name: 'Sign out' }).click();
   const confirm = page.getByRole('dialog', { name: 'Sign out and lose your plan?' });
   await confirm.getByRole('button', { name: 'Sign out and lose plan' }).click();
-  await expect(page.getByRole('button', { name: 'Continue as guest' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Start exploring' })).toBeVisible();
   await expect.poll(async () => (await recoveryRecords(page)).length).toBe(0);
 });
 
 test('guests cannot open the signed-in workspace', async ({ page }) => {
   await startPlanning(page, 'Traditional');
   await page.goto('/reports');
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/signin$/);
   await expect(page.getByRole('navigation', { name: 'Primary' })).toHaveCount(0);
 });

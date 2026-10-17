@@ -36,13 +36,41 @@
 }
 
 .headerInner {
-  display: flex;
+  display: grid;
+  grid-template-areas:
+    'start end'
+    'nav nav';
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: var(--wp-space-3) var(--wp-space-4);
-  flex-wrap: wrap;
+  gap: var(--wp-space-2) var(--wp-space-4);
   max-width: var(--wp-content-max);
   margin: 0 auto;
   padding: var(--wp-space-2) var(--wp-space-4);
+
+  // Brand at the start, Reports and Communities in the true centre, the controls at the
+  // right end: the outer columns are equal, so the middle one stays centred.
+  @include desktop-up {
+    grid-template-areas: 'start nav end';
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  }
+}
+
+.start {
+  grid-area: start;
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-4);
+  min-width: 0;
+}
+
+.end {
+  grid-area: end;
+  display: flex;
+  align-items: center;
+  justify-self: end;
+  max-width: 100%;
+  gap: var(--wp-space-4);
+  min-width: 0;
 }
 
 .brand {
@@ -58,39 +86,12 @@
   color: var(--wp-color-text-muted);
 }
 
-.tagline {
-  @include wide-up {
-    display: block;
-  }
-}
-
-.strapline {
-  // A small basis so the account and display controls stay on the first row.
-  flex: 1 1 8rem;
-  max-width: 16rem;
-  margin-left: auto;
-  text-align: end;
-
-  @include wide-up {
-    display: block;
-  }
-}
-
 .primaryNav {
+  grid-area: nav;
   display: flex;
+  justify-content: center;
   gap: var(--wp-space-1);
-  order: 3;
-  width: 100%;
   overflow-x: auto;
-
-  @include tablet-up {
-    order: 0;
-    width: auto;
-  }
-
-  @include wide-up {
-    margin-left: var(--wp-space-4);
-  }
 }
 
 .shell[data-welcome-flow] {
@@ -128,10 +129,12 @@
 // The controls always sit at the right end of the header, whatever else it shows.
 .tools {
   display: flex;
-  flex: none;
+  flex: 0 1 auto;
+  min-width: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   align-items: center;
   gap: var(--wp-space-2);
-  margin-left: auto;
 }
 
 .main {
@@ -181,6 +184,10 @@
 
   .headerInner {
     min-height: 4.5rem;
+    @media (max-width: 639px) {
+      grid-template-areas: 'start' 'nav' 'end';
+      grid-template-columns: minmax(0, 1fr);
+    }
     padding-inline: var(--wp-workspace-inset);
   }
 

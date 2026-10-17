@@ -6,7 +6,6 @@ import { ErrorSummary, type FieldError } from '../components/ErrorSummary/ErrorS
 import { AdornedInput, Field } from '../components/Field/Field';
 import { Icon } from '../components/Icon/Icon';
 import { Notice } from '../components/Notice/Notice';
-import { env } from '../config/env';
 import { useOnlineStatus } from '../lib/useOnlineStatus';
 import { AuthFailure, toAuthFailure } from './authErrors';
 import { useAuth } from './authContext';
@@ -60,14 +59,7 @@ function validate(mode: Mode, email: string, password: string): FieldError[] {
  * `onDone` runs once the person holds a permanent account (or chose to carry on without
  * moving a guest plan).
  */
-export function SignInForm({
-  onDone,
-  layout = 'dialog',
-}: {
-  onDone: () => void;
-  /** `screen` is the compact first-screen form: no local-mode note. */
-  layout?: 'dialog' | 'screen';
-}) {
+export function SignInForm({ onDone }: { onDone: () => void }) {
   const auth = useAuth();
   const online = useOnlineStatus();
   const [mode, setMode] = useState<Mode>('sign-in');
@@ -180,7 +172,7 @@ export function SignInForm({
   const fieldError = (id: string) => fieldErrors.find((e) => e.fieldId === id)?.message;
 
   return (
-    <div className={[styles.body, layout === 'screen' && styles.compact].filter(Boolean).join(' ')}>
+    <div className={[styles.body, styles.compact].join(' ')}>
       {isGuest && (
         <p className={styles.note}>
           Your current planning session comes with you. If the account you sign in to already has a
@@ -206,7 +198,7 @@ export function SignInForm({
       <Button
         variant="secondary"
         fullWidth
-        size={layout === 'screen' ? 'lg' : 'md'}
+        size="lg"
         className={styles.google}
         loading={busy === 'google'}
         aria-disabled={!online || (busy !== null && busy !== 'google') || undefined}
@@ -222,11 +214,7 @@ export function SignInForm({
         <span>or</span>
       </p>
 
-      <form
-        className={[styles.form, layout === 'screen' && styles.compact].filter(Boolean).join(' ')}
-        noValidate
-        onSubmit={onSubmit}
-      >
+      <form className={[styles.form, styles.compact].join(' ')} noValidate onSubmit={onSubmit}>
         <ErrorSummary errors={fieldErrors} />
         <Field id={EMAIL_ID} label="Email" required hideLabel error={fieldError(EMAIL_ID)}>
           {(control) => (
@@ -276,8 +264,8 @@ export function SignInForm({
         <Button
           type="submit"
           fullWidth
-          size={layout === 'screen' ? 'lg' : 'md'}
-          className={layout === 'screen' ? styles.screenSubmit : undefined}
+          size="lg"
+          className={styles.submit}
           loading={busy === 'email'}
           aria-disabled={!online || (busy !== null && busy !== 'email') || undefined}
         >
@@ -303,12 +291,6 @@ export function SignInForm({
           {mode === 'sign-in' ? 'Create an account' : 'Sign in instead'}
         </button>
       </p>
-
-      {layout === 'dialog' && env.appMode === 'local' && (
-        <p className={styles.local}>
-          Local mode: accounts live only in the Firebase Auth emulator, never a real project.
-        </p>
-      )}
     </div>
   );
 }

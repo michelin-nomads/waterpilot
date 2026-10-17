@@ -7,9 +7,11 @@ import { EmptyState, ErrorState } from '../../components/StatePanel/StatePanel';
 import { ArchiveReportDocument, ReportsDocument } from '../../graphql/generated/graphql';
 import { useGraphQLMutation, useGraphQLQuery } from '../../graphql/hooks';
 import { queryKeys } from '../../graphql/queryKeys';
+import { NewReportDialog } from './NewReportDialog';
 import { ReportCard, type ReportListItem } from './ReportCard';
 import { COMMUNITY_TYPE_LABEL } from './reportLabels';
 import styles from './Workspace.module.scss';
+import { WorkspacePage } from './WorkspacePage';
 import { WorkspaceToolbar } from './WorkspaceToolbar';
 
 const PAGE = { first: 50 };
@@ -29,12 +31,13 @@ function matches(report: ReportListItem, term: string): boolean {
     .some((value) => value?.toLocaleLowerCase().includes(term));
 }
 
-/** The signed-in person's saved reports, as cards. */
+/** The signed-in person's saved reports, as cards, with New report at the top right. */
 export default function ReportsTab() {
   const [showArchived, setShowArchived] = useState(false);
   const [search, setSearch] = useState('');
   const [archiving, setArchiving] = useState<ReportListItem | null>(null);
   const [archiveError, setArchiveError] = useState<string | null>(null);
+  const [newReportOpen, setNewReportOpen] = useState(false);
 
   const filter = showArchived ? ALL_STATUSES : FINALIZED_ONLY;
   const query = useGraphQLQuery(queryKeys.reports.list(filter, PAGE), ReportsDocument, {
@@ -109,7 +112,15 @@ export default function ReportsTab() {
   }
 
   return (
-    <>
+    <WorkspacePage
+      title="Your water planning workspace"
+      subtitle="Manage your reports and community plans."
+      action={
+        <Button startIcon="plus" onClick={() => setNewReportOpen(true)}>
+          New report
+        </Button>
+      }
+    >
       <WorkspaceToolbar
         searchLabel="Search reports"
         search={search}
@@ -147,6 +158,7 @@ export default function ReportsTab() {
           </p>
         )}
       </Dialog>
-    </>
+      <NewReportDialog open={newReportOpen} onClose={() => setNewReportOpen(false)} />
+    </WorkspacePage>
   );
 }

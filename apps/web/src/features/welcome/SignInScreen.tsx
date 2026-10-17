@@ -1,7 +1,5 @@
-import type { ReactNode } from 'react';
-
 import { SignInForm } from '../../auth/SignInDialog';
-import { Button } from '../../components/Button/Button';
+import { ButtonLink } from '../../components/Button/Button';
 import { Icon, type IconName } from '../../components/Icon/Icon';
 import styles from './SignInScreen.module.scss';
 
@@ -12,18 +10,15 @@ const POINTS: ReadonlyArray<{ icon: IconName; lines: [string, string] }> = [
 ];
 
 interface SignInScreenProps {
-  onContinueAsGuest: () => void;
-  starting: boolean;
-  offline: boolean;
-  /** A notice about starting as a guest, shown above the guest button. */
-  notice?: ReactNode;
+  /** Runs once the person holds a permanent account. */
+  onSignedIn: () => void;
 }
 
 /**
- * The first screen for anyone who is not signed in: sign in, or carry on as a guest.
- * Signing in leads to the reports workspace; a guest goes on to choose how to plan.
+ * Sign in, or carry on as a guest. Signing in leads to the main screen; a guest goes there
+ * without an account and chooses how to plan.
  */
-export function SignInScreen({ onContinueAsGuest, starting, offline, notice }: SignInScreenProps) {
+export function SignInScreen({ onSignedIn }: SignInScreenProps) {
   return (
     <div className={styles.screen}>
       <svg
@@ -112,23 +107,20 @@ export function SignInScreen({ onContinueAsGuest, starting, offline, notice }: S
           Sign in to save your work and get the most out of water planning for your community.
         </p>
 
-        <SignInForm layout="screen" onDone={() => undefined} />
+        <SignInForm onDone={onSignedIn} />
 
         <div className={styles.guest}>
-          {notice}
-          <Button
+          <ButtonLink
+            to="/"
             variant="secondary"
             fullWidth
             size="lg"
             className={styles.guestButton}
             startIcon="user"
             endIcon="arrow-right"
-            loading={starting}
-            aria-disabled={offline || undefined}
-            onClick={onContinueAsGuest}
           >
             Continue as guest
-          </Button>
+          </ButtonLink>
           <p className={styles.footnote}>
             An account is only needed to finalize and save your plan.
           </p>

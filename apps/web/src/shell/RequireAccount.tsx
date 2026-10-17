@@ -6,7 +6,7 @@ import { LoadingRegion, Skeleton } from '../components/Skeleton/Skeleton';
 /**
  * Route guard for the signed-in workspace (reports, communities, projects, funding).
  * Without a signed-in account these screens do not exist: people planning as a guest can
- * reach the planner only, and are sent back to the start.
+ * reach the planner only, and are sent to sign in.
  */
 export function RequireAccount() {
   const auth = useAuth();
@@ -18,6 +18,6 @@ export function RequireAccount() {
       </LoadingRegion>
     );
   }
-  if (auth.user?.kind !== 'permanent') return <Navigate to="/" replace />;
+  if (auth.user?.kind !== 'permanent') return <Navigate to="/signin" replace />;
   return <Outlet />;
 }

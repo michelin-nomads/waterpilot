@@ -117,6 +117,10 @@ export function PlanningSessionProvider({
           uid: user.uid,
           accountKind: user.kind,
           tabId: tabId(),
+          handover:
+            previous?.kind === 'guest' && user.kind === 'permanent'
+              ? registry.current.get(identityOf(previous)!)?.getState()
+              : undefined,
           restore: handedOver || (resumeExisting && registry.current.size === 0),
           transport,
           recovery,
@@ -161,8 +165,8 @@ export function PlanningSessionProvider({
     if (previous && previous.uid !== user?.uid && previous.kind === 'permanent') {
       void recovery.deleteUid(previous.uid);
     }
-    void coordinator?.start();
-  }, [ready, identity, user, coordinator, recovery]);
+    if (!auth.pendingClaim) void coordinator?.start();
+  }, [ready, identity, user, coordinator, recovery, auth.pendingClaim]);
 
   // A guest's plan lands in this account once a pending claim completes.
   useEffect(() => {
@@ -175,7 +179,7 @@ export function PlanningSessionProvider({
 
   // Reconcile with saves made elsewhere: other tabs, reconnecting and returning to the tab.
   useEffect(() => {
-    if (!coordinator) return;
+    if (!coordinator || auth.pendingClaim) return;
     const refresh = () => void coordinator.refresh();
     const onVisible = () => {
       if (document.visibilityState === 'visible') refresh();
@@ -200,7 +204,7 @@ export function PlanningSessionProvider({
       bc?.close();
       if (channel.current === bc) channel.current = null;
     };
-  }, [coordinator]);
+  }, [coordinator, auth.pendingClaim]);
 
   const newReport = useCallback(
     async (mode: PlanningMode) => {

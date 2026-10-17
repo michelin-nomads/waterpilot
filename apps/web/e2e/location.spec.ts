@@ -39,7 +39,6 @@ async function choosePointOnly(page: Page) {
 
 async function startPlanning(page: Page) {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Continue as guest' }).click();
   await page.getByRole('button', { name: 'Start exploring' }).click();
   await expect(page).toHaveURL(/\/area$/);
   await expect(page.getByText(/local mode shows no map/i)).toBeVisible();

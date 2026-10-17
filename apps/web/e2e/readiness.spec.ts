@@ -27,7 +27,6 @@ test.beforeEach(async () => {
 
 test('a guest sees readiness for the demo area and records a value they know', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Continue as guest' }).click();
   await page.getByRole('button', { name: 'Start exploring' }).click();
   await expect(page).toHaveURL(/\/area$/);
 

@@ -19,8 +19,7 @@
 }
 
 .note,
-.switch,
-.local {
+.switch {
   margin: 0;
   color: var(--wp-color-text-muted);
   font-size: var(--wp-text-sm);
@@ -114,8 +113,8 @@
   font-size: var(--wp-text-sm);
 }
 
-// The first screen's primary action: the deeper teal of the sign-in design, white text.
-.screenSubmit.screenSubmit {
+// The sign-in form's primary action: the deeper teal of the sign-in design, white text.
+.submit.submit {
   border-color: transparent;
   background: linear-gradient(180deg, #0c847d, #09716b);
   color: #fff;

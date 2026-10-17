@@ -6,10 +6,10 @@ import { Badge } from '../components/Badge/Badge';
 import { Button } from '../components/Button/Button';
 import { Dialog } from '../components/Dialog/Dialog';
 import { Icon } from '../components/Icon/Icon';
-import { useToast } from '../components/Toast/toastContext';
 import { useDismissable } from '../lib/useDismissable';
 import { usePlanningSession } from '../session/sessionContext';
 import styles from './AccountMenu.module.scss';
+import { SignInAction, type SignInPresentation } from './SignInAction';
 
 /** "Ravi Kumar" becomes RK; with no name, the first two letters of the email. */
 function initialsFor(name: string | null, email: string | null): string {
@@ -23,19 +23,19 @@ function initialsFor(name: string | null, email: string | null): string {
 }
 
 interface AccountMenuProps {
-  /** Guests are offered Sign in outside the planner only; inside it, at the Review step. */
-  guestSignIn?: boolean;
+  /** Where the Sign in action leads for someone without an account; `null` hides it. */
+  signIn: SignInPresentation | null;
+  /** Show the signed-out visitor label on this screen, even before a guest account exists. */
+  showGuestLabel: boolean;
 }
 
 /**
  * Header account control. A signed-in person gets an avatar with their name, email and
- * Sign out. A guest keeps a visible "Guest" label (and, outside the planner, a Sign in
- * action that upgrades them); guests are never offered sign-out, which would abandon their
- * session. With no account the first screen is the sign-in, so the header shows nothing.
+ * Sign out. The shell decides whether signed-out visitors see a Guest label and Sign in;
+ * guests are never offered sign-out, which would abandon their session.
  */
-export function AccountMenu({ guestSignIn = true }: AccountMenuProps) {
+export function AccountMenu({ signIn, showGuestLabel }: AccountMenuProps) {
   const auth = useAuth();
-  const toast = useToast();
   const session = usePlanningSession();
   const navigate = useNavigate();
   const [signingOut, setSigningOut] = useState(false);
@@ -49,12 +49,6 @@ export function AccountMenu({ guestSignIn = true }: AccountMenuProps) {
     setOpen(false);
     if (reason === 'escape') triggerRef.current?.focus();
   });
-
-  const signIn = async () => {
-    if (!(await auth.openSignIn())) {
-      toast.show({ message: 'Sign-in was cancelled. You can still start planning as a guest.' });
-    }
-  };
 
   if (auth.status === 'loading') {
     return (
@@ -113,6 +107,19 @@ export function AccountMenu({ guestSignIn = true }: AccountMenuProps) {
         <div id={panelId} className={styles.panel} hidden={!open}>
           <p className={styles.who}>{name}</p>
           {user.displayName && user.email && <p className={styles.email}>{user.email}</p>}
+          {auth.pendingClaim && (
+            <Button
+              variant="ghost"
+              size="sm"
+              fullWidth
+              onClick={() => {
+                setOpen(false);
+                void auth.openSignIn();
+              }}
+            >
+              Finish moving your plan
+            </Button>
+          )}
           <Button variant="ghost" size="sm" fullWidth loading={signingOut} onClick={requestSignOut}>
             Sign out
           </Button>
@@ -142,18 +149,10 @@ export function AccountMenu({ guestSignIn = true }: AccountMenuProps) {
     );
   }
 
-  if (user?.kind === 'guest') {
-    return (
-      <div className={styles.account}>
-        <Badge tone="neutral">Guest</Badge>
-        {guestSignIn && (
-          <Button variant="ghost" size="sm" startIcon="user" onClick={() => void signIn()}>
-            Sign in
-          </Button>
-        )}
-      </div>
-    );
-  }
-
-  return null;
+  return (
+    <div className={styles.account}>
+      {showGuestLabel && <Badge tone="neutral">Guest</Badge>}
+      {signIn && <SignInAction presentation={signIn} />}
+    </div>
+  );
 }

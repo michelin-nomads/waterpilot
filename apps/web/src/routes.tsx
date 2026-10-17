@@ -26,10 +26,11 @@ export const routes: RouteObject[] = [
         // Pathless boundary so route errors render inside the shell.
         errorElement: <RouteError />,
         children: [
-          // The start: Welcome for everyone else, the workspace for signed-in accounts.
+          // `/` is the main screen for everyone (choose how to plan); sign-in is its own screen.
           { index: true, lazy: lazyPage(() => import('./features/welcome')) },
+          { path: 'signin', lazy: lazyPage(() => import('./features/welcome/SignInPage')) },
           {
-            // The planner is open to guests; it needs a plan, which Welcome or New report starts.
+            // The planner is open to guests; it needs a plan, which the main screen or New report starts.
             lazy: lazyPage(() => import('./features/planning/PlanningLayout')),
             children: [
               { path: 'area', lazy: lazyPage(() => import('./features/area')) },
@@ -48,18 +49,10 @@ export const routes: RouteObject[] = [
           {
             element: <RequireAccount />,
             children: [
+              { path: 'reports', lazy: lazyPage(() => import('./features/workspace/ReportsTab')) },
               {
-                lazy: lazyPage(() => import('./features/workspace/WorkspaceLayout')),
-                children: [
-                  {
-                    path: 'reports',
-                    lazy: lazyPage(() => import('./features/workspace/ReportsTab')),
-                  },
-                  {
-                    path: 'communities',
-                    lazy: lazyPage(() => import('./features/workspace/CommunitiesTab')),
-                  },
-                ],
+                path: 'communities',
+                lazy: lazyPage(() => import('./features/workspace/CommunitiesTab')),
               },
               { path: 'dashboard', element: <Navigate to="/reports" replace /> },
               // Optional branches retain their existing public URLs, outside the planner.

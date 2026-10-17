@@ -212,7 +212,7 @@ describe('planning session in the app', () => {
     );
     await vi.waitFor(() => expect(backend.calls).toContain('signOut'));
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Welcome to WaterPilot' }),
+      await screen.findByRole('heading', { level: 1, name: 'A better water plan starts here.' }),
     ).toBeInTheDocument();
     await vi.waitFor(async () => expect(await recovery.forUid('user-1')).toEqual([]));
     expect(screen.queryByText(GOAL_A.description)).not.toBeInTheDocument();
@@ -238,7 +238,7 @@ describe('planning session in the app', () => {
     );
     await vi.waitFor(() => expect(backend.calls).toContain('signOut'));
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Welcome to WaterPilot' }),
+      await screen.findByRole('heading', { level: 1, name: 'A better water plan starts here.' }),
     ).toBeInTheDocument();
   });
 
@@ -305,8 +305,8 @@ describe('planning session in the app', () => {
     const recovery = new MemoryRecoveryStore();
     const { router } = renderApp({ sessions, recovery, path: '/goals', resumeExisting: false });
 
-    await screen.findByRole('heading', { level: 1, name: 'Your water planning workspace' });
-    expect(router.state.location.pathname).toBe('/reports');
+    await screen.findByRole('heading', { level: 1, name: 'A better water plan starts here.' });
+    expect(router.state.location.pathname).toBe('/');
     expect(session().state.status).toBe('none');
     expect(screen.queryByText(GOAL_A.description)).not.toBeInTheDocument();
     expect(await recovery.forUid('user-1')).toEqual([]);
@@ -342,7 +342,7 @@ describe('planning session in the app', () => {
         name: 'Leave and lose plan',
       }),
     );
-    await screen.findByRole('heading', { level: 1, name: 'Your water planning workspace' });
+    await screen.findByRole('heading', { level: 1, name: 'Communities' });
     expect(router.state.location.pathname).toBe('/communities');
     expect(session().state.status).toBe('none');
   });
@@ -366,8 +366,8 @@ describe('planning session in the app', () => {
       path: '/reports',
       resumeExisting: false,
     });
-    await screen.findByRole('heading', { level: 1, name: 'A better water plan starts here.' });
-    expect(router.state.location.pathname).toBe('/');
+    await screen.findByRole('heading', { level: 1, name: 'Welcome to WaterPilot' });
+    expect(router.state.location.pathname).toBe('/signin');
     expect(screen.queryByRole('navigation', { name: 'Primary' })).not.toBeInTheDocument();
   });
 });

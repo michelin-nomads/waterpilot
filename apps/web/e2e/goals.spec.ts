@@ -44,7 +44,6 @@ test('a guest checks a goal against their baseline, saves it, and sees an imposs
   page,
 }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Continue as guest' }).click();
   await page.getByRole('button', { name: 'Start exploring' }).click();
   await page.getByRole('button', { name: 'Use the synthetic demo area' }).click();
   await enter(page, 'DELIVERED_SUPPLY', '1', 'MLD', 'Utility monthly report');

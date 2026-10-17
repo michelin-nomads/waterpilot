@@ -6,6 +6,7 @@ import { EmptyState, ErrorState } from '../../components/StatePanel/StatePanel';
 import { CommunityCard } from './CommunityCard';
 import { useCommunityDirectory, type DirectoryView } from './useCommunityDirectory';
 import styles from './Workspace.module.scss';
+import { WorkspacePage } from './WorkspacePage';
 import { WorkspaceToolbar } from './WorkspaceToolbar';
 
 const VIEWS: ReadonlyArray<{ id: DirectoryView; label: string }> = [
@@ -85,18 +86,22 @@ export default function CommunitiesTab() {
   }
 
   return (
-    <>
+    <WorkspacePage
+      title="Communities"
+      subtitle="Find community water plans, join one, or start your own."
+      action={
+        <ButtonLink to="/communities/new" startIcon="plus">
+          Create a community
+        </ButtonLink>
+      }
+    >
       <WorkspaceToolbar
         searchLabel="Search communities"
         search={directory.search}
         onSearchChange={directory.setSearch}
         showArchived={directory.showArchived}
         onShowArchivedChange={directory.setShowArchived}
-      >
-        <ButtonLink to="/communities/new" variant="secondary">
-          Create a community
-        </ButtonLink>
-      </WorkspaceToolbar>
+      />
       <div className={styles.toolbar} role="group" aria-label="Community view">
         {VIEWS.map((item) => (
           <Button
@@ -146,6 +151,6 @@ export default function CommunitiesTab() {
         </Notice>
       )}
       {body}
-    </>
+    </WorkspacePage>
   );
 }

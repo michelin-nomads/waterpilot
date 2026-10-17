@@ -59,6 +59,8 @@ export interface CoordinatorDeps {
    * Defaults to true.
    */
   restore?: boolean;
+  /** In-memory state handed over by this visit's guest after authentication. */
+  handover?: CoordinatorState;
   /** Called after the server acknowledges a change; `inputsChanged` when derived data is stale. */
   onSaved?: (session: SessionState, inputsChanged: boolean) => void;
 }
@@ -110,11 +112,17 @@ export class SessionCoordinator {
   private persistChain: Promise<void> = Promise.resolve();
   private disposed = false;
   private restorable: boolean;
+  private handover: CoordinatorState | undefined;
 
   constructor(private readonly deps: CoordinatorDeps) {
     this.restorable = deps.restore ?? true;
+    this.handover = deps.handover;
     this.now = deps.now ?? Date.now;
     this.online = deps.online ?? (() => navigator.onLine);
+    if (deps.handover?.status === 'ready') {
+      this.state = { ...deps.handover };
+      this.editedAt = isEmptyPatch(this.state.pending) ? null : this.now();
+    }
   }
 
   get uid(): string {
@@ -196,7 +204,23 @@ export class SessionCoordinator {
       this.set({ status: 'none' });
       return;
     }
-    const record = await this.recoveryRecord();
+    // Prefer the live handoff over IndexedDB: its last write may still be queued.
+    const handover = this.handover;
+    this.handover = undefined;
+    const record =
+      handover?.status === 'ready' && handover.server
+        ? {
+            key: this.recordKey,
+            uid: this.deps.uid,
+            accountKind: this.deps.accountKind,
+            sessionId: handover.server.id,
+            base: handover.server,
+            pending: handover.pending,
+            editedAt: isEmptyPatch(handover.pending) ? null : this.now(),
+            writtenAt: this.now(),
+            expiresAt: this.now() + RECOVERY_TTL_MS,
+          }
+        : await this.recoveryRecord();
     let current: SessionState | null;
     try {
       current = await this.deps.transport.current();
@@ -225,6 +249,7 @@ export class SessionCoordinator {
       const ownRecord = record?.uid === this.deps.uid ? record : null;
       if (ownRecord) void this.deps.recovery.delete(ownRecord.key);
       this.set({
+        ...INITIAL,
         status: 'none',
         message:
           ownRecord && ownRecord.editedAt !== null
@@ -240,7 +265,7 @@ export class SessionCoordinator {
     const recovered =
       record && record.sessionId === current.id && record.editedAt !== null ? record : null;
     if (!recovered) {
-      this.set({ status: 'ready', server: current });
+      this.set({ ...INITIAL, status: 'ready', server: current });
       return;
     }
     this.editedAt = recovered.editedAt;
