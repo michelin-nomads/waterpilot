@@ -7,14 +7,14 @@ import { PlanInputNotice } from './PlanInputNotice';
 import styles from './StagePage.module.scss';
 
 interface StagePageProps {
-  stageId: PlanningStage['id'];
+  stageId: PlanningStage['id'] | 'baseline';
   children: ReactNode;
   title?: string;
   subtitle?: string;
   actions?: ReactNode;
 }
 
-/** Standard frame for a planning stage: "Step N of 5", title and subtitle. */
+/** Standard frame for a planning stage: "Step N of 6", title and subtitle. */
 export function StagePage({ stageId, children, title, subtitle, actions }: StagePageProps) {
   const { stage, index } = getStage(stageId);
   return (
@@ -34,7 +34,7 @@ export function StagePage({ stageId, children, title, subtitle, actions }: Stage
 }
 
 interface StageNotBuiltProps {
-  stageId: PlanningStage['id'];
+  stageId: PlanningStage['id'] | 'baseline';
   /** What this stage will do once built, in user terms. */
   capabilities: readonly string[];
 }

@@ -34,8 +34,7 @@ interface Props {
 }
 
 /**
- * The agent's what-if tool, in the agent pane only (Traditional mode has no what-if
- * controls). Previewing checks a scenario against the same baseline without saving
+ * The shared scenario editor. Previewing checks a scenario against the same baseline without saving
  * anything; applying saves it with the session, so plans are compared under it and the
  * chosen plan is cleared. A scenario parsed from words applies only once confirmed.
  */
@@ -116,11 +115,8 @@ export function WhatIfPanel({ sessionId, revision, scenario, saved, pending, onS
         </Badge>
       </div>
       <p className={styles.muted}>
-        The agent&apos;s what-if tool. No language model is connected, so enter the change directly:
-        demand, supply or rainfall, as a share of today&apos;s value or a set value. The result is
-        the same deterministic calculation the agent&apos;s tools return. Previewing saves nothing
-        and leaves your baseline and chosen plan as they are. Applying compares plans again under
-        the what-if and clears a chosen plan.
+        Change demand, supply or rainfall to test a possible future. Preview first, then apply the
+        scenario to use it in plan comparison. Your baseline stays unchanged.
       </p>
       {awaiting && scenario && (
         <Notice kind="stale" title="Confirm the what-if the agent prepared" announce={false}>
@@ -186,7 +182,7 @@ export function WhatIfPanel({ sessionId, revision, scenario, saved, pending, onS
           Preview
         </Button>
         <Button onClick={apply} loading={pending} disabled={!unsaved || pending}>
-          Apply to plans
+          Apply scenario
         </Button>
         {scenario && (
           <Button

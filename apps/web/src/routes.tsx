@@ -2,6 +2,7 @@ import type { ComponentType } from 'react';
 import { Navigate, type RouteObject } from 'react-router-dom';
 
 import { env } from './config/env';
+import { SHOW_COMMUNITY_BASELINE } from './features/planning/visibility';
 import AppShell from './shell/AppShell';
 import { LaunchScreen } from './shell/LaunchScreen';
 import { NotFoundPage, RouteError } from './shell/RouteStatus';
@@ -37,15 +38,17 @@ export const routes: RouteObject[] = [
               { path: 'area', lazy: lazyPage(() => import('./features/area')) },
               {
                 path: 'baseline/:section?',
-                lazy: lazyPage(() => import('./features/area/BaselinePage')),
+                ...(SHOW_COMMUNITY_BASELINE
+                  ? { lazy: lazyPage(() => import('./features/area/BaselinePage')) }
+                  : { element: <Navigate to="/area" replace /> }),
               },
               { path: 'reports/review', lazy: lazyPage(() => import('./features/reports/Review')) },
               { path: 'goals', lazy: lazyPage(() => import('./features/goals')) },
               { path: 'plans', lazy: lazyPage(() => import('./features/plans')) },
+              { path: 'scenarios', lazy: lazyPage(() => import('./features/plans/ScenarioPage')) },
+              { path: 'make-it-happen', lazy: lazyPage(() => import('./features/funding')) },
             ],
           },
-          // What-if is a workspace panel now (ADR 0002); keep old links working.
-          { path: 'scenarios', element: <Navigate to="/plans" replace /> },
           // Everything below belongs to a signed-in account; guests can only plan.
           {
             element: <RequireAccount />,
@@ -57,7 +60,6 @@ export const routes: RouteObject[] = [
               },
               { path: 'dashboard', element: <Navigate to="/reports" replace /> },
               // Optional branches retain their existing public URLs, outside the planner.
-              { path: 'make-it-happen', lazy: lazyPage(() => import('./features/funding')) },
               { path: 'tracking', lazy: lazyPage(() => import('./features/tracking')) },
               { path: 'tracking/:projectId', lazy: lazyPage(() => import('./features/tracking')) },
               { path: 'funding', element: <Navigate to="/make-it-happen" replace /> },

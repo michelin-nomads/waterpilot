@@ -53,6 +53,9 @@ async function renderPlan(
     stage: stage as never,
     mode,
     ...(stage !== 'UNDERSTAND' ? { areaId: 'area-1', baselineReviewed: true } : {}),
+    ...(['GOAL', 'COMPARE', 'REVIEW'].includes(stage)
+      ? { scenario: { adjustments: [], confirmed: true } }
+      : {}),
     ...(['COMPARE', 'REVIEW'].includes(stage)
       ? { goal: { kind: 'REDUCE_SHORTAGE' as const } }
       : {}),
@@ -228,9 +231,10 @@ describe('communities page', () => {
     const title = screen.getByRole('heading', { level: 1, name: 'Communities' });
     expect(title).toBeVisible();
     expect(screen.queryByRole('navigation', { name: 'Workspace' })).not.toBeInTheDocument();
-    expect(
-      screen.getByRole('link', { name: 'Create a community' }),
-    ).toHaveAttribute('href', '/communities/new');
+    expect(screen.getByRole('link', { name: 'Create a community' })).toHaveAttribute(
+      'href',
+      '/communities/new',
+    );
     expect(
       within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('link', {
         name: 'Communities',
@@ -427,14 +431,14 @@ describe('application shell', () => {
   it('redirects a direct future-stage URL to the first incomplete step', async () => {
     const { router } = await renderPlan('/plans');
     expect(router.state.location.pathname).toBe('/area');
-    const stages = screen.getByRole('navigation', { name: 'Planning stages' });
+    const stages = await screen.findByRole('navigation', { name: 'Planning stages' });
     expect(within(stages).getAllByRole('link')).toHaveLength(1);
-    expect(stages.querySelectorAll('[aria-disabled="true"]')).toHaveLength(4);
+    expect(stages.querySelectorAll('[aria-disabled="true"]')).toHaveLength(5);
   });
 
   it('marks the first stage as the current step', async () => {
     await renderPlan('/area');
-    const stages = screen.getByRole('navigation', { name: 'Planning stages' });
+    const stages = await screen.findByRole('navigation', { name: 'Planning stages' });
     expect(screen.getByRole('region', { name: 'Workspace' })).toContainElement(stages);
     expect(
       within(screen.getByRole('link', { name: 'WaterPilot home' }).closest('header')!).getByRole(
@@ -443,13 +447,13 @@ describe('application shell', () => {
       ),
     ).toBeInTheDocument();
     const links = within(stages).getAllByRole('link');
-    expect(links.map((l) => l.textContent)).toEqual(['1Location']);
-    expect(stages.querySelectorAll('[aria-disabled="true"]')).toHaveLength(4);
-    expect(within(stages).getByRole('link', { name: /location/i })).toHaveAttribute(
+    expect(links.map((l) => l.textContent)).toEqual(['1Understand Your Area']);
+    expect(stages.querySelectorAll('[aria-disabled="true"]')).toHaveLength(5);
+    expect(within(stages).getByRole('link', { name: /Understand Your Area/i })).toHaveAttribute(
       'aria-current',
       'step',
     );
-    expect(screen.getByText('Step 1 of 5', { selector: 'p:not(nav p)' })).toBeInTheDocument();
+    expect(screen.getByText('Step 1 of 6', { selector: 'p:not(nav p)' })).toBeInTheDocument();
     expect(document.title).toBe('Understand your area · WaterPilot');
   });
 
@@ -468,8 +472,8 @@ describe('application shell', () => {
     expect(within(primary).getByRole('link', { name: 'Reports' })).not.toHaveAttribute(
       'aria-current',
     );
-    const stages = screen.getByRole('navigation', { name: 'Planning stages' });
-    expect(within(stages).getByRole('link', { name: 'Review' })).toHaveAttribute(
+    const stages = await screen.findByRole('navigation', { name: 'Planning stages' });
+    expect(within(stages).getByRole('link', { name: 'Take Action' })).toHaveAttribute(
       'aria-current',
       'step',
     );
@@ -482,17 +486,24 @@ describe('application shell', () => {
     expect(screen.queryByRole('link', { name: 'Communities' })).not.toBeInTheDocument();
   });
 
-  it('has no separate What-if page: /scenarios redirects into the workspace', async () => {
+  it('opens scenario testing as its own planning step', async () => {
     const { router } = await renderPlan('/scenarios', { stage: 'COMPARE' });
-    expect(router.state.location.pathname).toBe('/plans');
-    expect(screen.queryByRole('link', { name: /future scenario/i })).not.toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/scenarios');
+    expect(await screen.findByRole('heading', { name: 'Test a Future Scenario' })).toBeVisible();
   });
 
   it('keeps the old /funding link working by redirecting to Make It Happen', async () => {
-    const router = await renderAt('/funding', new FakeAuthBackend(permanent()));
+    const sessions = new FakeSessionServer();
+    sessions.seed('user-1', {
+      areaId: 'area-1',
+      baselineReviewed: true,
+      goal: { kind: 'REDUCE_SHORTAGE' },
+      selectedPlanOptionId: 'pln_saved',
+    });
+    const router = await renderAt('/funding', new FakeAuthBackend(permanent()), sessions);
     expect(router.state.location.pathname).toBe('/make-it-happen');
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Funding opportunities' }),
+      await screen.findByRole('heading', { level: 1, name: 'Make it Happen' }),
     ).toBeInTheDocument();
   });
 
@@ -505,7 +516,7 @@ describe('application shell', () => {
 
   it('moves focus to the new page heading after navigation', async () => {
     await renderPlan('/area', { stage: 'GOAL' });
-    const stages = screen.getByRole('navigation', { name: 'Planning stages' });
+    const stages = await screen.findByRole('navigation', { name: 'Planning stages' });
     fireEvent.click(within(stages).getByRole('link', { name: /goal/i }));
     const heading = await screen.findByRole('heading', {
       level: 1,
@@ -659,16 +670,31 @@ describe('planning modes', () => {
 });
 
 describe('corrected journey compatibility', () => {
+  it('hides a direct baseline URL and unlocks scenarios without marking a baseline reviewed', async () => {
+    const sessions = new FakeSessionServer();
+    sessions.seed('guest-1', { areaId: 'area-1', baselineReviewed: false });
+    const router = await renderAt('/baseline/overview', new FakeAuthBackend(guest()), sessions);
+    await screen.findByRole('heading', { level: 1, name: 'Understand your area' });
+    expect(router.state.location.pathname).toBe('/area');
+    expect(screen.queryByRole('heading', { name: 'Your water baseline' })).not.toBeInTheDocument();
+    const steps = screen.getByRole('navigation', { name: 'Planning stages' });
+    expect(within(steps).getByRole('link', { name: 'Test a Future Scenario' })).toHaveAttribute(
+      'href',
+      '/scenarios',
+    );
+    expect(sessions.active('guest-1')?.baselineReviewed).toBe(false);
+  });
   it.each([
-    ['BASELINE', '/baseline'],
-    ['BASELINE_INPUTS', '/baseline'],
-    ['BASELINE_OVERVIEW', '/baseline/overview'],
+    ['BASELINE', '/area'],
+    ['BASELINE_INPUTS', '/area'],
+    ['BASELINE_OVERVIEW', '/area'],
+    ['SCENARIO', '/scenarios'],
     ['REVIEW', '/reports/review'],
     ['MAKE_IT_HAPPEN', '/make-it-happen'],
     ['TRACK', '/tracking'],
   ] as const)('recovers %s without creating another session', async (stage, path) => {
     expect(pathForSessionStage(stage)).toBe(path);
-    const isBranch = stage === 'MAKE_IT_HAPPEN' || stage === 'TRACK';
+    const isBranch = stage === 'TRACK';
     // The optional branches belong to a signed-in account; the planner is open to guests.
     const uid = isBranch ? 'user-1' : 'guest-1';
     const sessions = new FakeSessionServer();
@@ -689,11 +715,11 @@ describe('corrected journey compatibility', () => {
     if (isBranch) {
       expect(screen.queryByRole('navigation', { name: 'Planning stages' })).not.toBeInTheDocument();
     } else {
-      expect(sessionStageForPath(path)).toBe(stage === 'BASELINE_INPUTS' ? 'BASELINE' : stage);
+      expect(sessionStageForPath(path)).toBe(stage.startsWith('BASELINE') ? 'UNDERSTAND' : stage);
       expect(screen.getByRole('navigation', { name: 'Planning stages' })).toBeInTheDocument();
       await screen.findByRole('radio', { name: /WaterPilot Agent: Plan with AI assistance/ });
     }
-    expect(sessions.active(uid)?.stage).toBe(stage === 'BASELINE_INPUTS' ? 'BASELINE' : stage);
+    expect(sessions.active(uid)?.stage).toBe(stage.startsWith('BASELINE') ? 'UNDERSTAND' : stage);
     expect(sessions.calls.filter((call) => call.startsWith('create'))).toEqual([]);
     expect(stageForPath('/reports/reviewer')).toBeNull();
     expect(stageForPath('/area-other')).toBeNull();

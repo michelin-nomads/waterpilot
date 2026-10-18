@@ -19,6 +19,8 @@ import { useGraphQLQuery } from '../../graphql/hooks';
 import { queryKeys } from '../../graphql/queryKeys';
 import { usePlanningSession } from '../../session/sessionContext';
 import { PageHeader } from '../../shell/PageHeader';
+import { SHOW_COMMUNITY_BASELINE } from '../planning/visibility';
+import { getStage, PLANNING_STAGES } from '../../shell/stages';
 import {
   formatDays,
   formatMetric,
@@ -68,7 +70,10 @@ export default function ReviewPage() {
   if (finalized) {
     return (
       <div className={styles.reviewPage}>
-        <PageHeader title="Review your plan" />
+        <PageHeader
+          eyebrow={`Step ${getStage('review').index + 1} of ${PLANNING_STAGES.length}`}
+          title="Review your plan"
+        />
         <LoadingRegion label="Opening your report">
           <Skeleton shape="block" />
         </LoadingRegion>
@@ -79,7 +84,10 @@ export default function ReviewPage() {
   if (session.state.status === 'loading') {
     return (
       <div className={styles.reviewPage}>
-        <PageHeader title="Review your plan" />
+        <PageHeader
+          eyebrow={`Step ${getStage('review').index + 1} of ${PLANNING_STAGES.length}`}
+          title="Review your plan"
+        />
         <LoadingRegion label="Loading your current plan">
           <Skeleton shape="block" />
         </LoadingRegion>
@@ -90,7 +98,10 @@ export default function ReviewPage() {
   if (!current) {
     return (
       <div className={styles.reviewPage}>
-        <PageHeader title="Review your plan" />
+        <PageHeader
+          eyebrow={`Step ${getStage('review').index + 1} of ${PLANNING_STAGES.length}`}
+          title="Review your plan"
+        />
         <EmptyReview />
       </div>
     );
@@ -119,6 +130,7 @@ export default function ReviewPage() {
   return (
     <div className={styles.reviewPage}>
       <PageHeader
+        eyebrow={`Step ${getStage('review').index + 1} of ${PLANNING_STAGES.length}`}
         title="Review your plan"
         subtitle="Check the location, goal, selected plan and assumptions before saving a read-only report."
       />
@@ -246,9 +258,11 @@ export default function ReviewPage() {
                 <p className={styles.meta}>Before you save</p>
                 <h2 id="review-assumptions-title">Key assumptions and limitations</h2>
               </div>
-              <ButtonLink to="/baseline/overview" variant="secondary">
-                Edit baseline
-              </ButtonLink>
+              {SHOW_COMMUNITY_BASELINE && (
+                <ButtonLink to="/baseline/overview" variant="secondary">
+                  Edit baseline
+                </ButtonLink>
+              )}
             </div>
             {found!.planComparison.assumptions.length > 0 ? (
               <ul className={styles.assumptions}>
@@ -301,8 +315,8 @@ export default function ReviewPage() {
               </div>
             )}
             <div className={styles.actions}>
-              <ButtonLink to="/plans" variant="secondary">
-                Back to plans
+              <ButtonLink to="/make-it-happen" variant="secondary">
+                Back to funding
               </ButtonLink>
               <Button
                 loading={isPending}

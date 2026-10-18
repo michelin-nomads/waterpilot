@@ -16,6 +16,7 @@ import type { SessionState } from '../../session/sessionState';
 import { AuthTestProviders } from '../../test/AuthTestProviders';
 import { FakeAuthBackend, permanent } from '../../test/fakeAuth';
 import { FakeSessionServer } from '../../test/fakeSession';
+import ScenarioPage from './ScenarioPage';
 import AgentScenario from './AgentScenario';
 import PlansPage from './index';
 import {
@@ -481,6 +482,41 @@ function scenarioReply(scenario: ScenarioComparisonFieldsFragment) {
   };
 }
 
+describe('Scenario planning step', () => {
+  it('shows an applied scenario in Step 2 and can remove it through the session', async () => {
+    handlers.SessionScenario = () => scenarioReply(APPLIED);
+    const sessions = renderWith(<ScenarioPage />, {
+      baselineReviewed: true,
+      goal: null,
+      scenario: {
+        adjustments: [
+          { parameter: 'demand', change: 'INCREASE_BY', quantity: { value: '0.1', unit: 'RATIO' } },
+        ],
+        confirmed: true,
+      },
+    });
+    expect(await screen.findByRole('table', { name: 'Against the same baseline' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Continue with saved scenario' })).toBeEnabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Remove what-if' }));
+    await waitFor(() =>
+      expect(sessions.applied.some((entry) => entry.patch.scenario === null)).toBe(true),
+    );
+  });
+  it('offers scenario testing before a goal is set and records an explicit baseline choice', async () => {
+    handlers.SessionScenario = () => scenarioReply(NO_SCENARIO);
+    const sessions = renderWith(<ScenarioPage />, { baselineReviewed: true, goal: null });
+    expect(await screen.findByRole('heading', { name: 'Test a Future Scenario' })).toBeVisible();
+    expect(await screen.findByRole('button', { name: 'Preview' })).toBeEnabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Continue with current baseline' }));
+    await waitFor(() =>
+      expect(sessions.applied.some((entry) => entry.patch.scenario?.confirmed)).toBe(true),
+    );
+    expect(
+      sessions.applied.find((entry) => entry.patch.scenario)?.patch.scenario?.adjustments,
+    ).toEqual([]);
+  });
+});
+
 describe('plansFormat', () => {
   it('formats exact values once, for display', () => {
     expect(formatMetric(n('3/73', '0.0410958904109589041095890411'), 'RATIO')).toBe('4.1%');
@@ -661,82 +697,9 @@ describe('PlansPage', () => {
     renderPlans();
     await screen.findByRole('list', { name: 'Feasible plans' });
     expect(screen.queryByRole('button', { name: 'Preview' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Apply to plans' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Apply scenario' })).not.toBeInTheDocument();
     expect(screen.queryByRole('group', { name: 'Water demand' })).not.toBeInTheDocument();
     expect(screen.queryByText('What-if from Agent mode')).not.toBeInTheDocument();
-  });
-
-  it('shows an agent-generated what-if read-only, labelled, and offers Agent mode', async () => {
-    handlers.PlanComparison = () => reply(comparison(), APPLIED);
-    const sessions = renderPlans({
-      goal: GOAL,
-      inputsRevision: 1,
-      scenario: {
-        adjustments: [
-          {
-            parameter: 'demand',
-            change: 'INCREASE_BY',
-            quantity: { value: '0.1', unit: 'RATIO' },
-          },
-        ],
-        interpretedFrom: null,
-        confirmed: true,
-      },
-    });
-    const card = (await screen.findByText('What-if from Agent mode')).closest('section')!;
-    expect(within(card).getByText('Agent-generated')).toBeInTheDocument();
-    expect(within(card).getByText('+1,62,000 L/day')).toBeInTheDocument();
-    expect(within(card).getByText(/not by a language model/)).toBeInTheDocument();
-    expect(within(card).queryByRole('button', { name: 'Preview' })).not.toBeInTheDocument();
-    fireEvent.click(within(card).getByRole('button', { name: 'Open Agent mode' }));
-    await waitFor(() => expect(sessions.applied.at(-1)?.patch).toEqual({ mode: 'AGENT' }));
-  });
-
-  it('returns from an applied scenario to the original baseline through the session', async () => {
-    handlers.PlanComparison = () => reply(comparison(), APPLIED, 'NONE');
-    const scenario = {
-      adjustments: [
-        {
-          parameter: 'rainfall',
-          change: 'DECREASE_BY' as const,
-          quantity: { value: '0.2', unit: 'RATIO' as const },
-        },
-      ],
-      interpretedFrom: null,
-      confirmed: true,
-    };
-    const sessions = renderPlans({ goal: GOAL, inputsRevision: 1, scenario });
-    const table = await screen.findByRole('table', { name: 'Against the same baseline' });
-    expect(within(table).getByRole('columnheader', { name: 'Baseline' })).toBeInTheDocument();
-    expect(within(table).getByRole('columnheader', { name: 'What-if' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Return to baseline' }));
-    await waitFor(() => expect(sessions.applied.at(-1)?.patch).toEqual({ scenario: null }));
-  });
-
-  it('requires the explicit Apply this scenario action for a pending scenario', async () => {
-    const waiting: ScenarioComparisonFieldsFragment = {
-      ...NO_SCENARIO,
-      status: 'awaiting_confirmation',
-    };
-    handlers.PlanComparison = () => reply(comparison(), waiting);
-    const scenario = {
-      adjustments: [
-        {
-          parameter: 'rainfall',
-          change: 'DECREASE_BY' as const,
-          quantity: { value: '0.2', unit: 'RATIO' as const },
-        },
-      ],
-      interpretedFrom: 'What if rainfall falls by 20%?',
-      confirmed: false,
-    };
-    const sessions = renderPlans({ goal: GOAL, inputsRevision: 1, scenario });
-    fireEvent.click(await screen.findByRole('button', { name: 'Apply this scenario' }));
-    await waitFor(() =>
-      expect(sessions.applied.at(-1)?.patch).toEqual({
-        scenario: { ...scenario, confirmed: true },
-      }),
-    );
   });
 
   it('saves the chosen plan through the session', async () => {
@@ -754,9 +717,9 @@ describe('PlansPage', () => {
   it('lets the user continue once a plan is chosen and still current', async () => {
     handlers.PlanComparison = () => reply(comparison(), NO_SCENARIO, 'CURRENT');
     renderPlans({ goal: GOAL, inputsRevision: 1, selectedPlanOptionId: 'opt_a' });
-    expect(await screen.findByRole('link', { name: /continue to review/i })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: /continue to funding/i })).toHaveAttribute(
       'href',
-      '/reports/review',
+      '/make-it-happen',
     );
     expect(screen.queryByRole('button', { name: /choose again/i })).not.toBeInTheDocument();
   });
@@ -771,7 +734,7 @@ describe('PlansPage', () => {
     expect(notice).toHaveAttribute('data-notice', 'caution');
     expect(notice).toHaveTextContent(/changed its wider-system impact/i);
     // Cannot continue with a stale selection.
-    expect(screen.queryByRole('link', { name: /continue to review/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /continue to funding/i })).not.toBeInTheDocument();
     // Re-choosing stores the current assessment through the session.
     fireEvent.click(within(notice as HTMLElement).getByRole('button', { name: /choose again/i }));
     await waitFor(() =>
@@ -783,7 +746,7 @@ describe('PlansPage', () => {
     handlers.PlanComparison = () => reply(comparison(), NO_SCENARIO, 'LEGACY');
     renderPlans({ goal: GOAL, inputsRevision: 1, selectedPlanOptionId: 'old_option' });
     await screen.findByRole('list', { name: 'Feasible plans' });
-    expect(screen.queryByRole('link', { name: /continue to review/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /continue to funding/i })).not.toBeInTheDocument();
     expect(screen.getByText(/no longer one of the current options/i)).toBeInTheDocument();
   });
 
@@ -794,7 +757,7 @@ describe('PlansPage', () => {
       '[data-notice]',
     )!;
     expect(notice).toHaveAttribute('data-notice', 'caution');
-    expect(screen.queryByRole('link', { name: /continue to review/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /continue to funding/i })).not.toBeInTheDocument();
     // There is no stored option to re-choose; the person must pick from the list.
     expect(screen.queryByRole('button', { name: /choose again/i })).not.toBeInTheDocument();
   });
@@ -957,7 +920,7 @@ describe('AgentScenario (agent what-if tool)', () => {
       scenario: null,
       selectedPlanOptionId: 'opt_b',
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Apply to plans' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Apply scenario' }));
     await waitFor(() =>
       expect(sessions.applied.at(-1)?.patch).toEqual({
         scenario: {

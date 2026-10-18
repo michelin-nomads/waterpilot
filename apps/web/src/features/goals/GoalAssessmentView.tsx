@@ -1,9 +1,10 @@
 import { useId } from 'react';
 
-import { Badge } from '../../components';
+import { Badge, Icon } from '../../components';
 import type { GoalAssessmentFieldsFragment } from '../../graphql/generated/graphql';
 import { FIT_LABEL, OUTCOME } from './goalLabels';
 import styles from './Goals.module.scss';
+import { GoalCheckVisuals } from './GoalCheckVisuals';
 
 type Fit = GoalAssessmentFieldsFragment['interventions'][number];
 
@@ -94,67 +95,93 @@ export function GoalAssessmentView({
   const Sub = `h${headingLevel + 1}` as 'h3' | 'h4';
   const relevant = a.interventions.filter((f) => f.relevant);
   const findings = [...a.constraints, ...a.conflicts];
+  const moreSteps = compact ? a.nextSteps : a.nextSteps.slice(1);
   return (
-    <section className={styles.assessment} aria-labelledby={titleId} data-goal-outcome={a.outcome}>
+    <section
+      className={styles.assessment}
+      aria-labelledby={titleId}
+      data-goal-outcome={a.outcome}
+      data-compact={compact}
+    >
       <div className={styles.assessmentHead}>
         <Heading id={titleId} className={styles.subTitle}>
-          Goal check
+          <Icon name="target" /> Goal check
         </Heading>
         <OutcomeBadge outcome={a.outcome} />
       </div>
-      <p className={styles.summary}>{a.summary}</p>
-      <div className={styles.block}>
-        <Sub className={styles.blockTitle}>Target against your baseline</Sub>
-        <p data-target-outcome={a.target.outcome}>{a.target.message}</p>
-        {a.target.caveats.length > 0 && (
-          <ul className={styles.list}>
-            {a.target.caveats.map((c) => (
-              <li key={c}>{c}</li>
-            ))}
-          </ul>
-        )}
-      </div>
-      {findings.length > 0 && (
-        <div className={styles.block}>
-          <Sub className={styles.blockTitle}>Constraints and conflicts</Sub>
-          <ul className={styles.list}>
-            {findings.map((f) => (
-              <li key={f.code} data-finding={f.code} data-outcome={f.outcome ?? 'NOTE'}>
-                {f.outcome ? <strong>{OUTCOME[f.outcome].label}: </strong> : null}
-                {f.message}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      {a.nextSteps.length > 0 && (
-        <div className={styles.block}>
-          <Sub className={styles.blockTitle}>To assess this further</Sub>
-          <ul className={styles.list}>
-            {a.nextSteps.map((s) => (
-              <li key={s}>{s}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-      {!compact && (
-        <div className={styles.block}>
-          <Sub className={styles.blockTitle}>How each measure fits</Sub>
-          {relevant.length === 0 ? (
-            <p className={styles.muted}>No catalogue measure serves these goals yet.</p>
-          ) : (
-            <ul className={styles.measures}>
-              {relevant.map((f) => (
-                <MeasureFit key={f.interventionId} fit={f} shortlist={shortlist} />
-              ))}
-            </ul>
-          )}
-          <p className={styles.muted}>
-            Catalogue {a.catalogueVersion}. Costs and build times are only ever your own estimates:
-            no sourced figures exist for this location, and effects are not modelled yet.
+      <p className={styles.checkSummary}>{a.summary}</p>
+      {!compact && <GoalCheckVisuals assessment={a} />}
+      {!compact && a.nextSteps.length > 0 && (
+        <div className={styles.nextAction}>
+          <Icon name="arrow-right" size="sm" />
+          <p>
+            <strong>Next step</strong> {a.nextSteps[0]}
           </p>
         </div>
       )}
+      <details className={styles.checkDetails} open={compact || undefined}>
+        <summary>
+          <span>View check details</span>
+          <Icon name="chevron-down" size="sm" />
+        </summary>
+        <div className={styles.checkDetailsBody}>
+          <div className={styles.assessmentGrid}>
+            <div className={styles.block}>
+              <Sub className={styles.blockTitle}>Target against your baseline</Sub>
+              <p data-target-outcome={a.target.outcome}>{a.target.message}</p>
+              {a.target.caveats.length > 0 && (
+                <ul className={styles.list}>
+                  {a.target.caveats.map((c) => (
+                    <li key={c}>{c}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            {findings.length > 0 && (
+              <div className={styles.block}>
+                <Sub className={styles.blockTitle}>Constraints and conflicts</Sub>
+                <ul className={styles.list}>
+                  {findings.map((f) => (
+                    <li key={f.code} data-finding={f.code} data-outcome={f.outcome ?? 'NOTE'}>
+                      {f.outcome ? <strong>{OUTCOME[f.outcome].label}: </strong> : null}
+                      {f.message}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {moreSteps.length > 0 && (
+              <div className={styles.block}>
+                <Sub className={styles.blockTitle}>To assess this further</Sub>
+                <ul className={styles.list}>
+                  {moreSteps.map((s) => (
+                    <li key={s}>{s}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+          {!compact && (
+            <div className={styles.measureSection}>
+              <Sub className={styles.blockTitle}>How each measure fits</Sub>
+              {relevant.length === 0 ? (
+                <p className={styles.muted}>No catalogue measure serves these goals yet.</p>
+              ) : (
+                <ul className={styles.measures}>
+                  {relevant.map((f) => (
+                    <MeasureFit key={f.interventionId} fit={f} shortlist={shortlist} />
+                  ))}
+                </ul>
+              )}
+              <p className={styles.muted}>
+                Catalogue {a.catalogueVersion}. Costs and build times are only ever your own
+                estimates: no sourced figures exist for this location, and effects are not modelled
+                yet.
+              </p>
+            </div>
+          )}
+        </div>
+      </details>
     </section>
   );
 }

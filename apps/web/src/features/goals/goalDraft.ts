@@ -172,9 +172,15 @@ export const PRESETS: readonly Preset[] = [
   },
   {
     id: 'groundwater',
-    title: 'Raise the groundwater level',
+    title: 'Groundwater depth of 10 m below ground',
     description: 'Recharge the ground. You can set a level in metres below ground.',
-    apply: (d) => ({ ...d, kind: 'IMPROVE_GROUNDWATER', mode: null, unit: null }),
+    apply: (d) => ({
+      ...d,
+      kind: 'IMPROVE_GROUNDWATER',
+      mode: 'ABSOLUTE_LEVEL',
+      unit: 'METRES_BELOW_GROUND',
+      targetValue: '10',
+    }),
   },
   {
     id: 'bills',
@@ -190,28 +196,40 @@ export const PRESETS: readonly Preset[] = [
   },
   {
     id: 'flooding',
-    title: 'Reduce local flooding',
+    title: 'At most 1 flood event per year',
     description: 'Slow and soak up storm water.',
-    apply: (d) => ({ ...d, kind: 'REDUCE_FLOOD_RISK', mode: null, unit: null }),
+    apply: (d) => ({
+      ...d,
+      kind: 'REDUCE_FLOOD_RISK',
+      mode: 'ABSOLUTE_LEVEL',
+      unit: 'COUNT',
+      targetValue: '1',
+    }),
   },
   {
     id: 'quality',
-    title: 'Improve water quality',
+    title: 'Turbidity target of 5 NTU',
     description: 'Set a level for one parameter, such as turbidity.',
     apply: (d) => ({
       ...d,
       kind: 'IMPROVE_WATER_QUALITY',
       mode: 'ABSOLUTE_LEVEL',
-      targetValue: '',
+      targetValue: '5',
       unit: 'NTU',
       targetParameter: 'turbidity',
     }),
   },
   {
     id: 'custom',
-    title: 'Something else',
+    title: '20% reduction in your chosen measure',
     description: 'Describe it in your own words, then confirm the wording.',
-    apply: (d) => ({ ...d, kind: 'CUSTOM', mode: null, unit: null, confirmed: false }),
+    apply: (d) => ({
+      ...d,
+      kind: 'CUSTOM',
+      mode: 'RELATIVE_REDUCTION',
+      unit: 'RATIO',
+      targetValue: '20',
+    }),
   },
 ];
 

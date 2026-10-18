@@ -70,7 +70,7 @@ export function GoalSummary({
             ? `${unit === 'RATIO' ? shiftDecimalRight(baseline, 2) : baseline} ${unit ? (UNIT_LABEL[unit] ?? unit) : ''}`
             : assessment
               ? 'Not available for this target'
-              : 'Check your goal to assess this target.'}
+              : 'Your baseline is assessed when you compare plans.'}
         </p>
         {assessment && (
           <Badge tone={OUTCOME[assessment.target.outcome].tone}>

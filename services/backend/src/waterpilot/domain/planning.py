@@ -161,6 +161,7 @@ class PlanningStage(StrEnum):
     BASELINE = "baseline"
     BASELINE_INPUTS = "baseline_inputs"
     BASELINE_OVERVIEW = "baseline_overview"
+    SCENARIO = "scenario"
     REVIEW = "review"
     GOAL = "goal"
     COMPARE = "compare"

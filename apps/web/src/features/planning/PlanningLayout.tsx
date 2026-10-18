@@ -143,7 +143,7 @@ export default function PlanningLayout() {
           hidden={!agentMode || (tabbed && pane !== 'conversation')}
         >
           <AgentPanel
-            showScenario={routeStage === 'COMPARE'}
+            showScenario={false}
             onUseTraditional={() => setMode('traditional')}
             onFocusWorkspace={() => setPane('workspace')}
           />

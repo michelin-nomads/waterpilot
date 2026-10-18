@@ -7,6 +7,7 @@ import { useGraphQLQuery } from '../../graphql/hooks';
 import { queryKeys } from '../../graphql/queryKeys';
 import { LocationStep } from '../location/LocationStep';
 import { LocationSummary } from '../location/LocationSummary';
+import { SHOW_COMMUNITY_BASELINE } from '../planning/visibility';
 import { usePlanningSession } from '../../session/sessionContext';
 
 /** Keep one editor mounted while confirmation updates the session's area. */
@@ -53,8 +54,11 @@ export function SavedAreaUnderstanding({
       {ready && !inputsPending && (
         <StepActions
           primary={
-            <Button onClick={() => navigate('/baseline')} endIcon="arrow-right">
-              Continue to baseline
+            <Button
+              onClick={() => navigate(SHOW_COMMUNITY_BASELINE ? '/baseline' : '/scenarios')}
+              endIcon="arrow-right"
+            >
+              {SHOW_COMMUNITY_BASELINE ? 'Continue to baseline' : 'Test a Future Scenario'}
             </Button>
           }
         />

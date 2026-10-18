@@ -15,6 +15,7 @@ import { FakeSessionServer } from '../../test/fakeSession';
 import { AgentPanel } from '../planning/AgentPanel';
 import { draftField, emptyDraft, fromGoalInput, PRESETS, toGoalInput } from './goalDraft';
 import GoalsPage from './index';
+import { GoalCheckVisuals } from './GoalCheckVisuals';
 import { goalBudgetLabel, goalDurationLabel } from './goalDisplay';
 
 const AREA = 'are_0000000000000000000000AREA';
@@ -159,6 +160,43 @@ async function choose(preset: RegExp, useExample = true) {
 }
 
 describe('goal draft', () => {
+  it('provides a complete editable numeric target for every goal kind', () => {
+    for (const preset of PRESETS) {
+      const draft = preset.apply({
+        ...emptyDraft('INR'),
+        description: 'Reuse more water',
+        confirmed: true,
+      });
+      expect(draft.mode).not.toBeNull();
+      expect(draft.unit).not.toBeNull();
+      expect(Number(draft.targetValue)).toBeGreaterThan(0);
+      expect(draft.description).toBe('Reuse more water');
+      expect(draft.confirmed).toBe(true);
+    }
+  });
+
+  it('charts returned percentage values and site counts, including a real zero baseline', () => {
+    render(
+      <GoalCheckVisuals
+        assessment={assessment({
+          target: { ...assessment().target, baseline: '0', targetLevel: '0.2', unit: 'RATIO' },
+          interventions: [
+            fit('one', 'One', 'FEASIBLE'),
+            fit('two', 'Two', 'INFEASIBLE'),
+            fit('three', 'Three', 'NOT_ASSESSABLE'),
+          ],
+        })}
+      />,
+    );
+    const target = screen.getByRole('figure', { name: 'Baseline and target comparison' });
+    expect(within(target).getByText('0%')).toBeVisible();
+    expect(within(target).getByText('20%')).toBeVisible();
+    expect(within(target).queryByText('Unavailable')).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('figure', { name: 'Site suitability: 1 fit, 1 ruled out, 1 need details' }),
+    ).toBeVisible();
+  });
+
   it('formats exact budget strings and custom durations without rounding the draft', () => {
     expect(goalBudgetLabel('12345678901234567890.25', 'INR')).toBe(
       '₹1,23,45,67,89,01,23,45,67,890.25',
@@ -346,7 +384,7 @@ describe('goal draft', () => {
 describe('GoalsPage', () => {
   it('shows all six outcomes and leaves numeric targets and deadlines unset until chosen', async () => {
     renderGoals();
-    expect(screen.getByText('Step 3 of 5')).toBeInTheDocument();
+    expect(screen.getByText('Step 3 of 6')).toBeInTheDocument();
     expect(
       await screen.findByRole('heading', { name: 'What would you like to improve?' }),
     ).toBeVisible();
@@ -366,86 +404,6 @@ describe('GoalsPage', () => {
     expect(screen.getByLabelText('Preferred implementation time')).toHaveValue('365');
   });
 
-  it('says plainly when a goal cannot be met as set, and why', async () => {
-    handlers.CheckGoal = () =>
-      checkReply(
-        assessment({
-          outcome: 'INFEASIBLE',
-          summary: 'This goal cannot be met as set.',
-          constraints: [
-            {
-              code: 'horizon_before_build',
-              message: 'The planning horizon ends before any measure could be built.',
-              outcome: 'INFEASIBLE',
-            },
-          ],
-          conflicts: [
-            {
-              code: 'objective_excluded',
-              message: 'Ruling out recharge leaves nothing that raises groundwater.',
-              outcome: 'INFEASIBLE',
-            },
-          ],
-        }),
-      );
-    renderGoals();
-    await choose(/tanker/i);
-    fireEvent.click(screen.getByRole('button', { name: /check goal/i }));
-
-    const view = await screen.findByRole('region', { name: /goal check/i });
-    expect(view).toHaveAttribute('data-goal-outcome', 'INFEASIBLE');
-    expect(within(view).getAllByText('Cannot be met as set').length).toBeGreaterThan(0);
-    expect(within(view).getByText(/horizon ends before/i)).toBeInTheDocument();
-    expect(within(view).getByText(/leaves nothing that raises groundwater/i)).toBeInTheDocument();
-    expect(screen.getByText(/checked, not saved yet/i)).toBeInTheDocument();
-    expect(lastGoal().target).toEqual({
-      mode: 'RELATIVE_REDUCTION',
-      quantity: { value: '0.3', unit: 'RATIO' },
-    });
-    expect(checks().at(-1)?.variables.sessionId).toBe('ses_1');
-  });
-
-  it('separates not-yet-assessable from impossible and lists what would settle it', async () => {
-    renderGoals();
-    await choose(/tanker/i);
-    fireEvent.click(screen.getByRole('button', { name: /check goal/i }));
-    const view = await screen.findByRole('region', { name: /goal check/i });
-    expect(view).toHaveAttribute('data-goal-outcome', 'NOT_ASSESSABLE');
-    expect(within(view).getAllByText('Not yet assessable').length).toBeGreaterThan(0);
-    expect(within(view).getByText(/record tanker deliveries/i)).toBeInTheDocument();
-    expect(within(view).queryByText(/confidence/i)).not.toBeInTheDocument();
-    expect(within(view).queryByText(/₹|\bINR\s*\d/)).not.toBeInTheDocument();
-  });
-
-  it('marks a check out of date as soon as the goal changes', async () => {
-    renderGoals();
-    await choose(/tanker/i);
-    fireEvent.click(screen.getByRole('button', { name: /check goal/i }));
-    await screen.findByRole('region', { name: /goal check/i });
-    fireEvent.change(screen.getByLabelText(/target \(%\)/i), { target: { value: '40' } });
-    expect(screen.getByText(/changed the goal after checking it/i)).toBeInTheDocument();
-    expect(screen.queryByRole('region', { name: /goal check/i })).not.toBeInTheDocument();
-  });
-
-  it('offers shortlisting only where the site meets a measure’s prerequisites', async () => {
-    renderGoals();
-    await choose(/tanker/i);
-    fireEvent.click(screen.getByRole('button', { name: /check goal/i }));
-    await screen.findByRole('region', { name: /goal check/i });
-    const box = (id: string) =>
-      within(document.querySelector(`[data-intervention="${id}"]`) as HTMLElement).getByRole(
-        'checkbox',
-        { name: /shortlist/i },
-      );
-    expect(box('recharge_well')).toBeDisabled();
-    expect(box('rooftop_rainwater_harvesting')).toBeEnabled();
-    fireEvent.click(box('rooftop_rainwater_harvesting'));
-    fireEvent.click(screen.getByRole('button', { name: /check goal/i }));
-    await waitFor(() =>
-      expect(lastGoal().preferredInterventions).toEqual(['rooftop_rainwater_harvesting']),
-    );
-  });
-
   it('shows server field errors on the field, opening its section', async () => {
     handlers.CheckGoal = () =>
       checkReply(null, [
@@ -456,7 +414,7 @@ describe('GoalsPage', () => {
       ]);
     const sessions = renderGoals();
     await choose(/tanker/i);
-    fireEvent.click(screen.getByRole('button', { name: /save goal/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Compare plans' }));
     const field = await screen.findByLabelText(/open or unpaved ground/i);
     expect(field).toBeVisible();
     expect(field).toHaveAccessibleDescription(/need open or unpaved ground/i);
@@ -467,7 +425,7 @@ describe('GoalsPage', () => {
     renderGoals();
     await choose(/tanker/i);
     fireEvent.change(screen.getByLabelText(/budget \(INR\)/i), { target: { value: '10,00,000' } });
-    fireEvent.click(screen.getByRole('button', { name: /save goal/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Compare plans' }));
     expect(await screen.findByRole('link', { name: /without commas/i })).toBeInTheDocument();
     expect(checks()).toHaveLength(0);
   });
@@ -476,17 +434,14 @@ describe('GoalsPage', () => {
     const sessions = renderGoals();
     await choose(/tanker/i);
     fireEvent.change(screen.getByLabelText(/budget \(INR\)/i), { target: { value: '1000000' } });
-    fireEvent.click(screen.getByRole('button', { name: /save goal/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Compare plans' }));
     await waitFor(() => expect(sessions.applied).toHaveLength(1));
     const goal = sessions.applied[0]?.patch.goal as GoalInput;
     expect(goal.budget).toEqual({ minorUnits: '100000000', currency: 'INR' });
     expect(goal.target?.quantity).toEqual({ value: '0.3', unit: 'RATIO' });
     expect(checks()).toHaveLength(1);
-    expect(await screen.findByRole('button', { name: /goal saved/i })).toBeDisabled();
-    await waitFor(() =>
-      expect(document.querySelector('[data-assessment-source="saved"]')).not.toBeNull(),
-    );
-    expect(screen.getByRole('button', { name: /compare plans/i })).toBeEnabled();
+    await waitFor(() => expect(screen.getByTestId('goal-route')).toHaveTextContent('/plans'));
+    expect(screen.queryByRole('button', { name: /save goal/i })).not.toBeInTheDocument();
   });
 
   it('checks and finishes saving before navigating to plan comparison', async () => {
@@ -557,7 +512,7 @@ describe('GoalsPage', () => {
     fireEvent.change(screen.getByLabelText(/Describe your goal/), {
       target: { value: 'Reuse water for the garden' },
     });
-    const confirm = screen.getByLabelText(/This wording is what I mean/);
+    const confirm = screen.getByLabelText(/Use this description as my planning goal/);
     fireEvent.click(confirm);
     expect(confirm).toBeChecked();
     fireEvent.change(screen.getByLabelText(/Describe your goal/), {
@@ -567,6 +522,63 @@ describe('GoalsPage', () => {
     fireEvent.click(screen.getByRole('radio', { name: /groundwater/i }));
     expect(screen.getByLabelText(/budget \(INR\)/i)).toHaveValue('800000');
     expect(screen.getByLabelText('Kind of target')).toHaveValue('');
+  });
+
+  it('updates section counts and marks conditional tariff and funding fields as required', async () => {
+    renderGoals();
+    await choose(/tanker/i, false);
+    const site = screen.getByRole('button', { name: /Site constraints/ });
+    expect(site).toHaveTextContent('Not added');
+    fireEvent.click(site);
+    fireEvent.change(screen.getByLabelText(/Roof area you can collect/), {
+      target: { value: '100' },
+    });
+    expect(site).toHaveTextContent('1 specified');
+    fireEvent.click(screen.getByRole('button', { name: /Water costs & funding/ }));
+    const price = screen.getByLabelText('Tanker price (currency amount)');
+    expect(price).not.toBeRequired();
+    fireEvent.change(price, { target: { value: '1000' } });
+    expect(price).toBeRequired();
+    expect(screen.getByLabelText(/Litres purchased for that price/)).toBeRequired();
+    fireEvent.click(screen.getByRole('button', { name: 'Add funding source' }));
+    expect(screen.getByLabelText(/Funding description/)).toBeRequired();
+    expect(screen.getByLabelText(/Funding evidence and date/)).not.toBeRequired();
+    expect(screen.getByRole('button', { name: /Water costs & funding/ })).toHaveTextContent(
+      '2 added',
+    );
+  });
+
+  it('labels optional sections and fills example targets without a separate helper', async () => {
+    renderGoals();
+    await choose(/groundwater/i, false);
+    expect(screen.getByRole('heading', { name: 'Optional planning details' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: /Help me set a target/i })).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(/budget \(INR\)/i), { target: { value: '800000' } });
+    fireEvent.click(screen.getByRole('button', { name: /Use example:/ }));
+    expect(screen.getByLabelText('Kind of target')).toHaveValue('ABSOLUTE_LEVEL');
+    expect(screen.getByLabelText(/Target \(m below ground\)/)).toHaveValue('10');
+    expect(screen.getByLabelText(/budget \(INR\)/i)).toHaveValue('800000');
+    expect(checks()).toHaveLength(0);
+  });
+
+  it('fills the water quality example value, unit and parameter', async () => {
+    renderGoals();
+    await choose(/quality/i);
+    expect(screen.getByRole('textbox', { name: 'Target (NTU (turbidity))' })).toHaveValue('5');
+    expect(screen.getByRole('combobox', { name: 'Unit' })).toHaveValue('NTU');
+    expect(screen.getByRole('textbox', { name: 'What will you measure?' })).toHaveValue(
+      'turbidity',
+    );
+  });
+
+  it('has no manual goal-check control or results and validates only when comparing', async () => {
+    renderGoals();
+    await choose(/tanker/i);
+    expect(screen.queryByRole('button', { name: 'Check goal' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Goal check' })).not.toBeInTheDocument();
+    expect(checks()).toHaveLength(0);
+    fireEvent.click(screen.getByRole('button', { name: 'Compare plans' }));
+    await waitFor(() => expect(checks()).toHaveLength(1));
   });
 
   it('keeps arbitrary saved day counts exact and separates implementation from the benefits period', async () => {
@@ -580,26 +592,9 @@ describe('GoalsPage', () => {
     expect(days).toHaveValue('47');
     expect(screen.getByLabelText('Compare benefits over (days)')).toHaveValue('913');
     fireEvent.change(days, { target: { value: '51' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Check goal' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Compare plans' }));
     await waitFor(() => expect(lastGoal()?.timelineDays).toBe(51));
     expect(lastGoal().horizonDays).toBe(913);
-  });
-
-  it('shows only checked baseline evidence in the live summary and clears it when a target changes', async () => {
-    handlers.CheckGoal = () =>
-      checkReply(
-        assessment({
-          target: { ...assessment().target, baseline: '0.625', targetLevel: '0.4375' },
-        }),
-      );
-    renderGoals();
-    await choose(/tanker/i);
-    const summary = screen.getByRole('complementary', { name: 'Your goal at a glance' });
-    expect(within(summary).getByText('Check your goal to assess this target.')).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Check goal' }));
-    expect(await within(summary).findByText('62.5 %')).toBeVisible();
-    fireEvent.change(screen.getByLabelText(/target \(%\)/i), { target: { value: '40' } });
-    expect(within(summary).queryByText('62.5 %')).not.toBeInTheDocument();
   });
 
   it('points to the location step when there is no baseline to compare with', async () => {

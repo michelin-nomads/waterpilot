@@ -7,11 +7,9 @@ import { useGraphQLQuery } from '../../graphql/hooks';
 import { queryKeys } from '../../graphql/queryKeys';
 import { usePlanningSession } from '../../session/sessionContext';
 import type { SessionState } from '../../session/sessionState';
-import { usePlanningMode } from '../planning/planningMode';
 import { StagePage } from '../planning/StagePage';
 import { PlanComparisonView } from './PlanComparisonView';
 import styles from './Plans.module.scss';
-import { ScenarioResult } from './ScenarioResult';
 
 /**
  * The chosen plan's stored wider-impact assessment no longer matches a fresh one, so the
@@ -57,7 +55,6 @@ function StaleSelectionNotice({
 
 function PlansWorkspace({ session }: { session: SessionState }) {
   const { coordinator, state } = usePlanningSession();
-  const [mode, setMode] = usePlanningMode();
   const revision = state.server?.inputsRevision ?? session.inputsRevision;
   const upstreamPending =
     'goal' in state.pending || 'scenario' in state.pending || 'areaId' in state.pending;
@@ -137,40 +134,10 @@ function PlansWorkspace({ session }: { session: SessionState }) {
           </LoadingRegion>
         )}
       </section>
-      {found && !upstreamPending && (
-        <ScenarioResult
-          saved={found.scenarioComparison}
-          scenario={session.scenario}
-          agentMode={mode === 'agent'}
-          onOpenAgent={() => setMode('agent')}
-          onSave={(scenario) => coordinator?.setScenario(scenario)}
-          busy={choosing || !coordinator}
-        />
-      )}
-      {found && !upstreamPending && found.scenarioComparison.status === 'none' && (
-        <section className={styles.scenarioPrompt} aria-labelledby="scenario-prompt-title">
-          <div>
-            <h2 id="scenario-prompt-title" className={styles.title}>
-              Explore a scenario
-            </h2>
-            <p className={styles.muted}>
-              Preview a change to demand, supply or rainfall against the same baseline. The
-              comparison engine recalculates plans only after you apply it.
-            </p>
-          </div>
-          {mode === 'agent' ? (
-            <p className={styles.muted}>Scenario controls are available in the Agent workspace.</p>
-          ) : (
-            <Button variant="secondary" onClick={() => setMode('agent')}>
-              Open scenario controls
-            </Button>
-          )}
-        </section>
-      )}
       {currentSelection && !upstreamPending && (
         <div className={styles.actions}>
-          <ButtonLink to="/reports/review" endIcon="arrow-right">
-            Continue to review
+          <ButtonLink to="/make-it-happen" endIcon="arrow-right">
+            Continue to funding
           </ButtonLink>
         </div>
       )}

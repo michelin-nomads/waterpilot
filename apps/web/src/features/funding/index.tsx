@@ -23,7 +23,7 @@ import { queryKeys } from '../../graphql/queryKeys';
 import { formatMoney, formatMoneyRange } from '../plans/plansFormat';
 import { usePlanningSession } from '../../session/sessionContext';
 import type { SessionState } from '../../session/sessionState';
-import { PageHeader } from '../../shell/PageHeader';
+import { StagePage } from '../planning/StagePage';
 import styles from './Matches.module.scss';
 
 const list = (text: string) =>
@@ -428,11 +428,7 @@ export default function FundingPage() {
   const reportId = params.get('reportId') ?? undefined;
   const session = state.server;
   return (
-    <div>
-      <PageHeader
-        title="Funding opportunities"
-        subtitle="Explore funding for your selected plan."
-      />
+    <StagePage stageId="funding">
       {!session?.selectedPlanOptionId ? (
         <EmptyState
           title="Choose a plan before matching funding"
@@ -449,6 +445,16 @@ export default function FundingPage() {
           reportId={reportId}
         />
       )}
-    </div>
+      <div className={styles.actions}>
+        <ButtonLink to="/plans" variant="secondary">
+          Back to plans
+        </ButtonLink>
+        {session?.selectedPlanOptionId && (
+          <ButtonLink to="/reports/review" endIcon="arrow-right">
+            Continue to Take Action
+          </ButtonLink>
+        )}
+      </div>
+    </StagePage>
   );
 }

@@ -7,12 +7,14 @@ export interface AccordionItem {
   id: string;
   title: ReactNode;
   summary?: ReactNode;
+  trailing?: ReactNode;
   icon?: IconName;
   content: ReactNode;
 }
 
 interface AccordionProps {
   items: readonly AccordionItem[];
+  className?: string;
   /** Ids expanded initially (uncontrolled). */
   defaultExpanded?: readonly string[];
   /** Controlled expansion; pair with `onExpandedChange`. */
@@ -25,6 +27,7 @@ interface AccordionProps {
 
 export function Accordion({
   items,
+  className,
   defaultExpanded = [],
   expanded: controlled,
   onExpandedChange,
@@ -43,7 +46,7 @@ export function Accordion({
   };
 
   return (
-    <div className={styles.accordion}>
+    <div className={[styles.accordion, className].filter(Boolean).join(' ')}>
       {items.map((item, index) => {
         const open = expanded.includes(item.id);
         const buttonId = `${baseId}-${item.id}-button`;
@@ -69,6 +72,7 @@ export function Accordion({
                   <span className={styles.title}>{item.title}</span>
                   {item.summary && <span className={styles.summary}>{item.summary}</span>}
                 </span>
+                {item.trailing && <span className={styles.trailing}>{item.trailing}</span>}
                 <span className={styles.chevron}>
                   <Icon name="chevron-down" />
                 </span>

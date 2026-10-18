@@ -546,6 +546,7 @@ export type PlanningStage =
   | 'GOAL'
   | 'MAKE_IT_HAPPEN'
   | 'REVIEW'
+  | 'SCENARIO'
   | 'TRACK'
   | 'UNDERSTAND';
 

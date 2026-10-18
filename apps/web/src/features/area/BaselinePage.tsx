@@ -46,7 +46,7 @@ export default function BaselinePage() {
     try {
       coordinator.markBaselineReviewed();
       await coordinator.flush();
-      if (coordinator.getState().server?.baselineReviewed) navigate('/goals');
+      if (coordinator.getState().server?.baselineReviewed) navigate('/scenarios');
     } finally {
       setCompleting(false);
     }
@@ -112,7 +112,7 @@ export default function BaselinePage() {
                 <StepActions
                   primary={
                     <Button disabled={saving} onClick={() => void completeBaseline()}>
-                      Continue to goal
+                      Continue to scenario
                     </Button>
                   }
                   secondary={

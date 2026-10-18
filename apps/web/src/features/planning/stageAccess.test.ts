@@ -10,11 +10,13 @@ it('unlocks one step at a time from saved completion, irrespective of the visite
   session.areaId = 'area';
   expect(unlockedStageIndex(session)).toBe(1);
   session.baselineReviewed = true;
+  expect(unlockedStageIndex(session)).toBe(1);
+  session.scenario = { adjustments: [], confirmed: true };
   expect(unlockedStageIndex(session)).toBe(2);
   session.goal = { kind: 'REDUCE_SHORTAGE' };
   expect(unlockedStageIndex(session)).toBe(3);
   session.selectedPlanOptionId = 'plan';
-  expect(unlockedStageIndex(session)).toBe(4);
+  expect(unlockedStageIndex(session)).toBe(5);
   session.baselineReviewed = false;
-  expect(canOpenStage(PLANNING_STAGES[2]!, session)).toBe(false);
+  expect(canOpenStage(PLANNING_STAGES[2]!, session)).toBe(true);
 });

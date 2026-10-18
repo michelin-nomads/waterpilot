@@ -83,3 +83,8 @@
 .panel {
   padding: 0 var(--wp-space-4) var(--wp-space-4);
 }
+
+.trailing {
+  flex: none;
+  font-weight: 400;
+}

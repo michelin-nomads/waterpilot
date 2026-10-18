@@ -2,6 +2,7 @@ import { useId, useState, type ReactNode } from 'react';
 
 import {
   Accordion,
+  Badge,
   Button,
   ErrorSummary,
   Field,
@@ -175,7 +176,24 @@ export function GoalForm({
     .filter((s): s is string => s !== null);
   const expanded = [...new Set([...open, ...withErrors])];
   const selectedPreset = presetFor(draft);
-  const example = PRESETS.find((p) => p.id === selectedPreset && p.apply(draft).mode !== null);
+  const example = PRESETS.find((p) => p.id === selectedPreset);
+
+  const countPill = (count: number, unit: string) => (
+    <Badge tone={count ? 'accent' : 'neutral'}>{count ? `${count} ${unit}` : 'Not added'}</Badge>
+  );
+  const siteCount =
+    [
+      draft.scale,
+      draft.roofArea,
+      draft.openGround,
+      draft.storageSpace,
+      draft.pipedSupply,
+      draft.groundwaterUse,
+    ].filter((value) => value.trim()).length + draft.restrictions.length;
+  const financeCount =
+    Number(Boolean(draft.tariffAmount.trim() || draft.tariffLitres.trim())) +
+    Number(Boolean(draft.contingencyPercent.trim())) +
+    draft.funding.length;
 
   const sections = kind
     ? [
@@ -183,9 +201,7 @@ export function GoalForm({
           id: 'site',
           title: 'Site constraints',
           icon: 'adjustments' as const,
-          summary: draft.restrictions.length
-            ? `${draft.restrictions.length} restrictions specified`
-            : 'Optional · unknown details stay unknown',
+          trailing: countPill(siteCount, 'specified'),
           content: (
             <div className={styles.stack}>
               <div className={styles.grid}>
@@ -269,12 +285,13 @@ export function GoalForm({
           id: 'finance',
           title: 'Water costs & funding',
           icon: 'wallet' as const,
-          summary: 'Optional · tariffs, contingency and funding',
+          trailing: countPill(financeCount, 'added'),
           content: (
             <div className={styles.stack}>
               <Field
                 id={fid('currency')}
                 label="Budget currency"
+                required={Boolean(draft.budgetAmount.trim())}
                 error={errors.currency}
                 labelAction={
                   <Tooltip label="About budget currency">
@@ -299,10 +316,8 @@ export function GoalForm({
         {
           id: 'also',
           title: 'Other goals to balance',
-          summary:
-            kind === 'CUSTOM'
-              ? 'Match measures to your custom outcome'
-              : 'Optional · up to three additional outcomes',
+          icon: 'layers' as const,
+          trailing: countPill(draft.also.length, 'selected'),
           content: (
             <fieldset className={styles.checks}>
               <legend className={styles.legend}>Also aim to</legend>
@@ -324,7 +339,10 @@ export function GoalForm({
           id: 'estimates',
           title: 'Cost & performance assumptions',
           icon: 'chart' as const,
-          summary: 'Optional · your own estimates',
+          trailing: countPill(
+            draft.estimates.length,
+            draft.estimates.length === 1 ? 'estimate' : 'estimates',
+          ),
           content: (
             <div className={styles.stack}>
               {draft.estimates.map((e, i) => (
@@ -346,6 +364,13 @@ export function GoalForm({
                             buildLow: 'Shortest build (days)',
                             buildHigh: 'Longest build (days)',
                           }[f]
+                        }
+                        required={
+                          ((f === 'costLow' || f === 'costCurrency') &&
+                            Boolean(e.costLow.trim() || e.costHigh.trim())) ||
+                          ((f === 'recurringLow' || f === 'recurringCurrency') &&
+                            Boolean(e.recurringLow?.trim() || e.recurringHigh?.trim())) ||
+                          (f === 'buildLow' && Boolean(e.buildLow.trim() || e.buildHigh.trim()))
                         }
                         error={errors[`estimates.${i}.${f}`]}
                       >
@@ -387,6 +412,9 @@ export function GoalForm({
                                 : fid(`${effectsField(i)}.${spec.key}.${side}`)
                             }
                             label={`${spec.label} — ${side === 'low' ? 'low' : 'high'} (${suffix})`}
+                            required={
+                              side === 'low' && Boolean(value?.low.trim() || value?.high.trim())
+                            }
                             hint={
                               side === 'low' ? spec.note || (share ? 'Your own figure.' : '') : ''
                             }
@@ -441,7 +469,7 @@ export function GoalForm({
                   </Button>
                 </fieldset>
               ))}
-              <div className={styles.inline}>
+              <div className={styles.estimateAdd}>
                 <Field id={fid('estimateFor')} label="Add an estimate for">
                   {(p) => (
                     <Select
@@ -462,7 +490,6 @@ export function GoalForm({
                 </Field>
                 <Button
                   variant="secondary"
-                  size="sm"
                   startIcon="plus"
                   disabled={!estimateFor}
                   onClick={() => {
@@ -505,13 +532,14 @@ export function GoalForm({
           <section className={styles.panel}>
             <div className={styles.sectionHead}>
               <h2 id={fid('kind')} tabIndex={-1}>
-                <span className={styles.sectionNumber}>01</span>Choose your primary goal
+                <span className={styles.sectionNumber}>01</span>Choose your primary goal{' '}
+                <span aria-hidden="true">*</span>
               </h2>
               <span className={styles.muted}>Choose one</span>
             </div>
             <GoalChoices draft={draft} onChange={onChange} />
             {kind === 'CUSTOM' && (
-              <div className={styles.stack}>
+              <div className={styles.customGoalFields}>
                 <Field
                   id={fid('description')}
                   label="Describe your goal"
@@ -521,7 +549,8 @@ export function GoalForm({
                   {(p) => (
                     <Textarea
                       {...p}
-                      rows={3}
+                      rows={1}
+                      className={styles.customDescription}
                       maxLength={2000}
                       value={draft.description}
                       onChange={(e) =>
@@ -530,14 +559,15 @@ export function GoalForm({
                     />
                   )}
                 </Field>
-                <label className={styles.check} id={fid('confirmed')}>
+                <label className={styles.customConfirmation} id={fid('confirmed')}>
                   <input
                     type="checkbox"
+                    required
                     checked={draft.confirmed}
                     disabled={!draft.description.trim()}
                     onChange={(e) => set('confirmed', e.target.checked)}
                   />
-                  This wording is what I mean; use it for planning.
+                  Use this description as my planning goal. <span aria-hidden="true">*</span>
                 </label>
                 {errors.confirmed && <p className={styles.error}>{errors.confirmed}</p>}
               </div>
@@ -608,7 +638,7 @@ export function GoalForm({
                     </Field>
                   )}
                   {draft.mode === 'ABSOLUTE_LEVEL' && units.length > 1 && (
-                    <Field id={fid('unit')} label="Unit">
+                    <Field id={fid('unit')} label="Unit" required>
                       {(p) => (
                         <Select
                           {...p}
@@ -635,6 +665,7 @@ export function GoalForm({
                           assessed.
                         </Tooltip>
                       }
+                      required={kind === 'IMPROVE_WATER_QUALITY'}
                       error={errors.targetParameter}
                     >
                       {(p) => (
@@ -648,19 +679,19 @@ export function GoalForm({
                   )}
                 </div>
               </fieldset>
-              {example && (
-                <div className={styles.exampleTarget}>
-                  <span className={styles.muted}>Need a starting point?</span>
+              <div className={styles.exampleTarget}>
+                {example && (
                   <Button
                     variant="ghost"
                     size="sm"
                     className={styles.textAction}
+                    title="Fill an editable example target."
                     onClick={() => onChange(example.apply(draft))}
                   >
                     Use example: {example.title}
                   </Button>
-                </div>
-              )}
+                )}
+              </div>
             </section>
           )}
           {kind && (
@@ -727,12 +758,19 @@ export function GoalForm({
             </section>
           )}
           {sections.length > 0 && (
-            <Accordion
-              items={sections}
-              headingLevel={3}
-              expanded={expanded}
-              onExpandedChange={setOpen}
-            />
+            <section className={styles.optionalDetails} aria-labelledby={fid('optional')}>
+              <div className={styles.sectionHead}>
+                <h2 id={fid('optional')}>Optional planning details</h2>
+                <span className={styles.muted}>Add what you know, or skip these sections.</span>
+              </div>
+              <Accordion
+                className={styles.optionalAccordion}
+                items={sections}
+                headingLevel={3}
+                expanded={expanded}
+                onExpandedChange={setOpen}
+              />
+            </section>
           )}
         </fieldset>
         <GoalSummary draft={draft} assessment={assessment} />

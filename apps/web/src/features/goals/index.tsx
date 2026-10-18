@@ -15,7 +15,6 @@ import { graphqlRequest } from '../../graphql/client';
 import {
   CheckGoalDocument,
   GoalAreaDocument,
-  GoalAssessmentDocument,
   InterventionCatalogueDocument,
   type CheckGoalQuery,
   type GoalInput,
@@ -26,7 +25,6 @@ import { queryKeys } from '../../graphql/queryKeys';
 import { usePlanningSession } from '../../session/sessionContext';
 import { sameValue, type SessionState } from '../../session/sessionState';
 import { StagePage } from '../planning/StagePage';
-import { GoalAssessmentView } from './GoalAssessmentView';
 import {
   draftField,
   emptyDraft,
@@ -85,7 +83,6 @@ function GoalEditor({ session, catalogue }: { session: SessionState; catalogue: 
   const navigate = useNavigate();
   const areaId = session.areaId;
   const revision = state.server?.inputsRevision ?? session.inputsRevision;
-  const savedGoal = state.server?.goal ?? null;
   const goalPending = 'goal' in state.pending;
   const goalSaving = goalPending && state.save === 'saving';
 
@@ -102,27 +99,8 @@ function GoalEditor({ session, catalogue }: { session: SessionState; catalogue: 
   );
   const effective = draft.currency ? draft : { ...draft, currency: areaCurrency ?? '' };
   const [errors, setErrors] = useState<DraftErrors>({});
-  const [checked, setChecked] = useState<{ json: string; input: GoalInput } | null>(null);
   const [saving, setSaving] = useState(false);
   const [failure, setFailure] = useState('');
-
-  const current = toGoalInput(effective).input;
-  const currentJson = current ? JSON.stringify(current) : null;
-  const matchesSaved = current !== null && sameValue('goal', savedGoal, current);
-
-  const checkKey = queryKeys.sessions.goalCheck(session.id, revision, checked?.json ?? '');
-  const check = useGraphQLQuery(
-    checkKey,
-    CheckGoalDocument,
-    { sessionId: session.id, goal: checked?.input as GoalInput },
-    { enabled: checked !== null },
-  );
-  const saved = useGraphQLQuery(
-    queryKeys.sessions.goalAssessment(session.id, revision),
-    GoalAssessmentDocument,
-    { sessionId: session.id },
-    { enabled: savedGoal !== null && !goalPending },
-  );
 
   function prepare(): { json: string; input: GoalInput } | null {
     const { input, errors: local } = toGoalInput(effective);
@@ -131,15 +109,9 @@ function GoalEditor({ session, catalogue }: { session: SessionState; catalogue: 
     return { json: JSON.stringify(input), input };
   }
 
-  function runCheck() {
-    const next = prepare();
-    if (next) setChecked(next);
-  }
-
-  async function save(compare = false) {
+  async function saveAndCompare() {
     const next = prepare();
     if (!next || !coordinator) return;
-    setChecked(next);
     setFailure('');
     setSaving(true);
     try {
@@ -166,7 +138,7 @@ function GoalEditor({ session, catalogue }: { session: SessionState; catalogue: 
         ) {
           throw new Error('Goal save incomplete');
         }
-        if (compare) navigate('/plans');
+        navigate('/plans');
       }
     } catch {
       setFailure(
@@ -176,28 +148,6 @@ function GoalEditor({ session, catalogue }: { session: SessionState; catalogue: 
       setSaving(false);
     }
   }
-
-  const checkErrors =
-    check.data && checked?.json === currentJson ? check.data.checkGoal.errors : [];
-  const shownErrors = { ...serverErrors(checkErrors), ...errors };
-  const draftAssessment =
-    checked && checked.json === currentJson ? (check.data?.checkGoal.assessment ?? null) : null;
-  const savedAssessment =
-    matchesSaved && !goalPending ? (saved.data?.planningSession?.goalAssessment ?? null) : null;
-  const shown = savedAssessment ?? draftAssessment;
-  const stale = checked !== null && checked.json !== currentJson && !matchesSaved;
-
-  const shortlist = {
-    selected: effective.preferred,
-    disabled: saving || goalSaving,
-    toggle: (iid: string) =>
-      setDraft({
-        ...effective,
-        preferred: effective.preferred.includes(iid)
-          ? effective.preferred.filter((x) => x !== iid)
-          : [...effective.preferred, iid],
-      }),
-  };
 
   return (
     <div className={styles.page}>
@@ -214,35 +164,17 @@ function GoalEditor({ session, catalogue }: { session: SessionState; catalogue: 
           setErrors({});
           setFailure('');
         }}
-        errors={shownErrors}
+        errors={errors}
         catalogue={catalogue}
         areaCurrency={areaCurrency}
-        assessment={shown}
         disabled={saving || goalSaving}
-        onCompare={() => void save(true)}
+        onCompare={() => void saveAndCompare()}
         actions={
           <div className={styles.goalFooter}>
-            <ButtonLink to="/baseline/overview" variant="secondary">
-              Back to baseline
+            <ButtonLink to="/scenarios" variant="secondary">
+              Back to scenario
             </ButtonLink>
             <div className={styles.actions}>
-              <Button
-                variant="ghost"
-                className={styles.textAction}
-                onClick={runCheck}
-                loading={check.isFetching && !saving}
-                disabled={!effective.kind || saving || goalSaving}
-              >
-                Check goal
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() => void save()}
-                loading={saving || goalSaving}
-                disabled={!effective.kind || (matchesSaved && !goalPending)}
-              >
-                {matchesSaved && !goalPending ? 'Goal saved' : 'Save goal'}
-              </Button>
               <Button
                 type="submit"
                 loading={saving || goalSaving}
@@ -260,24 +192,6 @@ function GoalEditor({ session, catalogue }: { session: SessionState; catalogue: 
           {failure}
         </Notice>
       )}
-      {check.isError && (
-        <Notice kind="caution" title="The goal check could not load">
-          Your entries are kept. Check the connection and try again.
-        </Notice>
-      )}
-      {stale && (
-        <Notice kind="stale">You changed the goal after checking it. Check it again.</Notice>
-      )}
-      {shown ? (
-        <div className={styles.panel} data-assessment-source={savedAssessment ? 'saved' : 'draft'}>
-          {!savedAssessment && <p className={styles.muted}>Checked, not saved yet.</p>}
-          <GoalAssessmentView assessment={shown} shortlist={shortlist} />
-        </div>
-      ) : check.isFetching || saved.isFetching ? (
-        <LoadingRegion label="Checking your goal">
-          <Skeleton shape="block" />
-        </LoadingRegion>
-      ) : null}
     </div>
   );
 }

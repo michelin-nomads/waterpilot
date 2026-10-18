@@ -244,7 +244,7 @@ describe('AreaPage', () => {
     expect(
       screen.getByRole('heading', { level: 1, name: /understand your area/i }),
     ).toBeInTheDocument();
-    expect(screen.getByText('Step 1 of 5')).toBeInTheDocument();
+    expect(screen.getByText('Step 1 of 6')).toBeInTheDocument();
     await screen.findByRole('heading', { name: /data coverage/i });
   });
 
@@ -344,8 +344,8 @@ describe('AreaPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Understand this area' }));
     expect(await screen.findByRole('heading', { name: 'Water conditions' })).toBeVisible();
     expect(screen.getByRole('form', { name: 'Your selected area' })).toBeInTheDocument();
-    fireEvent.click(await screen.findByRole('button', { name: 'Continue to baseline' }));
-    expect(screen.getByTestId('route-path')).toHaveTextContent('/baseline');
+    fireEvent.click(await screen.findByRole('button', { name: 'Test a Future Scenario' }));
+    expect(screen.getByTestId('route-path')).toHaveTextContent('/scenarios');
     expect(await screen.findByText('User-input assessment')).toBeInTheDocument();
   });
 

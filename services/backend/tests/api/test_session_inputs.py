@@ -64,6 +64,7 @@ def test_new_sessions_start_at_revision_zero(h: Harness) -> None:
         "BASELINE",
         "BASELINE_INPUTS",
         "BASELINE_OVERVIEW",
+        "SCENARIO",
         "GOAL",
         "COMPARE",
         "REVIEW",
