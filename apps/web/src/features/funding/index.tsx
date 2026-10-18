@@ -25,7 +25,7 @@ import { usePlanningSession } from '../../session/sessionContext';
 import type { SessionState } from '../../session/sessionState';
 import styles from './Matches.module.scss';
 import { Catalogue } from './Catalogue';
-import { PageHeader } from '../../shell/PageHeader';
+import { StagePage } from '../planning/StagePage';
 
 const list = (text: string) =>
   text
@@ -439,11 +439,7 @@ export default function FundingPage() {
   const [showEligibility, setShowEligibility] = useState(false);
   const [chosenScheme, setChosenScheme] = useState('');
   return (
-    <div>
-      <PageHeader
-        title="Find funding opportunities"
-        subtitle="Explore relevant funding options for water improvements in your community."
-      />
+    <StagePage stageId="funding">
       <details className={styles.about}>
         <summary>About funding</summary>
         <p>
@@ -491,6 +487,16 @@ export default function FundingPage() {
           />
         )}
       </div>
-    </div>
+      <div className={styles.actions}>
+        <ButtonLink to="/plans" variant="secondary">
+          Back to plans
+        </ButtonLink>
+        {session?.selectedPlanOptionId && (
+          <ButtonLink to="/reports/review" endIcon="arrow-right">
+            Continue to Take Action
+          </ButtonLink>
+        )}
+      </div>
+    </StagePage>
   );
 }

@@ -130,3 +130,12 @@
     justify-content: space-between;
   }
 }
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--wp-space-4);
+  margin-top: var(--wp-space-6);
+}
+
