@@ -151,7 +151,17 @@ export default function FundingPage() {
   };
 
   const comp = useMemo(() => {
-    return createFeasibleComparison(rawComparison, session ?? fallbackSession);
+    let effectiveGoal = session?.goal;
+    try {
+      const stored = localStorage.getItem(`waterpilot_goal_${sessionId}`);
+      if (stored) {
+        effectiveGoal = { ...(session?.goal ?? {}), ...JSON.parse(stored) };
+      }
+    } catch {}
+    const activeSession = session
+      ? { ...session, goal: effectiveGoal ?? null }
+      : { ...fallbackSession, goal: effectiveGoal ?? null };
+    return createFeasibleComparison(rawComparison, activeSession);
   }, [rawComparison, session, sessionId]);
 
   const storedOptionId = useMemo(() => {
