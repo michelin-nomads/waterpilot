@@ -629,3 +629,38 @@
     padding-top: var(--wp-space-3);
   }
 }
+
+.loadingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--wp-space-8) var(--wp-space-4);
+  background: var(--wp-color-surface);
+  border: 1px dashed var(--wp-color-border);
+  border-radius: var(--wp-radius-lg);
+  color: var(--wp-color-text-muted);
+  font-size: var(--wp-text-sm);
+  text-align: center;
+  gap: var(--wp-space-3);
+}
+
+.registryBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+  font-size: var(--wp-text-xs);
+  color: var(--wp-color-text-muted);
+  background: var(--wp-color-surface-sunken);
+  padding: 0.25rem var(--wp-space-3);
+  border-radius: var(--wp-radius-pill);
+  border: 1px solid var(--wp-color-border);
+}
+
+.liveDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--wp-color-success);
+  box-shadow: 0 0 0 2px var(--wp-color-success-soft);
+}

@@ -20,6 +20,7 @@
     "@waterpilot/contracts": "*",
     "axios": "^1.20.0",
     "firebase": "^13.0.0",
+    "jspdf": "^4.2.1",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "react-router-dom": "^7.18.4",
