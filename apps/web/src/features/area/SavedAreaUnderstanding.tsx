@@ -48,7 +48,11 @@ export function SavedAreaUnderstanding({
       <LocationStep
         initialArea={area && !area.providerContentExpired ? area : undefined}
         sessionId={sessionId}
-        onConfirmed={() => undefined}
+        onConfirmed={(confirmedArea) => {
+          try {
+            sessionStorage.setItem(`waterpilot.confirmed_area.${sessionId}`, JSON.stringify(confirmedArea));
+          } catch {}
+        }}
         onResultsChange={setReady}
       />
       {ready && !inputsPending && (

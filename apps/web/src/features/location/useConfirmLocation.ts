@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useRef } from 'react';
 
 import { newIdempotencyKey, unwrapPayload } from '../../graphql/client';
@@ -7,6 +8,7 @@ import {
   type ConfirmLocationInput,
 } from '../../graphql/generated/graphql';
 import { useGraphQLMutation } from '../../graphql/hooks';
+import { queryKeys } from '../../graphql/queryKeys';
 import { usePlanningSession } from '../../session/sessionContext';
 
 export type LocationDraftInput = Omit<ConfirmLocationInput, 'idempotencyKey'>;
@@ -18,6 +20,7 @@ export type LocationDraftInput = Omit<ConfirmLocationInput, 'idempotencyKey'>;
  */
 export function useConfirmLocation() {
   const { coordinator } = usePlanningSession();
+  const queryClient = useQueryClient();
   const mutation = useGraphQLMutation('confirmLocation', ConfirmLocationDocument);
   const intent = useRef<{ key: string; signature: string } | null>(null);
 
@@ -29,6 +32,7 @@ export function useConfirmLocation() {
     const data = await mutation.mutateAsync({ ...input, idempotencyKey: intent.current.key });
     const { area } = unwrapPayload(data.confirmLocation);
     if (!area) throw new Error('The server did not return the location.');
+    queryClient.setQueryData(queryKeys.areas.detail(area.id), { area });
     if (coordinator) {
       coordinator.setArea(area.id);
       await coordinator.flush();

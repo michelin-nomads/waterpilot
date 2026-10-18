@@ -64,7 +64,11 @@ export function LocationStep({
       const cached = queryClient.getQueryData<AreaBaselineQuery>(
         queryKeys.baseline.area(initialArea.id, sessionId),
       );
-      return cached?.area ?? null;
+      if (cached?.area) return cached.area;
+      try {
+        const raw = sessionStorage.getItem(`waterpilot.baseline.${initialArea.id}.${sessionId}`);
+        if (raw) return JSON.parse(raw);
+      } catch {}
     }
     return null;
   });
@@ -130,6 +134,28 @@ export function LocationStep({
       onResultsChange?.(true);
     }
   }, [result, onResultsChange]);
+
+  // Preserve and restore draft when initialArea is provided
+  useEffect(() => {
+    if (initialArea && initialArea.centroidLat != null && initialArea.centroidLon != null && !draft) {
+      setDraft({
+        origin: initialArea.origin === 'CATALOGUE' ? 'CUSTOM' : initialArea.origin,
+        accuracyMeters: initialArea.accuracyMeters ?? undefined,
+        place: {
+          placeId: initialArea.placeId ?? '',
+          name: initialArea.name,
+          formattedAddress: initialArea.formattedAddress,
+          latitude: initialArea.centroidLat,
+          longitude: initialArea.centroidLon,
+          countryCode: initialArea.countryCode,
+          scope: initialArea.scope,
+          types: [],
+          admin: initialArea.admin,
+        },
+      });
+      setPreviewRadius(initialArea.radiusMeters ?? 1000);
+    }
+  }, [initialArea, draft]);
 
   const resolveDraft = useCallback(
     async (candidate: LocationDraft, token: number) => {
@@ -226,10 +252,16 @@ export function LocationStep({
           queryKey: queryKeys.baseline.area(area.id, sessionId),
           queryFn: ({ signal }) =>
             graphqlRequest(AreaBaselineDocument, { areaId: area.id, sessionId }, { signal }),
-          staleTime: 0,
+          staleTime: 5 * 60_000,
           retry: false,
         });
         if (!response.area) throw new Error('The area returned no water conditions.');
+        try {
+          sessionStorage.setItem(
+            `waterpilot.baseline.${area.id}.${sessionId}`,
+            JSON.stringify(response.area),
+          );
+        } catch {}
         if (token !== selection.current) return;
         setLoadingProgress(1);
         setResult({ ...response.area });

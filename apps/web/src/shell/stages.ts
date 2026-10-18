@@ -32,7 +32,7 @@ export const PLANNING_STAGES: readonly PlanningStage[] = [
     sessionStage: 'SCENARIO',
     path: '/scenarios',
     label: 'Test a Future Scenario',
-    subtitle: 'Explore changes to demand, supply or rainfall against your baseline.',
+    subtitle: 'Explore changes to demand, supply or rainfall to test future water security.',
     reference: 'Original Designs pp. 5–9',
     ownerPhase: '08–10',
   },

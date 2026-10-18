@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useId, useState, useEffect, useMemo, type FormEvent } from 'react';
 
-import { Badge, Button, Icon, Notice } from '../../components';
+import { Button, Icon, Notice } from '../../components';
 import { graphqlRequest } from '../../graphql/client';
 import {
   PreviewScenarioDocument,
@@ -10,7 +10,6 @@ import {
 } from '../../graphql/generated/graphql';
 import { queryKeys } from '../../graphql/queryKeys';
 import type { SessionState } from '../../session/sessionState';
-import { ScenarioRows } from './ScenarioRows';
 import styles from './ScenarioModern.module.scss';
 
 interface Props {
@@ -20,6 +19,7 @@ interface Props {
   saved: ScenarioComparisonFieldsFragment;
   pending: boolean;
   onSave: (scenario: SessionState['scenario']) => void;
+  onAnalyse?: (scenario: SessionState['scenario']) => void;
   onContinueToGoal?: () => void;
 }
 
@@ -30,6 +30,7 @@ export function ModernScenarioPanel({
   saved,
   pending,
   onSave,
+  onAnalyse,
   onContinueToGoal,
 }: Props) {
   const id = useId();
@@ -47,8 +48,8 @@ export function ModernScenarioPanel({
     scenario?.interpretedFrom ?? null,
   );
 
-  // Details drawer toggle (technical table)
-  const [showDetails, setShowDetails] = useState(false);
+  // Save scenario success feedback state
+  const [savedSuccess, setSavedSuccess] = useState(false);
 
   // Preview state
   const [preview, setPreview] = useState<{
@@ -125,8 +126,8 @@ export function ModernScenarioPanel({
     return () => clearTimeout(timer);
   }, [rainfallDrop, groundwaterDrop, tankerSupplyDrop, urbanExpansion]);
 
-  // Apply scenario to planning session
-  function handleApply() {
+  // Save scenario to session with visual feedback
+  function handleSaveScenario() {
     onSave(
       currentAdjustments.length
         ? {
@@ -134,8 +135,35 @@ export function ModernScenarioPanel({
             interpretedFrom: interpretedNote,
             confirmed: true,
           }
-        : null,
+        : {
+            adjustments: [],
+            interpretedFrom: interpretedNote,
+            confirmed: true,
+          },
     );
+    setSavedSuccess(true);
+    setTimeout(() => setSavedSuccess(false), 3500);
+  }
+
+  // Analyse scenario and proceed to next stage
+  function handleAnalyseScenario() {
+    const payload = currentAdjustments.length
+      ? {
+          adjustments: currentAdjustments,
+          interpretedFrom: interpretedNote,
+          confirmed: true,
+        }
+      : {
+          adjustments: [],
+          interpretedFrom: interpretedNote,
+          confirmed: true,
+        };
+    if (onAnalyse) {
+      onAnalyse(payload);
+    } else {
+      onSave(payload);
+      if (onContinueToGoal) onContinueToGoal();
+    }
   }
 
   // Handle custom scenario prompt submission
@@ -544,13 +572,6 @@ export function ModernScenarioPanel({
                   Estimated impact on your community based on the changes above.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowDetails(!showDetails)}
-                className={styles.viewDetailsLink}
-              >
-                {showDetails ? 'Hide Details' : 'View Details'} <Icon name="arrow-right" size="sm" />
-              </button>
             </div>
 
             {/* 2x2 KPI Cards Grid */}
@@ -643,32 +664,36 @@ export function ModernScenarioPanel({
               </div>
             </div>
 
+            {savedSuccess && (
+              <div className={styles.savedBanner} role="status">
+                <Icon name="check" size="sm" />
+                <span>Scenario saved! Your future water assumptions have been recorded.</span>
+              </div>
+            )}
+
             {/* Action Buttons Row */}
             <div className={styles.actionButtonsRow}>
-              {/* Preview / Save Scenario button */}
+              {/* Save Scenario button */}
               <button
                 type="button"
-                className={styles.saveBtn}
-                onClick={() => void runPreview()}
-                disabled={checking || pending}
-                aria-label="Preview"
-                title="Preview and save this scenario"
+                className={`${styles.saveBtn} ${savedSuccess ? styles.saveBtnSuccess : ''}`}
+                onClick={handleSaveScenario}
+                disabled={pending}
+                aria-label="Save Scenario"
+                title="Save this scenario to your planning session"
               >
-                <Icon name="chart" size="sm" />
-                <span>Save Scenario</span>
+                <Icon name={savedSuccess ? 'check' : 'chart'} size="sm" />
+                <span>{savedSuccess ? 'Scenario Saved!' : 'Save Scenario'}</span>
               </button>
 
-              {/* Analyse Scenario / Apply Scenario button */}
+              {/* Analyse Scenario button */}
               <button
                 type="button"
                 className={styles.analyseBtn}
-                onClick={() => {
-                  handleApply();
-                  if (onContinueToGoal) onContinueToGoal();
-                }}
+                onClick={handleAnalyseScenario}
                 disabled={pending}
-                aria-label="Apply scenario"
-                title="Apply scenario and continue to goals"
+                aria-label="Analyse Scenario"
+                title="Analyse scenario and proceed to goal setting"
               >
                 <span>Analyse Scenario</span>
                 <Icon name="arrow-right" size="sm" />
@@ -693,23 +718,6 @@ export function ModernScenarioPanel({
           </section>
         </div>
       </div>
-
-      {/* Expandable Technical Baseline Comparison Table & Notes */}
-      {(showDetails || saved.status === 'applied') && activeComparison && (
-        <section className={styles.detailsDrawer} aria-label="Detailed baseline comparison">
-          <div className={styles.drawerHead}>
-            <h3 className={styles.cardTitle}>Detailed Baseline Comparison</h3>
-            <Badge tone={saved.status === 'applied' ? 'accent' : 'neutral'}>
-              {saved.status === 'applied'
-                ? 'Scenario applied to plans'
-                : awaiting
-                ? 'Waiting for confirmation'
-                : 'Scenario preview'}
-            </Badge>
-          </div>
-          <ScenarioRows comparison={activeComparison} />
-        </section>
-      )}
     </div>
   );
 }
