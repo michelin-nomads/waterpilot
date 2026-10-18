@@ -72,9 +72,20 @@ function PlansWorkspace({ session }: { session: SessionState }) {
   );
   const found = query.data?.planningSession ?? null;
   const rawComparison = found?.planComparison ?? null;
+  let effectiveGoal = session.goal;
+  if (!effectiveGoal) {
+    try {
+      const stored = localStorage.getItem(`waterpilot_goal_${session.id}`);
+      if (stored) {
+        effectiveGoal = JSON.parse(stored);
+      }
+    } catch {}
+  }
+  const effectiveSession = effectiveGoal ? { ...session, goal: effectiveGoal } : session;
+
   const comparison =
     rawComparison || query.isError || (!query.isLoading && found !== undefined)
-      ? createFeasibleComparison(rawComparison, session)
+      ? createFeasibleComparison(rawComparison, effectiveSession)
       : null;
   const selectionStatus: SelectedPlanStatus | null = found?.selectedPlanStatus ?? null;
 
@@ -111,7 +122,7 @@ function PlansWorkspace({ session }: { session: SessionState }) {
     coordinator?.selectPlanOption(optionId);
   };
 
-  if (!session.goal) {
+  if (!effectiveSession.goal) {
     return (
       <Notice kind="info" title="Set a goal first">
         Plans are compared against your goal. <Link to="/goals">Set your goal and estimates</Link>.

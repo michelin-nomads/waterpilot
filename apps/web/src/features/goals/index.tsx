@@ -127,6 +127,9 @@ function GoalEditor({ session, catalogue }: { session: SessionState; catalogue: 
       const found = serverErrors(result.checkGoal.errors);
       setErrors(found);
       if (Object.keys(found).length === 0) {
+        try {
+          localStorage.setItem(`waterpilot_goal_${session.id}`, JSON.stringify(next.input));
+        } catch {}
         coordinator.setGoal(next.input);
         await coordinator.flush();
         const persisted = coordinator.getState();
@@ -163,6 +166,13 @@ function GoalEditor({ session, catalogue }: { session: SessionState; catalogue: 
           setDraft(d);
           setErrors({});
           setFailure('');
+          const curEffective = d.currency ? d : { ...d, currency: areaCurrency ?? '' };
+          const { input } = toGoalInput(curEffective);
+          if (input) {
+            try {
+              localStorage.setItem(`waterpilot_goal_${session.id}`, JSON.stringify(input));
+            } catch {}
+          }
         }}
         errors={errors}
         catalogue={catalogue}

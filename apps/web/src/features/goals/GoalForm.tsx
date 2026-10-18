@@ -296,7 +296,7 @@ export function GoalForm({
                 <h2>
                   <span className={styles.sectionNumber}>02</span>Make it measurable
                 </h2>
-                <span className={styles.muted}>Optional</span>
+                <span className={styles.muted}>Optional — recommended benchmark used if omitted</span>
               </div>
               <fieldset className={styles.target}>
                 <legend className={styles.hidden}>Target for: {KIND_LABEL[kind]}</legend>
@@ -315,7 +315,7 @@ export function GoalForm({
                           });
                         }}
                       >
-                        <option value="">No numeric target</option>
+                        <option value="">No numeric target (use recommended benchmark)</option>
                         {modes.map((m) => (
                           <option key={m} value={m}>
                             {MODE_LABEL[m]}

@@ -11,6 +11,33 @@ export function createFeasibleComparison(
     if (original.options && original.options.length > 0) {
       return original;
     }
+
+    if (
+      original.status === 'NO_FEASIBLE_PLAN' &&
+      original.rejections &&
+      original.rejections.evaluated > 0 &&
+      original.rejections.onlyOptimistic +
+        original.rejections.missedTarget +
+        original.rejections.overBudget >
+        0
+    ) {
+      return original;
+    }
+
+    if (
+      original.status === 'NEEDS_INPUT' &&
+      original.needs &&
+      original.needs.length > 0 &&
+      !original.needs.some(
+        (n) =>
+          n.toLowerCase().includes('tanker deliveries') ||
+          n.toLowerCase().includes('records with demand') ||
+          n.toLowerCase().includes('numeric target'),
+      )
+    ) {
+      return original;
+    }
+
     const isMissingBaselineData =
       Boolean(original.summary?.includes('The baseline does not yet have')) ||
       Boolean(
@@ -21,11 +48,12 @@ export function createFeasibleComparison(
         ),
       );
 
-    if (
-      original.status !== 'NOT_SUPPORTED' &&
-      !isMissingBaselineData &&
-      (original.status !== 'OPTIONS' || original.options.length > 0)
-    ) {
+    const isMissingTarget =
+      Boolean(original.summary?.toLowerCase().includes('numeric target')) ||
+      Boolean(original.needs?.some((n) => n.toLowerCase().includes('numeric target'))) ||
+      !session.goal?.target;
+
+    if (original.status !== 'NOT_SUPPORTED' && !isMissingBaselineData && !isMissingTarget) {
       return original;
     }
   }
@@ -33,30 +61,53 @@ export function createFeasibleComparison(
   const isRayasandra = session.areaId?.toLowerCase().includes('rayasandra') ?? false;
   const baseShortage = isRayasandra ? 84 : 74;
 
+  const goalKind = String(session.goal?.kind ?? 'REDUCE_SHORTAGE');
   let metric: 'SHORTAGE_DAYS' | 'TANKER_DEPENDENCE' = 'SHORTAGE_DAYS';
+  let unit: 'DAY' | 'RATIO' = 'DAY';
   let summary =
     'Three illustrative combinations show the balance between investment, delivery time and fewer shortage days.';
 
-  const goalKind = String(session.goal?.kind ?? '');
   if (goalKind === 'REDUCE_TANKER_DEPENDENCE') {
     metric = 'TANKER_DEPENDENCE';
+    unit = 'DAY';
     summary =
       'Three illustrative combinations show the balance between investment, delivery time and fewer tanker days.';
   } else if (goalKind === 'IMPROVE_GROUNDWATER') {
+    metric = 'SHORTAGE_DAYS';
+    unit = 'DAY';
     summary =
       'Three illustrative combinations show the balance between investment, delivery time and groundwater restoration.';
   } else if (goalKind === 'REDUCE_WATER_BILLS') {
+    metric = 'SHORTAGE_DAYS';
+    unit = 'DAY';
     summary =
       'Three illustrative combinations show the balance between investment, delivery time and reduced water costs.';
   } else if (goalKind === 'REDUCE_FLOOD_RISK' || goalKind === 'REDUCE_FLOODING') {
+    metric = 'SHORTAGE_DAYS';
+    unit = 'DAY';
     summary =
       'Three illustrative combinations show the balance between investment, delivery time and flood mitigation.';
   } else if (goalKind === 'IMPROVE_WATER_QUALITY') {
+    metric = 'SHORTAGE_DAYS';
+    unit = 'DAY';
     summary =
       'Three illustrative combinations show the balance between investment, delivery time and water quality filtration.';
+  } else {
+    metric = 'SHORTAGE_DAYS';
+    unit = 'DAY';
+    summary =
+      'Three illustrative combinations show the balance between investment, delivery time and fewer shortage days.';
   }
 
+  // Recommended benchmark targets when target is left optional
   let targetVal = 50;
+  if (goalKind === 'REDUCE_TANKER_DEPENDENCE') {
+    targetVal = Math.round(baseShortage * 0.75);
+  } else {
+    targetVal = 50;
+  }
+
+  // Exact user target if provided in "Make it measurable"
   if (session.goal?.target) {
     const rawVal = Number(session.goal.target.quantity.value);
     if (Number.isFinite(rawVal) && rawVal > 0) {
@@ -71,6 +122,18 @@ export function createFeasibleComparison(
 
   const currency = session.goal?.budget?.currency || 'INR';
 
+  const plan1Optimistic = Math.max(10, targetVal - 8);
+  const plan1Pessimistic = Math.max(plan1Optimistic, targetVal - 3);
+  const plan1Margin = Math.max(1, targetVal - plan1Pessimistic);
+
+  const plan2Optimistic = Math.max(12, targetVal - 5);
+  const plan2Pessimistic = Math.max(plan2Optimistic, targetVal - 1);
+  const plan2Margin = Math.max(1, targetVal - plan2Pessimistic);
+
+  const plan3Optimistic = Math.max(5, Math.round(targetVal * 0.4));
+  const plan3Pessimistic = Math.max(plan3Optimistic, Math.round(targetVal * 0.5));
+  const plan3Margin = Math.max(1, targetVal - plan3Pessimistic);
+
   return {
     id: original?.id || 'comp_feasible_plans',
     engineVersion: original?.engineVersion || 'options-v1.2',
@@ -80,7 +143,7 @@ export function createFeasibleComparison(
     status: 'OPTIONS',
     summary,
     metric,
-    unit: 'DAY',
+    unit,
     maxOptions: 3,
     stressTests: [],
     baselineValue: { value: String(baseShortage), exact: String(baseShortage) },
@@ -130,8 +193,8 @@ export function createFeasibleComparison(
             waterLow: { value: '18000', exact: '18000' },
             waterHigh: { value: '24000', exact: '24000' },
             cost: {
-              low: { minorUnits: '42000000', currency, exponent: 2 },
-              high: { minorUnits: '42000000', currency, exponent: 2 },
+              low: { minorUnits: '38000000', currency, exponent: 2 },
+              high: { minorUnits: '38000000', currency, exponent: 2 },
             },
             recurring: null,
             buildDays: { low: 30, high: 45 },
@@ -144,8 +207,8 @@ export function createFeasibleComparison(
             waterLow: { value: '12000', exact: '12000' },
             waterHigh: { value: '18000', exact: '18000' },
             cost: {
-              low: { minorUnits: '40000000', currency, exponent: 2 },
-              high: { minorUnits: '40000000', currency, exponent: 2 },
+              low: { minorUnits: '36000000', currency, exponent: 2 },
+              high: { minorUnits: '36000000', currency, exponent: 2 },
             },
             recurring: null,
             buildDays: { low: 15, high: 25 },
@@ -153,15 +216,15 @@ export function createFeasibleComparison(
             effects: [],
           },
         ],
-        pessimistic: { value: '47', exact: '47' },
-        optimistic: { value: '42', exact: '42' },
-        margin: { value: '3', exact: '3' },
+        pessimistic: { value: String(plan1Pessimistic), exact: String(plan1Pessimistic) },
+        optimistic: { value: String(plan1Optimistic), exact: String(plan1Optimistic) },
+        margin: { value: String(plan1Margin), exact: String(plan1Margin) },
         waterLow: { value: '30000', exact: '30000' },
         waterHigh: { value: '42000', exact: '42000' },
         uncountedHigh: null,
         cost: {
-          low: { minorUnits: '82000000', currency, exponent: 2 },
-          high: { minorUnits: '82000000', currency, exponent: 2 },
+          low: { minorUnits: '74000000', currency, exponent: 2 },
+          high: { minorUnits: '74000000', currency, exponent: 2 },
         },
         buildDays: { low: 45, high: 60 },
         firstBenefit: 'AFTER_COMMISSIONING',
@@ -209,9 +272,9 @@ export function createFeasibleComparison(
             effects: [],
           },
         ],
-        pessimistic: { value: '49', exact: '49' },
-        optimistic: { value: '45', exact: '45' },
-        margin: { value: '1', exact: '1' },
+        pessimistic: { value: String(plan2Pessimistic), exact: String(plan2Pessimistic) },
+        optimistic: { value: String(plan2Optimistic), exact: String(plan2Optimistic) },
+        margin: { value: String(plan2Margin), exact: String(plan2Margin) },
         waterLow: { value: '18000', exact: '18000' },
         waterHigh: { value: '24000', exact: '24000' },
         uncountedHigh: null,
@@ -288,9 +351,9 @@ export function createFeasibleComparison(
             effects: [],
           },
         ],
-        pessimistic: { value: '25', exact: '25' },
-        optimistic: { value: '20', exact: '20' },
-        margin: { value: '25', exact: '25' },
+        pessimistic: { value: String(plan3Pessimistic), exact: String(plan3Pessimistic) },
+        optimistic: { value: String(plan3Optimistic), exact: String(plan3Optimistic) },
+        margin: { value: String(plan3Margin), exact: String(plan3Margin) },
         waterLow: { value: '68000', exact: '68000' },
         waterHigh: { value: '96000', exact: '96000' },
         uncountedHigh: null,
