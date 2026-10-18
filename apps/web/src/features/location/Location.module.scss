@@ -425,8 +425,8 @@
   z-index: calc(var(--wp-z-dialog) + 1);
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  padding: clamp(5rem, 12vh, 8rem) var(--wp-space-4) var(--wp-space-4);
+  align-items: center;
+  padding: var(--wp-space-4);
   background: color-mix(in srgb, var(--wp-color-surface) 60%, transparent);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
@@ -437,4 +437,5 @@
   justify-items: center;
   gap: var(--wp-space-3);
   max-width: 26rem;
+  margin: auto;
 }
