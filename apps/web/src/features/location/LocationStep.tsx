@@ -27,6 +27,7 @@ interface LocationStepProps {
   onCancel?: () => void;
   initialArea?: AreaLocationFieldsFragment & { placeId?: string | null };
   sessionId?: string;
+  isResuming?: boolean;
   onResultsChange?: (ready: boolean) => void;
 }
 
@@ -53,6 +54,7 @@ export function LocationStep({
   onCancel,
   initialArea,
   sessionId,
+  isResuming = false,
   onResultsChange,
 }: LocationStepProps) {
   const adapter = usePlaces();
@@ -62,13 +64,17 @@ export function LocationStep({
   const userCleared = useRef(false);
   const justSubmitted = useRef(false);
   const [result, setResult] = useState<AreaBaselineQuery['area'] | null>(() => {
-    if (initialArea?.id && sessionId) {
-      const cached = queryClient.getQueryData<AreaBaselineQuery>(
-        queryKeys.baseline.area(initialArea.id, sessionId),
-      );
-      if (cached?.area) return cached.area;
+    if (initialArea?.id && isResuming) {
+      if (sessionId) {
+        const cached = queryClient.getQueryData<AreaBaselineQuery>(
+          queryKeys.baseline.area(initialArea.id, sessionId),
+        );
+        if (cached?.area) return cached.area;
+      }
       try {
-        const raw = sessionStorage.getItem(`waterpilot.baseline.${initialArea.id}.${sessionId}`);
+        const raw =
+          (sessionId ? sessionStorage.getItem(`waterpilot.baseline.${initialArea.id}.${sessionId}`) : null) ??
+          sessionStorage.getItem(`waterpilot.baseline.${initialArea.id}`);
         if (raw) {
           const parsed = JSON.parse(raw);
           if (parsed?.baseline) return parsed;
@@ -146,7 +152,7 @@ export function LocationStep({
   // Automatically restore or fetch baseline water conditions when initialArea is present
   useEffect(() => {
     const areaId = initialArea?.id;
-    if (!areaId || !sessionId || result || userCleared.current) return;
+    if (!areaId || !sessionId || result || userCleared.current || !isResuming) return;
 
     // 1. Try TanStack query cache
     const cached = queryClient.getQueryData<AreaBaselineQuery>(
@@ -160,7 +166,9 @@ export function LocationStep({
 
     // 2. Try sessionStorage
     try {
-      const raw = sessionStorage.getItem(`waterpilot.baseline.${areaId}.${sessionId}`);
+      const raw =
+        sessionStorage.getItem(`waterpilot.baseline.${areaId}.${sessionId}`) ??
+        sessionStorage.getItem(`waterpilot.baseline.${areaId}`);
       if (raw) {
         const parsed = JSON.parse(raw);
         if (parsed?.baseline) {
@@ -171,7 +179,9 @@ export function LocationStep({
       }
     } catch {}
 
-    // 3. Automatically fetch baseline water conditions from backend
+    // 3. Automatically fetch baseline water conditions from backend if resuming from a later stage
+    if (!isResuming) return;
+
     let cancelled = false;
     void queryClient
       .fetchQuery({
@@ -190,6 +200,10 @@ export function LocationStep({
             `waterpilot.baseline.${areaId}.${sessionId}`,
             JSON.stringify(response.area),
           );
+          sessionStorage.setItem(
+            `waterpilot.baseline.${areaId}`,
+            JSON.stringify(response.area),
+          );
         } catch {}
       })
       .catch(() => {
@@ -199,7 +213,7 @@ export function LocationStep({
     return () => {
       cancelled = true;
     };
-  }, [initialArea?.id, sessionId, result, queryClient, onResultsChange]);
+  }, [initialArea?.id, sessionId, result, queryClient, onResultsChange, isResuming]);
 
   // Preserve and restore draft when initialArea is provided
   useEffect(() => {
@@ -339,6 +353,10 @@ export function LocationStep({
             `waterpilot.baseline.${area.id}.${sessionId}`,
             JSON.stringify(response.area),
           );
+          sessionStorage.setItem(
+            `waterpilot.baseline.${area.id}`,
+            JSON.stringify(response.area),
+          );
         } catch {}
         if (token !== selection.current) return;
         setLoadingProgress(1);
@@ -367,11 +385,13 @@ export function LocationStep({
 
   const updateExtent = useCallback(
     (radius: number | null) => {
-      userCleared.current = true;
       setPreviewRadius(radius);
-      clearResults();
+      if (radius != null && radius !== (initialArea?.radiusMeters ?? 1000)) {
+        userCleared.current = true;
+        clearResults();
+      }
     },
-    [clearResults],
+    [clearResults, initialArea?.radiusMeters],
   );
 
   const mapPoint = useMemo(() => {
