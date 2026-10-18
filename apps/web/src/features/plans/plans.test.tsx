@@ -664,7 +664,7 @@ describe('PlansPage', () => {
       expect(detail).not.toBeVisible();
     }
     expect(screen.getByRole('heading', { name: 'Projected outcomes' })).toBeVisible();
-    expect(screen.getByRole('heading', { name: 'Neighbourhood impact' })).toBeVisible();
+    expect(screen.queryByRole('heading', { name: 'Neighbourhood impact' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Select a plan to continue' })).toBeDisabled();
     expect(
       screen.queryByRole('link', { name: /proceed with selected plan/i }),
@@ -719,26 +719,7 @@ describe('PlansPage', () => {
       within(cards[1]!).getByText(/Water quality review: required before building/),
     ).toBeInTheDocument();
     expect(screen.queryByText('Possible false resilience')).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByText('Connections, sources & limitations'));
-    const boundaries = screen.getByRole('table', { name: 'Influence boundaries' });
-    const shared = within(boundaries)
-      .getAllByRole('row')
-      .filter((r) => r.dataset.linkage);
-    expect(shared.map((r) => r.dataset.linkage)).toEqual(['UNKNOWN', 'UNKNOWN', 'UNKNOWN']);
-    const nearby = screen.getByRole('list', { name: 'Nearby places' });
-    expect(within(nearby).getByRole('listitem')).toHaveTextContent(
-      'Next ward, about 900 m away: Aquifer connection unknown; Catchment connection unknown; Supply network connection unknown.',
-    );
-    expect(screen.getByText(/Being close does not mean sharing an aquifer/)).toBeInTheDocument();
-    expect(screen.getByText('Not known whether the site uses groundwater.')).toBeInTheDocument();
-    expect(
-      within(screen.getByRole('list', { name: 'Not assessed' })).getByText(
-        /Not enough evidence to estimate effects on neighbours/,
-      ),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/does not judge whether water is safe to drink/)).toBeInTheDocument();
-    expect(document.body.textContent).not.toMatch(/\bpotable\b|\bdrinkable\b|\bno harm\b/i);
+    expect(screen.queryByRole('heading', { name: 'Neighbourhood impact' })).not.toBeInTheDocument();
   });
 
   it('warns about possible false resilience with its uncertainty and source', async () => {
@@ -764,9 +745,6 @@ describe('PlansPage', () => {
     expect(notice).toHaveTextContent(/lowers the water table for others/);
     expect(notice).toHaveTextContent(/is not known: no reviewed record on file/);
     expect(notice).toHaveTextContent('Based on: You said the site uses groundwater');
-    expect(
-      screen.getByText('You said the site uses a borewell or other groundwater.'),
-    ).toBeInTheDocument();
   });
 
   it('has no what-if controls in Traditional mode', async () => {

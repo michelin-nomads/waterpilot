@@ -1,7 +1,6 @@
 import { Icon } from '../../components';
 import type { Comparison } from './PlanComparisonView';
 import { formatMetric, formatOutcomeRange } from './plansFormat';
-import { ImpactContextPanel } from './WiderImpactView';
 import styles from './Plans.module.scss';
 
 /** Compare the modelled ranges actually returned, rather than inventing a yearly forecast. */
@@ -13,7 +12,6 @@ export function ComparisonSummaryPanels({
   selectedId: string | null;
 }) {
   const unit = comparison.unit ?? 'RATIO';
-  const preview = comparison.options.find((o) => o.id === selectedId) ?? comparison.options[0];
 
   const baselineNum = comparison.baselineValue ? Number(comparison.baselineValue.value) : NaN;
   const targetNum = comparison.targetLevel ? Number(comparison.targetLevel.value) : NaN;
@@ -206,54 +204,6 @@ export function ComparisonSummaryPanels({
           Outcomes use baseline data and CPHEEO municipal engineering models. Higher bars indicate
           greater water security and reduction in tanker dependence.
         </p>
-      </section>
-      <section className={styles.summaryPanel} aria-labelledby="neighbourhood-title">
-        <header className={styles.supportHead}>
-          <span className={styles.supportIcon}>
-            <Icon name="map" />
-          </span>
-          <div>
-            <h3 id="neighbourhood-title">Neighbourhood impact</h3>
-            <p className={styles.muted}>Understand the connections beyond your site.</p>
-          </div>
-        </header>
-        {preview && (
-          <div className={styles.impactPreview}>
-            <span className={styles.muted}>
-              {preview.id === selectedId ? 'Selected plan' : 'Preview'} · Plan {preview.rank}
-            </span>
-            <strong>
-              {preview.impact.externalities.length
-                ? `${preview.impact.externalities.length} possible wider ${preview.impact.externalities.length === 1 ? 'effect' : 'effects'} recorded`
-                : 'Wider impact needs review'}
-            </strong>
-            <p className={styles.muted}>
-              Review the plan’s impact details for benefits, trade-offs and uncertainties.
-            </p>
-          </div>
-        )}
-        <div className={styles.nearbySummary}>
-          <Icon name="users" size="sm" />
-          <p>
-            {comparison.impactContext.nearby.length
-              ? `${comparison.impactContext.nearby.length} nearby ${comparison.impactContext.nearby.length === 1 ? 'community' : 'communities'} recorded within ${comparison.impactContext.nearbyRadiusM / 1000} km.`
-              : 'No nearby communities recorded in the current evidence.'}
-          </p>
-        </div>
-        <p className={styles.muted}>
-          Proximity alone does not establish a shared aquifer, catchment or water network.
-        </p>
-        <details className={styles.quickDetails}>
-          <summary>
-            Connections, sources & limitations <Icon name="chevron-down" size="sm" />
-          </summary>
-          <div className={styles.evidenceContent}>
-            <ImpactContextPanel
-              context={comparison.impactContext}
-              engineVersion={comparison.impactEngineVersion}
-            />
-          </div>
-        </details>
       </section>
     </div>
   );

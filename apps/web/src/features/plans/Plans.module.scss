@@ -436,9 +436,7 @@
   display: grid;
   gap: var(--wp-space-5);
   margin-top: var(--wp-space-4);
-  @include desktop-up {
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-  }
+  grid-template-columns: 1fr;
 }
 .summaryPanel {
   @include card;
