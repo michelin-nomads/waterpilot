@@ -36,7 +36,8 @@ from waterpilot.domain.location import (
     timezone_at,
     unit_system_for,
 )
-from waterpilot.domain.planning import PlanningMode
+from waterpilot.domain.planning import Goal, GoalKind, PlanningMode
+from waterpilot.domain.reports import Report
 from waterpilot.domain.readiness import AssessmentBasis, InputId
 from waterpilot.domain.values import EvidenceQuality
 
@@ -252,13 +253,26 @@ def test_device_location_keeps_its_accuracy_and_a_private_community_is_refused()
         key("k1"),
     )
     assert area.accuracy_m == 2500 and area.owner_uid == "ben"
+    report = Report(
+        id=new_id(IdKind.REPORT),
+        owner_uid="ben",
+        session_id=new_id(IdKind.SESSION),
+        area_id=area.id,
+        title="Private test report",
+        goal=Goal(id=new_id(IdKind.GOAL), kind=GoalKind.REDUCE_SHORTAGE),
+        plan_option_id=new_id(IdKind.PLAN_OPTION),
+        finalized_at=NOW,
+        created_at=NOW,
+        updated_at=NOW,
+    )
+    s.deps.store.reports.insert(report)
     with pytest.raises(DomainError) as err:
         s.communities.create(
             ctx(BEN),
             {
                 "name": "Well users",
                 "area_id": area.id,
-                "report_id": new_id(IdKind.REPORT),
+                "report_id": report.id,
                 "contact_name": "Ben",
             },
             key("c1"),
