@@ -49,7 +49,7 @@ export const PLANNING_STAGES: readonly PlanningStage[] = [
     id: 'plans',
     sessionStage: 'COMPARE',
     path: '/plans',
-    label: 'Compare AI-Recommended Plans',
+    label: 'Compare Plans',
     subtitle: 'Compare feasible options, what they cost and how they affect neighbours.',
     reference: '6.png',
     ownerPhase: '12',

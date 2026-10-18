@@ -392,16 +392,16 @@ describe('GoalsPage', () => {
       expect(await screen.findByRole('radio', { name })).toBeVisible();
     await choose(/tanker/i, false);
     expect(screen.getByLabelText('Kind of target')).toHaveValue('');
-    expect(screen.getByLabelText('Preferred implementation time')).toHaveValue('');
+    expect(screen.getByLabelText('Preferred implementation time (days)')).toHaveValue('');
     expect(screen.getByLabelText('What matters most?')).toBeVisible();
-    expect(screen.getByLabelText('Compare benefits over')).toBeVisible();
+    expect(screen.getByLabelText('Compare benefits over (days)')).toBeVisible();
     expect(screen.getByRole('button', { name: /Site constraints/i })).toHaveAttribute(
       'aria-expanded',
       'false',
     );
     fireEvent.click(screen.getByRole('button', { name: /Use example:/i }));
     expect(screen.getByLabelText(/target \(%\)/i)).toHaveValue('30');
-    expect(screen.getByLabelText('Preferred implementation time')).toHaveValue('365');
+    expect(screen.getByLabelText('Preferred implementation time (days)')).toHaveValue('365');
   });
 
   it('shows server field errors on the field, opening its section', async () => {
@@ -415,7 +415,7 @@ describe('GoalsPage', () => {
     const sessions = renderGoals();
     await choose(/tanker/i);
     fireEvent.click(screen.getByRole('button', { name: 'Compare plans' }));
-    const field = await screen.findByLabelText(/open or unpaved ground/i);
+    const field = await screen.findByRole('textbox', { name: /open or unpaved ground/i });
     expect(field).toBeVisible();
     expect(field).toHaveAccessibleDescription(/need open or unpaved ground/i);
     expect(sessions.applied).toHaveLength(0);
@@ -504,54 +504,76 @@ describe('GoalsPage', () => {
     expect(screen.getByRole('button', { name: 'Compare plans' })).toBeEnabled();
   });
 
-  it('requires a fresh custom-wording confirmation after editing and preserves constraints when changing outcomes', async () => {
+  it('uses typed custom wording without a checkbox or generic measurement suggestion', async () => {
     renderGoals();
     await choose(/tanker/i, false);
-    fireEvent.change(screen.getByLabelText(/budget \(INR\)/i), { target: { value: '800000' } });
     fireEvent.click(screen.getByRole('button', { name: 'Set a custom goal' }));
     fireEvent.change(screen.getByLabelText(/Describe your goal/), {
       target: { value: 'Reuse water for the garden' },
     });
-    const confirm = screen.getByLabelText(/Use this description as my planning goal/);
-    fireEvent.click(confirm);
-    expect(confirm).toBeChecked();
-    fireEvent.change(screen.getByLabelText(/Describe your goal/), {
-      target: { value: 'Reuse more garden water' },
-    });
-    expect(confirm).not.toBeChecked();
-    fireEvent.click(screen.getByRole('radio', { name: /groundwater/i }));
-    expect(screen.getByLabelText(/budget \(INR\)/i)).toHaveValue('800000');
-    expect(screen.getByLabelText('Kind of target')).toHaveValue('');
+    expect(
+      screen.queryByRole('checkbox', { name: /Use this description/ }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Use example:/ })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Compare plans' }));
+    await waitFor(() => expect(lastGoal()?.confirmed).toBe(true));
+    expect(lastGoal().description).toBe('Reuse water for the garden');
+    expect(lastGoal().target).toBeNull();
   });
 
-  it('updates section counts and marks conditional tariff and funding fields as required', async () => {
+  it('keeps Scale separate and supports multiple site features with inline area values', async () => {
     renderGoals();
     await choose(/tanker/i, false);
-    const site = screen.getByRole('button', { name: /Site constraints/ });
-    expect(site).toHaveTextContent('Not added');
-    fireEvent.click(site);
-    fireEvent.change(screen.getByLabelText(/Roof area you can collect/), {
-      target: { value: '100' },
+    const summary = screen.getByRole('complementary', { name: 'Your goal at a glance' });
+    expect(within(summary).queryByText('Baseline reference')).not.toBeInTheDocument();
+    expect(within(summary).queryByText(/This is your intended outcome/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Site constraints/ }));
+    expect(screen.getByRole('combobox', { name: 'Scale' })).toBeVisible();
+    expect(screen.queryByRole('checkbox', { name: 'Scale' })).not.toBeInTheDocument();
+    const roofLabel = 'Roof area you can collect from (m²)';
+    const groundLabel = 'Open or unpaved ground (m²)';
+    fireEvent.click(screen.getByRole('checkbox', { name: roofLabel }));
+    fireEvent.change(screen.getByRole('textbox', { name: roofLabel }), {
+      target: { value: '120' },
     });
-    expect(site).toHaveTextContent('1 specified');
-    fireEvent.click(screen.getByRole('button', { name: /Water costs & funding/ }));
-    const price = screen.getByLabelText('Tanker price (currency amount)');
-    expect(price).not.toBeRequired();
-    fireEvent.change(price, { target: { value: '1000' } });
-    expect(price).toBeRequired();
-    expect(screen.getByLabelText(/Litres purchased for that price/)).toBeRequired();
-    fireEvent.click(screen.getByRole('button', { name: 'Add funding source' }));
-    expect(screen.getByLabelText(/Funding description/)).toBeRequired();
-    expect(screen.getByLabelText(/Funding evidence and date/)).not.toBeRequired();
-    expect(screen.getByRole('button', { name: /Water costs & funding/ })).toHaveTextContent(
-      '2 added',
-    );
+    fireEvent.click(screen.getByRole('checkbox', { name: groundLabel }));
+    fireEvent.change(screen.getByRole('textbox', { name: groundLabel }), {
+      target: { value: '50' },
+    });
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Space for a tank' }));
+    expect(screen.getByRole('textbox', { name: roofLabel })).toHaveValue('120');
+    expect(screen.getByRole('textbox', { name: groundLabel })).toHaveValue('50');
+    fireEvent.click(screen.getByRole('button', { name: 'Compare plans' }));
+    await waitFor(() => expect(lastGoal()?.site?.storageSpace).toBe(true));
+    expect(lastGoal()?.site?.roofArea).toEqual({ value: '120', unit: 'SQUARE_METRE' });
+    expect(lastGoal()?.site?.openGround).toEqual({ value: '50', unit: 'SQUARE_METRE' });
+  });
+
+  it('keeps sliders and exact inputs synchronized without filling optional values by default', async () => {
+    renderGoals();
+    await choose(/tanker/i, false);
+    expect(screen.getByLabelText(/budget \(INR\)/i)).toHaveValue('');
+    fireEvent.change(screen.getByRole('slider', { name: 'Budget slider' }), {
+      target: { value: '800000' },
+    });
+    expect(screen.getByLabelText(/budget \(INR\)/i)).toHaveValue('800000');
+    fireEvent.change(screen.getByLabelText('Preferred implementation time (days)'), {
+      target: { value: '47' },
+    });
+    expect(screen.getByRole('slider', { name: 'Implementation slider' })).toHaveValue('47');
+    const benefits = screen.getByLabelText('Compare benefits over (days)');
+    expect(
+      benefits.compareDocumentPosition(screen.getByLabelText('What matters most?')) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it('labels optional sections and fills example targets without a separate helper', async () => {
     renderGoals();
     await choose(/groundwater/i, false);
-    expect(screen.getByRole('heading', { name: 'Optional planning details' })).toBeVisible();
+    expect(
+      screen.queryByRole('heading', { name: 'Optional planning details' }),
+    ).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Help me set a target/i })).not.toBeInTheDocument();
     fireEvent.change(screen.getByLabelText(/budget \(INR\)/i), { target: { value: '800000' } });
     fireEvent.click(screen.getByRole('button', { name: /Use example:/ }));

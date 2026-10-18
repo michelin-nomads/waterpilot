@@ -1,24 +1,14 @@
-import { Badge, Icon } from '../../components';
-import type { GoalAssessmentFieldsFragment } from '../../graphql/generated/graphql';
-import { shiftDecimalRight } from '../../lib/format';
+import { Icon } from '../../components';
 import { goalBudgetLabel, goalDurationLabel } from './goalDisplay';
 import type { GoalDraft } from './goalDraft';
-import { KIND_LABEL, OUTCOME, PRIORITY_LABEL, RESTRICTION_LABEL, UNIT_LABEL } from './goalLabels';
+import { KIND_LABEL, PRIORITY_LABEL, RESTRICTION_LABEL, UNIT_LABEL } from './goalLabels';
 import styles from './Goals.module.scss';
 
-export function GoalSummary({
-  draft,
-  assessment,
-}: {
-  draft: GoalDraft;
-  assessment?: GoalAssessmentFieldsFragment | null;
-}) {
+export function GoalSummary({ draft }: { draft: GoalDraft }) {
   const target =
     draft.mode && draft.targetValue.trim()
-      ? `${draft.targetValue}${draft.mode === 'RELATIVE_REDUCTION' || draft.unit === 'RATIO' ? '%' : ` ${UNIT_LABEL[draft.unit ?? 'COUNT'] ?? ''}`}${draft.mode === 'RELATIVE_REDUCTION' ? ' reduction' : ''}`
+      ? `${draft.targetValue}${draft.mode === 'RELATIVE_REDUCTION' || draft.unit === 'RATIO' ? '%' : ` ${draft.kind === 'CUSTOM' && draft.unit === 'COUNT' ? 'count' : (UNIT_LABEL[draft.unit ?? 'COUNT'] ?? '')}`}${draft.mode === 'RELATIVE_REDUCTION' ? ' reduction' : ''}`
       : 'Not set';
-  const baseline = assessment?.target.baseline;
-  const unit = assessment?.target.unit;
   return (
     <aside className={styles.goalSummary} aria-label="Your goal at a glance">
       <div className={styles.summaryHeader}>
@@ -63,25 +53,6 @@ export function GoalSummary({
             <p className={styles.muted}>No restrictions specified</p>
           )}
         </div>
-        <div className={styles.summaryDivider} />
-        <span className={styles.summaryLabel}>Baseline reference</span>
-        <p className={styles.muted}>
-          {baseline != null
-            ? `${unit === 'RATIO' ? shiftDecimalRight(baseline, 2) : baseline} ${unit ? (UNIT_LABEL[unit] ?? unit) : ''}`
-            : assessment
-              ? 'Not available for this target'
-              : 'Your baseline is assessed when you compare plans.'}
-        </p>
-        {assessment && (
-          <Badge tone={OUTCOME[assessment.target.outcome].tone}>
-            {OUTCOME[assessment.target.outcome].label}
-          </Badge>
-        )}
-        <p className={styles.summaryNote}>
-          <Icon name="info" size="sm" />
-          This is your intended outcome. Plan comparison shows what the available evidence can
-          support.
-        </p>
       </div>
     </aside>
   );

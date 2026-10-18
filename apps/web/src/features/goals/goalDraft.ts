@@ -444,7 +444,7 @@ export function toGoalInput(draft: GoalDraft): { input: GoalInput | null; errors
     },
     preferredInterventions: draft.preferred,
     estimates,
-    confirmed: draft.kind === 'CUSTOM' ? draft.confirmed : false,
+    confirmed: draft.kind === 'CUSTOM' && Boolean(draft.description.trim()),
   };
   return Object.keys(errors).length ? { input: null, errors } : { input, errors };
 }

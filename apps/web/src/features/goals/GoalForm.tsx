@@ -14,22 +14,13 @@ import {
 } from '../../components';
 import type {
   InterventionCatalogueQuery,
-  GoalAssessmentFieldsFragment,
   Priority,
   SiteRestriction,
   SiteScale,
   TargetMode,
   Unit,
 } from '../../graphql/generated/graphql';
-import {
-  effectsField,
-  PRESETS,
-  type DraftErrors,
-  type EffectDraft,
-  type EstimateDraft,
-  type GoalDraft,
-  type YesNo,
-} from './goalDraft';
+import { PRESETS, type DraftErrors, type GoalDraft } from './goalDraft';
 import {
   KIND_LABEL,
   MODE_LABEL,
@@ -37,15 +28,13 @@ import {
   PRIORITY_LABEL,
   RESTRICTION_LABEL,
   SCALE_LABEL,
-  STANDARD_KINDS,
   UNIT_LABEL,
   UNITS,
 } from './goalLabels';
 import styles from './Goals.module.scss';
 import { GoalChoices } from './GoalChoices';
 import { GoalSummary } from './GoalSummary';
-import { GoalDurationField } from './GoalDurationField';
-import { FinancialInputs } from './FinancialInputs';
+import { GoalRangeField } from './GoalRangeField';
 
 type Catalogue = InterventionCatalogueQuery['interventionCatalogue'];
 
@@ -57,21 +46,9 @@ interface GoalFormProps {
   /** The location's currency; budgets in another currency are never converted. */
   areaCurrency: string | null;
   actions: ReactNode;
-  assessment?: GoalAssessmentFieldsFragment | null;
   disabled?: boolean;
   onCompare: () => void;
 }
-
-const ESTIMATE_FIELDS = [
-  'costLow',
-  'costHigh',
-  'costCurrency',
-  'recurringLow',
-  'recurringHigh',
-  'recurringCurrency',
-  'buildLow',
-  'buildHigh',
-] as const satisfies readonly (keyof EstimateDraft)[];
 
 const SECTION_FIELDS: Record<string, readonly string[]> = {
   finance: [
@@ -94,11 +71,14 @@ const SECTION_FIELDS: Record<string, readonly string[]> = {
   also: ['also'],
 };
 
-const YES_NO_LABEL = {
-  storageSpace: 'Space for a tank?',
-  pipedSupply: 'Piped water supply?',
-  groundwaterUse: 'Use a borewell or other groundwater?',
+const SITE_FIELDS = {
+  roofArea: 'Roof area you can collect from (m²)',
+  openGround: 'Open or unpaved ground (m²)',
+  storageSpace: 'Space for a tank',
+  pipedSupply: 'Piped water supply',
+  groundwaterUse: 'Borewell or groundwater use',
 } as const;
+type SiteFeature = keyof typeof SITE_FIELDS;
 
 /** Accordion section holding a field, so a field with an error is never left hidden. */
 function sectionOf(field: string): string | null {
@@ -116,10 +96,7 @@ export function GoalForm({
   draft,
   onChange,
   errors,
-  catalogue,
-  areaCurrency,
   actions,
-  assessment,
   disabled = false,
   onCompare,
 }: GoalFormProps) {
@@ -131,41 +108,16 @@ export function GoalForm({
     const list = draft[key] as readonly string[];
     set(key, (list.includes(value) ? list.filter((v) => v !== value) : [...list, value]) as never);
   };
-  const [estimateFor, setEstimateFor] = useState('');
   const [open, setOpen] = useState<string[]>([]);
 
+  const [selectedAreas, setSelectedAreas] = useState({
+    roofArea: Boolean(draft.roofArea.trim()),
+    openGround: Boolean(draft.openGround.trim()),
+  });
   const kind = draft.kind;
   const modes = kind ? MODES[kind] : [];
   const units = kind ? UNITS[kind] : [];
   const ratio = draft.mode === 'RELATIVE_REDUCTION' || draft.unit === 'RATIO';
-  const interventions = catalogue?.interventions ?? [];
-  const nameOf = (iid: string) => interventions.find((i) => i.id === iid)?.name ?? iid;
-  const effectInputsOf = (iid: string) =>
-    interventions.find((i) => i.id === iid)?.effectInputs ?? [];
-  const setEffect = (
-    i: number,
-    spec: { key: string; unit: Unit },
-    side: 'low' | 'high',
-    value: string,
-  ) =>
-    set(
-      'estimates',
-      draft.estimates.map((x, j) => {
-        if (j !== i) return x;
-        const found = x.effects.find((f) => f.key === spec.key);
-        const next: EffectDraft = {
-          ...(found ?? { key: spec.key, unit: spec.unit, low: '', high: '' }),
-          [side]: value,
-        };
-        return {
-          ...x,
-          effects: found
-            ? x.effects.map((f) => (f.key === spec.key ? next : f))
-            : [...x.effects, next],
-        };
-      }),
-    );
-
   const summary: FieldError[] = Object.entries(errors).flatMap(([field, message]) =>
     message ? [{ fieldId: fid(field), message }] : [],
   );
@@ -176,10 +128,12 @@ export function GoalForm({
     .filter((s): s is string => s !== null);
   const expanded = [...new Set([...open, ...withErrors])];
   const selectedPreset = presetFor(draft);
-  const example = PRESETS.find((p) => p.id === selectedPreset);
+  const example = kind === 'CUSTOM' ? undefined : PRESETS.find((p) => p.id === selectedPreset);
 
   const countPill = (count: number, unit: string) => (
-    <Badge tone={count ? 'accent' : 'neutral'}>{count ? `${count} ${unit}` : 'Not added'}</Badge>
+    <Badge tone={count ? 'accent' : 'neutral'}>
+      {count ? `${count} ${unit} · Optional` : 'Optional'}
+    </Badge>
   );
   const siteCount =
     [
@@ -190,10 +144,6 @@ export function GoalForm({
       draft.pipedSupply,
       draft.groundwaterUse,
     ].filter((value) => value.trim()).length + draft.restrictions.length;
-  const financeCount =
-    Number(Boolean(draft.tariffAmount.trim() || draft.tariffLitres.trim())) +
-    Number(Boolean(draft.contingencyPercent.trim())) +
-    draft.funding.length;
 
   const sections = kind
     ? [
@@ -204,7 +154,7 @@ export function GoalForm({
           trailing: countPill(siteCount, 'specified'),
           content: (
             <div className={styles.stack}>
-              <div className={styles.grid}>
+              <div className={styles.siteScale}>
                 <Field id={fid('scale')} label="Scale" error={errors.scale}>
                   {(p) => (
                     <Select
@@ -213,60 +163,72 @@ export function GoalForm({
                       onChange={(e) => set('scale', e.target.value as SiteScale | '')}
                     >
                       <option value="">Not sure</option>
-                      {(Object.keys(SCALE_LABEL) as SiteScale[]).map((v) => (
-                        <option key={v} value={v}>
-                          {SCALE_LABEL[v]}
+                      {(Object.keys(SCALE_LABEL) as SiteScale[]).map((value) => (
+                        <option key={value} value={value}>
+                          {SCALE_LABEL[value]}
                         </option>
                       ))}
                     </Select>
                   )}
                 </Field>
-                <Field
-                  id={fid('roofArea')}
-                  label="Roof area you can collect from (m²)"
-                  error={errors.roofArea}
-                >
-                  {(p) => (
-                    <Input
-                      {...p}
-                      inputMode="decimal"
-                      value={draft.roofArea}
-                      onChange={(e) => set('roofArea', e.target.value)}
-                    />
-                  )}
-                </Field>
-                <Field
-                  id={fid('openGround')}
-                  label="Open or unpaved ground (m²)"
-                  error={errors.openGround}
-                >
-                  {(p) => (
-                    <Input
-                      {...p}
-                      inputMode="decimal"
-                      value={draft.openGround}
-                      onChange={(e) => set('openGround', e.target.value)}
-                    />
-                  )}
-                </Field>
-                {(['storageSpace', 'pipedSupply', 'groundwaterUse'] as const).map((key) => (
-                  <Field key={key} id={fid(key)} label={YES_NO_LABEL[key]}>
-                    {(p) => (
-                      <Select
-                        {...p}
-                        value={draft[key]}
-                        onChange={(e) => set(key, e.target.value as YesNo)}
-                      >
-                        <option value="">Not sure</option>
-                        <option value="yes">Yes</option>
-                        <option value="no">No</option>
-                      </Select>
-                    )}
-                  </Field>
-                ))}
               </div>
+              <fieldset className={styles.siteFieldPicker}>
+                <legend className={styles.hidden}>Available site features</legend>
+                <div className={styles.siteFieldOptions}>
+                  {(Object.keys(SITE_FIELDS) as SiteFeature[]).map((key) => {
+                    if (key === 'roofArea' || key === 'openGround') {
+                      const checked = selectedAreas[key] || Boolean(errors[key]);
+                      return (
+                        <div key={key} className={styles.siteFeatureRow}>
+                          <label>
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={(e) => {
+                                setSelectedAreas({ ...selectedAreas, [key]: e.target.checked });
+                                if (!e.target.checked) set(key, '');
+                              }}
+                            />
+                            {SITE_FIELDS[key]}
+                          </label>
+                          {checked && (
+                            <Field
+                              id={fid(key)}
+                              label={SITE_FIELDS[key]}
+                              hideLabel
+                              error={errors[key]}
+                            >
+                              {(p) => (
+                                <Input
+                                  {...p}
+                                  inputMode="decimal"
+                                  placeholder={key === 'roofArea' ? 'e.g. 120' : 'e.g. 50'}
+                                  value={draft[key]}
+                                  onChange={(e) => set(key, e.target.value)}
+                                />
+                              )}
+                            </Field>
+                          )}
+                        </div>
+                      );
+                    }
+                    return (
+                      <div key={key} className={styles.siteFeatureRow} data-no-area="true">
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={draft[key] === 'yes'}
+                            onChange={(e) => set(key, e.target.checked ? 'yes' : 'no')}
+                          />
+                          {SITE_FIELDS[key]}
+                        </label>
+                      </div>
+                    );
+                  })}
+                </div>
+              </fieldset>
               <fieldset className={styles.checks}>
-                <legend className={styles.legend}>Rule out</legend>
+                <legend className={styles.legend}>Activities not allowed on your site</legend>
                 {(Object.keys(RESTRICTION_LABEL) as SiteRestriction[]).map((r) => (
                   <label key={r} className={styles.check}>
                     <input
@@ -278,239 +240,6 @@ export function GoalForm({
                   </label>
                 ))}
               </fieldset>
-            </div>
-          ),
-        },
-        {
-          id: 'finance',
-          title: 'Water costs & funding',
-          icon: 'wallet' as const,
-          trailing: countPill(financeCount, 'added'),
-          content: (
-            <div className={styles.stack}>
-              <Field
-                id={fid('currency')}
-                label="Budget currency"
-                required={Boolean(draft.budgetAmount.trim())}
-                error={errors.currency}
-                labelAction={
-                  <Tooltip label="About budget currency">
-                    {areaCurrency ? `The selected location uses ${areaCurrency}. ` : ''}Amounts
-                    remain in their stated currency; no currency conversion is applied.
-                  </Tooltip>
-                }
-              >
-                {(p) => (
-                  <Input
-                    {...p}
-                    maxLength={3}
-                    value={draft.currency}
-                    onChange={(e) => set('currency', e.target.value.toUpperCase())}
-                  />
-                )}
-              </Field>
-              <FinancialInputs draft={draft} onChange={onChange} errors={errors} fid={fid} />
-            </div>
-          ),
-        },
-        {
-          id: 'also',
-          title: 'Other goals to balance',
-          icon: 'layers' as const,
-          trailing: countPill(draft.also.length, 'selected'),
-          content: (
-            <fieldset className={styles.checks}>
-              <legend className={styles.legend}>Also aim to</legend>
-              {STANDARD_KINDS.filter((k) => k !== kind).map((k) => (
-                <label key={k} className={styles.check}>
-                  <input
-                    type="checkbox"
-                    checked={draft.also.includes(k)}
-                    disabled={!draft.also.includes(k) && draft.also.length >= 3}
-                    onChange={() => toggle('also', k)}
-                  />
-                  {KIND_LABEL[k]}
-                </label>
-              ))}
-            </fieldset>
-          ),
-        },
-        {
-          id: 'estimates',
-          title: 'Cost & performance assumptions',
-          icon: 'chart' as const,
-          trailing: countPill(
-            draft.estimates.length,
-            draft.estimates.length === 1 ? 'estimate' : 'estimates',
-          ),
-          content: (
-            <div className={styles.stack}>
-              {draft.estimates.map((e, i) => (
-                <fieldset key={e.interventionId} className={styles.estimate}>
-                  <legend className={styles.legend}>{nameOf(e.interventionId)}</legend>
-                  <div className={styles.grid}>
-                    {ESTIMATE_FIELDS.map((f) => (
-                      <Field
-                        key={f}
-                        id={fid(`estimates.${i}.${f}`)}
-                        label={
-                          {
-                            costLow: `Lowest cost (${e.costCurrency || draft.currency})`,
-                            costCurrency: 'Capital cost currency',
-                            recurringLow: `Annual maintenance — low (${e.recurringCurrency || draft.currency})`,
-                            recurringHigh: `Annual maintenance — high (${e.recurringCurrency || draft.currency})`,
-                            recurringCurrency: 'Maintenance currency',
-                            costHigh: `Highest cost (${e.costCurrency || draft.currency})`,
-                            buildLow: 'Shortest build (days)',
-                            buildHigh: 'Longest build (days)',
-                          }[f]
-                        }
-                        required={
-                          ((f === 'costLow' || f === 'costCurrency') &&
-                            Boolean(e.costLow.trim() || e.costHigh.trim())) ||
-                          ((f === 'recurringLow' || f === 'recurringCurrency') &&
-                            Boolean(e.recurringLow?.trim() || e.recurringHigh?.trim())) ||
-                          (f === 'buildLow' && Boolean(e.buildLow.trim() || e.buildHigh.trim()))
-                        }
-                        error={errors[`estimates.${i}.${f}`]}
-                      >
-                        {(p) => (
-                          <Input
-                            {...p}
-                            inputMode="decimal"
-                            value={
-                              e[f] ??
-                              (f === 'costCurrency' || f === 'recurringCurrency'
-                                ? draft.currency
-                                : '')
-                            }
-                            onChange={(ev) =>
-                              set(
-                                'estimates',
-                                draft.estimates.map((x, j) =>
-                                  j === i ? { ...x, [f]: ev.target.value } : x,
-                                ),
-                              )
-                            }
-                          />
-                        )}
-                      </Field>
-                    ))}
-                  </div>
-                  {effectInputsOf(e.interventionId).length > 0 ? (
-                    <div className={styles.grid} role="group" aria-label="Water effect ranges">
-                      {effectInputsOf(e.interventionId).map((spec, k) => {
-                        const share = spec.unit === 'RATIO';
-                        const suffix = share ? '%' : (UNIT_LABEL[spec.unit] ?? spec.unit);
-                        const value = e.effects.find((f) => f.key === spec.key);
-                        return (['low', 'high'] as const).map((side) => (
-                          <Field
-                            key={`${spec.key}.${side}`}
-                            id={
-                              k === 0 && side === 'low'
-                                ? fid(effectsField(i))
-                                : fid(`${effectsField(i)}.${spec.key}.${side}`)
-                            }
-                            label={`${spec.label} — ${side === 'low' ? 'low' : 'high'} (${suffix})`}
-                            required={
-                              side === 'low' && Boolean(value?.low.trim() || value?.high.trim())
-                            }
-                            hint={
-                              side === 'low' ? spec.note || (share ? 'Your own figure.' : '') : ''
-                            }
-                            error={k === 0 && side === 'low' ? errors[effectsField(i)] : undefined}
-                          >
-                            {(p) => (
-                              <Input
-                                {...p}
-                                inputMode="decimal"
-                                value={value?.[side] ?? ''}
-                                onChange={(ev) => setEffect(i, spec, side, ev.target.value)}
-                              />
-                            )}
-                          </Field>
-                        ));
-                      })}
-                    </div>
-                  ) : (
-                    <p className={styles.muted}>
-                      This measure&apos;s water effect is not modelled, so it is not counted when
-                      plans are compared.
-                    </p>
-                  )}
-                  <Field id={fid(`estimates.${i}.note`)} label="Where these figures come from">
-                    {(p) => (
-                      <Input
-                        {...p}
-                        maxLength={500}
-                        value={e.note}
-                        onChange={(ev) =>
-                          set(
-                            'estimates',
-                            draft.estimates.map((x, j) =>
-                              j === i ? { ...x, note: ev.target.value } : x,
-                            ),
-                          )
-                        }
-                      />
-                    )}
-                  </Field>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() =>
-                      set(
-                        'estimates',
-                        draft.estimates.filter((_, j) => j !== i),
-                      )
-                    }
-                  >
-                    Remove estimate
-                  </Button>
-                </fieldset>
-              ))}
-              <div className={styles.estimateAdd}>
-                <Field id={fid('estimateFor')} label="Add an estimate for">
-                  {(p) => (
-                    <Select
-                      {...p}
-                      value={estimateFor}
-                      onChange={(e) => setEstimateFor(e.target.value)}
-                    >
-                      <option value="">Choose a measure</option>
-                      {interventions
-                        .filter((i) => !draft.estimates.some((e) => e.interventionId === i.id))
-                        .map((i) => (
-                          <option key={i.id} value={i.id}>
-                            {i.name}
-                          </option>
-                        ))}
-                    </Select>
-                  )}
-                </Field>
-                <Button
-                  variant="secondary"
-                  startIcon="plus"
-                  disabled={!estimateFor}
-                  onClick={() => {
-                    set('estimates', [
-                      ...draft.estimates,
-                      {
-                        interventionId: estimateFor,
-                        costLow: '',
-                        costHigh: '',
-                        buildLow: '',
-                        buildHigh: '',
-                        effects: [],
-                        note: '',
-                      },
-                    ]);
-                    setEstimateFor('');
-                  }}
-                >
-                  Add estimate
-                </Button>
-              </div>
             </div>
           ),
         },
@@ -552,24 +281,12 @@ export function GoalForm({
                       rows={1}
                       className={styles.customDescription}
                       maxLength={2000}
+                      placeholder="Describe the outcome you want for your community"
                       value={draft.description}
-                      onChange={(e) =>
-                        onChange({ ...draft, description: e.target.value, confirmed: false })
-                      }
+                      onChange={(e) => set('description', e.target.value)}
                     />
                   )}
                 </Field>
-                <label className={styles.customConfirmation} id={fid('confirmed')}>
-                  <input
-                    type="checkbox"
-                    required
-                    checked={draft.confirmed}
-                    disabled={!draft.description.trim()}
-                    onChange={(e) => set('confirmed', e.target.checked)}
-                  />
-                  Use this description as my planning goal. <span aria-hidden="true">*</span>
-                </label>
-                {errors.confirmed && <p className={styles.error}>{errors.confirmed}</p>}
               </div>
             )}
           </section>
@@ -611,7 +328,9 @@ export function GoalForm({
                     <Field
                       id={fid('targetValue')}
                       label={
-                        ratio ? 'Target (%)' : `Target (${UNIT_LABEL[draft.unit ?? 'COUNT'] ?? ''})`
+                        ratio
+                          ? 'Target (%)'
+                          : `Target (${kind === 'CUSTOM' && draft.unit === 'COUNT' ? 'count' : (UNIT_LABEL[draft.unit ?? 'COUNT'] ?? '')})`
                       }
                       labelAction={
                         <Tooltip label="About this target">
@@ -631,6 +350,7 @@ export function GoalForm({
                         <Input
                           {...p}
                           inputMode="decimal"
+                          placeholder={ratio ? 'e.g. 25' : 'Enter target value'}
                           value={draft.targetValue}
                           onChange={(e) => set('targetValue', e.target.value)}
                         />
@@ -647,7 +367,7 @@ export function GoalForm({
                         >
                           {units.map((u) => (
                             <option key={u} value={u}>
-                              {UNIT_LABEL[u] ?? u}
+                              {kind === 'CUSTOM' && u === 'COUNT' ? 'count' : (UNIT_LABEL[u] ?? u)}
                             </option>
                           ))}
                         </Select>
@@ -660,9 +380,9 @@ export function GoalForm({
                       label="What will you measure?"
                       labelAction={
                         <Tooltip label="About the target parameter">
-                          Use a lowercase parameter name, such as turbidity or nitrate. A custom
-                          outcome needs a matching baseline measure and supported model to be
-                          assessed.
+                          {kind === 'CUSTOM'
+                            ? 'Name your own measured quantity using lowercase letters and underscores. Assessing it needs matching baseline data and a supported model.'
+                            : 'Use the parameter name that matches your reading, such as turbidity or nitrate.'}
                         </Tooltip>
                       }
                       required={kind === 'IMPROVE_WATER_QUALITY'}
@@ -671,6 +391,9 @@ export function GoalForm({
                       {(p) => (
                         <Input
                           {...p}
+                          placeholder={
+                            kind === 'CUSTOM' ? 'Enter a quantity to measure' : 'e.g. turbidity'
+                          }
                           value={draft.targetParameter}
                           onChange={(e) => set('targetParameter', e.target.value)}
                         />
@@ -703,32 +426,38 @@ export function GoalForm({
                 <span className={styles.muted}>Optional</span>
               </div>
               <div className={styles.grid}>
-                <Field
+                <GoalRangeField
                   id={fid('budgetAmount')}
                   label={`Maximum implementation budget (${draft.currency || 'currency'})`}
+                  value={draft.budgetAmount}
+                  onChange={(v) => set('budgetAmount', v)}
                   error={errors.budgetAmount}
-                  labelAction={
-                    <Tooltip label="About the implementation budget">
-                      Enter the maximum budget in {draft.currency || 'your stated currency'},
-                      without commas or currency symbols. Leave blank for no budget limit.
-                    </Tooltip>
-                  }
-                >
-                  {(p) => (
-                    <Input
-                      {...p}
-                      inputMode="decimal"
-                      value={draft.budgetAmount}
-                      onChange={(e) => set('budgetAmount', e.target.value)}
-                    />
-                  )}
-                </Field>
-                <GoalDurationField
+                  max={10000000}
+                  step={10000}
+                  placeholder="Amount"
+                  sliderLabel="Budget slider"
+                />
+                <GoalRangeField
                   id={fid('timelineDays')}
-                  label="Preferred implementation time"
+                  label="Preferred implementation time (days)"
                   value={draft.timelineDays}
-                  onChange={(value) => set('timelineDays', value)}
+                  onChange={(v) => set('timelineDays', v)}
                   error={errors.timelineDays}
+                  min={1}
+                  max={730}
+                  placeholder="Days"
+                  sliderLabel="Implementation slider"
+                />
+                <GoalRangeField
+                  id={fid('horizonDays')}
+                  label="Compare benefits over (days)"
+                  value={draft.horizonDays}
+                  onChange={(v) => set('horizonDays', v)}
+                  error={errors.horizonDays}
+                  min={1}
+                  max={3650}
+                  placeholder="Days"
+                  sliderLabel="Benefits slider"
                 />
                 <Field id={fid('priority')} label="What matters most?" error={errors.priority}>
                   {(p) => (
@@ -746,34 +475,22 @@ export function GoalForm({
                     </Select>
                   )}
                 </Field>
-                <GoalDurationField
-                  id={fid('horizonDays')}
-                  label="Compare benefits over"
-                  value={draft.horizonDays}
-                  onChange={(value) => set('horizonDays', value)}
-                  error={errors.horizonDays}
-                  horizon
-                />
               </div>
             </section>
           )}
           {sections.length > 0 && (
-            <section className={styles.optionalDetails} aria-labelledby={fid('optional')}>
-              <div className={styles.sectionHead}>
-                <h2 id={fid('optional')}>Optional planning details</h2>
-                <span className={styles.muted}>Add what you know, or skip these sections.</span>
-              </div>
+            <section className={styles.optionalDetails} aria-label="Optional site constraints">
               <Accordion
                 className={styles.optionalAccordion}
                 items={sections}
-                headingLevel={3}
+                headingLevel={2}
                 expanded={expanded}
                 onExpandedChange={setOpen}
               />
             </section>
           )}
         </fieldset>
-        <GoalSummary draft={draft} assessment={assessment} />
+        <GoalSummary draft={draft} />
       </div>
       {actions}
     </form>
