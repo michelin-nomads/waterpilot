@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { Button, ButtonLink, ErrorState, LoadingRegion, Notice, Skeleton } from '../../components';
+import { Button, ErrorState, LoadingRegion, Notice, Skeleton } from '../../components';
 import { SessionScenarioDocument } from '../../graphql/generated/graphql';
 import { useGraphQLQuery } from '../../graphql/hooks';
 import { queryKeys } from '../../graphql/queryKeys';
 import { usePlanningSession } from '../../session/sessionContext';
 import type { SessionState } from '../../session/sessionState';
-import { SHOW_COMMUNITY_BASELINE } from '../planning/visibility';
 import { StagePage } from '../planning/StagePage';
 import { ModernScenarioPanel } from './ModernScenarioPanel';
 import { ScenicHeaderIllustration } from './ScenicHeaderIllustration';
@@ -74,14 +73,8 @@ export default function ScenarioPage() {
         </LoadingRegion>
       )}
       <div className={styles.actions}>
-        <ButtonLink
-          to={SHOW_COMMUNITY_BASELINE ? '/baseline/overview' : '/area'}
-          variant="secondary"
-        >
-          Back to your area
-        </ButtonLink>
         <Button
-          variant="secondary"
+          variant="ghost"
           disabled={!coordinator || inputsPending || saving}
           onClick={() =>
             void save({ adjustments: [], interpretedFrom: null, confirmed: true }, true)

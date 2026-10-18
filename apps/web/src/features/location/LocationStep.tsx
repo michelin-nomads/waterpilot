@@ -59,7 +59,15 @@ export function LocationStep({
   const queryClient = useQueryClient();
   const [working, setWorking] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
-  const [result, setResult] = useState<AreaBaselineQuery['area'] | null>(null);
+  const [result, setResult] = useState<AreaBaselineQuery['area'] | null>(() => {
+    if (initialArea?.id && sessionId) {
+      const cached = queryClient.getQueryData<AreaBaselineQuery>(
+        queryKeys.baseline.area(initialArea.id, sessionId),
+      );
+      return cached?.area ?? null;
+    }
+    return null;
+  });
   const resultsElement = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!result) return;
@@ -115,6 +123,13 @@ export function LocationStep({
     },
     [],
   );
+
+  // Notify parent if baseline was restored from query cache on mount
+  useEffect(() => {
+    if (result) {
+      onResultsChange?.(true);
+    }
+  }, [result, onResultsChange]);
 
   const resolveDraft = useCallback(
     async (candidate: LocationDraft, token: number) => {
@@ -275,6 +290,7 @@ export function LocationStep({
           <LocationSearch
             adapter={adapter}
             showHint={false}
+            initialValue={initialArea?.name ?? ''}
             onSelect={(place) => review({ origin: 'PLACE_SEARCH', place })}
             action={
               <Button
