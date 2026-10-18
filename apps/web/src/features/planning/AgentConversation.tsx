@@ -157,7 +157,12 @@ export default function AgentConversation({
             runRef.current = next;
             setRun(next);
             if (event.type === 'invalidate') {
-              for (const key of event.keys ?? []) {
+              for (const rawKey of (event.keys ?? []) as (string[] | string)[]) {
+                const key = Array.isArray(rawKey)
+                  ? rawKey
+                  : typeof rawKey === 'string'
+                  ? rawKey.split(':')
+                  : [rawKey];
                 await client.cancelQueries({ queryKey: key });
                 await client.invalidateQueries({ queryKey: key });
               }
@@ -222,14 +227,26 @@ export default function AgentConversation({
   const events = run?.events ?? [];
   const displayed: AgentEvent[] = [];
   for (const event of events) {
+    if (event.type !== 'text' && event.type !== 'message' && event.type !== 'result') {
+      continue;
+    }
     const previous = displayed.at(-1);
     if (
       event.type === 'text' &&
       previous?.type === 'text' &&
       (event.run_id && previous.run_id ? event.run_id === previous.run_id : true)
-    )
+    ) {
       previous.text = (previous.text ?? '') + (event.text ?? '');
-    else displayed.push({ ...event });
+    } else if (
+      event.type === 'message' &&
+      previous?.type === 'message' &&
+      event.role === previous.role &&
+      event.text?.trim() === previous.text?.trim()
+    ) {
+      continue;
+    } else {
+      displayed.push({ ...event });
+    }
   }
 
   useEffect(() => {
