@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { Button, ErrorState, LoadingRegion, Notice, Skeleton } from '../../components';
+import { ErrorState, LoadingRegion, Notice, Skeleton } from '../../components';
 import { SessionScenarioDocument } from '../../graphql/generated/graphql';
 import { useGraphQLQuery } from '../../graphql/hooks';
 import { queryKeys } from '../../graphql/queryKeys';
@@ -9,8 +9,6 @@ import { usePlanningSession } from '../../session/sessionContext';
 import type { SessionState } from '../../session/sessionState';
 import { StagePage } from '../planning/StagePage';
 import { ModernScenarioPanel } from './ModernScenarioPanel';
-import styles from './Plans.module.scss';
-
 export default function ScenarioPage() {
   const { state, view, coordinator, inputsPending } = usePlanningSession();
   const navigate = useNavigate();
@@ -42,7 +40,11 @@ export default function ScenarioPage() {
     }
   }
   return (
-    <StagePage stageId="scenario">
+    <StagePage
+      stageId="scenario"
+      titleSuffix="(Optional)"
+      subtitle="Explore how rainfall, water supply and demand changes affect your goals."
+    >
       {failed && (
         <Notice kind="caution">
           The scenario could not be saved. Your entries are kept; try again.
@@ -67,17 +69,6 @@ export default function ScenarioPage() {
         <LoadingRegion label="Loading scenario">
           <Skeleton shape="block" />
         </LoadingRegion>
-      )}
-      {state.server?.scenario?.confirmed && (
-        <div className={styles.actions}>
-          <Button
-            disabled={saving || inputsPending}
-            onClick={() => navigate('/goals')}
-            endIcon="arrow-right"
-          >
-            Continue with saved scenario
-          </Button>
-        </div>
       )}
     </StagePage>
   );

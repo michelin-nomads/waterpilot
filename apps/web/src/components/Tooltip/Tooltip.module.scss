@@ -15,7 +15,7 @@
   border-radius: 50%;
   background: transparent;
   color: var(--wp-color-text-muted);
-  cursor: help;
+  cursor: default;
 
   &:hover {
     color: var(--wp-color-accent);
@@ -81,7 +81,7 @@
   color: inherit;
   font: inherit;
   text-align: inherit;
-  cursor: help;
+  cursor: default;
 
   > span {
     display: block;

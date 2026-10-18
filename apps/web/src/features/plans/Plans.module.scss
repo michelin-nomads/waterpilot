@@ -311,11 +311,12 @@
 }
 .options {
   gap: var(--wp-space-5);
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
 }
 .option {
   display: flex;
   flex-direction: column;
+  container-type: inline-size;
   gap: var(--wp-space-4);
   background: var(--wp-color-surface);
   &[data-selected='true'] {
@@ -362,10 +363,14 @@
 .optionFacts {
   margin: 0;
   display: grid;
+  min-width: 0;
+  width: 100%;
 }
 .optionFacts > div {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  min-width: 0;
   gap: var(--wp-space-3);
   padding: var(--wp-space-3) 0;
   border-top: 1px solid var(--wp-color-border);
@@ -376,6 +381,8 @@
   gap: var(--wp-space-2);
   color: var(--wp-color-text-muted);
   font-size: var(--wp-text-sm);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .optionFacts dt svg {
   flex: none;
@@ -383,7 +390,8 @@
 }
 .optionFacts dd {
   margin: 0;
-  max-width: 55%;
+  min-width: 0;
+  max-width: 100%;
   text-align: right;
   font-size: var(--wp-text-sm);
   font-weight: 650;
@@ -496,7 +504,9 @@
   border-radius: var(--wp-radius-md);
   background: var(--wp-color-surface);
   border: 1px solid var(--wp-color-border);
-  transition: border-color var(--wp-motion-fast), background var(--wp-motion-fast);
+  transition:
+    border-color var(--wp-motion-fast),
+    background var(--wp-motion-fast);
 }
 .rangeItem[data-chosen='true'] {
   border-color: var(--wp-color-accent);
@@ -616,29 +626,41 @@
   box-shadow: 0 0 2px rgba(0, 0, 0, 0.4);
 }
 .scaleRuler {
-  position: relative;
-  height: 1.5rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--wp-space-2) var(--wp-space-3);
   margin-top: var(--wp-space-1);
   margin-bottom: var(--wp-space-3);
   font-size: var(--wp-text-xs);
   color: var(--wp-color-text-muted);
 }
 .scaleStart {
-  position: absolute;
-  left: 0;
-  white-space: nowrap;
+  grid-column: 1;
+  grid-row: 1;
+  overflow-wrap: anywhere;
 }
 .scaleTarget {
-  position: absolute;
-  transform: translateX(-50%);
+  grid-column: 1 / -1;
+  grid-row: 2;
   color: var(--wp-color-accent-strong);
   font-weight: 600;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 .scaleEnd {
-  position: absolute;
-  right: 0;
-  white-space: nowrap;
+  grid-column: 2;
+  grid-row: 1;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+  min-width: 0;
+
+  > :first-child {
+    flex: none;
+  }
 }
 .chartNote {
   display: flex;
@@ -668,7 +690,6 @@
     var(--wp-color-accent) 3px,
     var(--wp-color-accent) 6px
   );
-  margin-left: var(--wp-space-2);
 }
 .legendTargetLine {
   display: inline-block;
@@ -676,14 +697,13 @@
   width: 3px;
   background: var(--wp-color-text);
   border-radius: 1px;
-  margin-left: var(--wp-space-2);
 }
 .outcomeCardValue {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 0.2rem;
-  max-width: 65% !important;
+  max-width: 100%;
 }
 .outcomeRowMain {
   display: flex;
@@ -699,7 +719,7 @@
   background: var(--wp-color-success-soft);
   padding: 0.1rem 0.4rem;
   border-radius: var(--wp-radius-pill);
-  white-space: nowrap;
+  white-space: normal;
   border: 1px solid rgba(16, 185, 129, 0.25);
 }
 .outcomeCardBadgeExceeds {
@@ -709,7 +729,7 @@
   background: var(--wp-color-accent-soft);
   padding: 0.1rem 0.4rem;
   border-radius: var(--wp-radius-pill);
-  white-space: nowrap;
+  white-space: normal;
   border: 1px solid var(--wp-color-accent);
 }
 .outcomeCardSavings {
@@ -719,7 +739,29 @@
   background: var(--wp-color-accent-soft);
   padding: 0.1rem 0.4rem;
   border-radius: var(--wp-radius-sm);
-  white-space: nowrap;
+  white-space: normal;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+@container (max-width: 23rem) {
+  .optionFacts > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--wp-space-2);
+  }
+
+  .optionFacts dd {
+    text-align: left;
+  }
+
+  .outcomeCardValue {
+    align-items: flex-start;
+  }
+
+  .outcomeRowMain {
+    justify-content: flex-start;
+    min-width: 0;
+  }
 }
 .impactPreview {
   display: grid;
