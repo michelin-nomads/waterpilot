@@ -191,23 +191,7 @@ export function AreaConditions({
           </article>
         ))}
       </div>
-      <div className={styles.insight}>
-        <span className={styles.insightIcon}>
-          <Icon name="bulb" size="lg" />
-        </span>
-        <div>
-          <h3>
-            {count ? 'What this means for your plan' : 'Every good plan starts with local context'}
-          </h3>
-          <p>
-            {count
-              ? `${count} of the six conditions have supporting data. Review the source periods and any remaining gaps before using these figures to plan.`
-              : selected
-                ? 'Your area is selected. Public observations can describe the environment; your community’s demand and supply records complete the picture in the next step.'
-                : 'Choose your area on the map or search for a place. We’ll bring together the available evidence and show where more information is needed.'}
-          </p>
-        </div>
-      </div>
+
       <details className={styles.sources}>
         <summary>
           <Icon name="layers" size="sm" /> Data sources & how to read this{' '}
