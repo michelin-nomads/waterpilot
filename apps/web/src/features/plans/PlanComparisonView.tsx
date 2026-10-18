@@ -49,6 +49,41 @@ function OptionCard({
 }) {
   const headingId = useId();
   const unit = comparison.unit ?? 'RATIO';
+
+  const baseNum = comparison.baselineValue ? Number(comparison.baselineValue.value) : NaN;
+  const optNum = option.optimistic ? Number(option.optimistic.value) : NaN;
+  const pessNum = option.pessimistic ? Number(option.pessimistic.value) : NaN;
+  const targetNum = comparison.targetLevel ? Number(comparison.targetLevel.value) : NaN;
+
+  let savingsText: string | null = null;
+  let statusBadge: { text: string; kind: 'meets' | 'exceeds' } | null = null;
+
+  if (
+    Number.isFinite(baseNum) &&
+    Number.isFinite(optNum) &&
+    Number.isFinite(pessNum) &&
+    baseNum > 0
+  ) {
+    const minRem = Math.min(optNum, pessNum);
+    const maxRem = Math.max(optNum, pessNum);
+    const savedLow = Math.max(0, baseNum - maxRem);
+    const savedHigh = Math.max(0, baseNum - minRem);
+    const pct = Math.round((savedHigh / baseNum) * 100);
+    if (savedHigh > 0) {
+      const rangeStr =
+        savedLow === savedHigh ? `${savedLow} days` : `${savedLow} to ${savedHigh} days`;
+      savingsText = `↓ ${rangeStr} saved (${pct}% reduction)`;
+    }
+    if (Number.isFinite(targetNum)) {
+      const buffer = targetNum - maxRem;
+      if (buffer >= 10) {
+        statusBadge = { text: '★ Exceeds target', kind: 'exceeds' };
+      } else if (buffer >= 0) {
+        statusBadge = { text: '✓ Meets target', kind: 'meets' };
+      }
+    }
+  }
+
   return (
     <li
       className={styles.option}
@@ -107,7 +142,23 @@ function OptionCard({
                 ? 'Tanker dependence'
                 : 'Projected outcome'}
           </dt>
-          <dd>{formatOutcomeRange(option.pessimistic, option.optimistic, unit)}</dd>
+          <dd className={styles.outcomeCardValue}>
+            <div className={styles.outcomeRowMain}>
+              <strong>{formatOutcomeRange(option.pessimistic, option.optimistic, unit)}</strong>
+              {statusBadge && (
+                <span
+                  className={
+                    statusBadge.kind === 'exceeds'
+                      ? styles.outcomeCardBadgeExceeds
+                      : styles.outcomeCardBadgeMeets
+                  }
+                >
+                  {statusBadge.text}
+                </span>
+              )}
+            </div>
+            {savingsText && <div className={styles.outcomeCardSavings}>{savingsText}</div>}
+          </dd>
         </div>
       </dl>
       {option.impact.falseResilience.map((finding) => (

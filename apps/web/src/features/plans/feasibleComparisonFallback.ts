@@ -59,7 +59,13 @@ export function createFeasibleComparison(
   }
 
   const isRayasandra = session.areaId?.toLowerCase().includes('rayasandra') ?? false;
-  const baseShortage = isRayasandra ? 84 : 74;
+  let baseShortage = isRayasandra ? 84 : 74;
+  if (original?.baselineValue?.value) {
+    const parsed = Number(original.baselineValue.value);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      baseShortage = Math.round(parsed);
+    }
+  }
 
   const goalKind = String(session.goal?.kind ?? 'REDUCE_SHORTAGE');
   let metric: 'SHORTAGE_DAYS' | 'TANKER_DEPENDENCE' = 'SHORTAGE_DAYS';
@@ -101,7 +107,12 @@ export function createFeasibleComparison(
 
   // Recommended benchmark targets when target is left optional
   let targetVal = 50;
-  if (goalKind === 'REDUCE_TANKER_DEPENDENCE') {
+  if (original?.targetLevel?.value && !session.goal?.target) {
+    const origTarget = Number(original.targetLevel.value);
+    if (Number.isFinite(origTarget) && origTarget > 0) {
+      targetVal = Math.round(origTarget);
+    }
+  } else if (goalKind === 'REDUCE_TANKER_DEPENDENCE') {
     targetVal = Math.round(baseShortage * 0.75);
   } else {
     targetVal = 50;
@@ -120,18 +131,20 @@ export function createFeasibleComparison(
     }
   }
 
+  targetVal = Math.min(targetVal, baseShortage - 5);
+
   const currency = session.goal?.budget?.currency || 'INR';
 
-  const plan1Optimistic = Math.max(10, targetVal - 8);
-  const plan1Pessimistic = Math.max(plan1Optimistic, targetVal - 3);
+  const plan1Optimistic = Math.max(10, Math.min(baseShortage - 21, targetVal - 8));
+  const plan1Pessimistic = Math.max(plan1Optimistic, Math.min(baseShortage - 21, targetVal - 3));
   const plan1Margin = Math.max(1, targetVal - plan1Pessimistic);
 
-  const plan2Optimistic = Math.max(12, targetVal - 5);
-  const plan2Pessimistic = Math.max(plan2Optimistic, targetVal - 1);
+  const plan2Optimistic = Math.max(12, Math.min(baseShortage - 19, targetVal - 5));
+  const plan2Pessimistic = Math.max(plan2Optimistic, Math.min(baseShortage - 19, targetVal - 1));
   const plan2Margin = Math.max(1, targetVal - plan2Pessimistic);
 
-  const plan3Optimistic = Math.max(5, Math.round(targetVal * 0.4));
-  const plan3Pessimistic = Math.max(plan3Optimistic, Math.round(targetVal * 0.5));
+  const plan3Optimistic = Math.max(5, Math.min(baseShortage - 46, Math.round(targetVal * 0.4)));
+  const plan3Pessimistic = Math.max(plan3Optimistic, Math.min(baseShortage - 46, Math.round(targetVal * 0.5)));
   const plan3Margin = Math.max(1, targetVal - plan3Pessimistic);
 
   return {
