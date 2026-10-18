@@ -76,3 +76,27 @@ mutation MatchFunding($input: MatchFundingInput!) {
     }
   }
 }
+
+query FundingCatalogue($first: Int, $after: String) {
+  fundingSchemes(first: $first, after: $after) {
+    nodes {
+      id
+      name
+      funder
+      summary
+      evidence
+      status
+      officialSource
+      sourceUrl
+      lastVerifiedAt
+      amountRules
+      interventions
+      maxAmount {
+        ...MoneyFields
+      }
+    }
+    pageInfo {
+      ...PageInfoFields
+    }
+  }
+}

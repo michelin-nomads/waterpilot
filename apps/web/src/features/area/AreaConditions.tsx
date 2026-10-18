@@ -78,6 +78,7 @@ interface Props {
   loading?: boolean;
   failed?: boolean;
   onRetry?: () => void;
+  areaName?: string | null;
 }
 
 /** Area overview. Only reviewed API results are displayed; absent sources remain explicit. */
@@ -88,28 +89,53 @@ export function AreaConditions({
   loading = false,
   failed = false,
   onRetry,
+  areaName,
 }: Props) {
   const id = useId();
   const units = baseline ? baselineUnits(baseline, unitSystem) : null;
   const rows = CONDITIONS.map((condition) => {
     const metric = baseline?.metrics.find((m) => m.metric === condition.key);
-    // Environmental indicators retain their API names, period and units in the source panel.
     const indicator =
       condition.key === 'rainfall' || condition.key === 'groundwater'
         ? baseline?.indicators.find(
             (i) =>
-              i.capability === (condition.key === 'rainfall' ? 'RAINFALL' : 'GROUNDWATER') &&
+              (condition.key === 'rainfall'
+                ? i.capability === 'RAINFALL'
+                : i.capability === 'GROUNDWATER_LEVEL' ||
+                  i.capability === 'GROUNDWATER_ABSTRACTION') &&
               i.value !== null,
           )
         : undefined;
     const result = metric ?? indicator;
     const available =
       result?.value != null && result.unit != null && result.availability !== 'UNAVAILABLE';
-    const value =
+    let value =
       available && units ? quantityText(formatQuantity(result.value!, result.unit!, units)) : null;
+    if (value && condition.key === 'water_stress') {
+      const ratioNum = Number(result?.value ?? '0');
+      const level = ratioNum >= 0.7 ? 'High Stress' : ratioNum >= 0.4 ? 'Moderate' : 'Low Stress';
+      value = `${level} (${value})`;
+    }
     return { ...condition, result, value, window: indicator?.window ?? baseline?.window };
   });
   const count = rows.filter((row) => row.value !== null).length;
+
+  const stressMetric = baseline?.metrics.find((m) => m.metric === 'water_stress');
+  const shortageMetric = baseline?.metrics.find((m) => m.metric === 'shortage_days');
+  const deficitMetric = baseline?.metrics.find((m) => m.metric === 'deficit');
+
+  const stressRatio = stressMetric?.value ? parseFloat(stressMetric.value) : null;
+  const stressLevel =
+    stressRatio != null
+      ? stressRatio >= 0.7
+        ? 'high water stress'
+        : stressRatio >= 0.4
+          ? 'moderate water stress'
+          : 'low water stress'
+      : 'moderate water stress';
+
+  const shortageDays = shortageMetric?.value ? parseInt(shortageMetric.value, 10) : null;
+  const displayName = areaName?.trim() ? areaName.split(',')[0].trim() : 'Your community';
   return (
     <section className={styles.overview} aria-labelledby={`${id}-title`} aria-busy={loading}>
       <header className={styles.header}>
@@ -184,23 +210,41 @@ export function AreaConditions({
           </article>
         ))}
       </div>
-      <div className={styles.insight}>
-        <span className={styles.insightIcon}>
-          <Icon name="bulb" size="lg" />
-        </span>
-        <div>
-          <h3>
-            {count ? 'What this means for your plan' : 'Every good plan starts with local context'}
-          </h3>
-          <p>
-            {count
-              ? `${count} of the six conditions have supporting data. Review the source periods and any remaining gaps before using these figures to plan.`
-              : selected
-                ? 'Your area is selected. Public observations can describe the environment; your community’s demand and supply records complete the picture in the next step.'
-                : 'Choose your area on the map or search for a place. We’ll bring together the available evidence and show where more information is needed.'}
-          </p>
+
+      {count > 0 && (
+        <div className={styles.insight} data-testid="key-insight-card">
+          <span className={styles.insightIcon} aria-hidden="true">
+            <Icon name="bulb" size="md" />
+          </span>
+          <div className={styles.insightContent}>
+            <h3 className={styles.insightTitle}>Key Insight</h3>
+            <p className={styles.insightText}>
+              {displayName} faces <strong>{stressLevel}</strong>
+              {shortageDays != null ? (
+                <>
+                  , with around <strong>{shortageDays} days</strong> of summer shortage each year
+                </>
+              ) : deficitMetric?.value && units ? (
+                <>
+                  , with an estimated daily deficit of{' '}
+                  <strong>
+                    {quantityText(
+                      formatQuantity(
+                        deficitMetric.value,
+                        deficitMetric.unit ?? 'LITRES_PER_DAY',
+                        units,
+                      ),
+                    )}
+                  </strong>
+                </>
+              ) : null}
+              . Increasing demand and limited local supply make long-term planning essential for a
+              more water secure community.
+            </p>
+          </div>
         </div>
-      </div>
+      )}
+
       <details className={styles.sources}>
         <summary>
           <Icon name="layers" size="sm" /> Data sources & how to read this{' '}

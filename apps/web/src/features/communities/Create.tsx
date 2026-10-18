@@ -37,7 +37,6 @@ export default function CreateCommunityPage() {
   const [contactEmail, setContactEmail] = useState('');
   const [shareContactName, setShareContactName] = useState(false);
   const [shareContactEmail, setShareContactEmail] = useState(false);
-  const [shareArea, setShareArea] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const request = useRef<{ payload: string; key: string } | null>(null);
   const selectedReport = useMemo(
@@ -59,7 +58,7 @@ export default function CreateCommunityPage() {
       name: name.trim(),
       description: description.trim(),
       reportId: selectedReport.id,
-      areaId: shareArea && canShareArea ? (selectedReport.area?.id ?? null) : null,
+      areaId: canShareArea ? (selectedReport.area?.id ?? null) : null,
       contactName: contactName.trim(),
       contactEmail: contactEmail.trim() || null,
       shareContactName,
@@ -167,7 +166,6 @@ export default function CreateCommunityPage() {
                 value={reportId}
                 onChange={(event) => {
                   setReportId(event.target.value);
-                  setShareArea(false);
                 }}
               >
                 <option value="">Choose your report</option>
@@ -237,16 +235,12 @@ export default function CreateCommunityPage() {
               />
               Publish my contact email to community visitors. I consent to sharing it.
             </label>
-            {selectedReport && canShareArea && (
-              <label className={`${styles.checkbox} ${styles.wide}`}>
-                <input
-                  type="checkbox"
-                  checked={shareArea}
-                  onChange={(event) => setShareArea(event.target.checked)}
-                />
-                Share the report’s approximate public area for nearby discovery (
-                {selectedReport.area?.name}). No address or coordinates are shown.
-              </label>
+            {selectedReport && (
+              <p className={`${styles.meta} ${styles.wide}`}>
+                {canShareArea
+                  ? `Community location: ${selectedReport.area?.name}. This report’s public area is inherited automatically for nearby search and rounded map pins.`
+                  : 'This report’s location is private and will not be published. Use a report with a public searched location to appear on the community map.'}
+              </p>
             )}
           </div>
           <p className={styles.meta}>

@@ -229,6 +229,8 @@ export function formatQuantity(value: string, unit: CanonicalUnit, units: Units)
       return { value: fixed(value, 1), unit: 'pH' };
     case 'CFU_PER_100ML':
       return { value: fixed(value, 0), unit: 'CFU/100 mL' };
+    case 'CATEGORY':
+      return { value, unit: '' };
     default:
       return { value: formatDecimal(value, 2), unit: '' };
   }

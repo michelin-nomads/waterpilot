@@ -341,7 +341,12 @@ export function LocationStep({
           role="region"
           aria-label="Water conditions results"
         >
-          <AreaConditions selected baseline={result.baseline} unitSystem={result.unitSystem} />
+          <AreaConditions
+            selected
+            baseline={result.baseline}
+            unitSystem={result.unitSystem}
+            areaName={result.name}
+          />
         </div>
       )}
       {working &&

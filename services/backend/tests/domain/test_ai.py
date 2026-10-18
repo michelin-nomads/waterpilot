@@ -120,7 +120,7 @@ def test_budget_is_only_configured_when_the_owner_sets_it() -> None:
 def test_default_limits_match_the_proposed_values() -> None:
     limits = AiLimits()
     assert limits.daily_request_limit == 100
-    assert limits.max_calls_per_run == 5
+    assert limits.max_calls_per_run == 15
     assert limits.transient_retries == 2
     assert limits.max_active_runs_per_session == 1
 

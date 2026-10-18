@@ -1,5 +1,3 @@
-import { Link } from 'react-router-dom';
-
 import { Button } from '../../components/Button/Button';
 import { Icon } from '../../components/Icon/Icon';
 import type { CommunityItem } from './useCommunityDirectory';
@@ -8,6 +6,8 @@ import styles from './CommunityDirectory.module.scss';
 interface CommunityCardProps {
   community: CommunityItem;
   joined: boolean;
+  selected: boolean;
+  onSelect: () => void;
   distanceMeters: number | null;
   joining: boolean;
   error: string | null;
@@ -19,6 +19,8 @@ interface CommunityCardProps {
 export function CommunityCard({
   community,
   joined,
+  selected,
+  onSelect,
   distanceMeters,
   joining,
   error,
@@ -26,15 +28,26 @@ export function CommunityCard({
   onLeave,
 }: CommunityCardProps) {
   const archived = community.status === 'ARCHIVED';
-  const href = `/communities/${community.id}`;
   return (
-    <li className={styles.card}>
+    <li
+      className={`${styles.card} ${selected ? styles.cardSelected : ''}`}
+      onClick={(event) => {
+        if (!(event.target as Element).closest('button, a')) onSelect();
+      }}
+    >
       <div className={styles.art} aria-hidden="true">
         <Icon name="users" size="lg" />
       </div>
       <div className={styles.content}>
         <h3>
-          <Link to={href}>{community.name}</Link>
+          <button
+            type="button"
+            className={styles.cardTitleButton}
+            aria-pressed={selected}
+            onClick={onSelect}
+          >
+            {community.name}
+          </button>
         </h3>
         <p className={styles.cardDescription}>
           {community.description || 'No description provided.'}

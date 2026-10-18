@@ -188,25 +188,6 @@ class CommunityService:
         principal = ctx.require_permanent()
         payload = build(CreateCommunityInput, data)
         store, now = self._d.store, self._d.clock()
-        location: dict[str, Any] = {}
-        if payload.area_id is not None:
-            require_id(payload.area_id, IdKind.AREA, "areaId")
-            area = store.areas.get(payload.area_id)
-            if area is None or not area.visible_to(principal.uid):
-                raise DomainError(ErrorCode.VALIDATION_FAILED, "unknown location", field="areaId")
-            if area.owner_uid is not None:
-                raise DomainError(
-                    ErrorCode.VALIDATION_FAILED,
-                    "a device or typed-in location stays private; choose a searched place "
-                    "to share it with a community",
-                    field="areaId",
-                )
-            lat, lon = geo.parse_point(area.centroid_lat, area.centroid_lon)
-            location = {
-                "latitude": area.centroid_lat,
-                "longitude": area.centroid_lon,
-                "geohash": geo.encode(lat, lon),
-            }
         report_id = require_id(payload.report_id, IdKind.REPORT, "reportId")
         if payload.share_contact_email and payload.contact_email is None:
             raise DomainError(
@@ -226,12 +207,37 @@ class CommunityService:
                     field="reportId",
                 )
 
+            if payload.area_id is not None and payload.area_id != report.area_id:
+                raise DomainError(
+                    ErrorCode.VALIDATION_FAILED,
+                    "community location must match its report",
+                    field="areaId",
+                )
+            area = store.areas.get(report.area_id)
+            location: dict[str, Any] = {}
+            public_area_id = None
+            if area is not None and area.owner_uid is None:
+                lat, lon = geo.parse_point(area.centroid_lat, area.centroid_lon)
+                public_area_id = area.id
+                location = {
+                    "latitude": area.centroid_lat,
+                    "longitude": area.centroid_lon,
+                    "geohash": geo.encode(lat, lon),
+                }
+            elif payload.area_id is not None:
+                raise DomainError(
+                    ErrorCode.VALIDATION_FAILED,
+                    "a device or typed-in location stays private; choose a searched place "
+                    "to share it with a community",
+                    field="areaId",
+                )
+
             community = store.communities.insert(
                 Community(
                     id=new_id(IdKind.COMMUNITY),
                     name=payload.name,
                     description=payload.description,
-                    area_id=payload.area_id,
+                    area_id=public_area_id,
                     member_count=1,
                     linked_report_id=report.id,
                     shared_report_goal=report.goal.kind,

@@ -43,3 +43,76 @@ it('provides a retry action after a failed data request', () => {
   fireEvent.click(screen.getByRole('button', { name: 'Retry area data' }));
   expect(retry).toHaveBeenCalledOnce();
 });
+
+it('displays all 6 conditions when fully populated with public data', () => {
+  const data = demoBaseline();
+  data.metrics = [
+    ...data.metrics,
+    {
+      ...data.metrics[0],
+      metric: 'water_stress',
+      name: 'Water stress',
+      formula: 'dependable_supply / demand',
+      unit: 'RATIO',
+      availability: 'AVAILABLE',
+      exact: '39/50',
+      value: '0.78',
+      origin: 'MODELED',
+      demo: false,
+      evidence: [],
+    },
+  ];
+  data.indicators = [
+    {
+      indicator: 'rainfall_total',
+      name: 'Rainfall over the reporting window',
+      capability: 'RAINFALL',
+      statistic: 'WINDOW_TOTAL',
+      variable: 'precipitation_sum',
+      parameter: null,
+      unit: 'MILLIMETRE',
+      availability: 'AVAILABLE',
+      exact: '1010.5',
+      value: '1010.5',
+      observedOn: '2024-12-31',
+      reason: null,
+      reasons: [],
+      origin: 'MEASURED',
+      demo: false,
+      window: { start: '2024-01-01', endExclusive: '2025-01-01', days: 366 },
+      evidence: [],
+    },
+    {
+      indicator: 'groundwater_level',
+      name: 'Latest groundwater level',
+      capability: 'GROUNDWATER_LEVEL',
+      statistic: 'LATEST',
+      variable: 'depth_to_water_level',
+      parameter: null,
+      unit: 'METRES_BELOW_GROUND',
+      availability: 'AVAILABLE',
+      exact: '16.5',
+      value: '16.5',
+      observedOn: '2024-11-01',
+      reason: null,
+      reasons: [],
+      origin: 'MEASURED',
+      demo: false,
+      window: null,
+      evidence: [],
+    },
+  ];
+  render(<AreaConditions selected baseline={data} areaName="Koramangala, Bengaluru" />);
+  expect(screen.getByText('6 of 6 available')).toBeVisible();
+  expect(card('Water stress').getByText('High Stress (78%)')).toBeVisible();
+  expect(card('Rainfall').getByText('1,010.5 mm')).toBeVisible();
+  expect(card('Reliable supply').getByText('80%')).toBeVisible();
+  expect(card('Current water deficit').getByText('2.0 MLD')).toBeVisible();
+  expect(card('Water shortage days').getByText('3 days')).toBeVisible();
+  expect(card('Groundwater').getByText('16.50 m below ground')).toBeVisible();
+  const insightCard = screen.getByTestId('key-insight-card');
+  expect(within(insightCard).getByRole('heading', { name: 'Key Insight' })).toBeVisible();
+  expect(within(insightCard).getByText(/Koramangala faces/)).toBeVisible();
+  expect(within(insightCard).getByText('high water stress')).toBeVisible();
+  expect(within(insightCard).getByText('3 days')).toBeVisible();
+});

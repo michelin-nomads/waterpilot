@@ -83,6 +83,7 @@ class Evidence:
     readiness: AreaReadiness
     manual: dict[InputId, ManualInput]
     snapshots: dict[str, SourceSnapshot]
+    has_community_baseline: bool = False
 
 
 class ReadinessService:
@@ -218,6 +219,7 @@ class ReadinessService:
             ev.readiness.model_copy(update={"inputs": inputs, "metrics": metrics}),
             manual,
             ev.snapshots,
+            has_community_baseline=True,
         )
 
     def assess(self, ctx: RequestContext, area_id: str, session_id: str | None) -> AreaReadiness:
