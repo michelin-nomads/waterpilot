@@ -195,7 +195,7 @@ export function createFeasibleComparison(
     },
     options: [
       {
-        id: 'opt_balanced_plan',
+        id: 'pln_0ZJ9M36D87THWBENGF2S4KPXRQ',
         rank: 1,
         name: 'Balanced plan',
         interventionIds: ['rainwater_harvesting', 'leak_detection'],
@@ -253,7 +253,7 @@ export function createFeasibleComparison(
         stress: [],
         economics: null,
         impact: {
-          id: 'imp_balanced',
+          id: 'imp_0ZJ9M36D87THWBENGF2S4KPXRQ',
           engineVersion: 'impact-v1.0',
           catalogueVersion: 'catalogue-v2.1',
           inputHash: '',
@@ -265,7 +265,7 @@ export function createFeasibleComparison(
         },
       },
       {
-        id: 'opt_lower_cost',
+        id: 'pln_D87THWBENGF2S4KPXRQA1CVY50',
         rank: 2,
         name: 'Lower cost plan',
         interventionIds: ['rooftop_rainwater_harvesting'],
@@ -304,7 +304,7 @@ export function createFeasibleComparison(
         stress: [],
         economics: null,
         impact: {
-          id: 'imp_lower_cost',
+          id: 'imp_D87THWBENGF2S4KPXRQA1CVY50',
           engineVersion: 'impact-v1.0',
           catalogueVersion: 'catalogue-v2.1',
           inputHash: '',
@@ -316,7 +316,7 @@ export function createFeasibleComparison(
         },
       },
       {
-        id: 'opt_higher_impact',
+        id: 'pln_THWBENGF2S4KPXRQA1CVY50ZJ9',
         rank: 3,
         name: 'Higher impact plan',
         interventionIds: ['rooftop_rainwater_harvesting', 'recharge_well', 'greywater_reuse'],
@@ -385,7 +385,7 @@ export function createFeasibleComparison(
         stress: [],
         economics: null,
         impact: {
-          id: 'imp_higher_impact',
+          id: 'imp_THWBENGF2S4KPXRQA1CVY50ZJ9',
           engineVersion: 'impact-v1.0',
           catalogueVersion: 'catalogue-v2.1',
           inputHash: '',

@@ -118,8 +118,18 @@ function PlansWorkspace({ session }: { session: SessionState }) {
     setLocalSelectedId(optionId);
     try {
       localStorage.setItem(`waterpilot_selected_plan_${session.id}`, optionId);
+      const chosen = comparison?.options.find((o) => o.id === optionId);
+      if (chosen) {
+        localStorage.setItem(`waterpilot_selected_option_${session.id}`, JSON.stringify(chosen));
+      }
     } catch {}
-    coordinator?.selectPlanOption(optionId);
+    const isServerOption = Boolean(rawComparison?.options?.some((o) => o.id === optionId));
+    if (isServerOption) {
+      try {
+        coordinator?.selectPlanOption(optionId);
+      } catch {}
+    }
+    navigate('/make-it-happen');
   };
 
   if (!effectiveSession.goal) {

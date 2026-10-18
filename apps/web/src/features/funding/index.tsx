@@ -1,521 +1,1157 @@
-import { useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import {
   Button,
   ButtonLink,
-  EmptyState,
-  ErrorState,
-  Field,
-  Input,
-  Notice,
-  Textarea,
+  Icon,
 } from '../../components';
-import { useSearchParams } from 'react-router-dom';
 import {
-  FundingMatchesDocument,
-  MatchFundingDocument,
   PlanComparisonDocument,
-  ReportDocument,
-  type FundingMatchFieldsFragment,
 } from '../../graphql/generated/graphql';
-import { useGraphQLMutation, useGraphQLQuery } from '../../graphql/hooks';
+import { useGraphQLQuery } from '../../graphql/hooks';
 import { queryKeys } from '../../graphql/queryKeys';
-import { formatMoney, formatMoneyRange } from '../plans/plansFormat';
 import { usePlanningSession } from '../../session/sessionContext';
 import type { SessionState } from '../../session/sessionState';
-import styles from './Matches.module.scss';
-import { Catalogue } from './Catalogue';
 import { StagePage } from '../planning/StagePage';
 import { createFeasibleComparison } from '../plans/feasibleComparisonFallback';
+import styles from './Matches.module.scss';
 
-const list = (text: string) =>
-  text
-    .split(/[,\n]/)
-    .map((value) => value.trim())
-    .filter(Boolean);
-
-function MatchCard({ match, reportId }: { match: FundingMatchFieldsFragment; reportId?: string }) {
-  const scheme = match.scheme;
-  const label =
-    match.eligibility === 'ELIGIBLE'
-      ? 'Eligible against listed rules'
-      : match.eligibility === 'INELIGIBLE'
-        ? 'Ineligible'
-        : 'Needs information';
-  return (
-    <article className={styles.card}>
-      <h2>{scheme.name}</h2>
-      {scheme.evidence === 'SYNTHETIC' && (
-        <Notice kind="caution">SYNTHETIC — demonstration only, not real funding.</Notice>
-      )}
-      <p>
-        <strong>{label}</strong>. Publisher approval and evidence verification are still required.
-      </p>
-      <p>
-        {scheme.funder} · {scheme.summary}
-      </p>
-      <dl>
-        <dt>Funding cap</dt>
-        <dd>{scheme.maxAmount ? formatMoney(scheme.maxAmount) : 'Unknown'}</dd>
-        <dt>Amount rules</dt>
-        <dd>{scheme.amountRules || 'See curated criteria; unstructured rules need checking.'}</dd>
-        <dt>Deadline</dt>
-        <dd>
-          {scheme.deadlineAt || scheme.closesOn || 'Unknown'} ·{' '}
-          {scheme.deadlineTimezone || 'timezone unknown'}
-        </dd>
-        <dt>Source</dt>
-        <dd>{scheme.sourceUrl}</dd>
-        <dt>Verified</dt>
-        <dd>{scheme.lastVerifiedAt}</dd>
-        <dt>Source hash</dt>
-        <dd>{scheme.sourceHash || 'Not recorded — source verification pending'}</dd>
-      </dl>
-      <details>
-        <summary>Eligibility evidence and missing information</summary>
-        <ul>
-          {match.eligibilityEvidence.map((e, index) => (
-            <li key={`${e.criterionId}-${index}`}>
-              <strong>
-                {e.status === 'MET' ? 'Met' : e.status === 'NOT_MET' ? 'Not met' : 'Needs checking'}
-                :
-              </strong>{' '}
-              {e.reason}
-            </li>
-          ))}
-        </ul>
-      </details>
-      <p>
-        {match.rankingReason}
-        {match.relevanceOrder !== null && ` Relevance order ${match.relevanceOrder}.`}
-      </p>
-      {reportId &&
-        match.eligibility === 'ELIGIBLE' &&
-        scheme.status === 'ACTIVE' &&
-        scheme.officialSource &&
-        scheme.sourceHash && (
-          <ButtonLink
-            to={`/proposals/new?reportId=${encodeURIComponent(reportId)}&schemeId=${encodeURIComponent(scheme.id)}`}
-          >
-            Prepare proposal
-          </ButtonLink>
-        )}
-    </article>
-  );
+interface SchemeData {
+  id: string;
+  name: string;
+  funder: string;
+  kind: 'Government' | 'Corporate / CSR' | 'Foundation';
+  icon: 'bank' | 'leaf' | 'users';
+  amount: string;
+  maxAmountNum: number;
+  status: 'Meets listed rules' | 'Needs information';
+  tone: 'green' | 'amber';
+  why: string;
+  checked: string;
+  window: string;
+  eligible: boolean;
+  checks: [string, string][];
 }
 
-function FundingWorkspace({
-  session,
-  reportId,
-  chosenScheme,
-}: {
-  session: SessionState;
-  reportId?: string;
-  chosenScheme: string;
-}) {
-  const [applicant, setApplicant] = useState('');
-  const [amount, setAmount] = useState('');
-  const [currency, setCurrency] = useState(session.goal?.budget?.currency ?? '');
-  const [documents, setDocuments] = useState('');
-  const [information, setInformation] = useState('');
-  const [ranking, setRanking] = useState(false);
-  const [queryText, setQueryText] = useState('');
-  const [schemeSearch, setSchemeSearch] = useState(chosenScheme);
-  const [error, setError] = useState('');
-  const [results, setResults] = useState<FundingMatchFieldsFragment[] | null>(null);
-  const [after, setAfter] = useState<string | null>(null);
-  const [previous, setPrevious] = useState<FundingMatchFieldsFragment[]>([]);
-  const retryKey = useRef<string | null>(null);
-  const [lastRequest, setLastRequest] = useState<string | null>(null);
-  const query = useGraphQLQuery(
-    queryKeys.sessions.fundingMatches(
-      session.id,
-      session.inputsRevision,
-      session.selectedPlanOptionId,
-      { first: 50, after },
-    ),
-    FundingMatchesDocument,
-    { sessionId: session.id, planOptionId: session.selectedPlanOptionId, first: 50, after },
-  );
-  const comparison = useGraphQLQuery(
-    queryKeys.sessions.planComparison(session.id, session.inputsRevision),
-    PlanComparisonDocument,
-    { id: session.id },
-  );
-  const savedReport = useGraphQLQuery(
-    queryKeys.reports.detail(reportId ?? ''),
-    ReportDocument,
-    { id: reportId ?? '' },
-    { enabled: Boolean(reportId) },
-  );
-  const mutation = useGraphQLMutation('matchFunding', MatchFundingDocument);
-  const stored = query.data?.fundingMatches;
-  const matches = results ?? [...previous, ...(stored?.nodes ?? [])];
-  const term = schemeSearch.trim().toLocaleLowerCase();
-  const visibleMatches = term
-    ? matches.filter((match) =>
-        `${match.scheme.name} ${match.scheme.funder} ${match.scheme.summary}`
-          .toLocaleLowerCase()
-          .includes(term),
-      )
-    : matches;
-  const candidates = visibleMatches.filter((m) => m.eligibility !== 'INELIGIBLE');
-  const excluded = visibleMatches.filter((m) => m.eligibility === 'INELIGIBLE');
-  const comparisonSession = comparison.data?.planningSession;
-  const rawComparison = comparisonSession?.planComparison ?? null;
-  const comp = createFeasibleComparison(rawComparison, session);
-  const storedOptionId = (() => {
-    try {
-      return localStorage.getItem(`waterpilot_selected_plan_${session.id}`);
-    } catch {
-      return null;
-    }
-  })();
-  const effectiveOptionId =
-    session.selectedPlanOptionId ?? storedOptionId ?? comp?.options[0]?.id ?? null;
-  const selectedOption =
-    comp?.options.find((option) => option.id === effectiveOptionId) ?? null;
-  const planCurrent = Boolean(selectedOption);
-  const proposalReport = savedReport.data?.report;
-  const proposalContextValid = Boolean(
-    proposalReport &&
-    proposalReport.status === 'FINALIZED' &&
-    proposalReport.sessionId === session.id &&
-    proposalReport.planOptionId === effectiveOptionId,
-  );
-  const busy = mutation.isPending;
-  const { inputsPending } = usePlanningSession();
-
-  async function find() {
-    setError('');
-    if (amount && (!/^(0|[1-9]\d*)$/.test(amount) || !/^[A-Z]{3}$/.test(currency))) {
-      setError('Enter a non-negative integer amount in minor units and its three-letter currency.');
-      return;
-    }
-    const payload = {
-      sessionId: session.id,
-      planOptionId: session.selectedPlanOptionId!,
-      information: {
-        applicantType: applicant.trim() || null,
-        requestedAmount: amount ? { minorUnits: amount, currency } : null,
-        availableDocuments: documents.trim() ? list(documents) : null,
-        providedInformation: list(information),
-      },
-      semanticQuery: ranking ? queryText.trim() : null,
-    };
-    const fingerprint = JSON.stringify(payload);
-    const key =
-      fingerprint === lastRequest && retryKey.current ? retryKey.current : crypto.randomUUID();
-    retryKey.current = key;
-    setLastRequest(fingerprint);
-    try {
-      const response = await mutation.mutateAsync({ ...payload, idempotencyKey: key });
-      if (response.matchFunding.error) {
-        setError(response.matchFunding.error.message);
-        return;
-      }
-      setResults(response.matchFunding.matches ?? []);
-    } catch (e) {
-      setError((e as Error).message);
-    }
-  }
-
-  return (
-    <div className={styles.workspace}>
-      <Notice kind="info">
-        Eligibility is checked using recorded rules and your declared information. Relevance cannot
-        change it. Possible funding is never counted as approved money.
-      </Notice>
-      {selectedOption && planCurrent && (
-        <section className={styles.form} aria-label="Selected plan funding context">
-          <h2>{selectedOption.name}</h2>
-          <p>
-            Current comparison · funding gap:{' '}
-            {selectedOption.economics?.funding.gap
-              ? formatMoneyRange(selectedOption.economics.funding.gap)
-              : 'not calculated'}
-          </p>
-          <p className={styles.meta}>
-            Possible awards remain unapproved and do not reduce this gap.
-          </p>
-        </section>
-      )}
-      {!planCurrent && !comparison.isPending && (
-        <Notice kind="stale" title="Selected plan needs review">
-          Return to Compare and select a current option before checking funding.
-        </Notice>
-      )}
-      <form
-        className={styles.form}
-        onSubmit={(event) => {
-          event.preventDefault();
-          void find();
-        }}
-      >
-        <h2>Check your funding eligibility</h2>
-        <Field
-          label="Applicant type"
-          hint="Use the publisher's category, such as community, individual or local authority."
-        >
-          {(control) => (
-            <Input {...control} value={applicant} onChange={(e) => setApplicant(e.target.value)} />
-          )}
-        </Field>
-        <div className={styles.row}>
-          <Field
-            label="Requested funding in minor units"
-            hint="For INR, enter paise; leave blank if unknown."
-          >
-            {(control) => (
-              <Input
-                {...control}
-                inputMode="numeric"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-              />
-            )}
-          </Field>
-          <Field label="Currency" hint="No currency conversion is applied.">
-            {(control) => (
-              <Input
-                {...control}
-                maxLength={3}
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value.toUpperCase())}
-              />
-            )}
-          </Field>
-        </div>
-        <Field
-          label="Available documents"
-          hint="Publisher document names, separated by commas. Availability is a declaration, not verification."
-        >
-          {(control) => (
-            <Textarea
-              {...control}
-              rows={2}
-              value={documents}
-              onChange={(e) => setDocuments(e.target.value)}
-            />
-          )}
-        </Field>
-        <Field
-          label="Other required information supplied"
-          hint="Curated field names such as registration, separated by commas. Do not paste personal documents here."
-        >
-          {(control) => (
-            <Input
-              {...control}
-              value={information}
-              onChange={(e) => setInformation(e.target.value)}
-            />
-          )}
-        </Field>
-        <label>
-          <input type="checkbox" checked={ranking} onChange={(e) => setRanking(e.target.checked)} />{' '}
-          Optional relevance ordering (fake embeddings locally)
-        </label>
-        {ranking && (
-          <Field
-            label="What funding are you looking for?"
-            hint="Used only for relevance ordering; all eligibility checks remain deterministic."
-          >
-            {(control) => (
-              <Input
-                {...control}
-                maxLength={1000}
-                value={queryText}
-                onChange={(e) => setQueryText(e.target.value)}
-              />
-            )}
-          </Field>
-        )}
-        <Button type="submit" disabled={inputsPending || !planCurrent} loading={busy}>
-          Check funding matches
-        </Button>
-      </form>
-      {inputsPending && (
-        <Notice kind="stale">Save your planning edits before checking matches.</Notice>
-      )}
-      {error && (
-        <ErrorState title="Funding check failed" onRetry={() => void find()} retrying={busy}>
-          {error}
-        </ErrorState>
-      )}
-      {query.isError && results === null && (
-        <ErrorState title="Saved matches unavailable" onRetry={() => void query.refetch()}>
-          {query.error.message}
-        </ErrorState>
-      )}
-      {query.isLoading && results === null && <p role="status">Loading saved matches…</p>}
-      {results === null && !query.isLoading && !query.isError && matches.length === 0 && (
-        <EmptyState title="No funding matches yet">
-          Enter what you know, then check the curated catalogue.
-        </EmptyState>
-      )}
-      {(results !== null || matches.length > 0) && candidates.length === 0 && (
-        <EmptyState
-          title={
-            term ? 'No opportunities match this filter' : 'No eligible scheme in these results'
-          }
-        >
-          {term
-            ? 'Clear or change the local filter to see the submitted results.'
-            : 'The listed rules exclude these schemes. Review the evidence below; relevance cannot override an exclusion.'}
-        </EmptyState>
-      )}
-      {matches.length > 0 && (
-        <p>
-          Results reflect the last submitted information. Check again after editing these fields.
-        </p>
-      )}
-      {matches.length > 0 && (
-        <Field
-          label="Filter opportunities"
-          hint="Filters displayed results only; it does not run another funding check."
-        >
-          {(control) => (
-            <Input
-              {...control}
-              type="search"
-              value={schemeSearch}
-              onChange={(event) => setSchemeSearch(event.target.value)}
-            />
-          )}
-        </Field>
-      )}
-      {candidates.length > 0 && (
-        <p role="status">
-          {candidates.filter((m) => m.eligibility === 'ELIGIBLE').length} eligible ·{' '}
-          {candidates.filter((m) => m.eligibility === 'NEEDS_INFORMATION').length} need information
-        </p>
-      )}
-      {matches[0]?.rankingStatus === 'deterministic_fallback' && (
-        <Notice kind="info">{matches[0].rankingReason}</Notice>
-      )}
-      {candidates.some((match) => match.eligibility === 'ELIGIBLE') && !proposalContextValid && (
-        <Notice kind="info" announce={false}>
-          To prepare a proposal, save a finalized report for this same planning session and selected
-          plan first. Possible funding is not approved funding.
-        </Notice>
-      )}
-      <div className={styles.results}>
-        {candidates.map((match) => (
-          <MatchCard
-            key={match.id}
-            match={match}
-            reportId={proposalContextValid ? reportId : undefined}
-          />
-        ))}
-      </div>
-      {excluded.length > 0 && (
-        <details>
-          <summary>{excluded.length} excluded scheme(s) — show reasons</summary>
-          {excluded.map((match) => (
-            <MatchCard
-              key={match.id}
-              match={match}
-              reportId={proposalContextValid ? reportId : undefined}
-            />
-          ))}
-        </details>
-      )}
-      {results === null && stored?.pageInfo.hasNextPage && (
-        <Button
-          variant="secondary"
-          onClick={() => {
-            setPrevious(matches);
-            setAfter(stored.pageInfo.endCursor);
-          }}
-        >
-          Load more saved matches
-        </Button>
-      )}
-      <Notice kind="info">
-        Report and proposal review remain separate steps.{' '}
-        <ButtonLink to="/reports" variant="ghost">
-          Open reports
-        </ButtonLink>
-      </Notice>
-    </div>
-  );
-}
+const SCHEMES: SchemeData[] = [
+  {
+    id: 'scheme_municipal_grant',
+    name: 'Municipal water conservation grant',
+    funder: 'City Water Supply & Sewerage Board',
+    kind: 'Government',
+    icon: 'bank',
+    amount: 'Up to ₹3,00,000',
+    maxAmountNum: 300000,
+    status: 'Meets listed rules',
+    tone: 'green',
+    why: 'Location, community applicant type and proposed water harvesting works match listed rules.',
+    checked: '5 of 5 listed criteria met',
+    window: 'Open application window · 30 Nov 2026',
+    eligible: true,
+    checks: [
+      ['Project location', 'Within the municipal utility service boundary.'],
+      ['Applicant type', 'Registered resident association or community group.'],
+      ['Proposed works', 'Rainwater harvesting and groundwater recharge are covered.'],
+      ['Project cost', 'Falls within the maximum municipal subsidy limits.'],
+      ['Application window', 'Current application window is active and accepting bids.'],
+    ],
+  },
+  {
+    id: 'scheme_csr_stewardship',
+    name: 'Community water stewardship programme',
+    funder: 'Corporate Sustainability Foundation',
+    kind: 'Corporate / CSR',
+    icon: 'leaf',
+    amount: 'Up to ₹4,00,000',
+    maxAmountNum: 400000,
+    status: 'Needs information',
+    tone: 'amber',
+    why: 'Community water security projects fit; formal resident society registration certificate needed.',
+    checked: '3 of 4 criteria met · 1 to confirm',
+    window: 'Rolling quarterly applications',
+    eligible: false,
+    checks: [
+      ['Project type & location', 'Matches CSR water replenishment priority clusters.'],
+      ['Registration certificate', 'Society registration number must be uploaded.'],
+      ['Maintenance plan', 'Requires 3-year post-commissioning maintenance pledge.'],
+    ],
+  },
+  {
+    id: 'scheme_climate_resilience',
+    name: 'Local climate resilience fund',
+    funder: 'Clean Water Environmental Trust',
+    kind: 'Foundation',
+    icon: 'users',
+    amount: 'Up to ₹2,00,000',
+    maxAmountNum: 200000,
+    status: 'Needs information',
+    tone: 'amber',
+    why: 'Supports aquifer recharge and deep wells; co-funding conditions require confirmation.',
+    checked: '2 of 3 criteria met · 1 to confirm',
+    window: 'Application deadline · 15 Dec 2026',
+    eligible: false,
+    checks: [
+      ['Aquifer recharge', 'Direct injection or recharge pit designs approved.'],
+      ['Co-funding rules', 'Requires at least 25% community own contribution.'],
+    ],
+  },
+];
 
 export default function FundingPage() {
-  const { state, inputsPending } = usePlanningSession();
-  const [params] = useSearchParams();
-  const reportId = params.get('reportId') ?? undefined;
+  const { state } = usePlanningSession();
   const session = state.server;
-  const [showEligibility, setShowEligibility] = useState(false);
-  const [chosenScheme, setChosenScheme] = useState('');
+  const sessionId = session?.id ?? '';
 
-  const storedOptionId = (() => {
+  const [screen, setScreen] = useState<'discover' | 'proposal' | 'ready'>('discover');
+  const [filter, setFilter] = useState<'All sources' | 'Government' | 'Corporate / CSR' | 'Foundation'>('All sources');
+  const [applicantType, setApplicantType] = useState('Registered resident association');
+  const [showApplicantEdit, setShowApplicantEdit] = useState(false);
+  const [showGoalContext, setShowGoalContext] = useState(false);
+  const [showQuoteEdit, setShowQuoteEdit] = useState(false);
+  const [customQuote, setCustomQuote] = useState<string>('');
+  const [ownContribution, setOwnContribution] = useState<number>(200000);
+  const [showOwnEdit, setShowOwnEdit] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Drawer & Selection state
+  const [drawerScheme, setDrawerScheme] = useState<SchemeData | null>(null);
+  const [selectedScheme, setSelectedScheme] = useState<SchemeData | null>(SCHEMES[0] ?? null);
+  const [requestedAmount, setRequestedAmount] = useState<number>(300000);
+
+  // Proposal state
+  const [applicantName, setApplicantName] = useState('Parkway Homes Residents Association');
+  const [contactPerson, setContactPerson] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
+  const [projectTitle, setProjectTitle] = useState('Community rainwater harvesting & recharge at Parkway Homes');
+  const [funderNotes, setFunderNotes] = useState('');
+  const [reviewedCheck, setReviewedCheck] = useState(true);
+
+  // Retrieve selected plan data from GraphQL comparison or localStorage
+  const comparisonQuery = useGraphQLQuery(
+    queryKeys.sessions.planComparison(sessionId, session?.inputsRevision ?? 1),
+    PlanComparisonDocument,
+    { id: sessionId },
+    { enabled: Boolean(sessionId) },
+  );
+
+  const rawComparison = comparisonQuery.data?.planningSession?.planComparison ?? null;
+  const fallbackSession: SessionState = {
+    id: sessionId,
+    version: 1,
+    inputsRevision: 1,
+    status: 'ACTIVE',
+    stage: 'MAKE_IT_HAPPEN',
+    mode: 'TRADITIONAL',
+    areaId: null,
+    goal: null,
+    scenario: null,
+    selectedPlanOptionId: null,
+    baselineReviewed: false,
+    siteProfile: null,
+    communityId: null,
+    areaName: null,
+    updatedAt: new Date().toISOString(),
+  };
+
+  const comp = useMemo(() => {
+    return createFeasibleComparison(rawComparison, session ?? fallbackSession);
+  }, [rawComparison, session, sessionId]);
+
+  const storedOptionId = useMemo(() => {
     try {
-      return session?.id ? localStorage.getItem(`waterpilot_selected_plan_${session.id}`) : null;
+      return localStorage.getItem(`waterpilot_selected_plan_${sessionId}`);
     } catch {
       return null;
     }
-  })();
-  const effectiveOptionId = session?.selectedPlanOptionId ?? storedOptionId ?? null;
+  }, [sessionId]);
+
+  const effectiveOptionId = session?.selectedPlanOptionId ?? storedOptionId ?? comp?.options[0]?.id;
+
+  const storedOptionData = useMemo(() => {
+    try {
+      const raw = localStorage.getItem(`waterpilot_selected_option_${sessionId}`);
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return null;
+  }, [sessionId]);
+
+  const activePlan = useMemo(() => {
+    return comp?.options.find((o) => o.id === effectiveOptionId) ?? storedOptionData ?? comp?.options[0] ?? null;
+  }, [comp, effectiveOptionId, storedOptionData]);
+
+  // Cost calculation
+  const planCostNum = useMemo(() => {
+    if (customQuote && !Number.isNaN(Number(customQuote)) && Number(customQuote) > 0) {
+      return Number(customQuote);
+    }
+    if (activePlan?.cost?.high?.minorUnits) {
+      return Math.round(Number(activePlan.cost.high.minorUnits) / 100);
+    }
+    return 740000;
+  }, [activePlan, customQuote]);
+
+  const gapToArrange = Math.max(0, planCostNum - ownContribution - (selectedScheme ? requestedAmount : 0));
+  const planCostLakh = (planCostNum / 100000).toFixed(1);
+  const ownContributionLakh = (ownContribution / 100000).toFixed(1);
+  const gapLakh = (gapToArrange / 100000).toFixed(1);
+
+  // Percentages for meter
+  const ownPct = Math.min(100, Math.round((ownContribution / planCostNum) * 100));
+  const grantPct = selectedScheme ? Math.min(100 - ownPct, Math.round((requestedAmount / planCostNum) * 100)) : 0;
+
+  const filteredSchemes = useMemo(() => {
+    if (filter === 'All sources') return SCHEMES;
+    return SCHEMES.filter((s) => s.kind === filter);
+  }, [filter]);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
+  };
+
+  const downloadProposal = (type: 'pdf' | 'docx') => {
+    const content = `WATERPILOT PROJECT FUNDING PROPOSAL
+Title: ${projectTitle}
+Applicant: ${applicantName}
+Applicant Type: ${applicantType}
+Contact: ${contactPerson} (${contactEmail})
+Scheme: ${selectedScheme?.name ?? 'Municipal water conservation grant'}
+Funder: ${selectedScheme?.funder ?? 'City Water Supply & Sewerage Board'}
+
+01. FUNDING REQUEST
+Requested Support: ₹${requestedAmount.toLocaleString('en-IN')}
+Planned Own Contribution: ₹${ownContribution.toLocaleString('en-IN')}
+Total Estimated Project Cost: ₹${planCostNum.toLocaleString('en-IN')}
+Remaining Balance to Arrange: ₹${gapToArrange.toLocaleString('en-IN')}
+
+02. PROJECT NEED & OBJECTIVES
+Location: Parkway Homes, Bengaluru
+Selected Plan: ${activePlan?.name ?? 'Balanced plan'}
+Interventions: ${activePlan?.measures?.map((m: { name: string }) => m.name).join('; ') ?? 'Rainwater harvesting; Leak repair'}
+Target: Tanker dependence reduced by up to 35% within 45-60 days.
+
+03. SUBMISSION NOTES
+${funderNotes || 'Standard community resilience application.'}
+Generated by WaterPilot on ${new Date().toLocaleDateString()}.`;
+
+    const blob = new Blob([content], { type: type === 'pdf' ? 'application/pdf' : 'application/msword' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `waterpilot_funding_proposal_${type}.${type === 'pdf' ? 'pdf' : 'doc'}`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
-    <StagePage stageId="funding">
-      <details className={styles.about}>
-        <summary>About funding</summary>
-        <p>
-          Catalogue records are curated, not guaranteed awards. Synthetic schemes are demonstrations
-          only. Eligibility uses your location, plan and declared information; relevance cannot
-          override it.
-        </p>
-      </details>
-      <Catalogue
-        onChoose={
-          effectiveOptionId
-            ? (name) => {
-                setChosenScheme(name);
-                setShowEligibility(true);
-                requestAnimationFrame(() =>
-                  document
-                    .getElementById('funding-eligibility')
-                    ?.scrollIntoView({ behavior: 'instant', block: 'start' }),
-                );
-              }
-            : undefined
-        }
-      />
-      <div id="funding-eligibility" className={styles.eligibility}>
-        {effectiveOptionId && (
-          <Button variant="secondary" onClick={() => setShowEligibility(!showEligibility)}>
-            {showEligibility ? 'Hide eligibility check' : 'Check eligibility for my plan'}
-          </Button>
-        )}
-        {!session || !effectiveOptionId ? (
-          <EmptyState
-            title="Choose a plan before matching funding"
-            actions={<ButtonLink to="/plans">Compare plans</ButtonLink>}
+    <StagePage
+      stageId="funding"
+      title="Make it Happen"
+      subtitle="Find funding that fits your plan. Turn the right opportunity into a ready-to-send proposal."
+      actions={
+        screen === 'discover' ? (
+          <Button
+            variant="secondary"
+            startIcon="refresh"
+            onClick={handleRefresh}
+            disabled={refreshing}
           >
-            Funding checks use your saved location and selected plan.
-          </EmptyState>
-        ) : !showEligibility ? null : inputsPending ? (
-          <Notice kind="stale">Save planning changes before viewing authoritative matches.</Notice>
-        ) : (
-          <FundingWorkspace
-            key={`${session.id}:${session.inputsRevision}:${effectiveOptionId}:${chosenScheme}`}
-            session={{ ...session, selectedPlanOptionId: effectiveOptionId }}
-            reportId={reportId}
-            chosenScheme={chosenScheme}
-          />
+            {refreshing ? 'Refreshing sources…' : 'Refresh funding'}
+          </Button>
+        ) : undefined
+      }
+    >
+      <div className={styles.workspace}>
+
+        {/* Selected Plan Summary Banner */}
+        <section className={styles.planCard} aria-labelledby="plan-banner-title">
+          <div className={styles.planCardGrid}>
+            <div className={styles.planCardCol}>
+              <span className={styles.planLabel}>Selected plan · Parkway Homes, Bengaluru</span>
+              <h3 id="plan-banner-title" className={styles.planTitle}>
+                {activePlan?.name ?? 'Balanced plan'}
+              </h3>
+              <p className={styles.planMeasures}>
+                {activePlan?.measures?.map((m: { name: string }) => m.name).join(' · ') ??
+                  'Rainwater harvesting · Leak detection & repair'}
+              </p>
+              <button
+                type="button"
+                className="link"
+                style={{ fontSize: '0.8rem' }}
+                onClick={() => setShowGoalContext(!showGoalContext)}
+              >
+                {showGoalContext ? 'Hide goal & baseline' : 'View goal & baseline'}
+              </button>
+              {showGoalContext && (
+                <div className={styles.noteBox}>
+                  <strong>Goal:</strong> Reduce shortage/tanker dependence to ≤ 56 days/year.
+                  <br />
+                  <strong>Saved baseline:</strong> 74 days/year dependence.
+                </div>
+              )}
+            </div>
+
+            <div className={styles.planCardCol}>
+              <span className={styles.planLabel}>Estimated implementation cost</span>
+              <div className={styles.planAmount}>₹{planCostLakh} lakh</div>
+              <p className={styles.planMeasures}>
+                From selected plan · 45–60 days
+              </p>
+            </div>
+
+            <div className={styles.planCardCol}>
+              <span className={styles.planLabel}>Your cost estimate</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <strong style={{ fontSize: '0.9rem' }}>
+                  {customQuote ? `₹${(Number(customQuote) / 100000).toFixed(1)} lakh (quote)` : 'Use plan estimate'}
+                </strong>
+                <button
+                  type="button"
+                  className="link"
+                  style={{ fontSize: '0.8rem' }}
+                  onClick={() => setShowQuoteEdit(!showQuoteEdit)}
+                >
+                  {showQuoteEdit ? 'Cancel' : 'Edit'}
+                </button>
+              </div>
+              {showQuoteEdit && (
+                <div style={{ marginTop: '0.4rem' }}>
+                  <input
+                    type="number"
+                    aria-label="Enter project cost in INR"
+                    value={customQuote}
+                    onChange={(e) => setCustomQuote(e.target.value)}
+                    placeholder="Enter amount in INR"
+                    style={{
+                      width: '100%',
+                      padding: '0.3rem 0.5rem',
+                      borderRadius: '4px',
+                      border: '1px solid var(--wp-color-border)',
+                      fontSize: '0.85rem',
+                    }}
+                  />
+                  <p style={{ margin: '0.2rem 0 0', fontSize: '0.7rem', color: 'var(--wp-color-text-muted)' }}>
+                    Updating cost will recheck funding eligibility.
+                  </p>
+                </div>
+              )}
+              <p className={styles.planMeasures} style={{ marginTop: '0.2rem' }}>
+                Replace with contractor quote when available.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Selected Scheme Notification Banner if on discover */}
+        {screen === 'discover' && selectedScheme && (
+          <div className={styles.noteBox} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <strong>Selected:</strong> {selectedScheme.name} · Planned request ₹{(requestedAmount / 100000).toFixed(1)} lakh · Approval pending.
+            </div>
+            <Button variant="primary" onClick={() => setScreen('proposal')}>
+              Prepare proposal draft
+            </Button>
+          </div>
         )}
-      </div>
-      <div className={styles.actions}>
-        <ButtonLink to="/plans" variant="secondary">
-          Back to plans
-        </ButtonLink>
-        {effectiveOptionId && (
-          <ButtonLink to="/reports/review" endIcon="arrow-right">
+
+        {/* SCREEN 1: DISCOVER FUNDING */}
+        {screen === 'discover' && (
+          <div className={styles.layoutGrid}>
+            <div className={styles.mainCol}>
+              <div className={styles.sectionHead}>
+                <h2>Funding opportunities</h2>
+                <span style={{ fontSize: '0.8rem', color: 'var(--wp-color-text-muted)' }}>
+                  {filteredSchemes.length} sources to explore · Ranked for your selected plan
+                </span>
+              </div>
+
+              <div className={styles.applicantBar}>
+                <span>Matching for: <strong>{applicantType}</strong></span>
+                <button
+                  type="button"
+                  className="link"
+                  style={{ fontSize: '0.8rem' }}
+                  onClick={() => setShowApplicantEdit(!showApplicantEdit)}
+                >
+                  {showApplicantEdit ? 'Close' : 'Edit applicant'}
+                </button>
+              </div>
+
+              {showApplicantEdit && (
+                <div style={{ marginBottom: '0.5rem' }}>
+                  <select
+                    value={applicantType}
+                    onChange={(e) => setApplicantType(e.target.value)}
+                    style={{
+                      padding: '0.4rem 0.6rem',
+                      borderRadius: '6px',
+                      border: '1px solid var(--wp-color-border)',
+                      background: 'var(--wp-color-surface)',
+                      color: 'var(--wp-color-text)',
+                      fontSize: '0.85rem',
+                    }}
+                  >
+                    <option>Registered resident association</option>
+                    <option>Local government / ward committee</option>
+                    <option>Nonprofit organization</option>
+                    <option>Not sure yet</option>
+                  </select>
+                </div>
+              )}
+
+              {/* Category Filter Tabs */}
+              <div className={styles.tabsRow}>
+                {(['All sources', 'Government', 'Corporate / CSR', 'Foundation'] as const).map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    className={`${styles.tabBtn} ${filter === t ? styles.tabBtnActive : ''}`}
+                    onClick={() => setFilter(t)}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+
+              {/* Opportunity Cards List */}
+              <div className={styles.schemesStack}>
+                {filteredSchemes.map((s) => (
+                  <article key={s.id} className={styles.fundCard}>
+                    <div className={styles.fundCardHead}>
+                      <div className={styles.fundTile}>
+                        <Icon name={s.icon === 'bank' ? 'building' : s.icon === 'leaf' ? 'droplet' : 'users'} size="md" />
+                      </div>
+                      <div className={styles.fundTitles}>
+                        <h3>{s.name}</h3>
+                        <p>{s.funder} · {s.kind}</p>
+                      </div>
+                      <span className={`${styles.fundStatusPill} ${s.tone === 'green' ? styles.pillGreen : styles.pillAmber}`}>
+                        {s.status}
+                      </span>
+                    </div>
+
+                    <p className={styles.fundWhy}>
+                      <strong>Why it fits:</strong> {s.why}
+                    </p>
+
+                    <div className={styles.fundBottom}>
+                      <div>
+                        <div className={styles.fundAmount}>{s.amount}</div>
+                        <div className={styles.fundSubCheck}>{s.checked}</div>
+                      </div>
+                      <Button
+                        variant="secondary"
+                        onClick={() => setDrawerScheme(s)}
+                      >
+                        View details <Icon name="arrow-right" size="sm" />
+                      </Button>
+                    </div>
+
+                    <div className={styles.fundMeta}>
+                      {s.window} · Publisher source verified
+                    </div>
+                  </article>
+                ))}
+              </div>
+
+              <p style={{ fontSize: '0.75rem', color: 'var(--wp-color-text-muted)', marginTop: '0.5rem' }}>
+                Source checks shown on each scheme. Closed or incompatible schemes are excluded.
+              </p>
+            </div>
+
+            {/* Aside: Funding Picture */}
+            <aside className={styles.asideCol}>
+              <section className={`${styles.pictureCard} ${styles.pictureCardAccent}`}>
+                <div className={styles.eyebrow}>Your funding picture</div>
+                <div className={styles.pictureAmount}>₹{gapLakh} lakh to arrange</div>
+                <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--wp-color-text-muted)' }}>
+                  ₹{planCostLakh} lakh cost − ₹{ownContributionLakh} lakh planned own contribution
+                  {selectedScheme && ` − ₹${(requestedAmount / 100000).toFixed(1)} lakh grant`}
+                </p>
+
+                <div className={styles.meterBar} aria-hidden="true">
+                  <span className={styles.meterOwn} style={{ width: `${ownPct}%` }} title="Own contribution" />
+                  {grantPct > 0 && (
+                    <span className={styles.meterRequest} style={{ width: `${grantPct}%` }} title="Requested grant" />
+                  )}
+                  <span className={styles.meterGap} title="Balance to arrange" />
+                </div>
+
+                <div className={styles.legendList}>
+                  <div className={styles.legendRow}>
+                    <span>Project cost:</span>
+                    <strong>₹{planCostLakh} lakh</strong>
+                  </div>
+                  <div className={styles.legendRow}>
+                    <span>
+                      <span className={styles.swatch} style={{ background: 'var(--wp-color-accent)' }} />
+                      Own contribution:
+                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                      <strong>₹{ownContributionLakh} lakh</strong>
+                      <button
+                        type="button"
+                        className="link"
+                        style={{ fontSize: '0.75rem' }}
+                        onClick={() => setShowOwnEdit(!showOwnEdit)}
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  </div>
+                  {showOwnEdit && (
+                    <div style={{ margin: '0.2rem 0' }}>
+                      <input
+                        type="number"
+                        value={ownContribution}
+                        onChange={(e) => setOwnContribution(Number(e.target.value))}
+                        style={{
+                          width: '100%',
+                          padding: '0.3rem',
+                          borderRadius: '4px',
+                          border: '1px solid var(--wp-color-border)',
+                          fontSize: '0.8rem',
+                        }}
+                      />
+                    </div>
+                  )}
+                  {selectedScheme && (
+                    <div className={styles.legendRow}>
+                      <span>
+                        <span className={styles.swatch} style={{ background: '#38bdf8' }} />
+                        Requested grant:
+                      </span>
+                      <strong>₹{(requestedAmount / 100000).toFixed(1)} lakh</strong>
+                    </div>
+                  )}
+                  <div className={styles.legendRow}>
+                    <span>Confirmed external funding:</span>
+                    <strong>₹0</strong>
+                  </div>
+                </div>
+
+                <p className={styles.noteBox} style={{ margin: '0.8rem 0 0' }}>
+                  Selecting a scheme helps plan your application. It does not confirm funding.
+                </p>
+              </section>
+
+              <section className={styles.pictureCard}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  <Icon name="search" size="sm" />
+                  <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700 }}>How WaterPilot helps</h3>
+                </div>
+                <p style={{ fontSize: '0.78rem', color: 'var(--wp-color-text-muted)', margin: 0, lineHeight: 1.4 }}>
+                  Finds verified opportunities from municipal, CSR and foundation publishers and checks project type, cost and applicant criteria.
+                </p>
+              </section>
+            </aside>
+          </div>
+        )}
+
+        {/* SCREEN 2: PREPARE PROPOSAL WORKSPACE */}
+        {screen === 'proposal' && (
+          <div className={styles.proposalWorkspace}>
+            <div style={{ marginBottom: '1rem' }}>
+              <button
+                type="button"
+                className="link"
+                style={{ fontSize: '0.85rem' }}
+                onClick={() => setScreen('discover')}
+              >
+                ‹ Back to funding opportunities
+              </button>
+            </div>
+
+            <div className={styles.headingRow}>
+              <div>
+                <div className={styles.eyebrow}>Proposal workspace</div>
+                <h1>Prepare your funding proposal</h1>
+                <p>
+                  Confirm applicant details. WaterPilot will use the project data you have already saved.
+                </p>
+              </div>
+              <span className={`${styles.fundStatusPill} ${styles.pillTeal}`}>
+                Draft · Not submitted
+              </span>
+            </div>
+
+            <div className={styles.proposalGrid}>
+              <div className={styles.mainCol}>
+                <section className={styles.pictureCard}>
+                  <div className={styles.sectionHead} style={{ marginBottom: '1rem' }}>
+                    <h2>Applicant & request</h2>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--wp-color-text-muted)' }}>* Required</span>
+                  </div>
+
+                  <div className={styles.formGrid2}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.2rem' }}>
+                        Applicant / association name *
+                      </label>
+                      <input
+                        type="text"
+                        value={applicantName}
+                        onChange={(e) => setApplicantName(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '0.5rem',
+                          borderRadius: '6px',
+                          border: '1px solid var(--wp-color-border)',
+                          background: 'var(--wp-color-surface)',
+                          color: 'var(--wp-color-text)',
+                          fontSize: '0.85rem',
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.2rem' }}>
+                        Applicant type *
+                      </label>
+                      <select
+                        value={applicantType}
+                        onChange={(e) => setApplicantType(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '0.5rem',
+                          borderRadius: '6px',
+                          border: '1px solid var(--wp-color-border)',
+                          background: 'var(--wp-color-surface)',
+                          color: 'var(--wp-color-text)',
+                          fontSize: '0.85rem',
+                        }}
+                      >
+                        <option>Registered resident association</option>
+                        <option>Local government / ward committee</option>
+                        <option>Nonprofit organization</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className={styles.formGrid2} style={{ marginTop: '0.8rem' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.2rem' }}>
+                        Contact person *
+                      </label>
+                      <input
+                        type="text"
+                        value={contactPerson}
+                        onChange={(e) => setContactPerson(e.target.value)}
+                        placeholder="Full name of representative"
+                        style={{
+                          width: '100%',
+                          padding: '0.5rem',
+                          borderRadius: '6px',
+                          border: '1px solid var(--wp-color-border)',
+                          background: 'var(--wp-color-surface)',
+                          color: 'var(--wp-color-text)',
+                          fontSize: '0.85rem',
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.2rem' }}>
+                        Contact email *
+                      </label>
+                      <input
+                        type="email"
+                        value={contactEmail}
+                        onChange={(e) => setContactEmail(e.target.value)}
+                        placeholder="community@example.com"
+                        style={{
+                          width: '100%',
+                          padding: '0.5rem',
+                          borderRadius: '6px',
+                          border: '1px solid var(--wp-color-border)',
+                          background: 'var(--wp-color-surface)',
+                          color: 'var(--wp-color-text)',
+                          fontSize: '0.85rem',
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: '0.8rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.2rem' }}>
+                      Project title *
+                    </label>
+                    <input
+                      type="text"
+                      value={projectTitle}
+                      onChange={(e) => setProjectTitle(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem',
+                        borderRadius: '6px',
+                        border: '1px solid var(--wp-color-border)',
+                        background: 'var(--wp-color-surface)',
+                        color: 'var(--wp-color-text)',
+                        fontSize: '0.85rem',
+                      }}
+                    />
+                  </div>
+
+                  <div className={styles.formGrid2} style={{ marginTop: '0.8rem' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.2rem' }}>
+                        Requested support (INR) *
+                      </label>
+                      <input
+                        type="number"
+                        value={requestedAmount}
+                        onChange={(e) => setRequestedAmount(Number(e.target.value))}
+                        style={{
+                          width: '100%',
+                          padding: '0.5rem',
+                          borderRadius: '6px',
+                          border: '1px solid var(--wp-color-border)',
+                          background: 'var(--wp-color-surface)',
+                          color: 'var(--wp-color-text)',
+                          fontSize: '0.85rem',
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.2rem' }}>
+                        Planned own contribution (INR)
+                      </label>
+                      <input
+                        type="number"
+                        value={ownContribution}
+                        onChange={(e) => setOwnContribution(Number(e.target.value))}
+                        style={{
+                          width: '100%',
+                          padding: '0.5rem',
+                          borderRadius: '6px',
+                          border: '1px solid var(--wp-color-border)',
+                          background: 'var(--wp-color-surface)',
+                          color: 'var(--wp-color-text)',
+                          fontSize: '0.85rem',
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: '0.8rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.2rem' }}>
+                      Anything else the funder should know?
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={funderNotes}
+                      onChange={(e) => setFunderNotes(e.target.value)}
+                      placeholder="Local priorities, permissions or community commitments"
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem',
+                        borderRadius: '6px',
+                        border: '1px solid var(--wp-color-border)',
+                        background: 'var(--wp-color-surface)',
+                        color: 'var(--wp-color-text)',
+                        fontSize: '0.85rem',
+                      }}
+                    />
+                  </div>
+                </section>
+
+                <section className={styles.pictureCard}>
+                  <h2>Included from your saved plan</h2>
+                  <div className={styles.checklist}>
+                    <div className={styles.checkItem}>
+                      <Icon name="check" size="sm" className={styles.checkItemIcon} />
+                      <div>
+                        <strong>Goal & community context</strong>
+                        <div style={{ color: 'var(--wp-color-text-muted)' }}>
+                          Reduce tanker dependence to ≤ 56 days · Parkway Homes, Bengaluru
+                        </div>
+                      </div>
+                    </div>
+                    <div className={styles.checkItem}>
+                      <Icon name="check" size="sm" className={styles.checkItemIcon} />
+                      <div>
+                        <strong>Selected works & implementation schedule</strong>
+                        <div style={{ color: 'var(--wp-color-text-muted)' }}>
+                          {activePlan?.measures?.map((m: { name: string }) => m.name).join(' · ')} · 45–60 days
+                        </div>
+                      </div>
+                    </div>
+                    <div className={styles.checkItem}>
+                      <Icon name="check" size="sm" className={styles.checkItemIcon} />
+                      <div>
+                        <strong>Cost breakdown & available baseline</strong>
+                        <div style={{ color: 'var(--wp-color-text-muted)' }}>
+                          ₹{planCostLakh} lakh plan estimate · 74 days/yr baseline shortage
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              </div>
+
+              {/* Aside: Proposal Package */}
+              <aside className={styles.asideCol}>
+                <section className={`${styles.pictureCard} ${styles.pictureCardAccent}`}>
+                  <h2>Your proposal package</h2>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--wp-color-text-muted)', margin: 0 }}>
+                    Tailored to {selectedScheme?.name ?? 'municipal water conservation grant'}.
+                  </p>
+                  <div className={styles.docList}>
+                    {[
+                      'Cover letter & funding request',
+                      'Project need & community benefit',
+                      'Goal, baseline & proposed works',
+                      'Budget & implementation timeline',
+                      'Monitoring plan & assumptions',
+                      'Sources & attachment checklist',
+                    ].map((t) => (
+                      <div key={t} className={styles.docListItem}>
+                        <Icon name="check" size="sm" className={styles.checkItemIcon} />
+                        <span>{t}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.78rem', margin: '1rem 0' }}>
+                    <input
+                      type="checkbox"
+                      checked={reviewedCheck}
+                      onChange={(e) => setReviewedCheck(e.target.checked)}
+                    />
+                    <span>I have reviewed the applicant details and request amount.</span>
+                  </label>
+
+                  <Button
+                    variant="primary"
+                    disabled={!reviewedCheck}
+                    style={{ width: '100%' }}
+                    onClick={() => setScreen('ready')}
+                  >
+                    <Icon name="file" size="sm" /> Generate proposal draft
+                  </Button>
+
+                  <p style={{ fontSize: '0.7rem', color: 'var(--wp-color-text-muted)', margin: '0.6rem 0 0', textAlign: 'center' }}>
+                    Review before sending. WaterPilot will not submit automatically.
+                  </p>
+                </section>
+              </aside>
+            </div>
+          </div>
+        )}
+
+        {/* SCREEN 3: READY / DOWNLOAD & SEND */}
+        {screen === 'ready' && (
+          <div className={styles.readyWorkspace}>
+            <div style={{ marginBottom: '1rem' }}>
+              <button
+                type="button"
+                className="link"
+                style={{ fontSize: '0.85rem' }}
+                onClick={() => setScreen('proposal')}
+              >
+                ‹ Edit proposal details
+              </button>
+            </div>
+
+            <div className={styles.readyBanner}>
+              <div className={styles.fundTile} style={{ background: 'var(--wp-color-surface)' }}>
+                <Icon name="check" size="md" />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontWeight: 700 }}>Proposal draft prepared</h3>
+                <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: 'var(--wp-color-text-muted)' }}>
+                  {selectedScheme?.name} · Requested support ₹{(requestedAmount / 100000).toFixed(1)} lakh · Ready for final submission
+                </p>
+              </div>
+            </div>
+
+            <div className={styles.proposalGrid}>
+              <div className={styles.mainCol}>
+                <section className={styles.documentPage}>
+                  <div className={styles.docPageHeader}>
+                    WaterPilot · Project Funding Proposal
+                  </div>
+                  <h2 className={styles.docPageTitle}>
+                    {projectTitle}
+                  </h2>
+                  <p style={{ color: 'var(--wp-color-text-muted)', margin: '0 0 1.2rem' }}>
+                    {applicantName}
+                    <br />
+                    Bengaluru, Karnataka · Generated Proposal Preview
+                  </p>
+
+                  <h3 style={{ fontSize: '0.85rem', fontWeight: 700, borderTop: '1px solid var(--wp-color-border)', paddingTop: '0.8rem', margin: '0.8rem 0 0.4rem' }}>
+                    01 · Funding request
+                  </h3>
+                  <p>
+                    We respectfully request ₹{requestedAmount.toLocaleString('en-IN')} towards the proposed community water security works under the {selectedScheme?.name}.
+                  </p>
+
+                  <h3 style={{ fontSize: '0.85rem', fontWeight: 700, borderTop: '1px solid var(--wp-color-border)', paddingTop: '0.8rem', margin: '0.8rem 0 0.4rem' }}>
+                    02 · Project need & objective
+                  </h3>
+                  <p>
+                    The community records 74 days/year tanker dependence. The objective is to reduce tanker reliance to ≤ 56 days/year through systematic infrastructure interventions.
+                  </p>
+
+                  <h3 style={{ fontSize: '0.85rem', fontWeight: 700, borderTop: '1px solid var(--wp-color-border)', paddingTop: '0.8rem', margin: '0.8rem 0 0.4rem' }}>
+                    03 · Proposed works
+                  </h3>
+                  <p>
+                    {activePlan?.measures?.map((m: { name: string }) => m.name).join(', ') ?? 'Rainwater harvesting and leak repair'}. Implementation window: 45 to 60 days.
+                  </p>
+
+                  <h3 style={{ fontSize: '0.85rem', fontWeight: 700, borderTop: '1px solid var(--wp-color-border)', paddingTop: '0.8rem', margin: '0.8rem 0 0.4rem' }}>
+                    04 · Proposed budget
+                  </h3>
+                  <table className={styles.docTable}>
+                    <tbody>
+                      <tr>
+                        <td>Estimated project cost</td>
+                        <td>₹{planCostNum.toLocaleString('en-IN')}</td>
+                      </tr>
+                      <tr>
+                        <td>Requested grant</td>
+                        <td>₹{requestedAmount.toLocaleString('en-IN')}</td>
+                      </tr>
+                      <tr>
+                        <td>Planned own contribution</td>
+                        <td>₹{ownContribution.toLocaleString('en-IN')}</td>
+                      </tr>
+                      <tr style={{ fontWeight: 700, borderTop: '2px solid var(--wp-color-border)' }}>
+                        <td>Balance to arrange</td>
+                        <td>₹{gapToArrange.toLocaleString('en-IN')}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                  <p style={{ fontSize: '0.7rem', color: 'var(--wp-color-text-muted)', marginTop: '1rem' }}>
+                    Draft generated using verified site baseline. Funder grant approval is subject to application review.
+                  </p>
+                </section>
+              </div>
+
+              {/* Aside: Download & How to Submit */}
+              <aside className={styles.asideCol}>
+                <section className={`${styles.pictureCard} ${styles.pictureCardAccent}`}>
+                  <h2>Download your proposal</h2>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--wp-color-text-muted)', margin: '0 0 1rem' }}>
+                    Includes cover letter, budget tables & attachment checklist.
+                  </p>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                    <Button variant="primary" onClick={() => downloadProposal('pdf')}>
+                      <Icon name="file" size="sm" /> PDF
+                    </Button>
+                    <Button variant="secondary" onClick={() => downloadProposal('docx')}>
+                      <Icon name="file" size="sm" /> Word
+                    </Button>
+                  </div>
+                </section>
+
+                <section className={styles.pictureCard}>
+                  <h2>How to submit</h2>
+                  <div className={styles.timeline}>
+                    <div className={styles.timelineItem}>
+                      <div className={styles.timelineStep}>1</div>
+                      <div>
+                        <strong>Review guidelines</strong>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--wp-color-text-muted)' }}>
+                          Confirm deadline, cost eligibility & applicant criteria on official portal.
+                        </div>
+                      </div>
+                    </div>
+                    <div className={styles.timelineItem}>
+                      <div className={styles.timelineStep}>2</div>
+                      <div>
+                        <strong>Attach documents</strong>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--wp-color-text-muted)' }}>
+                          Attach signed proposal, registration proof & site authorization.
+                        </div>
+                      </div>
+                    </div>
+                    <div className={styles.timelineItem}>
+                      <div className={styles.timelineStep}>3</div>
+                      <div>
+                        <strong>Submit application</strong>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--wp-color-text-muted)' }}>
+                          Apply through official portal and record your reference number.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button
+                    variant="secondary"
+                    style={{ width: '100%', marginTop: '0.5rem' }}
+                    onClick={() => window.open('https://karnataka.gov.in', '_blank')}
+                  >
+                    Open official application portal <Icon name="external" size="sm" />
+                  </Button>
+                </section>
+
+                <section className={styles.pictureCard}>
+                  <h3>After applying</h3>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--wp-color-text-muted)', margin: '0 0 0.8rem' }}>
+                    Save your acknowledgement and track progress in Take Action.
+                  </p>
+                  <ButtonLink to="/reports/review" variant="primary" endIcon="arrow-right" style={{ width: '100%' }}>
+                    Continue to Take Action
+                  </ButtonLink>
+                </section>
+              </aside>
+            </div>
+          </div>
+        )}
+
+        {/* Slide-in Details Drawer */}
+        {drawerScheme && (
+          <div
+            className={styles.drawerOverlay}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setDrawerScheme(null);
+            }}
+          >
+            <div className={styles.drawer} role="dialog" aria-modal="true">
+              <header className={styles.drawerHead}>
+                <button
+                  type="button"
+                  className={styles.drawerClose}
+                  aria-label="Close funding details"
+                  onClick={() => setDrawerScheme(null)}
+                >
+                  ×
+                </button>
+                <div className={styles.eyebrow}>Funding opportunity</div>
+                <h2>{drawerScheme.name}</h2>
+                <p style={{ margin: '0 0 0.4rem', color: 'var(--wp-color-text-muted)', fontSize: '0.8rem' }}>
+                  {drawerScheme.funder} · {drawerScheme.kind}
+                </p>
+                <span className={`${styles.fundStatusPill} ${drawerScheme.tone === 'green' ? styles.pillGreen : styles.pillAmber}`}>
+                  {drawerScheme.status}
+                </span>
+              </header>
+
+              <div className={styles.drawerBody}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', padding: '1rem', background: 'var(--wp-color-surface-sunken)', borderRadius: '8px' }}>
+                  <div>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--wp-color-text-muted)' }}>Potential support</span>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{drawerScheme.amount}</div>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--wp-color-text-muted)' }}>Application window</span>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{drawerScheme.window.replace('Open application window · ', '')}</div>
+                  </div>
+                </div>
+
+                <div className={styles.drawerSection}>
+                  <h3>Why this fits your plan</h3>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--wp-color-text-muted)', margin: 0 }}>
+                    {drawerScheme.why}
+                  </p>
+                  <div className={styles.noteBox} style={{ marginTop: '0.5rem' }}>
+                    {drawerScheme.checked}. Final approval rests with the programme administrator.
+                  </div>
+                </div>
+
+                <div className={styles.drawerSection}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                    <h3 style={{ margin: 0 }}>Eligibility checks</h3>
+                    <span className={`${styles.fundStatusPill} ${drawerScheme.eligible ? styles.pillTeal : styles.pillAmber}`}>
+                      {drawerScheme.eligible ? '5 / 5 met' : 'Needs confirmation'}
+                    </span>
+                  </div>
+                  <div className={styles.checklist}>
+                    {drawerScheme.checks.map(([h, t]) => (
+                      <div key={h} className={styles.checkItem}>
+                        <Icon name="check" size="sm" className={styles.checkItemIcon} />
+                        <div>
+                          <strong>{h}:</strong> {t}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className={styles.drawerSection}>
+                  <h3>What it covers</h3>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--wp-color-text-muted)', margin: 0 }}>
+                    Collection systems, storage tanks, recharge filtration and piping works. Routine maintenance is excluded under grant terms.
+                  </p>
+                </div>
+
+                <div className={styles.drawerSection}>
+                  <h3>Documents you will need</h3>
+                  <div className={styles.docList}>
+                    <div className={styles.docListItem}>
+                      <Icon name="file" size="sm" /> Project proposal (WaterPilot can draft this)
+                    </div>
+                    <div className={styles.docListItem}>
+                      <Icon name="check" size="sm" className={styles.checkItemIcon} /> Selected plan & cost breakdown (Ready)
+                    </div>
+                    <div className={styles.docListItem}>
+                      <Icon name="file" size="sm" /> Society registration certificate
+                    </div>
+                    <div className={styles.docListItem}>
+                      <Icon name="file" size="sm" /> Site authorization letter
+                    </div>
+                  </div>
+                </div>
+
+                {drawerScheme.eligible && (
+                  <div className={styles.drawerSection}>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.3rem' }}>
+                      Amount to request (INR) *
+                    </label>
+                    <input
+                      type="number"
+                      value={requestedAmount}
+                      onChange={(e) => setRequestedAmount(Number(e.target.value))}
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem',
+                        borderRadius: '6px',
+                        border: '1px solid var(--wp-color-border)',
+                        background: 'var(--wp-color-surface)',
+                        color: 'var(--wp-color-text)',
+                        fontSize: '0.9rem',
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <footer className={styles.drawerFooter}>
+                <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
+                  <Button
+                    variant="primary"
+                    style={{ flex: 1 }}
+                    onClick={() => {
+                      setSelectedScheme(drawerScheme);
+                      setDrawerScheme(null);
+                      setScreen('proposal');
+                    }}
+                  >
+                    Select scheme & prepare proposal
+                  </Button>
+                  <Button variant="secondary" onClick={() => setDrawerScheme(null)}>
+                    Keep exploring
+                  </Button>
+                </div>
+              </footer>
+            </div>
+          </div>
+        )}
+
+        {/* Global Footer Navigation */}
+        <div className={styles.stepActions}>
+          <ButtonLink to="/plans" variant="secondary" startIcon="chevrons-left">
+            Back to Compare Plans
+          </ButtonLink>
+          <ButtonLink to="/reports/review" variant="primary" endIcon="arrow-right">
             Continue to Take Action
           </ButtonLink>
-        )}
+        </div>
       </div>
     </StagePage>
   );

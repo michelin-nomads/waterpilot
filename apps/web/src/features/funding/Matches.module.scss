@@ -1,141 +1,594 @@
 .workspace {
   display: grid;
   gap: var(--wp-space-5);
-}
-.form,
-.card {
-  display: grid;
-  gap: var(--wp-card-body-gap);
-  padding: var(--wp-card-padding);
-  border: 1px solid var(--wp-color-border);
-  border-radius: var(--wp-radius-lg);
-  background: var(--wp-color-surface);
-  overflow-wrap: anywhere;
-}
-.row {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: var(--wp-space-4);
-}
-.results {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--wp-space-4);
-  align-items: start;
-}
-.card dl {
-  display: grid;
-  grid-template-columns: 7rem minmax(0, 1fr);
-  gap: var(--wp-space-2);
-}
-.card dd {
-  margin: 0;
-}
-.card summary {
-  cursor: pointer;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-.catalogue {
-  display: grid;
-  gap: var(--wp-space-5);
-}
-.filters {
-  display: grid;
-  grid-template-columns: minmax(15rem, 2fr) minmax(12rem, 1fr) minmax(12rem, 1.3fr) auto;
-  gap: var(--wp-space-4);
-  align-items: end;
-}
-.resultHeading {
+.headingRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: var(--wp-space-4);
+  flex-wrap: wrap;
+  gap: var(--wp-space-3);
+  margin-bottom: var(--wp-space-2);
 }
-.opportunity {
-  display: grid;
-  grid-template-columns: 4rem minmax(0, 1fr) auto;
-  gap: var(--wp-space-5);
-  padding: var(--wp-card-padding);
-  border: 1px solid var(--wp-color-border);
-  border-radius: var(--wp-radius-lg);
-  background: var(--wp-color-surface);
+
+.headingTitles h1 {
+  font-size: var(--wp-text-2xl);
+  font-weight: 750;
+  margin: 0 0 var(--wp-space-1);
+  color: var(--wp-color-text);
 }
-.schemeIcon {
-  width: 4rem;
-  height: 4rem;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  color: var(--wp-color-accent-strong);
-  background: var(--wp-color-surface-sunken);
-}
-.schemeBody {
-  min-width: 0;
-  display: grid;
-  gap: var(--wp-space-2);
-}
-.schemeBody h2,
-.schemeBody p {
+
+.headingTitles p {
   margin: 0;
-}
-.schemeBody h2 {
-  font-size: var(--wp-text-lg);
-}
-.publisher {
+  font-size: var(--wp-text-sm);
   color: var(--wp-color-text-muted);
 }
-.tags {
+
+.eyebrow {
+  font-size: var(--wp-text-xs);
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--wp-color-accent-strong);
+  margin-bottom: var(--wp-space-1);
+}
+
+/* Selected Plan Banner */
+.planCard {
+  background: var(--wp-color-surface);
+  border: 1px solid var(--wp-color-border);
+  border-radius: var(--wp-radius-lg);
+  padding: var(--wp-space-4) var(--wp-space-5);
+  box-shadow: 0 4px 18px rgba(16, 35, 56, 0.05);
+}
+
+.planCardGrid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr;
+  gap: var(--wp-space-5);
+  align-items: start;
+}
+
+.planCardCol + .planCardCol {
+  border-left: 1px solid var(--wp-color-border);
+  padding-left: var(--wp-space-5);
+}
+
+.planLabel {
+  display: block;
+  font-size: var(--wp-text-xs);
+  color: var(--wp-color-text-muted);
+  margin-bottom: var(--wp-space-1);
+}
+
+.planTitle {
+  font-size: var(--wp-text-md);
+  font-weight: 700;
+  margin: 0 0 var(--wp-space-1);
+  color: var(--wp-color-text);
+}
+
+.planMeasures {
+  font-size: var(--wp-text-xs);
+  color: var(--wp-color-text-muted);
+  margin: 0 0 var(--wp-space-2);
+}
+
+.planAmount {
+  font-size: var(--wp-text-xl);
+  font-weight: 750;
+  color: var(--wp-color-text);
+  line-height: 1.2;
+}
+
+.noteBox {
+  margin-top: var(--wp-space-3);
+  padding: var(--wp-space-3);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-color-accent-soft);
+  color: var(--wp-color-text);
+  font-size: var(--wp-text-xs);
+  border-left: 3px solid var(--wp-color-accent);
+}
+
+/* Main Layout */
+.layoutGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: var(--wp-space-5);
+  align-items: start;
+}
+
+.mainCol {
+  display: grid;
+  gap: var(--wp-space-4);
+}
+
+.asideCol {
+  display: grid;
+  gap: var(--wp-space-4);
+}
+
+/* Section Head & Tabs */
+.sectionHead {
   display: flex;
+  justify-content: space-between;
+  align-items: center;
   flex-wrap: wrap;
   gap: var(--wp-space-2);
 }
-.tags span {
-  padding: var(--wp-space-1) var(--wp-space-2);
-  border-radius: var(--wp-radius-sm);
-  background: var(--wp-color-surface-sunken);
-  color: var(--wp-color-text-muted);
-}
-.schemeAction {
-  display: flex;
-  flex-direction: column;
-  align-items: end;
-  justify-content: center;
-  gap: var(--wp-space-3);
-}
-.about {
-  margin-bottom: var(--wp-space-5);
-  color: var(--wp-color-text-muted);
-}
-.about summary,
-.schemeBody summary {
-  cursor: pointer;
-}
-.eligibility {
-  margin-top: var(--wp-space-6);
-  display: grid;
-  gap: var(--wp-space-4);
-  scroll-margin-top: 6rem;
-}
-@media (max-width: 1100px) {
-  .filters {
-    grid-template-columns: 1.5fr 1fr;
-  }
-  .opportunity {
-    grid-template-columns: 3rem minmax(0, 1fr);
-  }
-  .schemeAction {
-    grid-column: 2;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
+
+.sectionHead h2 {
+  font-size: var(--wp-text-lg);
+  font-weight: 700;
+  margin: 0;
 }
 
-.actions {
+.applicantBar {
+  font-size: var(--wp-text-xs);
+  color: var(--wp-color-text-muted);
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+  flex-wrap: wrap;
+}
+
+.tabsRow {
+  display: flex;
+  gap: var(--wp-space-2);
+  flex-wrap: wrap;
+}
+
+.tabBtn {
+  font-size: var(--wp-text-xs);
+  font-weight: 600;
+  padding: 0.35rem 0.8rem;
+  border-radius: var(--wp-radius-pill);
+  border: 1px solid var(--wp-color-border);
+  background: var(--wp-color-surface);
+  color: var(--wp-color-text);
+  cursor: pointer;
+  transition: all var(--wp-motion-fast);
+}
+
+.tabBtn:hover {
+  border-color: var(--wp-color-accent);
+}
+
+.tabBtnActive {
+  background: var(--wp-color-accent-soft);
+  color: var(--wp-color-accent-strong);
+  border-color: var(--wp-color-accent);
+}
+
+/* Scheme Cards */
+.schemesStack {
+  display: grid;
+  gap: var(--wp-space-4);
+}
+
+.fundCard {
+  background: var(--wp-color-surface);
+  border: 1px solid var(--wp-color-border);
+  border-radius: var(--wp-radius-lg);
+  padding: var(--wp-space-4);
+  box-shadow: 0 2px 10px rgba(16, 35, 56, 0.04);
+  transition: border-color var(--wp-motion-fast);
+}
+
+.fundCard:hover {
+  border-color: var(--wp-color-accent);
+}
+
+.fundCardHead {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--wp-space-3);
+  margin-bottom: var(--wp-space-3);
+}
+
+.fundTile {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-color-accent-soft);
+  color: var(--wp-color-accent-strong);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.fundTitles {
+  flex: 1;
+}
+
+.fundTitles h3 {
+  font-size: var(--wp-text-md);
+  font-weight: 700;
+  margin: 0 0 0.2rem;
+  color: var(--wp-color-text);
+}
+
+.fundTitles p {
+  font-size: var(--wp-text-xs);
+  color: var(--wp-color-text-muted);
+  margin: 0;
+}
+
+.fundStatusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: var(--wp-text-xs);
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--wp-radius-pill);
+  white-space: nowrap;
+}
+
+.pillGreen {
+  background: var(--wp-color-success-soft);
+  color: var(--wp-color-success);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.pillAmber {
+  background: var(--wp-color-warning-soft);
+  color: var(--wp-color-warning);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.pillTeal {
+  background: var(--wp-color-accent-soft);
+  color: var(--wp-color-accent-strong);
+  border: 1px solid var(--wp-color-accent);
+}
+
+.fundWhy {
+  font-size: var(--wp-text-xs);
+  color: var(--wp-color-text-muted);
+  margin: 0 0 var(--wp-space-3);
+  line-height: 1.45;
+}
+
+.fundWhy strong {
+  color: var(--wp-color-text);
+}
+
+.fundBottom {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: var(--wp-space-4);
-  margin-top: var(--wp-space-6);
+  padding-top: var(--wp-space-3);
+  border-top: 1px solid var(--wp-color-border);
+  gap: var(--wp-space-2);
 }
 
+.fundAmount {
+  font-size: var(--wp-text-md);
+  font-weight: 700;
+  color: var(--wp-color-text);
+}
+
+.fundSubCheck {
+  font-size: var(--wp-text-xs);
+  color: var(--wp-color-text-muted);
+  margin-top: 0.1rem;
+}
+
+.fundMeta {
+  font-size: 0.72rem;
+  color: var(--wp-color-text-muted);
+  margin-top: var(--wp-space-2);
+}
+
+/* Aside: Funding Picture */
+.pictureCard {
+  background: var(--wp-color-surface);
+  border: 1px solid var(--wp-color-border);
+  border-radius: var(--wp-radius-lg);
+  padding: var(--wp-space-4);
+  box-shadow: 0 4px 14px rgba(16, 35, 56, 0.05);
+}
+
+.pictureCardAccent {
+  border-color: var(--wp-color-accent);
+}
+
+.pictureAmount {
+  font-size: var(--wp-text-2xl);
+  font-weight: 750;
+  margin: var(--wp-space-1) 0;
+  color: var(--wp-color-text);
+}
+
+.meterBar {
+  display: flex;
+  height: 0.65rem;
+  border-radius: var(--wp-radius-pill);
+  overflow: hidden;
+  background: var(--wp-color-surface-sunken);
+  margin: var(--wp-space-3) 0 var(--wp-space-3);
+  border: 1px solid var(--wp-color-border);
+}
+
+.meterOwn {
+  background: var(--wp-color-accent);
+}
+
+.meterRequest {
+  background: #38bdf8;
+}
+
+.meterGap {
+  flex: 1;
+  background: var(--wp-color-surface-sunken);
+}
+
+.legendList {
+  display: grid;
+  gap: var(--wp-space-2);
+  font-size: var(--wp-text-xs);
+  margin-top: var(--wp-space-3);
+}
+
+.legendRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.swatch {
+  display: inline-block;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 2px;
+  margin-right: 0.4rem;
+}
+
+/* Drawer / Dialog */
+.drawerOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 23, 36, 0.45);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.drawer {
+  width: min(580px, 100%);
+  height: 100%;
+  background: var(--wp-color-surface);
+  color: var(--wp-color-text);
+  display: flex;
+  flex-direction: column;
+  box-shadow: -10px 0 35px rgba(0, 0, 0, 0.2);
+  animation: slideIn 220ms ease-out;
+  overflow: hidden;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.drawerHead {
+  padding: var(--wp-space-5);
+  border-bottom: 1px solid var(--wp-color-border);
+  position: relative;
+}
+
+.drawerClose {
+  position: absolute;
+  top: var(--wp-space-4);
+  right: var(--wp-space-4);
+  border: 1px solid var(--wp-color-border);
+  background: var(--wp-color-surface);
+  border-radius: var(--wp-radius-sm);
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: var(--wp-color-text);
+}
+
+.drawerHead h2 {
+  font-size: var(--wp-text-xl);
+  font-weight: 750;
+  margin: var(--wp-space-1) 2.5rem var(--wp-space-1) 0;
+}
+
+.drawerBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--wp-space-5);
+  display: grid;
+  gap: var(--wp-space-5);
+}
+
+.drawerSection {
+  padding-bottom: var(--wp-space-4);
+  border-bottom: 1px solid var(--wp-color-border);
+}
+
+.drawerSection h3 {
+  font-size: var(--wp-text-sm);
+  font-weight: 700;
+  margin: 0 0 var(--wp-space-2);
+}
+
+.checklist {
+  display: grid;
+  gap: var(--wp-space-2);
+  margin-top: var(--wp-space-2);
+}
+
+.checkItem {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--wp-space-2);
+  font-size: var(--wp-text-xs);
+  line-height: 1.4;
+}
+
+.checkItemIcon {
+  color: var(--wp-color-success);
+  flex: none;
+  margin-top: 1px;
+}
+
+.drawerFooter {
+  padding: var(--wp-space-4) var(--wp-space-5);
+  border-top: 1px solid var(--wp-color-border);
+  background: var(--wp-color-surface);
+}
+
+/* Proposal Workspace View */
+.proposalWorkspace {
+  display: grid;
+  gap: var(--wp-space-5);
+}
+
+.proposalGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: var(--wp-space-5);
+  align-items: start;
+}
+
+.formGrid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--wp-space-3);
+}
+
+.docList {
+  display: grid;
+  gap: var(--wp-space-2);
+  font-size: var(--wp-text-xs);
+  margin: var(--wp-space-3) 0;
+}
+
+.docListItem {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+  color: var(--wp-color-text);
+}
+
+/* Ready / Document Preview */
+.readyWorkspace {
+  display: grid;
+  gap: var(--wp-space-5);
+}
+
+.readyBanner {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-3);
+  padding: var(--wp-space-4);
+  background: var(--wp-color-success-soft);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: var(--wp-radius-lg);
+}
+
+.documentPage {
+  background: var(--wp-color-surface);
+  border: 1px solid var(--wp-color-border);
+  padding: var(--wp-space-6);
+  border-radius: var(--wp-radius-md);
+  box-shadow: 0 6px 24px rgba(16, 35, 56, 0.08);
+  font-size: var(--wp-text-xs);
+  line-height: 1.6;
+}
+
+.docPageHeader {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--wp-color-accent-strong);
+  margin-bottom: var(--wp-space-2);
+  font-weight: 700;
+}
+
+.docPageTitle {
+  font-size: var(--wp-text-xl);
+  font-weight: 750;
+  margin: 0 0 var(--wp-space-1);
+  color: var(--wp-color-text);
+}
+
+.docTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--wp-space-3) 0;
+}
+
+.docTable td {
+  padding: var(--wp-space-2) 0;
+  border-bottom: 1px solid var(--wp-color-border);
+}
+
+.docTable td:last-child {
+  text-align: right;
+  font-weight: 600;
+}
+
+.timeline {
+  display: grid;
+  gap: var(--wp-space-3);
+  margin: var(--wp-space-3) 0;
+}
+
+.timelineItem {
+  display: flex;
+  gap: var(--wp-space-3);
+}
+
+.timelineStep {
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  background: var(--wp-color-accent-soft);
+  color: var(--wp-color-accent-strong);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: var(--wp-text-xs);
+  flex: none;
+}
+
+.stepActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--wp-space-6);
+  padding-top: var(--wp-space-4);
+  border-top: 1px solid var(--wp-color-border);
+}
+
+@media (max-width: 850px) {
+  .planCardGrid,
+  .layoutGrid,
+  .proposalGrid,
+  .formGrid2 {
+    grid-template-columns: 1fr;
+  }
+  .planCardCol + .planCardCol {
+    border-left: none;
+    border-top: 1px solid var(--wp-color-border);
+    padding-left: 0;
+    padding-top: var(--wp-space-3);
+  }
+}
