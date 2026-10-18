@@ -8,7 +8,11 @@ import {
   within,
 } from '@testing-library/react';
 import { StrictMode } from 'react';
-import { useLocationConfirmation } from '../planning/planningInteraction';
+import {
+  useLocationConfirmation,
+  useLocationInteraction,
+  useLocationSelection,
+} from '../planning/planningInteraction';
 import { MapPanel } from './MapPanel';
 import { MemoryRouter } from 'react-router-dom';
 import type { AxiosAdapter, InternalAxiosRequestConfig } from 'axios';
@@ -881,4 +885,37 @@ it('uses the same location confirmation from the agent and blocks duplicate subm
     confirmFromAgent();
   });
   await waitFor(() => expect(confirms()).toHaveLength(1));
+});
+
+it('keeps agent review and workspace in sync when replacing the device suggestion', async () => {
+  geolocation.getCurrentPosition.mockImplementation((ok: PositionCallback) =>
+    ok({ coords: { latitude: 12.93, longitude: 77.62, accuracy: 25 } } as GeolocationPosition),
+  );
+  const places = new FakePlaces();
+  places.reverseResult = [KORAMANGALA];
+  renderStep(places);
+  await screen.findByRole('form', { name: 'Your selected area' });
+  const shared = renderHook(() => ({
+    select: useLocationSelection('ses_1'),
+    location: useLocationInteraction('ses_1'),
+  }));
+  await waitFor(() => expect(shared.result.current.select).toBeTypeOf('function'));
+  await act(async () => {
+    shared.result.current.select!({
+      ...KORAMANGALA,
+      name: 'HSR Layout',
+      formattedAddress: 'HSR Layout, Bengaluru',
+      admin: { ...KORAMANGALA.admin, sublocality: 'HSR Layout', locality: null },
+      latitude: '12.91',
+      longitude: '77.64',
+    });
+  });
+  await waitFor(() =>
+    expect(shared.result.current.location).toEqual({
+      status: 'suggested',
+      candidateName: 'HSR Layout',
+    }),
+  );
+  expect(screen.getByRole('form', { name: 'Your selected area' })).toHaveTextContent('HSR Layout');
+  expect(confirms()).toHaveLength(0);
 });

@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import { SHOW_COMMUNITY_BASELINE } from './visibility';
 import type { SessionState } from '../../session/sessionState';
+import type { Place } from '../location/types';
 
 export type LocationInteraction = {
   status: 'absent' | 'resolving' | 'suggested' | 'confirming' | 'confirmed' | 'failed';
@@ -59,6 +60,29 @@ export function planningInteraction(
 }
 
 const confirmations = new Map<string, () => void>();
+const selections = new Map<string, (place: Place) => void>();
+export function registerLocationSelection(sessionId: string, action: (place: Place) => void) {
+  selections.set(sessionId, action);
+  listeners.forEach((listener) => listener());
+  return () => {
+    if (selections.get(sessionId) === action) {
+      selections.delete(sessionId);
+      listeners.forEach((listener) => listener());
+    }
+  };
+}
+export function useLocationSelection(sessionId?: string) {
+  return useSyncExternalStore(
+    (listener) => {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+    () => (sessionId ? selections.get(sessionId) : undefined),
+    () => undefined,
+  );
+}
 export function registerLocationConfirmation(sessionId: string, action: (() => void) | null) {
   if (action) confirmations.set(sessionId, action);
   else confirmations.delete(sessionId);
