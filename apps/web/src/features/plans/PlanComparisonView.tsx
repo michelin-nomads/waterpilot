@@ -485,7 +485,7 @@ export function PlanComparisonView({ comparison, selectedId, busy, onChoose }: P
               content: (
                 <div className={styles.stack}>
                   <ul className={styles.list}>
-                    {comparison.assumptions.map((a) => (
+                    {(comparison.assumptions ?? []).map((a) => (
                       <li key={a}>{a}</li>
                     ))}
                   </ul>
@@ -493,10 +493,12 @@ export function PlanComparisonView({ comparison, selectedId, busy, onChoose }: P
                     <p className={styles.text}>Ranking: {comparison.ranking}</p>
                   )}
                   <p className={styles.muted}>
-                    Up to {comparison.maxOptions} plans are shown, never more than pass. Stress
-                    tests: {comparison.stressTests.join('; ')}.
+                    Up to {comparison.maxOptions ?? 3} plans are shown, never more than pass.
+                    {comparison.stressTests && comparison.stressTests.length > 0
+                      ? ` Stress tests: ${comparison.stressTests.join('; ')}.`
+                      : ''}
                   </p>
-                  {comparison.excluded.length > 0 && (
+                  {comparison.excluded && comparison.excluded.length > 0 && (
                     <>
                       <h4 className={styles.blockTitle}>Not considered</h4>
                       <ul className={styles.list}>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 
 import { Tooltip } from '../../components/Tooltip/Tooltip';
 import { Button } from '../../components/Button/Button';
@@ -11,6 +11,9 @@ import styles from './AgentPanel.module.scss';
 import { usePlanningSession } from '../../session/sessionContext';
 
 import AgentConversation from './AgentConversation';
+
+const AgentGoalCheck = lazy(() => import('../goals/AgentGoalCheck'));
+const AgentScenario = lazy(() => import('../plans/AgentScenario'));
 
 type AiStatusValue = AiStatusQuery['aiStatus'];
 
@@ -93,6 +96,7 @@ function panelContent(status: AiStatusValue | undefined): PanelContent {
 export function AgentPanel({
   onUseTraditional,
   onFocusWorkspace,
+  showScenario = true,
   onCollapse,
 }: {
   onUseTraditional: () => void;
@@ -159,18 +163,28 @@ export function AgentPanel({
           onFocusWorkspace={onFocusWorkspace}
         />
       ) : (
-        <EmptyState
-          icon="sparkle"
-          title={content.title}
-          headingLevel={3}
-          actions={
-            <Button variant="secondary" startIcon="list" onClick={onUseTraditional}>
-              Use Traditional mode
-            </Button>
-          }
-        >
-          <p>{content.body}</p>
-        </EmptyState>
+        <>
+          <EmptyState
+            icon="sparkle"
+            title={content.title}
+            headingLevel={3}
+            actions={
+              <Button variant="secondary" startIcon="list" onClick={onUseTraditional}>
+                Use Traditional mode
+              </Button>
+            }
+          >
+            <p>{content.body}</p>
+          </EmptyState>
+          <Suspense fallback={null}>
+            <AgentGoalCheck />
+          </Suspense>
+          {showScenario && (
+            <Suspense fallback={null}>
+              <AgentScenario />
+            </Suspense>
+          )}
+        </>
       )}
     </div>
   );

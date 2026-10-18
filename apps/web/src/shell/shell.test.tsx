@@ -503,7 +503,7 @@ describe('application shell', () => {
     const router = await renderAt('/funding', new FakeAuthBackend(permanent()), sessions);
     expect(router.state.location.pathname).toBe('/make-it-happen');
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Find funding opportunities' }),
+      await screen.findByRole('heading', { level: 1, name: /make it happen/i }),
     ).toBeInTheDocument();
   });
 

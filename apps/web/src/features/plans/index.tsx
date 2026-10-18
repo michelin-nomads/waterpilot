@@ -10,6 +10,7 @@ import type { SessionState } from '../../session/sessionState';
 import { LocationSummary } from '../location/LocationSummary';
 import { StagePage } from '../planning/StagePage';
 import { PlanComparisonView } from './PlanComparisonView';
+import { createFeasibleComparison } from './feasibleComparisonFallback';
 import styles from './Plans.module.scss';
 
 /**
@@ -69,14 +70,16 @@ function PlansWorkspace({ session }: { session: SessionState }) {
     { enabled: !upstreamPending && session.goal !== null },
   );
   const found = query.data?.planningSession ?? null;
+  const rawComparison = found?.planComparison ?? null;
+  const comparison = rawComparison ? createFeasibleComparison(rawComparison, session) : null;
   const selectionStatus: SelectedPlanStatus | null = found?.selectedPlanStatus ?? null;
   const selectedId = session.selectedPlanOptionId;
   const staleSelection =
     selectedId !== null && selectionStatus !== null && selectionStatus !== 'CURRENT';
   const currentSelection = Boolean(
     selectedId &&
-    selectionStatus === 'CURRENT' &&
-    found?.planComparison.options.some((option) => option.id === selectedId),
+    (selectionStatus === 'CURRENT' || !selectionStatus) &&
+    comparison?.options.some((option) => option.id === selectedId),
   );
   if (!session.goal) {
     return (
@@ -94,10 +97,10 @@ function PlansWorkspace({ session }: { session: SessionState }) {
         )}
         {upstreamPending ? (
           <Notice kind="stale">Saving your change; plans will be recalculated.</Notice>
-        ) : found ? (
+        ) : comparison ? (
           <>
             <PlanComparisonView
-              comparison={found.planComparison}
+              comparison={comparison}
               selectedId={selectedId}
               busy={choosing || !coordinator}
               onChoose={(optionId) => coordinator?.selectPlanOption(optionId)}
@@ -125,18 +128,18 @@ function PlansWorkspace({ session }: { session: SessionState }) {
           </LoadingRegion>
         )}
       </section>
-      {(!found || found.planComparison.options.length === 0) && (
+      {(!comparison || comparison.options.length === 0) && (
         <ButtonLink to="/goals" variant="ghost">
           Back
         </ButtonLink>
       )}
-      {found && found.planComparison.options.length > 0 && (
+      {comparison && comparison.options.length > 0 && (
         <div className={styles.selectionFooter}>
           <div className={styles.selectionInfo} aria-live="polite">
             <span className={styles.muted}>Your selection</span>
             <strong>
               {currentSelection
-                ? found.planComparison.options.find((o) => o.id === selectedId)?.name
+                ? comparison.options.find((o) => o.id === selectedId)?.name
                 : 'Choose a plan when you’re ready'}
             </strong>
           </div>

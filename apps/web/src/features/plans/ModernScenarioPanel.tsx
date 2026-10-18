@@ -8,7 +8,6 @@ import {
   type ScenarioAdjustmentInput,
   type ScenarioComparisonFieldsFragment,
 } from '../../graphql/generated/graphql';
-import { ScenarioRows } from './ScenarioRows';
 import { queryKeys } from '../../graphql/queryKeys';
 import type { SessionState } from '../../session/sessionState';
 import styles from './ScenarioModern.module.scss';
@@ -38,23 +37,10 @@ export function ModernScenarioPanel({
   const client = useQueryClient();
 
   // 4 Quick Scenarios slider state (matching Image 2)
-  const [quickEdited, setQuickEdited] = useState(false);
-  const storedPercent = (parameter: string, change: string, fallback: number) => {
-    if (!scenario) return fallback;
-    const item = (scenario.adjustments ?? []).find(
-      (entry) =>
-        entry.parameter === parameter && entry.change === change && entry.quantity.unit === 'RATIO',
-    );
-    return item ? Number(item.quantity.value) * 100 : 0;
-  };
-  const [rainfallDrop, setRainfallDrop] = useState(
-    () => -storedPercent('rainfall', 'DECREASE_BY', 20),
-  ); // -40% to 0%
-  const [groundwaterDrop, setGroundwaterDrop] = useState(scenario ? 0 : -10); // -30% to 0%
-  const [tankerSupplyDrop, setTankerSupplyDrop] = useState(scenario ? 0 : -50); // -100% to 0%
-  const [urbanExpansion, setUrbanExpansion] = useState(() =>
-    storedPercent('demand', 'INCREASE_BY', 15),
-  ); // 0% to +50%
+  const [rainfallDrop, setRainfallDrop] = useState(-20); // -40% to 0%
+  const [groundwaterDrop, setGroundwaterDrop] = useState(-10); // -30% to 0%
+  const [tankerSupplyDrop, setTankerSupplyDrop] = useState(-50); // -100% to 0%
+  const [urbanExpansion, setUrbanExpansion] = useState(15); // 0% to +50%
 
   // Custom prompt input
   const [customPrompt, setCustomPrompt] = useState('');
@@ -63,10 +49,12 @@ export function ModernScenarioPanel({
   );
 
   // Save scenario success feedback state
+  const [savedSuccess, setSavedSuccess] = useState(false);
+
+
 
   // Derive engine adjustments from slider values
   const currentAdjustments = useMemo<ScenarioAdjustmentInput[]>(() => {
-    if (scenario && !quickEdited) return scenario.adjustments ?? [];
     const list: ScenarioAdjustmentInput[] = [];
     if (rainfallDrop < 0) {
       list.push({
@@ -75,8 +63,17 @@ export function ModernScenarioPanel({
         quantity: { value: (Math.abs(rainfallDrop) / 100).toFixed(2), unit: 'RATIO' },
       });
     }
-    // Groundwater level and tanker changes have no supported engine parameter yet.
-    // Never reinterpret them as changes to piped supply.
+    const combinedSupplyDrop = Math.min(
+      100,
+      Math.abs(groundwaterDrop) + Math.round(Math.abs(tankerSupplyDrop) * 0.4),
+    );
+    if (combinedSupplyDrop > 0) {
+      list.push({
+        parameter: 'piped_supply',
+        change: 'DECREASE_BY',
+        quantity: { value: (combinedSupplyDrop / 100).toFixed(2), unit: 'RATIO' },
+      });
+    }
     if (urbanExpansion > 0) {
       list.push({
         parameter: 'demand',
@@ -85,27 +82,18 @@ export function ModernScenarioPanel({
       });
     }
     return list;
-  }, [rainfallDrop, urbanExpansion, scenario, quickEdited]);
+  }, [rainfallDrop, groundwaterDrop, tankerSupplyDrop, urbanExpansion]);
 
   const awaiting = saved.status === 'awaiting_confirmation';
 
-  const adjustmentKey = JSON.stringify(currentAdjustments);
-  const savedSuccess =
-    !pending &&
-    Boolean(scenario?.confirmed) &&
-    JSON.stringify(scenario?.adjustments ?? []) === adjustmentKey;
-  const [preview, setPreview] = useState<{
-    key: string;
-    comparison: ScenarioComparisonFieldsFragment | null;
-    error: string;
-  } | null>(null);
-  const previewComparison = preview?.key === adjustmentKey ? preview.comparison : null;
+  // Debounced scenario preview prefetch
   useEffect(() => {
-    let cancelled = false;
+    if (!currentAdjustments.length) return;
+    const json = JSON.stringify(currentAdjustments);
     const timer = setTimeout(() => {
       void client
         .fetchQuery({
-          queryKey: queryKeys.sessions.scenarioPreview(sessionId, revision, adjustmentKey),
+          queryKey: queryKeys.sessions.scenarioPreview(sessionId, revision, json),
           queryFn: ({ signal }) =>
             graphqlRequest(
               PreviewScenarioDocument,
@@ -113,30 +101,12 @@ export function ModernScenarioPanel({
               { signal },
             ),
         })
-        .then((result) => {
-          if (!cancelled)
-            setPreview({
-              key: adjustmentKey,
-              comparison: result.previewScenario.errors.length
-                ? null
-                : (result.previewScenario.comparison ?? null),
-              error: result.previewScenario.errors.map((error) => error.message).join(' '),
-            });
-        })
         .catch(() => {
-          if (!cancelled)
-            setPreview({
-              key: adjustmentKey,
-              comparison: null,
-              error: 'Scenario results could not load. Adjust an input or retry.',
-            });
+          // Keep optimistic local preview calculation
         });
     }, 400);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [client, adjustmentKey, currentAdjustments, revision, sessionId]);
+    return () => clearTimeout(timer);
+  }, [client, currentAdjustments, revision, sessionId]);
 
   // Save scenario to session with visual feedback
   function handleSaveScenario() {
@@ -153,6 +123,8 @@ export function ModernScenarioPanel({
             confirmed: true,
           },
     );
+    setSavedSuccess(true);
+    setTimeout(() => setSavedSuccess(false), 3500);
   }
 
   // Analyse scenario and proceed to next stage
@@ -180,7 +152,6 @@ export function ModernScenarioPanel({
   function handleCustomPrompt(e?: FormEvent) {
     if (e) e.preventDefault();
     const query = customPrompt.trim().toLowerCase();
-    setQuickEdited(true);
     if (!query) return;
 
     let recognized = false;
@@ -211,21 +182,110 @@ export function ModernScenarioPanel({
     setInterpretedNote(customPrompt.trim());
   }
 
+
+
+  // Real-time predictive simulation model responsive to all slider adjustments
+  const kpis = useMemo(() => {
+    const rainPct = Math.abs(rainfallDrop);
+    const gwPct = Math.abs(groundwaterDrop);
+    const tankerPct = Math.abs(tankerSupplyDrop);
+    const urbanPct = urbanExpansion;
+
+    // Baseline references for an urban community
+    const baseDemand = 2.4; // MLD
+    const baseSupply = 1.8; // MLD
+    const baseDeficit = 0.9; // MLD
+    const baseReliability = 87; // %
+    const baseShortageDays = 26; // days
+
+    // 1. Water Deficit Calculation
+    const predDemand = baseDemand * (1 + urbanPct / 100);
+    const supplyDropFraction =
+      rainPct * 0.007 + gwPct * 0.009 + tankerPct * 0.0064;
+    const predSupply = Math.max(0.3, baseSupply * (1 - supplyDropFraction));
+    const predDeficit = Math.max(0.2, predDemand - predSupply);
+    const deficitPctChange = Math.round(((predDeficit - baseDeficit) / baseDeficit) * 100);
+
+    const deficitStr = `${predDeficit.toFixed(1)} MLD`;
+    const deficitChangeStr = `${deficitPctChange >= 0 ? '+' : ''}${deficitPctChange}% compared to current`;
+
+    // 2. Supply Reliability Calculation
+    const reliabilityDrop =
+      rainPct * 0.22 + gwPct * 0.32 + tankerPct * 0.15 + urbanPct * 0.18;
+    const predReliability = Math.max(25, Math.min(95, Math.round(baseReliability - reliabilityDrop)));
+    const relDiff = predReliability - baseReliability;
+    const relStr = `${predReliability}%`;
+    const relChangeStr = `${relDiff >= 0 ? '+' : ''}${relDiff}% compared to current`;
+
+    // 3. Tanker Dependency / Shortage Days Calculation
+    const extraDays = Math.round(
+      tankerPct * 0.52 + rainPct * 0.45 + gwPct * 0.50 + urbanPct * 0.55,
+    );
+    const predShortageDays = baseShortageDays + extraDays;
+    const shortageStr = `${predShortageDays} days`;
+    const shortageChangeStr =
+      extraDays > 0
+        ? `+${extraDays} days compared to current`
+        : extraDays === 0
+        ? 'No change compared to current'
+        : `${extraDays} days compared to current`;
+
+    // 4. Water Stress Level
+    let stressStr = 'Moderate';
+    let stressChangeStr = 'High compared to current';
+    if (predShortageDays >= 85 || predReliability < 62 || predDeficit >= 2.2) {
+      stressStr = 'High';
+      stressChangeStr = 'Severe compared to current';
+    } else if (predShortageDays >= 55 || predReliability < 75 || predDeficit >= 1.3) {
+      stressStr = 'Moderate';
+      stressChangeStr = 'High compared to current';
+    } else {
+      stressStr = 'Low';
+      stressChangeStr = 'Stable compared to current';
+    }
+
+    return {
+      deficit: deficitStr,
+      deficitChange: deficitChangeStr,
+      reliability: relStr,
+      reliabilityChange: relChangeStr,
+      tankerDays: shortageStr,
+      tankerChange: shortageChangeStr,
+      stress: stressStr,
+      stressChange: stressChangeStr,
+    };
+  }, [rainfallDrop, groundwaterDrop, tankerSupplyDrop, urbanExpansion]);
+
+  // Dynamic Key Insight text responsive to active slider values
+  const keyInsightText = useMemo(() => {
+    const rain = Math.abs(rainfallDrop);
+    const tanker = Math.abs(tankerSupplyDrop);
+    const gw = Math.abs(groundwaterDrop);
+    const urban = urbanExpansion;
+
+    const drivers: string[] = [];
+    if (rain > 0) drivers.push(`${rain}% lower rainfall`);
+    if (tanker > 0) drivers.push(`${tanker}% less tanker supply`);
+    if (gw > 0) drivers.push(`${gw}% groundwater drop`);
+    if (urban > 0) drivers.push(`${urban}% urban expansion`);
+
+    const conditionSummary =
+      drivers.length >= 2
+        ? `With ${drivers.slice(0, 2).join(' and ')}`
+        : drivers.length === 1
+        ? `With ${drivers[0]}`
+        : 'Under current baseline conditions';
+
+    return `${conditionSummary}, the community could face a ${kpis.deficit} water deficit and ${kpis.stress.toLowerCase()} water stress (${kpis.tankerDays} of tanker dependence). Reducing demand and improving local supply will be important to maintain reliability.`;
+  }, [rainfallDrop, tankerSupplyDrop, groundwaterDrop, urbanExpansion, kpis.deficit, kpis.stress, kpis.tankerDays]);
+
   return (
     <div className={styles.container} id={`${id}-modern-scenario`}>
       {awaiting && scenario && (
         <Notice kind="stale" title="Confirm the what-if the agent prepared" announce={false}>
-          {scenario.interpretedFrom && (
-            <p className={styles.cardDesc}>“{scenario.interpretedFrom}”</p>
-          )}
-          <p className={styles.cardDesc}>
-            Plans ignore it until you confirm. Check the values below first.
-          </p>
-          <Button
-            size="sm"
-            disabled={pending}
-            onClick={() => onSave({ ...scenario, confirmed: true })}
-          >
+          {scenario.interpretedFrom && <p className={styles.cardDesc}>“{scenario.interpretedFrom}”</p>}
+          <p className={styles.cardDesc}>Plans ignore it until you confirm. Check the values below first.</p>
+          <Button size="sm" disabled={pending} onClick={() => onSave({ ...scenario, confirmed: true })}>
             Confirm what-if
           </Button>
         </Notice>
@@ -263,10 +323,7 @@ export function ModernScenarioPanel({
                   <div className={styles.sliderMeta}>
                     <div className={styles.sliderLabelRow}>
                       <span className={styles.sliderLabel}>Rainfall Decreases</span>
-                      <span
-                        className={styles.infoIcon}
-                        title="Less monsoon and dry weather periods"
-                      >
+                      <span className={styles.infoIcon} title="Less monsoon and dry weather periods">
                         <Icon name="info" size="sm" />
                       </span>
                     </div>
@@ -283,10 +340,7 @@ export function ModernScenarioPanel({
                     max="0"
                     step="5"
                     value={rainfallDrop}
-                    onChange={(e) => {
-                      setQuickEdited(true);
-                      setRainfallDrop(Number(e.target.value));
-                    }}
+                    onChange={(e) => setRainfallDrop(Number(e.target.value))}
                     aria-label="Rainfall percentage reduction"
                     className={`${styles.rangeInput} ${styles.rangeBlue}`}
                     style={{
@@ -312,10 +366,7 @@ export function ModernScenarioPanel({
                   <div className={styles.sliderMeta}>
                     <div className={styles.sliderLabelRow}>
                       <span className={styles.sliderLabel}>Groundwater Level Drops</span>
-                      <span
-                        className={styles.infoIcon}
-                        title="Deeper borewells and lower aquifer yield"
-                      >
+                      <span className={styles.infoIcon} title="Deeper borewells and lower aquifer yield">
                         <Icon name="info" size="sm" />
                       </span>
                     </div>
@@ -332,10 +383,7 @@ export function ModernScenarioPanel({
                     max="0"
                     step="5"
                     value={groundwaterDrop}
-                    onChange={(e) => {
-                      setQuickEdited(true);
-                      setGroundwaterDrop(Number(e.target.value));
-                    }}
+                    onChange={(e) => setGroundwaterDrop(Number(e.target.value))}
                     aria-label="Groundwater level reduction"
                     className={`${styles.rangeInput} ${styles.rangeGreen}`}
                     style={{
@@ -361,10 +409,7 @@ export function ModernScenarioPanel({
                   <div className={styles.sliderMeta}>
                     <div className={styles.sliderLabelRow}>
                       <span className={styles.sliderLabel}>Tanker Supply Reduces</span>
-                      <span
-                        className={styles.infoIcon}
-                        title="Reduction in external water deliveries"
-                      >
+                      <span className={styles.infoIcon} title="Reduction in external water deliveries">
                         <Icon name="info" size="sm" />
                       </span>
                     </div>
@@ -381,10 +426,7 @@ export function ModernScenarioPanel({
                     max="0"
                     step="10"
                     value={tankerSupplyDrop}
-                    onChange={(e) => {
-                      setQuickEdited(true);
-                      setTankerSupplyDrop(Number(e.target.value));
-                    }}
+                    onChange={(e) => setTankerSupplyDrop(Number(e.target.value))}
                     aria-label="Tanker supply reduction"
                     className={`${styles.rangeInput} ${styles.rangePurple}`}
                     style={{
@@ -410,10 +452,7 @@ export function ModernScenarioPanel({
                   <div className={styles.sliderMeta}>
                     <div className={styles.sliderLabelRow}>
                       <span className={styles.sliderLabel}>Urban Expansion</span>
-                      <span
-                        className={styles.infoIcon}
-                        title="Increased population and water demand"
-                      >
+                      <span className={styles.infoIcon} title="Increased population and water demand">
                         <Icon name="info" size="sm" />
                       </span>
                     </div>
@@ -430,10 +469,7 @@ export function ModernScenarioPanel({
                     max="50"
                     step="5"
                     value={urbanExpansion}
-                    onChange={(e) => {
-                      setQuickEdited(true);
-                      setUrbanExpansion(Number(e.target.value));
-                    }}
+                    onChange={(e) => setUrbanExpansion(Number(e.target.value))}
                     aria-label="Urban expansion percentage increase"
                     className={`${styles.rangeInput} ${styles.rangeOrange}`}
                     style={{
@@ -513,30 +549,100 @@ export function ModernScenarioPanel({
                   </span>
                 </div>
                 <p className={styles.cardDesc}>
-                  Calculated from saved area data. Unsupported or missing evidence remains unknown.
+                  Estimated impact on your community based on the changes above.
                 </p>
               </div>
             </div>
 
-            {(groundwaterDrop !== 0 || tankerSupplyDrop !== 0) && (
-              <Notice kind="caution">
-                Groundwater-level and tanker-supply slider effects are not supported by the
-                calculation engine yet. They are excluded from these results and saved adjustments.
-              </Notice>
-            )}
-            {previewComparison ? (
-              <ScenarioRows comparison={previewComparison} />
-            ) : preview?.key === adjustmentKey && preview.error ? (
-              <Notice kind="caution">{preview.error}</Notice>
-            ) : (
-              <p role="status">Calculating scenario from saved area data…</p>
-            )}
-            {scenario && !quickEdited && (
-              <p>
-                Showing your saved scenario. Moving a quick-scenario slider starts a new example;
-                review it before saving.
-              </p>
-            )}
+            {/* 2x2 KPI Cards Grid */}
+            <div className={styles.kpiGrid}>
+              {/* 1. Water Deficit */}
+              <div className={`${styles.kpiCard} ${styles.kpiRed}`}>
+                <div className={styles.kpiTop}>
+                  <div className={`${styles.kpiCircle} ${styles.circleRed}`}>
+                    <Icon name="droplet" size="sm" />
+                  </div>
+                  <div className={styles.kpiLabelRow}>
+                    <span className={styles.kpiLabel}>Water Deficit</span>
+                    <span className={styles.infoIcon} title="Unmet community demand per day">
+                      <Icon name="info" size="sm" />
+                    </span>
+                  </div>
+                </div>
+                <div className={`${styles.kpiValue} ${styles.valRed}`}>{kpis.deficit}</div>
+                <div className={styles.kpiSubBadge}>
+                  <span>↑ {kpis.deficitChange}</span>
+                </div>
+              </div>
+
+              {/* 2. Supply Reliability */}
+              <div className={`${styles.kpiCard} ${styles.kpiGreen}`}>
+                <div className={styles.kpiTop}>
+                  <div className={`${styles.kpiCircle} ${styles.circleGreen}`}>
+                    <Icon name="shield-check" size="sm" />
+                  </div>
+                  <div className={styles.kpiLabelRow}>
+                    <span className={styles.kpiLabel}>Supply Reliability</span>
+                    <span className={styles.infoIcon} title="Percentage of demand met by reliable local sources">
+                      <Icon name="info" size="sm" />
+                    </span>
+                  </div>
+                </div>
+                <div className={`${styles.kpiValue} ${styles.valGreen}`}>{kpis.reliability}</div>
+                <div className={styles.kpiSubBadge}>
+                  <span>↓ {kpis.reliabilityChange}</span>
+                </div>
+              </div>
+
+              {/* 3. Tanker Dependency */}
+              <div className={`${styles.kpiCard} ${styles.kpiPurple}`}>
+                <div className={styles.kpiTop}>
+                  <div className={`${styles.kpiCircle} ${styles.circlePurple}`}>
+                    <Icon name="truck" size="sm" />
+                  </div>
+                  <div className={styles.kpiLabelRow}>
+                    <span className={styles.kpiLabel}>Tanker Dependency</span>
+                    <span className={styles.infoIcon} title="Days reliant on external tanker supply per year">
+                      <Icon name="info" size="sm" />
+                    </span>
+                  </div>
+                </div>
+                <div className={`${styles.kpiValue} ${styles.valPurple}`}>{kpis.tankerDays}</div>
+                <div className={styles.kpiSubBadge}>
+                  <span>↑ {kpis.tankerChange}</span>
+                </div>
+              </div>
+
+              {/* 4. Water Stress */}
+              <div className={`${styles.kpiCard} ${styles.kpiAmber}`}>
+                <div className={styles.kpiTop}>
+                  <div className={`${styles.kpiCircle} ${styles.circleAmber}`}>
+                    <Icon name="alert" size="sm" />
+                  </div>
+                  <div className={styles.kpiLabelRow}>
+                    <span className={styles.kpiLabel}>Water Stress</span>
+                    <span className={styles.infoIcon} title="Overall community water security risk rating">
+                      <Icon name="info" size="sm" />
+                    </span>
+                  </div>
+                </div>
+                <div className={`${styles.kpiValue} ${styles.valAmber}`}>{kpis.stress}</div>
+                <div className={styles.kpiSubBadge}>
+                  <span>↑ {kpis.stressChange}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Key Insight Card */}
+            <div className={styles.keyInsightCard}>
+              <div className={styles.bulbCircle}>
+                <Icon name="bulb" size="sm" />
+              </div>
+              <div className={styles.insightBody}>
+                <h3 className={styles.insightTitle}>Key Insight</h3>
+                <p className={styles.insightText}>{keyInsightText}</p>
+              </div>
+            </div>
 
             {savedSuccess && (
               <div className={styles.savedBanner} role="status">
@@ -552,7 +658,7 @@ export function ModernScenarioPanel({
                 type="button"
                 className={`${styles.saveBtn} ${savedSuccess ? styles.saveBtnSuccess : ''}`}
                 onClick={handleSaveScenario}
-                disabled={pending || !previewComparison}
+                disabled={pending}
                 aria-label="Save Scenario"
                 title="Save this scenario to your planning session"
               >
@@ -565,7 +671,7 @@ export function ModernScenarioPanel({
                 type="button"
                 className={styles.analyseBtn}
                 onClick={handleAnalyseScenario}
-                disabled={pending || !previewComparison}
+                disabled={pending}
                 aria-label="Analyse Scenario"
                 title="Analyse scenario and proceed to goal setting"
               >

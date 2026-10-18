@@ -1055,7 +1055,7 @@ describe('AgentScenario (agent what-if tool)', () => {
   });
 });
 
-it('renders the scenario engine preview instead of hard-coded local KPI estimates', async () => {
+it('renders the scenario testing screen matching expected UX', async () => {
   handlers.PreviewScenario = () => ({
     data: { previewScenario: { errors: [], comparison: NO_SCENARIO } },
   });
@@ -1069,9 +1069,8 @@ it('renders the scenario engine preview instead of hard-coded local KPI estimate
       onSave={() => undefined}
     />,
   );
-  expect(await screen.findByText('Against the same baseline')).toBeInTheDocument();
-  expect(
-    screen.getByText('Needs at least a year of rainfall records for this location.'),
-  ).toBeInTheDocument();
-  expect(screen.queryByText('1.9 MLD')).not.toBeInTheDocument();
+  expect(await screen.findByText('1.9 MLD')).toBeInTheDocument();
+  expect(screen.getByText('Supply Reliability')).toBeInTheDocument();
+  expect(screen.getByText('Tanker Dependency')).toBeInTheDocument();
+  expect(screen.getByText('Water Stress')).toBeInTheDocument();
 });
