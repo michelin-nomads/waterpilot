@@ -6,6 +6,10 @@ import { useTimedProgress } from './useTimedProgress';
 interface WaterDropletLoaderProps {
   /** Time for the droplet to fill, in milliseconds. */
   durationMs?: number;
+  /** Controlled workflow progress from 0 to 1; overrides the timed fill. */
+  progress?: number;
+  indeterminate?: boolean;
+  size?: 'md' | 'sm';
   /** Text shown below the animation. */
   statusText?: string;
   /** Called once when the fill reaches 100%. */
@@ -24,18 +28,28 @@ const frontWavePath =
 
 export function WaterDropletLoader({
   durationMs = 8000,
+  progress: requestProgress,
+  indeterminate = false,
+  size = 'md',
   statusText = 'Preparing your water plan…',
   onComplete,
 }: WaterDropletLoaderProps) {
   const clipId = `water-droplet-clip-${useId().replace(/:/g, '')}`;
-  const progress = useTimedProgress(durationMs, onComplete);
+  const timedProgress = useTimedProgress(
+    durationMs,
+    indeterminate || requestProgress != null ? undefined : onComplete,
+  );
+  const progress = Math.max(0, Math.min(1, requestProgress ?? timedProgress));
 
-  const waterY = 286 - progress * 266;
+  const waterY = indeterminate ? 140 : 286 - progress * 266;
   const percentage = Math.round(progress * 100);
 
   return (
-    <section className={styles.loader} aria-label="WaterPilot loading">
-      <div className={styles.art} data-complete={progress >= 1}>
+    <section
+      className={`${styles.loader} ${size === 'sm' ? styles.compact : ''}`}
+      aria-label="WaterPilot loading"
+    >
+      <div className={styles.art} data-complete={!indeterminate && progress >= 1}>
         <svg
           className={styles.svg}
           viewBox="0 0 240 300"
@@ -43,7 +57,7 @@ export function WaterDropletLoader({
           aria-label={statusText}
           aria-valuemin={0}
           aria-valuemax={100}
-          aria-valuenow={percentage}
+          aria-valuenow={indeterminate ? undefined : percentage}
         >
           <defs>
             <clipPath id={clipId}>
@@ -71,9 +85,11 @@ export function WaterDropletLoader({
       </div>
 
       {/* The progressbar above carries the value for assistive technology. */}
-      <p className={styles.percentage} aria-hidden="true">
-        {percentage}%
-      </p>
+      {!indeterminate && (
+        <p className={styles.percentage} aria-hidden="true">
+          {percentage}%
+        </p>
+      )}
       <p className={styles.status}>{statusText}</p>
     </section>
   );

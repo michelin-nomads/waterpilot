@@ -1,0 +1,1399 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="UTF-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>WaterPilot · Goal design preview</title>
+  <style>
+    :root {
+      --bg: #f3f8fa;
+      --surface: #fff;
+      --sunken: #f7fafc;
+      --text: #141c43;
+      --muted: #5c6d83;
+      --line: #d8e3ec;
+      --accent: #087b7c;
+      --strong: #075d68;
+      --soft: #e8f5f3;
+      --warn: #926014;
+      --warnbg: #fff7e7;
+      --shadow: 0 2px 5px #14244306;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font:
+        14px/1.5 system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        'Segoe UI',
+        sans-serif;
+    }
+    body.dark {
+      --bg: #0b1825;
+      --surface: #112537;
+      --sunken: #0d1d2c;
+      --text: #e5edf8;
+      --muted: #a9bbcd;
+      --line: #2a4558;
+      --accent: #64d8cd;
+      --strong: #8ce9de;
+      --soft: #163b46;
+      --warn: #efd18c;
+      --warnbg: #332d24;
+      --shadow: none;
+    }
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+    button,
+    a,
+    summary {
+      cursor: pointer;
+    }
+    button {
+      color: inherit;
+    }
+    button:focus-visible,
+    a:focus-visible,
+    summary:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 3px;
+    }
+    a {
+      color: var(--strong);
+      text-underline-offset: 3px;
+    }
+    button {
+      border: 0;
+      background: none;
+    }
+    svg {
+      width: 22px;
+      height: 22px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+    .top {
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+    }
+    .brand {
+      display: flex;
+      gap: 9px;
+      align-items: center;
+      font-size: 24px;
+      letter-spacing: -1px;
+      font-weight: 800;
+    }
+    .brand svg {
+      width: 32px;
+      height: 38px;
+      color: var(--accent);
+    }
+    .topright,
+    .inline {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .mode {
+      background: var(--sunken);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 4px;
+      display: flex;
+      gap: 3px;
+    }
+    .mode span {
+      padding: 5px 10px;
+      border-radius: 9px;
+    }
+    .mode .on {
+      background: var(--accent);
+      color: var(--surface);
+    }
+    .guest {
+      border: 1px solid var(--line);
+      border-radius: 99px;
+      padding: 2px 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .topright a {
+      font-size: 13px;
+      font-weight: 650;
+      text-decoration: none;
+    }
+    .stagewrap {
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+    }
+    .stages {
+      max-width: 1360px;
+      margin: auto;
+      display: flex;
+      padding: 0 28px;
+    }
+    .stage {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 9px;
+      padding: 17px 0;
+      border-bottom: 3px solid transparent;
+      color: var(--muted);
+      font-weight: 650;
+    }
+    .stage b {
+      display: grid;
+      place-items: center;
+      width: 27px;
+      height: 27px;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      font-weight: 600;
+    }
+    .stage.done b {
+      color: var(--accent);
+      background: var(--soft);
+      border-color: var(--soft);
+    }
+    .stage.active {
+      color: var(--strong);
+      border-color: var(--accent);
+    }
+    .stage.active b {
+      color: var(--surface);
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    .stage.disabled {
+      opacity: 0.45;
+    }
+    main {
+      max-width: 1360px;
+      margin: auto;
+      padding: 26px 28px 22px;
+    }
+    .eyebrow {
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      color: var(--strong);
+      font-weight: 750;
+      text-transform: uppercase;
+    }
+    h1 {
+      font-size: 30px;
+      line-height: 1.2;
+      margin: 7px 0 8px;
+      letter-spacing: -1px;
+    }
+    p {
+      margin: 0;
+    }
+    .muted {
+      color: var(--muted);
+    }
+    .heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 22px;
+      margin-bottom: 24px;
+    }
+    .place {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--surface);
+      font-size: 12px;
+    }
+    .place svg {
+      color: var(--accent);
+      width: 18px;
+    }
+    .place a {
+      margin-left: 12px;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 304px;
+      gap: 22px;
+      align-items: start;
+    }
+    .content {
+      display: grid;
+      gap: 18px;
+    }
+    .panel,
+    .summary {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+    .panel {
+      padding: 20px;
+    }
+    .panelhead {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 17px;
+      gap: 12px;
+    }
+    .panelhead h2,
+    h2 {
+      font-size: 16px;
+      margin: 0;
+      letter-spacing: -0.2px;
+    }
+    .stepcaption {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+    .sectionTitle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .number {
+      font-size: 11px;
+      width: 25px;
+      height: 25px;
+      display: grid;
+      place-items: center;
+      background: var(--soft);
+      color: var(--strong);
+      border-radius: 7px;
+      font-weight: 750;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .choice {
+      text-align: left;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      background: var(--surface);
+      position: relative;
+      min-height: 134px;
+      transition:
+        border-color 0.15s,
+        background 0.15s;
+    }
+    .choice:hover {
+      border-color: var(--accent);
+    }
+    .choice.selected {
+      border: 1.5px solid var(--accent);
+      padding: 13.5px;
+      background: var(--soft);
+    }
+    .choiceTop {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .iconbox {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      background: var(--sunken);
+      color: var(--accent);
+    }
+    .selected .iconbox {
+      background: var(--surface);
+    }
+    .radio {
+      width: 16px;
+      height: 16px;
+      border: 1.5px solid var(--line);
+      border-radius: 50%;
+    }
+    .selected .radio {
+      border: 5px solid var(--accent);
+    }
+    .choice strong {
+      display: block;
+      font-size: 13px;
+      line-height: 1.35;
+      margin-bottom: 5px;
+    }
+    .choice p {
+      font-size: 12px;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+    .customlink {
+      margin-top: 15px;
+      border-top: 1px solid var(--line);
+      padding-top: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+    .textbutton {
+      padding: 0;
+      color: var(--strong);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      font-size: 12px;
+      font-weight: 650;
+    }
+    .formrow {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .field {
+      display: grid;
+      gap: 7px;
+      align-content: start;
+    }
+    label {
+      font-size: 12px;
+      font-weight: 650;
+    }
+    .optional {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 500;
+    }
+    input,
+    select,
+    textarea {
+      width: 100%;
+      min-width: 0;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 11px;
+      color: var(--text);
+      outline: none;
+    }
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--soft);
+    }
+    textarea {
+      resize: vertical;
+    }
+    .inputunit {
+      display: flex;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .inputunit input {
+      border: 0;
+      border-radius: 0;
+    }
+    .inputunit span {
+      display: grid;
+      place-items: center;
+      min-width: 42px;
+      background: var(--sunken);
+      border-left: 1px solid var(--line);
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .inputunit .prefix {
+      border: 0;
+      border-right: 1px solid var(--line);
+    }
+    .note {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 13px;
+    }
+    .note svg {
+      width: 15px;
+      height: 18px;
+      color: var(--accent);
+    }
+    .info {
+      display: inline-grid;
+      place-items: center;
+      border: 1px solid var(--muted);
+      border-radius: 50%;
+      font-size: 9px;
+      width: 13px;
+      height: 13px;
+      margin-left: 4px;
+      color: var(--muted);
+    }
+    .constraints {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--surface);
+    }
+    details > summary {
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 17px 20px;
+      gap: 12px;
+    }
+    summary::-webkit-details-marker {
+      display: none;
+    }
+    summary h2 {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+    }
+    summary .right {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    summary svg {
+      width: 17px;
+      height: 17px;
+    }
+    .body {
+      padding: 0 20px 20px;
+      border-top: 1px solid var(--line);
+    }
+    .body > p {
+      font-size: 12px;
+      color: var(--muted);
+      padding: 14px 0;
+    }
+    .checks {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .check input {
+      width: 15px;
+      height: 15px;
+      padding: 0;
+      accent-color: var(--accent);
+    }
+    .subhead {
+      font-size: 12px;
+      font-weight: 700;
+      margin: 19px 0 10px;
+    }
+    .summary {
+      overflow: hidden;
+      position: sticky;
+      top: 20px;
+    }
+    .summaryHead {
+      padding: 16px 18px;
+      background: var(--soft);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--strong);
+    }
+    .summaryHead svg {
+      width: 18px;
+    }
+    .summaryBody {
+      padding: 18px;
+    }
+    .summary small {
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 7px;
+      font-weight: 650;
+    }
+    .summary h3 {
+      font-size: 17px;
+      line-height: 1.4;
+      margin: 0 0 15px;
+      letter-spacing: -0.3px;
+    }
+    .targetDisplay {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--sunken);
+      margin-bottom: 16px;
+    }
+    .targetDisplay strong {
+      font-size: 23px;
+      line-height: 1.3;
+      display: block;
+      color: var(--strong);
+      letter-spacing: -0.5px;
+    }
+    .targetDisplay p {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+    .summary dl {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      font-size: 12px;
+      margin: 0;
+    }
+    .summary dt {
+      color: var(--muted);
+    }
+    .summary dd {
+      margin: 0;
+      font-weight: 600;
+      text-align: right;
+    }
+    .summaryRule {
+      border-top: 1px solid var(--line);
+      margin: 16px 0;
+    }
+    .chip {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 5px;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--strong);
+      background: var(--soft);
+      margin: 0 4px 6px 0;
+    }
+    .summaryNote {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-top: 15px;
+      display: flex;
+      gap: 7px;
+    }
+    .summaryNote svg {
+      width: 15px;
+      height: 17px;
+    }
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      border-top: 1px solid var(--line);
+      padding-top: 19px;
+      margin-top: 23px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 11px 17px;
+      border-radius: 9px;
+      font-weight: 650;
+      font-size: 13px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+    }
+    .btn svg {
+      width: 17px;
+      height: 17px;
+    }
+    .primary {
+      background: var(--accent);
+      color: var(--surface);
+      border-color: var(--accent);
+    }
+    .footer .right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .footer .right p {
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .preview {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.3px;
+      text-align: center;
+      padding: 11px 0 0;
+    }
+    .callout {
+      background: var(--warnbg);
+      border: 1px solid color-mix(in srgb, var(--warn) 35%, var(--line));
+      border-radius: 12px;
+      padding: 15px;
+      display: flex;
+      align-items: flex-start;
+      gap: 11px;
+    }
+    .callout svg {
+      color: var(--warn);
+      width: 19px;
+    }
+    .callout strong {
+      font-size: 13px;
+    }
+    .callout p {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .callout a {
+      font-size: 12px;
+      display: inline-block;
+      margin-top: 8px;
+    }
+    .customPanel {
+      display: none;
+      border-top: 1px solid var(--line);
+      padding-top: 15px;
+      margin-top: 15px;
+    }
+    .customPanel.visible {
+      display: grid;
+      gap: 14px;
+    }
+    .prototypeTools {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      background: var(--sunken);
+      border-top: 1px solid var(--line);
+      font-size: 10px;
+    }
+    .prototypeTools button {
+      font-size: 10px;
+      color: var(--muted);
+      padding: 3px 7px;
+      border-radius: 5px;
+    }
+    .prototypeTools .current {
+      background: var(--soft);
+      color: var(--strong);
+    }
+    .hidden {
+      display: none !important;
+    }
+    @media (min-width: 1600px) {
+      main,
+      .stages {
+        max-width: 1480px;
+      }
+    }
+    @media (max-width: 1050px) {
+      .layout {
+        grid-template-columns: minmax(0, 1fr) 270px;
+      }
+      .cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .choice {
+        min-height: 125px;
+      }
+      .place {
+        max-width: 280px;
+      }
+    }
+    @media (max-width: 760px) {
+      .top {
+        padding: 0 16px;
+      }
+      .mode {
+        display: none;
+      }
+      .stages {
+        padding: 0 16px;
+      }
+      .stage {
+        font-size: 0;
+      }
+      .stage b {
+        font-size: 12px;
+      }
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      .summary {
+        position: static;
+      }
+      .heading {
+        display: block;
+      }
+      .place {
+        margin-top: 16px;
+        max-width: none;
+      }
+      .cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      main {
+        padding: 22px 16px;
+      }
+      .formrow,
+      .checks {
+        grid-template-columns: 1fr;
+      }
+      .footer .right p {
+        display: none;
+      }
+      .footer {
+        align-items: start;
+      }
+      .prototypeTools {
+        flex-wrap: wrap;
+      }
+      .topright {
+        gap: 8px;
+      }
+    }
+  </style>
+  <body>
+    <div class="top">
+      <div class="brand">
+        <svg viewBox="0 0 24 28">
+          <path
+            d="M13 1C5 1 1 8 1 15a11 11 0 0 0 22 0M13 6S6 14 6 18a6 6 0 0 0 12 0c0-4-5-12-5-12Z"
+          />
+          <path d="M10 18q0 3 3 3" /></svg
+        >WaterPilot
+      </div>
+      <div class="topright">
+        <div class="mode"><span class="on">☷</span><span>✧</span></div>
+        <button aria-label="Switch theme" id="theme">☼</button><span class="guest">Guest</span
+        ><a href="#" onclick="return false;">Sign in</a>
+      </div>
+    </div>
+    <div class="stagewrap">
+      <nav class="stages" aria-label="Planning steps">
+        <div class="stage done"><b>✓</b>Location</div>
+        <div class="stage done"><b>✓</b>Baseline</div>
+        <div class="stage active"><b>3</b>Goal</div>
+        <div class="stage disabled"><b>4</b>Compare</div>
+        <div class="stage disabled"><b>5</b>Review</div>
+      </nav>
+    </div>
+    <main>
+      <div class="heading">
+        <div>
+          <div class="eyebrow">Step 3 of 5</div>
+          <h1>What would you like to improve?</h1>
+          <p class="muted">
+            Choose a goal. We’ll compare plans against your target and constraints.
+          </p>
+        </div>
+        <div class="place">
+          <span id="pin"></span>
+          <div>
+            <strong>Koramangala, Bengaluru</strong><br /><span class="muted"
+              >1 km planning radius</span
+            >
+          </div>
+          <a href="#" onclick="return false;">Change</a>
+        </div>
+      </div>
+      <div class="layout">
+        <div class="content">
+          <section class="panel">
+            <div class="panelhead">
+              <div class="sectionTitle">
+                <span class="number">01</span>
+                <h2>Choose your primary goal</h2>
+              </div>
+              <span class="stepcaption">Choose one</span>
+            </div>
+            <div class="cards" id="goals"></div>
+            <div class="customlink">
+              <span class="muted">Have a different outcome in mind?</span
+              ><button class="textbutton" id="custom">Set a custom goal →</button>
+            </div>
+            <div class="customPanel" id="customPanel">
+              <div class="field">
+                <label for="description"
+                  >Describe your goal <span style="color: var(--accent)">*</span></label
+                ><textarea id="description" rows="2">
+Reduce freshwater used for garden irrigation through treated-water reuse.</textarea>
+              </div>
+              <div class="note">
+                <span id="customInfo"></span>
+                <p>
+                  Your description is kept as written. Any measurable target is confirmed
+                  separately.
+                </p>
+              </div>
+            </div>
+          </section>
+          <section class="panel">
+            <div class="panelhead">
+              <div class="sectionTitle">
+                <span class="number">02</span>
+                <h2>Make it measurable</h2>
+              </div>
+              <span class="optional">Optional</span>
+            </div>
+            <div class="formrow">
+              <div class="field">
+                <label for="targetMode"
+                  >Target type
+                  <span
+                    class="info"
+                    title="Choose a percentage reduction from the baseline or an absolute target level."
+                    >i</span
+                  ></label
+                ><select id="targetMode">
+                  <option>Reduce from baseline</option>
+                  <option>Set a maximum level</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="target" id="targetLabel">Reduce tanker use by</label>
+                <div class="inputunit">
+                  <input id="target" type="number" min="0" max="100" value="30" /><span id="unit"
+                    >%</span
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="note">
+              <span id="targetInfo"></span>
+              <p id="targetNote">
+                A 30% reduction in tanker dependence compared with your baseline share.
+              </p>
+            </div>
+            <div class="customPanel" id="parameterPanel">
+              <div class="formrow">
+                <div class="field">
+                  <label for="parameter">What will you measure? *</label
+                  ><input id="parameter" value="Freshwater used for irrigation" />
+                </div>
+                <div class="field">
+                  <label for="measureUnit">Target unit *</label
+                  ><select id="measureUnit">
+                    <option>%</option>
+                    <option>litres / day</option>
+                    <option>litres</option>
+                    <option>days</option>
+                    <option>NTU</option>
+                    <option>mg/L</option>
+                    <option>pH</option>
+                    <option>CFU/100 mL</option>
+                  </select>
+                </div>
+              </div>
+              <label class="check" id="customConfirmation"
+                ><input type="checkbox" checked />I confirm this is the outcome I want to
+                compare.</label
+              >
+            </div>
+          </section>
+          <section class="panel">
+            <div class="panelhead">
+              <div class="sectionTitle">
+                <span class="number">03</span>
+                <h2>Budget & timing</h2>
+              </div>
+              <span class="optional">Optional</span>
+            </div>
+            <div class="formrow">
+              <div class="field">
+                <label for="budget"
+                  >Maximum implementation budget
+                  <span
+                    class="info"
+                    title="Uses the currency of your selected location. An empty budget adds no budget limit."
+                    >i</span
+                  ></label
+                >
+                <div class="inputunit">
+                  <span class="prefix">₹</span><input id="budget" value="8,00,000" />
+                </div>
+              </div>
+              <div class="field">
+                <label for="timeline"
+                  >Preferred implementation time
+                  <span
+                    class="info"
+                    title="How soon you want the works completed. This is separate from the period over which benefits are assessed."
+                    >i</span
+                  ></label
+                ><select id="timeline">
+                  <option>Not set</option>
+                  <option selected>12 months</option>
+                  <option>6 months</option>
+                  <option>24 months</option>
+                  <option>Enter days…</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="priority">What matters most?</label
+                ><select id="priority">
+                  <option>No preference</option>
+                  <option>Lowest cost</option>
+                  <option selected>Largest impact</option>
+                  <option>Fastest benefit</option>
+                  <option>Least effect on neighbours</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="horizon"
+                  >Compare benefits over
+                  <span
+                    class="info"
+                    title="The assessment period for costs and benefits, not the construction deadline."
+                    >i</span
+                  ></label
+                ><select id="horizon">
+                  <option selected>Not set</option>
+                  <option>1 year</option>
+                  <option>5 years</option>
+                  <option>10 years</option>
+                </select>
+              </div>
+            </div>
+          </section>
+          <details class="constraints" id="site">
+            <summary>
+              <h2><span id="sliders"></span>Site constraints</h2>
+              <span class="right"
+                ><span id="constraintCount">2 specified</span><span id="chevron"></span
+              ></span>
+            </summary>
+            <div class="body">
+              <p>Tell us what is possible on your site. Unknown details stay unknown.</p>
+              <div class="formrow">
+                <div class="field">
+                  <label>Planning scale</label
+                  ><select>
+                    <option selected>Building / apartment community</option>
+                    <option>Household</option>
+                    <option>Neighbourhood</option>
+                    <option>Utility network</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Space for a storage tank?</label
+                  ><select>
+                    <option selected>Not sure yet</option>
+                    <option>Yes</option>
+                    <option>No</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label
+                    >Available rooftop area
+                    <span
+                      class="info"
+                      title="Enter a known usable area. Leave blank if it has not been measured."
+                      >i</span
+                    ></label
+                  >
+                  <div class="inputunit"><input placeholder="Not known" /><span>m²</span></div>
+                </div>
+                <div class="field">
+                  <label>Available open ground</label>
+                  <div class="inputunit"><input placeholder="Not known" /><span>m²</span></div>
+                </div>
+                <div class="field">
+                  <label>Piped water supply?</label
+                  ><select>
+                    <option selected>Not sure yet</option>
+                    <option>Yes</option>
+                    <option>No</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Groundwater currently used?</label
+                  ><select>
+                    <option selected>Not sure yet</option>
+                    <option>Yes</option>
+                    <option>No</option>
+                  </select>
+                </div>
+              </div>
+              <div class="subhead">Works to exclude</div>
+              <div class="checks">
+                <label class="check"
+                  ><input type="checkbox" checked />No digging or excavation</label
+                ><label class="check"
+                  ><input type="checkbox" checked />No structural or plumbing changes</label
+                ><label class="check"><input type="checkbox" />No groundwater recharge</label
+                ><label class="check"><input type="checkbox" />No greywater reuse</label
+                ><label class="check"><input type="checkbox" />No works requiring a permit</label>
+              </div>
+            </div>
+          </details>
+          <details class="constraints">
+            <summary>
+              <h2><span id="wallet"></span>Cost & performance assumptions</h2>
+              <span class="right">Optional <span id="chevron2"></span></span>
+            </summary>
+            <div class="body">
+              <p>
+                Add known water tariffs, funding, or measure-specific cost and performance
+                estimates. Missing estimates remain unknown.
+              </p>
+              <div class="formrow">
+                <div class="field">
+                  <label>Current water cost</label>
+                  <div class="inputunit">
+                    <span class="prefix">₹</span><input placeholder="Amount per 1,000 litres" />
+                  </div>
+                </div>
+                <div class="field">
+                  <label>Cost contingency</label>
+                  <div class="inputunit"><input placeholder="Not set" /><span>%</span></div>
+                </div>
+              </div>
+              <div class="inline" style="margin-top: 16px">
+                <button class="textbutton">+ Add funding source</button
+                ><button class="textbutton">+ Add a measure estimate</button>
+              </div>
+            </div>
+          </details>
+          <div class="callout hidden" id="assessment">
+            <span id="alert"></span>
+            <div>
+              <strong>This target needs more baseline data</strong>
+              <p id="assessmentText">
+                Tanker volume and total supply are needed to assess a 30% reduction. You can compare
+                plans now; target achievement will remain unknown.
+              </p>
+              <a href="#" onclick="return false;">Review baseline data →</a>
+            </div>
+          </div>
+        </div>
+        <aside class="summary">
+          <div class="summaryHead"><span id="targetIcon"></span>Your goal at a glance</div>
+          <div class="summaryBody">
+            <small>Primary goal</small>
+            <h3 id="summaryGoal">Reduce tanker dependence</h3>
+            <div class="targetDisplay">
+              <small>Desired improvement</small
+              ><strong id="summaryTarget">30% less reliance</strong>
+              <p id="summaryTargetSub">relative to your current tanker share</p>
+            </div>
+            <dl>
+              <dt>Budget limit</dt>
+              <dd id="summaryBudget">₹8,00,000</dd>
+              <dt>Implementation</dt>
+              <dd id="summaryTime">Within 12 months</dd>
+              <dt>Priority</dt>
+              <dd id="summaryPriority">Largest impact</dd>
+            </dl>
+            <div class="summaryRule"></div>
+            <small>Site constraints</small><span class="chip">No excavation</span
+            ><span class="chip">No structural changes</span>
+            <div class="summaryRule"></div>
+            <small>Baseline reference</small>
+            <dl>
+              <dt id="baselineMetric">Tanker share</dt>
+              <dd>Not recorded</dd>
+              <dt>Target assessment</dt>
+              <dd style="color: var(--warn)">Needs data</dd>
+            </dl>
+            <p class="summaryNote">
+              <span id="summaryInfo"></span
+              ><span
+                >This is your intended outcome. Plan comparison will show what can be
+                assessed.</span
+              >
+            </p>
+          </div>
+        </aside>
+      </div>
+      <div class="footer">
+        <button class="btn" id="back"><span>←</span>Back to baseline</button>
+        <div class="right">
+          <p>You can edit this goal before finalizing.</p>
+          <button class="btn primary" id="compare">Compare plans <span>→</span></button>
+        </div>
+      </div>
+      <p class="preview">
+        DESIGN PREVIEW · Illustrative location, budget and target. No planning data is saved.
+      </p>
+    </main>
+    <div class="prototypeTools">
+      <span>Preview states</span><button data-screen="main">Goal & target</button
+      ><button data-screen="constraints">Site constraints</button
+      ><button data-screen="custom">Custom goal</button
+      ><button data-screen="check">Missing-data state</button>
+    </div>
+    <script>
+      const paths = {
+        droplet: 'M12 3S5 11 5 15a7 7 0 0 0 14 0c0-4-7-12-7-12Z',
+        truck:
+          'M3 6h12v12H3zM15 10h4l3 4v4h-7M6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6m12 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6',
+        ground: 'M3 18h18M4 21h16M12 3v11m-4-4 4 4 4-4',
+        wallet: 'M4 6h16v14H4zM4 6V4h13m-2 9h5m-3 0h.01',
+        flood: 'M2 15q3-3 6 0t6 0 6 0M2 20q3-3 6 0t6 0 6 0M5 9l7-6 7 6',
+        quality: 'M12 3S5 11 5 15a7 7 0 0 0 14 0c0-4-7-12-7-12Zm-3 12 2 2 4-4',
+        pin: 'M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 0 1 14 0Zm-7 3a3 3 0 1 0 0-6 3 3 0 0 0 0 6',
+        info: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Zm0-6v-5m0-3h.01',
+        target: 'M21 12a9 9 0 1 1-9-9m0 4a5 5 0 1 0 5 5m-5 0L22 2m-5 0h5v5',
+        sliders: 'M3 6h18M8 3v6M3 12h18M16 9v6M3 18h18M11 15v6',
+        chevron: 'm6 9 6 6 6-6',
+        alert: 'M12 3 2 21h20L12 3Zm0 6v5m0 3h.01',
+      };
+      function icon(name) {
+        return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${paths[name] || paths.info}"/></svg>`;
+      }
+      for (const [id, name] of Object.entries({
+        pin: 'pin',
+        customInfo: 'info',
+        targetInfo: 'info',
+        sliders: 'sliders',
+        chevron: 'chevron',
+        chevron2: 'chevron',
+        wallet: 'wallet',
+        targetIcon: 'target',
+        summaryInfo: 'info',
+        alert: 'alert',
+      }))
+        document.getElementById(id).innerHTML = icon(name);
+      const choices = [
+        ['shortage', 'droplet', 'Reduce water shortage', 'Have fewer days without enough water.'],
+        ['tanker', 'truck', 'Reduce tanker dependence', 'Rely less on water delivered by tankers.'],
+        [
+          'groundwater',
+          'ground',
+          'Improve groundwater',
+          'Work towards a healthier groundwater level.',
+        ],
+        ['bills', 'wallet', 'Reduce water bills', 'Lower water costs for your community.'],
+        ['flood', 'flood', 'Reduce flooding', 'Reduce the number of flood events.'],
+        [
+          'quality',
+          'quality',
+          'Improve water quality',
+          'Set a target for a measured water parameter.',
+        ],
+      ];
+      let selected = 'tanker';
+      const $ = (id) => document.getElementById(id);
+      function renderChoices() {
+        $('goals').innerHTML = choices
+          .map(
+            ([id, ic, title, desc]) =>
+              `<button role="radio" aria-checked="${selected === id}" class="choice ${selected === id ? 'selected' : ''}" data-goal="${id}"><div class="choiceTop"><span class="iconbox">${icon(ic)}</span><span class="radio"></span></div><strong>${title}</strong><p>${desc}</p></button>`,
+          )
+          .join('');
+        $('goals').setAttribute('role', 'radiogroup');
+        $('goals').setAttribute('aria-label', 'Primary goal');
+        document
+          .querySelectorAll('[data-goal]')
+          .forEach((b) => (b.onclick = () => setGoal(b.dataset.goal)));
+      }
+      function setGoal(id) {
+        selected = id;
+        renderChoices();
+        const custom = id === 'custom';
+        $('customPanel').classList.toggle('visible', custom);
+        $('parameterPanel').classList.toggle('visible', custom || id === 'quality');
+        $('custom').textContent = custom ? 'Custom goal selected ✓' : 'Set a custom goal →';
+        $('summaryGoal').textContent = custom
+          ? 'Custom community goal'
+          : choices.find((c) => c[0] === id)[2];
+        const config = {
+          tanker: [
+            'Reduce tanker use by',
+            '%',
+            'A percentage reduction in tanker dependence compared with your baseline share.',
+          ],
+          shortage: [
+            'Maximum shortage days',
+            'days / year',
+            'Measured over a full year of daily supply and demand records.',
+          ],
+          groundwater: [
+            'Target groundwater depth',
+            'm',
+            'Metres below ground. A lower depth means water is closer to the surface.',
+          ],
+          bills: [
+            'Reduce water bills by',
+            '%',
+            'Compared with your baseline water costs. A water tariff is needed to assess savings.',
+          ],
+          flood: [
+            'Maximum flood events',
+            'per year',
+            'Flood events over a year; flood-risk evidence is needed to assess this target.',
+          ],
+          quality: [
+            'Target value',
+            'NTU',
+            'Choose the water-quality parameter and matching unit before setting the target.',
+          ],
+          custom: [
+            'Reduce measured value by',
+            '%',
+            'Confirm the quantity you want to measure. Unsupported outcomes are kept as context.',
+          ],
+        }[id];
+        $('targetLabel').textContent = config[0];
+        $('unit').textContent = config[1];
+        $('targetNote').textContent = config[2];
+        $('targetMode').innerHTML = ['tanker', 'bills', 'custom', 'shortage'].includes(id)
+          ? '<option>Reduce from baseline</option><option>Set a maximum level</option>'
+          : '<option>Reach a target level</option>';
+        $('parameter').value = custom ? 'Freshwater used for irrigation' : 'Turbidity';
+        $('customConfirmation').classList.toggle('hidden', !custom);
+        $('measureUnit').innerHTML = (
+          id === 'quality'
+            ? ['NTU', 'mg/L', 'µS/cm', 'pH', 'CFU/100 mL']
+            : ['%', 'litres / day', 'litres', 'days', 'events', 'mm', 'm below ground']
+        )
+          .map((unit) => `<option>${unit}</option>`)
+          .join('');
+        $('measureUnit').value = id === 'quality' ? 'NTU' : '%';
+        updateSummary();
+      }
+      function updateSummary() {
+        const n = $('target').value;
+        $('summaryTarget').textContent =
+          selected === 'tanker'
+            ? `${n || '—'}% less reliance`
+            : selected === 'custom'
+              ? $('unit').textContent === '%'
+                ? `${n || '—'}% reduction`
+                : `${n || '—'} ${$('unit').textContent}`
+              : `${n || '—'} ${$('unit').textContent}`;
+        $('summaryTargetSub').textContent =
+          selected === 'tanker'
+            ? 'relative to your current tanker share'
+            : 'your chosen target, subject to assessment';
+        $('summaryBudget').textContent = $('budget').value ? '₹' + $('budget').value : 'Not set';
+        $('summaryTime').textContent =
+          $('timeline').value === 'Not set' ? 'Not set' : 'Within ' + $('timeline').value;
+        $('summaryPriority').textContent = $('priority').value;
+        const labels = {
+          tanker: 'Tanker share',
+          shortage: 'Shortage days / year',
+          groundwater: 'Groundwater depth',
+          bills: 'Water costs',
+          flood: 'Flood events / year',
+          quality: 'Water quality',
+          custom: 'Selected measure',
+        };
+        $('baselineMetric').textContent = labels[selected];
+        if (!n) {
+          $('summaryTarget').textContent = 'Not set';
+          $('summaryTargetSub').textContent = 'Compare options without a numeric target';
+        }
+      }
+      $('custom').onclick = () => setGoal('custom');
+      $('targetMode').onchange = () => {
+        if (selected === 'tanker') {
+          $('targetLabel').textContent =
+            $('targetMode').selectedIndex === 0 ? 'Reduce tanker use by' : 'Maximum tanker share';
+          $('targetNote').textContent =
+            $('targetMode').selectedIndex === 0
+              ? 'A percentage reduction compared with your baseline tanker share.'
+              : 'The maximum share of total supply that should come from tankers.';
+          $('summaryTarget').textContent =
+            $('targetMode').selectedIndex === 0
+              ? `${$('target').value}% less reliance`
+              : `At most ${$('target').value}%`;
+          $('summaryTargetSub').textContent =
+            $('targetMode').selectedIndex === 0
+              ? 'relative to your current tanker share'
+              : 'of total water supply from tankers';
+        }
+      };
+      ['target', 'budget', 'timeline', 'priority'].forEach((id) =>
+        $(id).addEventListener('input', updateSummary),
+      );
+      $('measureUnit').onchange = () => {
+        $('unit').textContent = $('measureUnit').value;
+        if ($('measureUnit').value !== '%') {
+          $('targetMode').selectedIndex = 1;
+          $('targetLabel').textContent = 'Target value';
+        }
+        updateSummary();
+      };
+      $('compare').onclick = () => {
+        if (selected !== 'tanker')
+          $('assessmentText').textContent =
+            'A matching baseline measure and evidence are needed to assess this target. You can compare plans; unsupported or missing outcomes remain unknown.';
+        $('assessment').classList.remove('hidden');
+        $('assessment').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      };
+      $('back').onclick = () => alert('Design preview only — your baseline is unchanged.');
+      let params = new URLSearchParams(location.search);
+      let theme = params.get('theme') || 'light';
+      document.body.classList.toggle('dark', theme === 'dark');
+      $('theme').onclick = () => {
+        document.body.classList.toggle('dark');
+      };
+      function state(screen) {
+        $('site').open = screen === 'constraints';
+        $('assessment').classList.toggle('hidden', screen !== 'check');
+        setGoal(screen === 'custom' ? 'custom' : 'tanker');
+        document
+          .querySelectorAll('[data-screen]')
+          .forEach((b) => b.classList.toggle('current', b.dataset.screen === screen));
+        if (screen === 'custom') {
+          $('assessment').classList.add('hidden');
+        }
+        document.querySelectorAll('[data-screen]').forEach(
+          (b) =>
+            (b.onclick = () => {
+              location.search = `screen=${b.dataset.screen}&theme=${document.body.classList.contains('dark') ? 'dark' : 'light'}`;
+            }),
+        );
+      }
+      state(params.get('screen') || 'main');
+    </script>
+  </body>
+</html>

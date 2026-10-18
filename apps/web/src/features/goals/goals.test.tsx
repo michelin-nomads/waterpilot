@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { AxiosAdapter, InternalAxiosRequestConfig } from 'axios';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 
 import type {
   CheckGoalQuery,
@@ -10,11 +10,12 @@ import type {
 import { apiClient } from '../../lib/apiClient';
 import type { SessionState } from '../../session/sessionState';
 import { AuthTestProviders } from '../../test/AuthTestProviders';
-import { FakeAuthBackend, permanent } from '../../test/fakeAuth';
+import { FakeAuthBackend, permanent, guest } from '../../test/fakeAuth';
 import { FakeSessionServer } from '../../test/fakeSession';
 import { AgentPanel } from '../planning/AgentPanel';
 import { draftField, emptyDraft, fromGoalInput, PRESETS, toGoalInput } from './goalDraft';
 import GoalsPage from './index';
+import { goalBudgetLabel, goalDurationLabel } from './goalDisplay';
 
 const AREA = 'are_0000000000000000000000AREA';
 
@@ -130,12 +131,17 @@ afterEach(() => {
   apiClient.defaults.adapter = originalAdapter;
 });
 
-function renderGoals(session: Partial<SessionState> = { areaId: AREA }) {
+function RouteProbe() {
+  return <span data-testid="goal-route">{useLocation().pathname}</span>;
+}
+
+function renderGoals(session: Partial<SessionState> = { areaId: AREA }, user = permanent()) {
   const sessions = new FakeSessionServer();
   sessions.seed('user-1', { id: 'ses_1', ...session });
   render(
-    <AuthTestProviders backend={new FakeAuthBackend(permanent())} sessions={sessions}>
-      <MemoryRouter>
+    <AuthTestProviders backend={new FakeAuthBackend(user)} sessions={sessions}>
+      <MemoryRouter initialEntries={['/goals']}>
+        <RouteProbe />
         <GoalsPage />
       </MemoryRouter>
     </AuthTestProviders>,
@@ -146,11 +152,22 @@ function renderGoals(session: Partial<SessionState> = { areaId: AREA }) {
 const checks = () => sent.filter((s) => s.op === 'CheckGoal');
 const lastGoal = () => checks().at(-1)?.variables.goal as GoalInput;
 
-async function choose(preset: RegExp) {
+async function choose(preset: RegExp, useExample = true) {
   fireEvent.click(await screen.findByRole('radio', { name: preset }));
+  const example = screen.queryByRole('button', { name: /Use example:/i });
+  if (useExample && example) fireEvent.click(example);
 }
 
 describe('goal draft', () => {
+  it('formats exact budget strings and custom durations without rounding the draft', () => {
+    expect(goalBudgetLabel('12345678901234567890.25', 'INR')).toBe(
+      '₹1,23,45,67,89,01,23,45,67,890.25',
+    );
+    expect(goalBudgetLabel('12.123', 'INR')).toBe('INR 12.123');
+    expect(goalDurationLabel('47')).toBe('47 days');
+    expect(goalDurationLabel('913', true)).toBe('913 days');
+  });
+
   const tanker = () => PRESETS.find((p) => p.id === 'tanker')?.apply(emptyDraft('INR'));
 
   it('stores percentages as exact ratios and budgets as integer minor units', () => {
@@ -327,28 +344,26 @@ describe('goal draft', () => {
 });
 
 describe('GoalsPage', () => {
-  it('starts from presets and reveals details only when asked', async () => {
+  it('shows all six outcomes and leaves numeric targets and deadlines unset until chosen', async () => {
     renderGoals();
     expect(screen.getByText('Step 3 of 5')).toBeInTheDocument();
     expect(
-      await screen.findByRole('heading', { name: 'Set your goal and constraints' }),
+      await screen.findByRole('heading', { name: 'What would you like to improve?' }),
     ).toBeVisible();
-    expect(await screen.findByText('Planning for')).toBeVisible();
-    for (const name of [/tanker/i, /shortage/i, /bills/i])
-      expect(await screen.findByRole('radio', { name })).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: /groundwater/i })).not.toBeVisible();
-    fireEvent.click(screen.getByText('More goals and constraints'));
-    for (const name of [/groundwater/i, /flooding/i, /quality/i])
-      expect(await screen.findByRole('radio', { name })).toBeInTheDocument();
-    expect(screen.queryByLabelText(/target \(%\)/i)).not.toBeInTheDocument();
-
-    await choose(/tanker/i);
+    for (const name of [/tanker/i, /shortage/i, /bills/i, /groundwater/i, /flooding/i, /quality/i])
+      expect(await screen.findByRole('radio', { name })).toBeVisible();
+    await choose(/tanker/i, false);
+    expect(screen.getByLabelText('Kind of target')).toHaveValue('');
+    expect(screen.getByLabelText('Preferred implementation time')).toHaveValue('');
+    expect(screen.getByLabelText('What matters most?')).toBeVisible();
+    expect(screen.getByLabelText('Compare benefits over')).toBeVisible();
+    expect(screen.getByRole('button', { name: /Site constraints/i })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Use example:/i }));
     expect(screen.getByLabelText(/target \(%\)/i)).toHaveValue('30');
-    expect(screen.getByLabelText(/budget \(INR\)/i)).toBeVisible();
-    expect(screen.getByLabelText(/^timeframe/i)).toHaveValue('365');
-    fireEvent.click(screen.getByText('Additional planning constraints'));
-    expect(screen.getByLabelText(/^planning horizon/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/^priority$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText('Preferred implementation time')).toHaveValue('365');
   });
 
   it('says plainly when a goal cannot be met as set, and why', async () => {
@@ -471,7 +486,120 @@ describe('GoalsPage', () => {
     await waitFor(() =>
       expect(document.querySelector('[data-assessment-source="saved"]')).not.toBeNull(),
     );
-    expect(screen.getByRole('link', { name: /compare plans/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /compare plans/i })).toBeEnabled();
+  });
+
+  it('checks and finishes saving before navigating to plan comparison', async () => {
+    const sessions = renderGoals();
+    await choose(/tanker/i);
+    let release!: () => void;
+    sessions.hold = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Compare plans' }));
+    await waitFor(() => expect(checks()).toHaveLength(1));
+    expect(screen.getByTestId('goal-route')).toHaveTextContent('/goals');
+    expect(screen.getByRole('radio', { name: /tanker/i })).toBeDisabled();
+    release();
+    await waitFor(() => expect(screen.getByTestId('goal-route')).toHaveTextContent('/plans'));
+    expect(sessions.applied[0]?.patch.goal?.target?.quantity.value).toBe('0.3');
+  });
+
+  it('keeps invalid server targets in the editor without saving or navigating', async () => {
+    handlers.CheckGoal = () =>
+      checkReply(null, [{ field: 'goal.target.quantity.value', message: 'Change this target.' }]);
+    const sessions = renderGoals();
+    await choose(/tanker/i);
+    fireEvent.click(screen.getByRole('button', { name: 'Compare plans' }));
+    expect(await screen.findByLabelText(/target \(%\)/i)).toHaveValue('30');
+    await screen.findByRole('link', { name: 'Change this target.' });
+    expect(screen.getByTestId('goal-route')).toHaveTextContent('/goals');
+    expect(sessions.applied).toHaveLength(0);
+  });
+
+  it('keeps entered values when the goal check fails', async () => {
+    handlers.CheckGoal = () => {
+      throw new Error('offline');
+    };
+    renderGoals();
+    await choose(/tanker/i);
+    fireEvent.change(screen.getByLabelText(/target \(%\)/i), { target: { value: '45' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Compare plans' }));
+    expect(await screen.findByText('Goal not saved', {}, { timeout: 5000 })).toBeVisible();
+    expect(screen.getByLabelText(/target \(%\)/i)).toHaveValue('45');
+    expect(screen.getByTestId('goal-route')).toHaveTextContent('/goals');
+  });
+
+  it('lets a guest save a goal and compare without requiring sign-in', async () => {
+    renderGoals({ areaId: AREA }, guest('user-1'));
+    await choose(/tanker/i);
+    fireEvent.click(screen.getByRole('button', { name: 'Compare plans' }));
+    await waitFor(() => expect(screen.getByTestId('goal-route')).toHaveTextContent('/plans'));
+  });
+
+  it('does not navigate if the session save fails after checking the goal', async () => {
+    const sessions = renderGoals();
+    await choose(/tanker/i);
+    sessions.offline = true;
+    fireEvent.click(screen.getByRole('button', { name: 'Compare plans' }));
+    expect(await screen.findByText('Goal not saved', {}, { timeout: 5000 })).toBeVisible();
+    expect(screen.getByTestId('goal-route')).toHaveTextContent('/goals');
+    expect(screen.getByLabelText(/target \(%\)/i)).toHaveValue('30');
+    expect(screen.getByLabelText(/target \(%\)/i)).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Compare plans' })).toBeEnabled();
+  });
+
+  it('requires a fresh custom-wording confirmation after editing and preserves constraints when changing outcomes', async () => {
+    renderGoals();
+    await choose(/tanker/i, false);
+    fireEvent.change(screen.getByLabelText(/budget \(INR\)/i), { target: { value: '800000' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Set a custom goal' }));
+    fireEvent.change(screen.getByLabelText(/Describe your goal/), {
+      target: { value: 'Reuse water for the garden' },
+    });
+    const confirm = screen.getByLabelText(/This wording is what I mean/);
+    fireEvent.click(confirm);
+    expect(confirm).toBeChecked();
+    fireEvent.change(screen.getByLabelText(/Describe your goal/), {
+      target: { value: 'Reuse more garden water' },
+    });
+    expect(confirm).not.toBeChecked();
+    fireEvent.click(screen.getByRole('radio', { name: /groundwater/i }));
+    expect(screen.getByLabelText(/budget \(INR\)/i)).toHaveValue('800000');
+    expect(screen.getByLabelText('Kind of target')).toHaveValue('');
+  });
+
+  it('keeps arbitrary saved day counts exact and separates implementation from the benefits period', async () => {
+    const input = toGoalInput({
+      ...PRESETS[0]!.apply(emptyDraft('INR')),
+      timelineDays: '47',
+      horizonDays: '913',
+    }).input!;
+    renderGoals({ areaId: AREA, goal: input });
+    const days = await screen.findByLabelText('Preferred implementation time (days)');
+    expect(days).toHaveValue('47');
+    expect(screen.getByLabelText('Compare benefits over (days)')).toHaveValue('913');
+    fireEvent.change(days, { target: { value: '51' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Check goal' }));
+    await waitFor(() => expect(lastGoal()?.timelineDays).toBe(51));
+    expect(lastGoal().horizonDays).toBe(913);
+  });
+
+  it('shows only checked baseline evidence in the live summary and clears it when a target changes', async () => {
+    handlers.CheckGoal = () =>
+      checkReply(
+        assessment({
+          target: { ...assessment().target, baseline: '0.625', targetLevel: '0.4375' },
+        }),
+      );
+    renderGoals();
+    await choose(/tanker/i);
+    const summary = screen.getByRole('complementary', { name: 'Your goal at a glance' });
+    expect(within(summary).getByText('Check your goal to assess this target.')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Check goal' }));
+    expect(await within(summary).findByText('62.5 %')).toBeVisible();
+    fireEvent.change(screen.getByLabelText(/target \(%\)/i), { target: { value: '40' } });
+    expect(within(summary).queryByText('62.5 %')).not.toBeInTheDocument();
   });
 
   it('points to the location step when there is no baseline to compare with', async () => {

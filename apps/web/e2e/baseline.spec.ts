@@ -58,7 +58,8 @@ test('a guest builds a baseline from values they know and revises it', async ({ 
   await page.getByRole('button', { name: 'Start Exploring' }).click();
   await chooseFixtureLocation(page);
 
-  await page.getByRole('button', { name: 'Confirm location' }).click();
+  await page.getByRole('button', { name: 'Understand this area' }).click();
+  await page.getByRole('button', { name: 'Continue to baseline' }).click();
   await page.getByRole('button', { name: 'Overview', exact: true }).click();
   const baseline = page.getByRole('region', { name: 'Your water baseline' });
   await expect(baseline).toBeVisible();

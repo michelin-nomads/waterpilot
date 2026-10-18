@@ -3,16 +3,17 @@ import { useId, useState, type ReactNode } from 'react';
 import {
   Accordion,
   Button,
-  ChoiceCards,
   ErrorSummary,
   Field,
   Input,
   Select,
   Textarea,
+  Tooltip,
   type FieldError,
 } from '../../components';
 import type {
   InterventionCatalogueQuery,
+  GoalAssessmentFieldsFragment,
   Priority,
   SiteRestriction,
   SiteScale,
@@ -40,6 +41,9 @@ import {
   UNITS,
 } from './goalLabels';
 import styles from './Goals.module.scss';
+import { GoalChoices } from './GoalChoices';
+import { GoalSummary } from './GoalSummary';
+import { GoalDurationField } from './GoalDurationField';
 import { FinancialInputs } from './FinancialInputs';
 
 type Catalogue = InterventionCatalogueQuery['interventionCatalogue'];
@@ -52,6 +56,9 @@ interface GoalFormProps {
   /** The location's currency; budgets in another currency are never converted. */
   areaCurrency: string | null;
   actions: ReactNode;
+  assessment?: GoalAssessmentFieldsFragment | null;
+  disabled?: boolean;
+  onCompare: () => void;
 }
 
 const ESTIMATE_FIELDS = [
@@ -66,8 +73,14 @@ const ESTIMATE_FIELDS = [
 ] as const satisfies readonly (keyof EstimateDraft)[];
 
 const SECTION_FIELDS: Record<string, readonly string[]> = {
-  constraints: ['currency', 'horizonDays', 'priority'],
-  finance: ['tariffAmount', 'tariffCurrency', 'tariffLitres', 'tariffNote', 'contingencyPercent'],
+  finance: [
+    'currency',
+    'tariffAmount',
+    'tariffCurrency',
+    'tariffLitres',
+    'tariffNote',
+    'contingencyPercent',
+  ],
   site: [
     'scale',
     'roofArea',
@@ -105,6 +118,9 @@ export function GoalForm({
   catalogue,
   areaCurrency,
   actions,
+  assessment,
+  disabled = false,
+  onCompare,
 }: GoalFormProps) {
   const id = useId();
   const fid = (name: string) => `${id}-${name.replace(/\./g, '-')}`;
@@ -158,77 +174,18 @@ export function GoalForm({
     .map(sectionOf)
     .filter((s): s is string => s !== null);
   const expanded = [...new Set([...open, ...withErrors])];
-  const primaryGoalIds = ['shortage', 'tanker', 'bills'];
-  const otherGoals = PRESETS.filter((preset) => !primaryGoalIds.includes(preset.id));
   const selectedPreset = presetFor(draft);
-  const otherGoalSelected = otherGoals.some((preset) => preset.id === selectedPreset);
-  const [moreGoalsOpen, setMoreGoalsOpen] = useState(false);
+  const example = PRESETS.find((p) => p.id === selectedPreset && p.apply(draft).mode !== null);
 
   const sections = kind
     ? [
         {
-          id: 'constraints',
-          title: 'Additional planning constraints',
-          summary: 'Optional. Set the planning horizon, currency and priority.',
-          content: (
-            <div className={styles.grid}>
-              <Field
-                id={fid('currency')}
-                label="Currency"
-                hint={
-                  areaCurrency
-                    ? `This location uses ${areaCurrency}. Amounts are never converted.`
-                    : 'Amounts are never converted between currencies.'
-                }
-                error={errors.currency}
-              >
-                {(p) => (
-                  <Input
-                    {...p}
-                    maxLength={3}
-                    value={draft.currency}
-                    onChange={(e) => set('currency', e.target.value.toUpperCase())}
-                  />
-                )}
-              </Field>
-              <Field
-                id={fid('horizonDays')}
-                label="Planning horizon (days)"
-                hint="How long benefits should count, separate from build time."
-                error={errors.horizonDays}
-              >
-                {(p) => (
-                  <Input
-                    {...p}
-                    inputMode="numeric"
-                    value={draft.horizonDays}
-                    onChange={(e) => set('horizonDays', e.target.value)}
-                  />
-                )}
-              </Field>
-              <Field id={fid('priority')} label="Priority" error={errors.priority}>
-                {(p) => (
-                  <Select
-                    {...p}
-                    value={draft.priority}
-                    onChange={(e) => set('priority', e.target.value as Priority | '')}
-                  >
-                    <option value="">No preference</option>
-                    {(Object.keys(PRIORITY_LABEL) as Priority[]).map((v) => (
-                      <option key={v} value={v}>
-                        {PRIORITY_LABEL[v]}
-                      </option>
-                    ))}
-                  </Select>
-                )}
-              </Field>
-            </div>
-          ),
-        },
-        {
           id: 'site',
-          title: 'Your site',
-          summary: 'What is there decides which measures can be used. Leave unknown blank.',
+          title: 'Site constraints',
+          icon: 'adjustments' as const,
+          summary: draft.restrictions.length
+            ? `${draft.restrictions.length} restrictions specified`
+            : 'Optional · unknown details stay unknown',
           content: (
             <div className={styles.stack}>
               <div className={styles.grid}>
@@ -310,17 +267,42 @@ export function GoalForm({
         },
         {
           id: 'finance',
-          title: 'Prices, maintenance and funding',
-          summary: 'Optional. Record exact prices, contingency and funding status.',
-          content: <FinancialInputs draft={draft} onChange={onChange} errors={errors} fid={fid} />,
+          title: 'Water costs & funding',
+          icon: 'wallet' as const,
+          summary: 'Optional · tariffs, contingency and funding',
+          content: (
+            <div className={styles.stack}>
+              <Field
+                id={fid('currency')}
+                label="Budget currency"
+                error={errors.currency}
+                labelAction={
+                  <Tooltip label="About budget currency">
+                    {areaCurrency ? `The selected location uses ${areaCurrency}. ` : ''}Amounts
+                    remain in their stated currency; no currency conversion is applied.
+                  </Tooltip>
+                }
+              >
+                {(p) => (
+                  <Input
+                    {...p}
+                    maxLength={3}
+                    value={draft.currency}
+                    onChange={(e) => set('currency', e.target.value.toUpperCase())}
+                  />
+                )}
+              </Field>
+              <FinancialInputs draft={draft} onChange={onChange} errors={errors} fid={fid} />
+            </div>
+          ),
         },
         {
           id: 'also',
           title: 'Other goals to balance',
           summary:
             kind === 'CUSTOM'
-              ? 'Pick the goals closest to yours so measures can be matched.'
-              : 'Optional. Checked for conflicts with your main goal.',
+              ? 'Match measures to your custom outcome'
+              : 'Optional · up to three additional outcomes',
           content: (
             <fieldset className={styles.checks}>
               <legend className={styles.legend}>Also aim to</legend>
@@ -340,9 +322,9 @@ export function GoalForm({
         },
         {
           id: 'estimates',
-          title: 'Your own estimates',
-          summary:
-            'Optional. No sourced costs or build times exist for this location; yours are labelled as yours.',
+          title: 'Cost & performance assumptions',
+          icon: 'chart' as const,
+          summary: 'Optional · your own estimates',
           content: (
             <div className={styles.stack}>
               {draft.estimates.map((e, i) => (
@@ -509,208 +491,252 @@ export function GoalForm({
     : [];
 
   return (
-    <form className={styles.form} noValidate onSubmit={(e) => e.preventDefault()}>
+    <form
+      className={styles.form}
+      noValidate
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!disabled) onCompare();
+      }}
+    >
       <ErrorSummary errors={summary} />
-      <div id={fid('kind')} tabIndex={-1}>
-        <ChoiceCards
-          legend="What do you want to achieve?"
-          hint="Choose a goal to compare against your baseline. Selecting a goal does not promise it is achievable."
-          options={PRESETS.filter((p) => primaryGoalIds.includes(p.id)).map((p) => ({
-            value: p.id,
-            title: p.title,
-            description: p.description,
-          }))}
-          value={selectedPreset && primaryGoalIds.includes(selectedPreset) ? selectedPreset : null}
-          onChange={(presetId) => {
-            const preset = PRESETS.find((p) => p.id === presetId);
-            if (preset) onChange(preset.apply({ ...draft, targetParameter: '', also: [] }));
-          }}
-          columns={3}
-          presentation="featured"
-        />
-      </div>
-      <details
-        className={styles.otherGoals}
-        open={moreGoalsOpen || otherGoalSelected}
-        onToggle={(event) => setMoreGoalsOpen(event.currentTarget.open)}
-      >
-        <summary>More goals and constraints</summary>
-        <ChoiceCards
-          legend="Other supported goals"
-          options={otherGoals.map((p) => ({
-            value: p.id,
-            title: p.title,
-            description: p.description,
-          }))}
-          value={otherGoalSelected ? selectedPreset : null}
-          onChange={(presetId) => {
-            const preset = PRESETS.find((p) => p.id === presetId);
-            if (preset) onChange(preset.apply({ ...draft, targetParameter: '', also: [] }));
-          }}
-          columns={2}
-        />
-      </details>
-      {kind === 'CUSTOM' && (
-        <div className={styles.stack}>
-          <Field
-            id={fid('description')}
-            label="Describe your goal"
-            error={errors.description}
-            required
-          >
-            {(p) => (
-              <Textarea
-                {...p}
-                rows={3}
-                maxLength={2000}
-                value={draft.description}
-                onChange={(e) =>
-                  onChange({ ...draft, description: e.target.value, confirmed: false })
-                }
-              />
-            )}
-          </Field>
-          <label className={styles.check} id={fid('confirmed')}>
-            <input
-              type="checkbox"
-              checked={draft.confirmed}
-              disabled={!draft.description.trim()}
-              onChange={(e) => set('confirmed', e.target.checked)}
-            />
-            This wording is what I mean; use it for planning.
-          </label>
-          {errors.confirmed && <p className={styles.error}>{errors.confirmed}</p>}
-        </div>
-      )}
-      {kind && (
-        <div className={styles.goalLimits} role="group" aria-label="Optional budget and timeframe">
-          <Field
-            id={fid('budgetAmount')}
-            label={`Budget (${draft.currency || 'currency'})`}
-            hint="Optional. Whole amount without commas or symbols. Amounts are never converted."
-            error={errors.budgetAmount}
-          >
-            {(p) => (
-              <Input
-                {...p}
-                inputMode="decimal"
-                value={draft.budgetAmount}
-                onChange={(e) => set('budgetAmount', e.target.value)}
-              />
-            )}
-          </Field>
-          <Field
-            id={fid('timelineDays')}
-            label="Timeframe (maximum build days)"
-            hint="Optional. How long implementation may take."
-            error={errors.timelineDays}
-          >
-            {(p) => (
-              <Input
-                {...p}
-                inputMode="numeric"
-                value={draft.timelineDays}
-                onChange={(e) => set('timelineDays', e.target.value)}
-              />
-            )}
-          </Field>
-        </div>
-      )}
-      {kind && (
-        <fieldset className={styles.target}>
-          <legend className={styles.legend}>Target for: {KIND_LABEL[kind]}</legend>
-          <div className={styles.grid}>
-            <Field id={fid('mode')} label="Kind of target">
-              {(p) => (
-                <Select
-                  {...p}
-                  value={draft.mode ?? ''}
-                  onChange={(e) => {
-                    const mode = (e.target.value || null) as TargetMode | null;
-                    onChange({
-                      ...draft,
-                      mode,
-                      unit: mode === 'RELATIVE_REDUCTION' ? 'RATIO' : (units[0] ?? null),
-                    });
-                  }}
+      <div className={styles.editorLayout}>
+        <fieldset className={styles.mainFields} disabled={disabled}>
+          <section className={styles.panel}>
+            <div className={styles.sectionHead}>
+              <h2 id={fid('kind')} tabIndex={-1}>
+                <span className={styles.sectionNumber}>01</span>Choose your primary goal
+              </h2>
+              <span className={styles.muted}>Choose one</span>
+            </div>
+            <GoalChoices draft={draft} onChange={onChange} />
+            {kind === 'CUSTOM' && (
+              <div className={styles.stack}>
+                <Field
+                  id={fid('description')}
+                  label="Describe your goal"
+                  error={errors.description}
+                  required
                 >
-                  <option value="">No numeric target</option>
-                  {modes.map((m) => (
-                    <option key={m} value={m}>
-                      {MODE_LABEL[m]}
-                    </option>
-                  ))}
-                </Select>
-              )}
-            </Field>
-            {draft.mode && (
-              <Field
-                id={fid('targetValue')}
-                label={ratio ? 'Target (%)' : `Target (${UNIT_LABEL[draft.unit ?? 'COUNT'] ?? ''})`}
-                hint={
-                  draft.mode === 'RELATIVE_REDUCTION'
-                    ? 'How much lower than your baseline, for example 30.'
-                    : kind === 'REDUCE_SHORTAGE'
-                      ? 'At most this many shortage days in a year.'
-                      : undefined
-                }
-                error={errors.targetValue}
-                required
-              >
-                {(p) => (
-                  <Input
-                    {...p}
-                    inputMode="decimal"
-                    value={draft.targetValue}
-                    onChange={(e) => set('targetValue', e.target.value)}
+                  {(p) => (
+                    <Textarea
+                      {...p}
+                      rows={3}
+                      maxLength={2000}
+                      value={draft.description}
+                      onChange={(e) =>
+                        onChange({ ...draft, description: e.target.value, confirmed: false })
+                      }
+                    />
+                  )}
+                </Field>
+                <label className={styles.check} id={fid('confirmed')}>
+                  <input
+                    type="checkbox"
+                    checked={draft.confirmed}
+                    disabled={!draft.description.trim()}
+                    onChange={(e) => set('confirmed', e.target.checked)}
                   />
-                )}
-              </Field>
+                  This wording is what I mean; use it for planning.
+                </label>
+                {errors.confirmed && <p className={styles.error}>{errors.confirmed}</p>}
+              </div>
             )}
-            {draft.mode === 'ABSOLUTE_LEVEL' && units.length > 1 && (
-              <Field id={fid('unit')} label="Unit">
-                {(p) => (
-                  <Select
-                    {...p}
-                    value={draft.unit ?? ''}
-                    onChange={(e) => set('unit', e.target.value as Unit)}
+          </section>
+          {kind && (
+            <section className={styles.panel}>
+              <div className={styles.sectionHead}>
+                <h2>
+                  <span className={styles.sectionNumber}>02</span>Make it measurable
+                </h2>
+                <span className={styles.muted}>Optional</span>
+              </div>
+              <fieldset className={styles.target}>
+                <legend className={styles.hidden}>Target for: {KIND_LABEL[kind]}</legend>
+                <div className={styles.grid}>
+                  <Field id={fid('mode')} label="Kind of target">
+                    {(p) => (
+                      <Select
+                        {...p}
+                        value={draft.mode ?? ''}
+                        onChange={(e) => {
+                          const mode = (e.target.value || null) as TargetMode | null;
+                          onChange({
+                            ...draft,
+                            mode,
+                            unit: mode === 'RELATIVE_REDUCTION' ? 'RATIO' : (units[0] ?? null),
+                          });
+                        }}
+                      >
+                        <option value="">No numeric target</option>
+                        {modes.map((m) => (
+                          <option key={m} value={m}>
+                            {MODE_LABEL[m]}
+                          </option>
+                        ))}
+                      </Select>
+                    )}
+                  </Field>
+                  {draft.mode && (
+                    <Field
+                      id={fid('targetValue')}
+                      label={
+                        ratio ? 'Target (%)' : `Target (${UNIT_LABEL[draft.unit ?? 'COUNT'] ?? ''})`
+                      }
+                      labelAction={
+                        <Tooltip label="About this target">
+                          {draft.mode === 'RELATIVE_REDUCTION'
+                            ? 'A percentage reduction compared with your baseline. This is not a percentage-point reduction.'
+                            : kind === 'REDUCE_SHORTAGE'
+                              ? 'The maximum shortage days in a year. Assessing it needs a full year of daily supply and demand records.'
+                              : kind === 'IMPROVE_GROUNDWATER'
+                                ? 'Depth in metres below ground. A smaller depth means groundwater is closer to the surface.'
+                                : 'An absolute target in the chosen unit. Availability of baseline and model evidence determines whether it can be assessed.'}
+                        </Tooltip>
+                      }
+                      error={errors.targetValue}
+                      required
+                    >
+                      {(p) => (
+                        <Input
+                          {...p}
+                          inputMode="decimal"
+                          value={draft.targetValue}
+                          onChange={(e) => set('targetValue', e.target.value)}
+                        />
+                      )}
+                    </Field>
+                  )}
+                  {draft.mode === 'ABSOLUTE_LEVEL' && units.length > 1 && (
+                    <Field id={fid('unit')} label="Unit">
+                      {(p) => (
+                        <Select
+                          {...p}
+                          value={draft.unit ?? ''}
+                          onChange={(e) => set('unit', e.target.value as Unit)}
+                        >
+                          {units.map((u) => (
+                            <option key={u} value={u}>
+                              {UNIT_LABEL[u] ?? u}
+                            </option>
+                          ))}
+                        </Select>
+                      )}
+                    </Field>
+                  )}
+                  {draft.mode && (kind === 'IMPROVE_WATER_QUALITY' || kind === 'CUSTOM') && (
+                    <Field
+                      id={fid('targetParameter')}
+                      label="What will you measure?"
+                      labelAction={
+                        <Tooltip label="About the target parameter">
+                          Use a lowercase parameter name, such as turbidity or nitrate. A custom
+                          outcome needs a matching baseline measure and supported model to be
+                          assessed.
+                        </Tooltip>
+                      }
+                      error={errors.targetParameter}
+                    >
+                      {(p) => (
+                        <Input
+                          {...p}
+                          value={draft.targetParameter}
+                          onChange={(e) => set('targetParameter', e.target.value)}
+                        />
+                      )}
+                    </Field>
+                  )}
+                </div>
+              </fieldset>
+              {example && (
+                <div className={styles.exampleTarget}>
+                  <span className={styles.muted}>Need a starting point?</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={styles.textAction}
+                    onClick={() => onChange(example.apply(draft))}
                   >
-                    {units.map((u) => (
-                      <option key={u} value={u}>
-                        {UNIT_LABEL[u] ?? u}
-                      </option>
-                    ))}
-                  </Select>
-                )}
-              </Field>
-            )}
-            {draft.mode && (kind === 'IMPROVE_WATER_QUALITY' || kind === 'CUSTOM') && (
-              <Field
-                id={fid('targetParameter')}
-                label="Parameter"
-                hint="Lowercase name, for example turbidity or nitrate."
-                error={errors.targetParameter}
-              >
-                {(p) => (
-                  <Input
-                    {...p}
-                    value={draft.targetParameter}
-                    onChange={(e) => set('targetParameter', e.target.value)}
-                  />
-                )}
-              </Field>
-            )}
-          </div>
+                    Use example: {example.title}
+                  </Button>
+                </div>
+              )}
+            </section>
+          )}
+          {kind && (
+            <section className={styles.panel} aria-label="Budget and timing">
+              <div className={styles.sectionHead}>
+                <h2>
+                  <span className={styles.sectionNumber}>03</span>Budget & timing
+                </h2>
+                <span className={styles.muted}>Optional</span>
+              </div>
+              <div className={styles.grid}>
+                <Field
+                  id={fid('budgetAmount')}
+                  label={`Maximum implementation budget (${draft.currency || 'currency'})`}
+                  error={errors.budgetAmount}
+                  labelAction={
+                    <Tooltip label="About the implementation budget">
+                      Enter the maximum budget in {draft.currency || 'your stated currency'},
+                      without commas or currency symbols. Leave blank for no budget limit.
+                    </Tooltip>
+                  }
+                >
+                  {(p) => (
+                    <Input
+                      {...p}
+                      inputMode="decimal"
+                      value={draft.budgetAmount}
+                      onChange={(e) => set('budgetAmount', e.target.value)}
+                    />
+                  )}
+                </Field>
+                <GoalDurationField
+                  id={fid('timelineDays')}
+                  label="Preferred implementation time"
+                  value={draft.timelineDays}
+                  onChange={(value) => set('timelineDays', value)}
+                  error={errors.timelineDays}
+                />
+                <Field id={fid('priority')} label="What matters most?" error={errors.priority}>
+                  {(p) => (
+                    <Select
+                      {...p}
+                      value={draft.priority}
+                      onChange={(e) => set('priority', e.target.value as Priority | '')}
+                    >
+                      <option value="">No preference</option>
+                      {(Object.keys(PRIORITY_LABEL) as Priority[]).map((value) => (
+                        <option key={value} value={value}>
+                          {PRIORITY_LABEL[value]}
+                        </option>
+                      ))}
+                    </Select>
+                  )}
+                </Field>
+                <GoalDurationField
+                  id={fid('horizonDays')}
+                  label="Compare benefits over"
+                  value={draft.horizonDays}
+                  onChange={(value) => set('horizonDays', value)}
+                  error={errors.horizonDays}
+                  horizon
+                />
+              </div>
+            </section>
+          )}
+          {sections.length > 0 && (
+            <Accordion
+              items={sections}
+              headingLevel={3}
+              expanded={expanded}
+              onExpandedChange={setOpen}
+            />
+          )}
         </fieldset>
-      )}
-      {sections.length > 0 && (
-        <Accordion
-          items={sections}
-          headingLevel={3}
-          expanded={expanded}
-          onExpandedChange={setOpen}
-        />
-      )}
+        <GoalSummary draft={draft} assessment={assessment} />
+      </div>
       {actions}
     </form>
   );

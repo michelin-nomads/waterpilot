@@ -249,7 +249,7 @@ for (const viewport of VIEWPORTS) {
     await page.setViewportSize(viewport);
     await usePreferences(page, 'light', 'estuary', 'agent');
     await openPlanner(page, 'agent');
-    const heading = page.getByRole('heading', { level: 1, name: 'Confirm your location' });
+    const heading = page.getByRole('heading', { level: 1, name: 'Understand your area' });
     await expect(heading).toBeVisible();
     const mainBox = await page.getByRole('main').boundingBox();
     expect(mainBox!.width).toBeGreaterThan(viewport.width * 0.95);
@@ -287,8 +287,8 @@ const pageOverflow = (page: Page) =>
 
 test.describe('320 px reflow', () => {
   const ROUTES = [
-    { path: '/area', heading: 'Confirm your location', mode: 'traditional' },
-    { path: '/area', heading: 'Confirm your location', mode: 'agent' },
+    { path: '/area', heading: 'Understand your area', mode: 'traditional' },
+    { path: '/area', heading: 'Understand your area', mode: 'agent' },
     { path: '/make-it-happen', heading: 'Funding opportunities', mode: 'agent' },
     { path: '/communities', heading: 'Communities', mode: 'traditional' },
     { path: '/design-system', heading: 'Design system', mode: 'traditional' },

@@ -4,5 +4,5 @@ import { expect, type Page } from '@playwright/test';
 export async function chooseFixtureLocation(page: Page) {
   await page.getByRole('combobox', { name: 'Search for a place' }).fill('Bengaluru');
   await page.getByRole('option', { name: /^Bengaluru/ }).click();
-  await expect(page.getByRole('form', { name: 'Confirm your location' })).toBeVisible();
+  await expect(page.getByRole('form', { name: 'Your selected area' })).toBeVisible();
 }

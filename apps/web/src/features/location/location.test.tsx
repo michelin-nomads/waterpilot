@@ -4,6 +4,7 @@ import { MapPanel } from './MapPanel';
 import { MemoryRouter } from 'react-router-dom';
 import type { AxiosAdapter, InternalAxiosRequestConfig } from 'axios';
 
+import { baselineReply } from '../../test/baselineFixtures';
 import { apiClient } from '../../lib/apiClient';
 import { AuthTestProviders } from '../../test/AuthTestProviders';
 import { FakeAuthBackend, permanent } from '../../test/fakeAuth';
@@ -183,8 +184,13 @@ const confirms = () =>
 let geolocation: { getCurrentPosition: ReturnType<typeof vi.fn> };
 
 beforeEach(() => {
+  Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+    configurable: true,
+    value: vi.fn(),
+  });
   sent = [];
   handlers = {
+    AreaBaseline: () => baselineReply(),
     ConfirmLocation: (v) => confirmed(v.input as Record<string, unknown>),
     Countries: () => ({
       data: {
@@ -239,8 +245,10 @@ async function search(text: string) {
 }
 
 async function confirmReview() {
-  await screen.findByRole('form', { name: 'Confirm your location' });
-  await act(async () => fireEvent.click(screen.getByRole('button', { name: /confirm location/i })));
+  await screen.findByRole('form', { name: 'Your selected area' });
+  await act(async () =>
+    fireEvent.click(screen.getByRole('button', { name: /understand this area/i })),
+  );
 }
 
 describe('location step', () => {
@@ -249,7 +257,7 @@ describe('location step', () => {
     await search('Nairobi');
     fireEvent.click(await screen.findByRole('option', { name: /nairobi/i }));
     expect(
-      await screen.findByRole('heading', { level: 2, name: 'Confirm your location' }),
+      await screen.findByRole('heading', { level: 2, name: 'Your selected area' }),
     ).toBeInTheDocument();
     expect(screen.queryByText('A place is not a catchment')).not.toBeInTheDocument();
     expect(confirms()).toHaveLength(0);
@@ -278,7 +286,7 @@ describe('location step', () => {
     const list = screen.getByRole('listbox');
     expect(within(list).getAllByRole('option')).toHaveLength(2);
     expect(
-      screen.queryByRole('heading', { level: 2, name: 'Confirm your location' }),
+      screen.queryByRole('heading', { level: 2, name: 'Your selected area' }),
     ).not.toBeInTheDocument();
     expect(confirms()).toHaveLength(0);
   });
@@ -413,7 +421,7 @@ describe('location step', () => {
       fireEvent.click(screen.getByRole('button', { name: /use my location/i })),
     );
     expect(
-      await screen.findByRole('heading', { level: 2, name: 'Confirm your location' }),
+      await screen.findByRole('heading', { level: 2, name: 'Your selected area' }),
     ).toBeInTheDocument();
     expect(screen.queryByText('This device location is imprecise')).not.toBeInTheDocument();
     await confirmReview();
@@ -437,7 +445,7 @@ describe('location step', () => {
       } as GeolocationPosition),
     );
     fireEvent.click(screen.getByRole('button', { name: /use my location/i }));
-    expect(await screen.findByRole('button', { name: /^Confirm location$/ })).toBeDisabled();
+    expect(await screen.findByRole('button', { name: /^Understand this area$/ })).toBeDisabled();
     places.reverseResult = [
       {
         ...KORAMANGALA,
@@ -637,7 +645,7 @@ describe('location review (Prompt 08 review)', () => {
     const rendered = renderStep(places);
     await search('Nairobi');
     fireEvent.click(await screen.findByRole('option', { name: /nairobi/i }));
-    await screen.findByRole('form', { name: 'Confirm your location' });
+    await screen.findByRole('form', { name: 'Your selected area' });
     return rendered;
   }
 
@@ -764,4 +772,66 @@ it('a cancelled StrictMode map mount cannot erase the active map canvas', async 
     pending[0]();
   });
   expect(screen.getByText('map canvas')).toBeInTheDocument();
+});
+
+// The area step must keep the editor mounted across the save and data request.
+describe('understand area interaction', () => {
+  it('reveals and scrolls to results only after the data arrives, keeping the editor intact', async () => {
+    let complete!: (reply: ReturnType<typeof baselineReply>) => void;
+    handlers.AreaBaseline = () =>
+      new Promise((resolve) => {
+        complete = resolve;
+      });
+    renderStep();
+    await search('Nairobi');
+    fireEvent.click(await screen.findByRole('option', { name: /nairobi/i }));
+    const form = await screen.findByRole('form', { name: 'Your selected area' });
+    expect(screen.queryByRole('heading', { name: 'Water conditions' })).not.toBeInTheDocument();
+    expect(sent.some((s) => s.op === 'AreaBaseline')).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: 'Understand this area' }));
+    await screen.findByRole('progressbar', { name: 'Understanding your area…' });
+    await waitFor(() => expect(complete).toBeTypeOf('function'));
+    await waitFor(() =>
+      expect(screen.getByRole('progressbar', { name: 'Understanding your area…' })).toHaveAttribute(
+        'aria-valuenow',
+        '50',
+      ),
+    );
+    expect(screen.queryByRole('heading', { name: 'Water conditions' })).not.toBeInTheDocument();
+    expect(HTMLElement.prototype.scrollIntoView).not.toHaveBeenCalled();
+    await act(async () => complete(baselineReply()));
+    const results = await screen.findByRole('region', { name: 'Water conditions results' });
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+    expect(screen.getByRole('form', { name: 'Your selected area' })).toBe(form);
+    expect(screen.getByRole('combobox', { name: 'Search for a place' })).toBeVisible();
+    await waitFor(() =>
+      expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledWith({
+        behavior: 'smooth',
+        block: 'start',
+      }),
+    );
+    expect(results).toHaveFocus();
+    fireEvent.change(screen.getByRole('textbox', { name: /Radius/ }), { target: { value: '2' } });
+    expect(screen.queryByRole('heading', { name: 'Water conditions' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Continue to baseline' })).not.toBeInTheDocument();
+  });
+
+  it('dismisses the loader on failure and allows retry without losing the location', async () => {
+    let calls = 0;
+    handlers.AreaBaseline = () =>
+      ++calls === 1
+        ? { errors: [{ message: 'unavailable', extensions: { code: 'INTERNAL' } }] }
+        : baselineReply();
+    renderStep();
+    await search('Nairobi');
+    fireEvent.click(await screen.findByRole('option', { name: /nairobi/i }));
+    await confirmReview();
+    expect(await screen.findByText(/Could not load water conditions/)).toBeVisible();
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Water conditions' })).not.toBeInTheDocument();
+    expect(screen.getByTestId('review-name')).toHaveTextContent('Nairobi');
+    await confirmReview();
+    expect(await screen.findByRole('heading', { name: 'Water conditions' })).toBeVisible();
+    expect(calls).toBe(2);
+  });
 });

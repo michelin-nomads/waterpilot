@@ -1029,7 +1029,7 @@ export type AreaLocationQueryVariables = Exact<{
 }>;
 
 
-export type AreaLocationQuery = { area: { id: string, name: string, centroidLat: string, centroidLon: string, countryCode: string, timezone: string, currency: string | null, unitSystem: UnitSystem, regionSetByUser: Array<string>, evidence: EvidenceQuality, origin: AreaOrigin, scope: GeographicScope, extent: ExtentKind, radiusMeters: number | null, private: boolean, formattedAddress: string | null, accuracyMeters: number | null, hasBoundary: boolean, providerContentExpired: boolean, admin: { countryName: string | null, admin1: string | null, admin2: string | null, locality: string | null, sublocality: string | null } } | null };
+export type AreaLocationQuery = { area: { placeId: string | null, id: string, name: string, centroidLat: string, centroidLon: string, countryCode: string, timezone: string, currency: string | null, unitSystem: UnitSystem, regionSetByUser: Array<string>, evidence: EvidenceQuality, origin: AreaOrigin, scope: GeographicScope, extent: ExtentKind, radiusMeters: number | null, private: boolean, formattedAddress: string | null, accuracyMeters: number | null, hasBoundary: boolean, providerContentExpired: boolean, admin: { countryName: string | null, admin1: string | null, admin2: string | null, locality: string | null, sublocality: string | null } } | null };
 
 export type ConfirmLocationMutationVariables = Exact<{
   input: ConfirmLocationInput;
@@ -3770,6 +3770,7 @@ export const CountriesDocument = new TypedDocumentString(`
 export const AreaLocationDocument = new TypedDocumentString(`
     query AreaLocation($id: ID!) {
   area(id: $id) {
+    placeId
     ...AreaLocationFields
   }
 }

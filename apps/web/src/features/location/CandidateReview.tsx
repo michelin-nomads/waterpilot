@@ -16,6 +16,7 @@ export interface LocationDraft {
 }
 
 interface CandidateReviewProps {
+  initialRadiusKm?: number;
   draft: LocationDraft;
   pending: boolean;
   canSave: boolean;
@@ -40,6 +41,7 @@ function radiusError(km: string): string | null {
 /** Review a circular planning area; regional settings are inferred by the API on confirmation. */
 export function CandidateReview({
   draft,
+  initialRadiusKm = 1,
   pending,
   canSave,
   failure,
@@ -51,7 +53,7 @@ export function CandidateReview({
 }: CandidateReviewProps) {
   const id = useId();
   const { place, origin } = draft;
-  const [radiusKm, setRadiusKm] = useState('1');
+  const [radiusKm, setRadiusKm] = useState(String(initialRadiusKm));
   const [error, setError] = useState<string | null>(null);
   const nameUnavailable = place.name === 'Location name unavailable';
   const inaccurate = (draft.accuracyMeters ?? 0) > INACCURATE_FIX_M;
@@ -87,7 +89,7 @@ export function CandidateReview({
     <form className={styles.review} onSubmit={submit} noValidate aria-labelledby={`${id}-title`}>
       <div className={styles.summaryHead}>
         <h2 id={`${id}-title`} className={styles.title}>
-          Confirm your location
+          Your selected area
         </h2>
         {isFixturePlace(place) && <Badge tone="warning">Test place, not real data</Badge>}
       </div>
@@ -206,7 +208,7 @@ export function CandidateReview({
           loading={pending}
           disabled={!canSave || !place.countryCode || nameUnavailable}
         >
-          Confirm location
+          Understand this area
         </Button>
         <Button variant="ghost" onClick={onBack}>
           Change area

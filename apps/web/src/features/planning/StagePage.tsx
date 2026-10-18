@@ -11,10 +11,11 @@ interface StagePageProps {
   children: ReactNode;
   title?: string;
   subtitle?: string;
+  actions?: ReactNode;
 }
 
 /** Standard frame for a planning stage: "Step N of 5", title and subtitle. */
-export function StagePage({ stageId, children, title, subtitle }: StagePageProps) {
+export function StagePage({ stageId, children, title, subtitle, actions }: StagePageProps) {
   const { stage, index } = getStage(stageId);
   return (
     <div className={styles.stage}>
@@ -22,6 +23,7 @@ export function StagePage({ stageId, children, title, subtitle }: StagePageProps
         eyebrow={`Step ${index + 1} of ${PLANNING_STAGES.length}`}
         title={title ?? stage.label}
         subtitle={subtitle ?? stage.subtitle}
+        actions={actions}
       />
       <div className={styles.content}>
         <PlanInputNotice />

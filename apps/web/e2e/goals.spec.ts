@@ -47,7 +47,8 @@ test('a guest checks a goal against their baseline, saves it, and sees an imposs
   await page.goto('/');
   await page.getByRole('button', { name: 'Start Exploring' }).click();
   await chooseFixtureLocation(page);
-  await page.getByRole('button', { name: 'Confirm location', exact: true }).click();
+  await page.getByRole('button', { name: 'Understand this area', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue to baseline' }).click();
   await enter(page, 'DELIVERED_SUPPLY', '1', 'MLD', 'Utility monthly report');
   await enter(page, 'TANKER_SUPPLY', '0.3', 'MLD', 'Tanker delivery receipts');
   await page.getByRole('link', { name: 'Set your goal' }).click();

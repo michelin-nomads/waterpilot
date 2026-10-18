@@ -2,10 +2,10 @@
 
 .step {
   display: grid;
-  gap: var(--wp-space-5);
+  gap: var(--wp-space-6);
 
   @include desktop-up {
-    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
     align-items: start;
   }
 }
@@ -65,8 +65,9 @@
 
   display: grid;
   align-content: start;
-  min-height: 30rem;
-  padding: var(--wp-card-padding);
+  min-height: 0;
+  padding: var(--wp-space-3);
+  gap: var(--wp-space-3);
 }
 
 .search {
@@ -223,13 +224,13 @@
 }
 
 .map {
-  min-height: 18rem;
+  min-height: 20rem;
   border: 1px solid var(--wp-color-border);
   border-radius: var(--wp-radius-lg);
   background: var(--wp-color-surface-sunken);
 
   @include desktop-up {
-    min-height: 30rem;
+    min-height: 24rem;
   }
 }
 
@@ -300,4 +301,140 @@
 }
 .compact .summaryHead > button {
   color: var(--wp-color-accent-strong);
+}
+
+// Location controls and map form the first row; results span the row below.
+.mapHeading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wp-space-2);
+  padding: var(--wp-space-1);
+  h2 {
+    margin: 0;
+    font-size: var(--wp-text-md);
+  }
+  > span {
+    color: var(--wp-color-text-muted);
+    font-size: var(--wp-text-xs);
+  }
+}
+.mapLegend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--wp-space-2);
+  margin: 0;
+  font-size: var(--wp-text-xs);
+  color: var(--wp-color-text-muted);
+  > span:first-child {
+    width: 0.75rem;
+    height: 0.75rem;
+    border: 2px solid var(--wp-color-accent);
+    border-radius: 50%;
+    background: var(--wp-color-accent-soft);
+  }
+}
+.legendNote {
+  margin-left: auto;
+}
+
+.results {
+  grid-column: 1 / -1;
+  min-width: 0;
+  padding-top: var(--wp-space-6);
+  border-top: 1px solid var(--wp-color-border);
+}
+
+.searchHeading {
+  display: grid;
+  gap: var(--wp-space-2);
+  margin-bottom: var(--wp-space-2);
+}
+
+.map > div {
+  min-height: inherit;
+}
+
+.main {
+  @include card;
+  align-self: start;
+  align-content: start;
+  gap: var(--wp-space-5);
+}
+
+.main > .card,
+.main > .review {
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.main > .review {
+  border-top: 1px solid var(--wp-color-border);
+  border-radius: 0;
+  padding-top: var(--wp-space-5);
+}
+
+// Stretch the live map to follow the editor as location details appear.
+.aside {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+}
+.mapStage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.mapWrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.map {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+.map > div {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  min-height: 100%;
+}
+.step {
+  @include desktop-up {
+    align-items: stretch;
+  }
+}
+.results {
+  scroll-margin-top: 10rem;
+  @include desktop-up {
+    scroll-margin-top: var(--wp-space-4);
+  }
+  &:focus {
+    outline: none;
+  }
+}
+.loadingOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--wp-z-dialog) + 1);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: clamp(5rem, 12vh, 8rem) var(--wp-space-4) var(--wp-space-4);
+  background: color-mix(in srgb, var(--wp-color-surface) 60%, transparent);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  overflow-y: auto;
+}
+.loadingIndicator {
+  display: grid;
+  justify-items: center;
+  gap: var(--wp-space-3);
+  max-width: 26rem;
 }

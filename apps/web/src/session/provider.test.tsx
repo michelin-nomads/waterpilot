@@ -284,7 +284,7 @@ describe('planning session in the app', () => {
     expect(screen.queryByText('Replace your current plan?')).not.toBeInTheDocument();
 
     fireEvent.click(within(dialog).getByRole('button', { name: /Explorer/ }));
-    await screen.findByRole('heading', { level: 1, name: 'Confirm your location' });
+    await screen.findByRole('heading', { level: 1, name: 'Understand your area' });
     expect(router.state.location.pathname).toBe('/area');
     expect(sessions.sessions.get(id)?.status).toBe('CLOSED');
     expect(session().view?.id).not.toBe(id);
@@ -310,7 +310,7 @@ describe('planning session in the app', () => {
       fireEvent.click(within(dialog).getByRole('button', { name: /WaterPilot Agent/ })),
     );
 
-    await screen.findByRole('heading', { level: 1, name: 'Confirm your location' });
+    await screen.findByRole('heading', { level: 1, name: 'Understand your area' });
     expect(router.state.location.pathname).toBe('/area');
     expect(sessions.calls.filter((call) => call === 'create:AGENT')).toHaveLength(2);
     expect([...sessions.sessions.values()].filter((item) => item.status === 'ACTIVE')).toHaveLength(

@@ -91,6 +91,9 @@ function locationReply(over: Record<string, unknown> = {}) {
       area: {
         id: AREA,
         name: 'Test ward',
+        centroidLat: '12.9352',
+        centroidLon: '77.6245',
+        placeId: 'fixture:test-ward',
         countryCode: 'IN',
         timezone: 'Asia/Kolkata',
         currency: 'INR',
@@ -138,6 +141,10 @@ const stub: AxiosAdapter = async (config: InternalAxiosRequestConfig) => {
 };
 
 beforeEach(() => {
+  Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+    configurable: true,
+    value: vi.fn(),
+  });
   sent = [];
   handlers = {
     AreaReadiness: () => areaReply(),
@@ -234,7 +241,9 @@ describe('community type', () => {
 describe('AreaPage', () => {
   it('renders the stage heading and position', async () => {
     renderArea();
-    expect(screen.getByRole('heading', { level: 1, name: /location/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 1, name: /understand your area/i }),
+    ).toBeInTheDocument();
     expect(screen.getByText('Step 1 of 5')).toBeInTheDocument();
     await screen.findByRole('heading', { name: /data coverage/i });
   });
@@ -244,7 +253,8 @@ describe('AreaPage', () => {
     expect(
       await screen.findByRole('combobox', { name: /search for a place/i }),
     ).toBeInTheDocument();
-    expect(screen.getByRole('complementary', { name: 'Map' })).toBeInTheDocument();
+    expect(screen.getByRole('complementary', { name: 'Area map' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Water conditions' })).not.toBeInTheDocument();
     expect(sent).toHaveLength(0);
     expect(
       screen.queryByRole('button', { name: /synthetic demo area|enter it yourself/i }),
@@ -325,32 +335,26 @@ describe('AreaPage', () => {
     expect(within(disclosure).getByText('Forward supply and demand projection')).toBeVisible();
   });
 
-  it('shows the confirmed location with region settings and a user-input banner', async () => {
+  it('keeps a saved area editable and hides results until explicitly requested', async () => {
+    handlers.AreaLocation = () => locationReply({ radiusMeters: 1000 });
     renderArea();
-    expect(
-      await screen.findByRole('heading', { name: 'Test ward, Bengaluru' }),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/^INR \(set by you\)$/)).toBeInTheDocument();
-    expect(screen.getByText('Asia/Kolkata')).toBeInTheDocument();
-    expect(screen.getByText(/reference point only/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Change area' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Confirm location' }));
+    expect(await screen.findByTestId('review-name')).toHaveTextContent('Test ward, Bengaluru');
+    expect(screen.getByRole('combobox', { name: 'Search for a place' })).toBeVisible();
+    expect(screen.queryByRole('heading', { name: 'Water conditions' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Understand this area' }));
+    expect(await screen.findByRole('heading', { name: 'Water conditions' })).toBeVisible();
+    expect(screen.getByRole('form', { name: 'Your selected area' })).toBeInTheDocument();
+    fireEvent.click(await screen.findByRole('button', { name: 'Continue to baseline' }));
     expect(screen.getByTestId('route-path')).toHaveTextContent('/baseline');
     expect(await screen.findByText('User-input assessment')).toBeInTheDocument();
   });
 
-  it('asks to choose the place again when provider details expired', async () => {
+  it('requires a fresh search when saved provider details have expired', async () => {
     handlers.AreaLocation = () => locationReply({ providerContentExpired: true });
     renderArea();
     expect(await screen.findByText(/kept for at most 30 days/i)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /choose it again/i }));
-    expect(
-      await screen.findByRole('combobox', { name: /search for a place/i }),
-    ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /keep the current location/i }));
-    expect(
-      await screen.findByRole('heading', { name: 'Test ward, Bengaluru' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('combobox', { name: 'Search for a place' })).toBeVisible();
+    expect(screen.queryByRole('form', { name: 'Your selected area' })).not.toBeInTheDocument();
   });
 
   it('labels demo sources as synthetic', async () => {

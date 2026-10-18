@@ -34,7 +34,8 @@ test('a guest sees readiness for the demo area and records a value they know', a
   await expect(page.getByRole('combobox', { name: 'Search for a place' })).toBeVisible();
   await chooseFixtureLocation(page);
 
-  await page.getByRole('button', { name: 'Confirm location', exact: true }).click();
+  await page.getByRole('button', { name: 'Understand this area', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue to baseline' }).click();
   await page.getByRole('button', { name: 'Overview', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Data coverage' })).toBeVisible();
   const demand = page.locator('[data-metric="demand"]');

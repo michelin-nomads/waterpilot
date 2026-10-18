@@ -86,7 +86,7 @@ describe('main screen', () => {
     const backend = new FakeAuthBackend();
     const router = await renderAt('/', backend);
     fireEvent.click(screen.getByRole('button', { name: 'Start Exploring' }));
-    await screen.findByRole('heading', { level: 1, name: 'Confirm your location' });
+    await screen.findByRole('heading', { level: 1, name: 'Understand your area' });
     expect(router.state.location.pathname).toBe('/area');
     expect(backend.calls).toEqual(['signInAsGuest']);
     expect(within(appHeader()).getByText('Guest')).toBeInTheDocument();
@@ -128,7 +128,7 @@ describe('main screen', () => {
     const sessions = new FakeSessionServer();
     await renderAt('/', new FakeAuthBackend(guest()), sessions);
     fireEvent.click(await screen.findByRole('button', { name: 'Start with Agent' }));
-    await screen.findByRole('heading', { level: 1, name: 'Confirm your location' });
+    await screen.findByRole('heading', { level: 1, name: 'Understand your area' });
     expect(sessions.active('guest-1')?.mode).toBe('AGENT');
     expect(screen.getByRole('complementary', { name: 'Conversation' })).toBeInTheDocument();
     expect(window.localStorage.getItem(PLANNING_MODE_STORAGE_KEY)).toBe('agent');
@@ -179,7 +179,7 @@ describe('main screen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Start Exploring' }));
     expect(await screen.findByText(/your plan could not be started/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
-    await screen.findByRole('heading', { level: 1, name: 'Confirm your location' });
+    await screen.findByRole('heading', { level: 1, name: 'Understand your area' });
     expect(router.state.location.pathname).toBe('/area');
   });
 
@@ -312,7 +312,7 @@ describe('header by account', () => {
       await screen.findByText('Sign-in was cancelled. Your plan is as you left it.'),
     ).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/area');
-    expect(screen.getByRole('heading', { level: 1, name: 'Confirm your location' })).toBeVisible();
+    expect(screen.getByRole('heading', { level: 1, name: 'Understand your area' })).toBeVisible();
   });
 
   it('keeps the person on the same planner screen once they have signed in', async () => {
@@ -331,7 +331,7 @@ describe('header by account', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Create account' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(router.state.location.pathname).toBe('/area');
-    expect(screen.getByRole('heading', { level: 1, name: 'Confirm your location' })).toBeVisible();
+    expect(screen.getByRole('heading', { level: 1, name: 'Understand your area' })).toBeVisible();
     const header = appHeader();
     expect(await within(header).findByRole('button', { name: /Account menu/ })).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Search for a place' })).toBe(nameField);
@@ -449,7 +449,7 @@ describe('application shell', () => {
       'step',
     );
     expect(screen.getByText('Step 1 of 5', { selector: 'p:not(nav p)' })).toBeInTheDocument();
-    expect(document.title).toBe('Confirm your location · WaterPilot');
+    expect(document.title).toBe('Understand your area · WaterPilot');
   });
 
   it('shows the signed-in navigation without Reports current while Review is open', async () => {
@@ -508,7 +508,7 @@ describe('application shell', () => {
     fireEvent.click(within(stages).getByRole('link', { name: /goal/i }));
     const heading = await screen.findByRole('heading', {
       level: 1,
-      name: 'Set your goal and constraints',
+      name: 'What would you like to improve?',
     });
     expect(heading).toHaveFocus();
   });

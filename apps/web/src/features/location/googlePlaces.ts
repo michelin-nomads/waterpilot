@@ -346,7 +346,17 @@ export function googlePlaces(
           const center = { lat: Number(latitude), lng: Number(longitude) };
           clear = [marker(center)];
           if (radiusMeters) {
-            const circle = new maps.Circle({ map, center, radius: radiusMeters, clickable: false });
+            const circle = new maps.Circle({
+              map,
+              center,
+              radius: radiusMeters,
+              clickable: false,
+              strokeColor: '#08777a',
+              strokeOpacity: 1,
+              strokeWeight: 2,
+              fillColor: '#08777a',
+              fillOpacity: 0.16,
+            });
             clear.push(() => circle.setMap(null));
           }
           map.setCenter(center);

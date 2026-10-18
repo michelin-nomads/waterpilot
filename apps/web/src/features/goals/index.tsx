@@ -1,8 +1,16 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
-import { Button, ButtonLink, ErrorState, LoadingRegion, Notice, Skeleton } from '../../components';
+import {
+  Button,
+  ButtonLink,
+  ErrorState,
+  LoadingRegion,
+  Notice,
+  Skeleton,
+  Tooltip,
+} from '../../components';
 import { graphqlRequest } from '../../graphql/client';
 import {
   CheckGoalDocument,
@@ -74,10 +82,12 @@ function effectUnits(catalogue: Catalogue): EffectUnits {
 function GoalEditor({ session, catalogue }: { session: SessionState; catalogue: Catalogue }) {
   const { coordinator, state } = usePlanningSession();
   const client = useQueryClient();
+  const navigate = useNavigate();
   const areaId = session.areaId;
   const revision = state.server?.inputsRevision ?? session.inputsRevision;
   const savedGoal = state.server?.goal ?? null;
   const goalPending = 'goal' in state.pending;
+  const goalSaving = goalPending && state.save === 'saving';
 
   const area = useGraphQLQuery(
     queryKeys.areas.goalArea(areaId ?? ''),
@@ -94,6 +104,7 @@ function GoalEditor({ session, catalogue }: { session: SessionState; catalogue: 
   const [errors, setErrors] = useState<DraftErrors>({});
   const [checked, setChecked] = useState<{ json: string; input: GoalInput } | null>(null);
   const [saving, setSaving] = useState(false);
+  const [failure, setFailure] = useState('');
 
   const current = toGoalInput(effective).input;
   const currentJson = current ? JSON.stringify(current) : null;
@@ -125,10 +136,11 @@ function GoalEditor({ session, catalogue }: { session: SessionState; catalogue: 
     if (next) setChecked(next);
   }
 
-  async function save() {
+  async function save(compare = false) {
     const next = prepare();
     if (!next || !coordinator) return;
     setChecked(next);
+    setFailure('');
     setSaving(true);
     try {
       const result = await client.fetchQuery({
@@ -142,7 +154,24 @@ function GoalEditor({ session, catalogue }: { session: SessionState; catalogue: 
       });
       const found = serverErrors(result.checkGoal.errors);
       setErrors(found);
-      if (Object.keys(found).length === 0) coordinator.setGoal(next.input);
+      if (Object.keys(found).length === 0) {
+        coordinator.setGoal(next.input);
+        await coordinator.flush();
+        const persisted = coordinator.getState();
+        if (
+          persisted.message ||
+          persisted.conflict ||
+          Object.keys(persisted.pending).length ||
+          !sameValue('goal', persisted.server?.goal ?? null, next.input)
+        ) {
+          throw new Error('Goal save incomplete');
+        }
+        if (compare) navigate('/plans');
+      }
+    } catch {
+      setFailure(
+        'Your goal could not be saved. Your entries are kept. Check the connection and try again.',
+      );
     } finally {
       setSaving(false);
     }
@@ -160,6 +189,7 @@ function GoalEditor({ session, catalogue }: { session: SessionState; catalogue: 
 
   const shortlist = {
     selected: effective.preferred,
+    disabled: saving || goalSaving,
     toggle: (iid: string) =>
       setDraft({
         ...effective,
@@ -177,56 +207,64 @@ function GoalEditor({ session, catalogue }: { session: SessionState; catalogue: 
           <Link to="/area">Choose a location</Link> to check them.
         </Notice>
       )}
-      {areaId && area.data?.area && (
-        <section className={styles.locationContext} aria-label="Selected planning location">
-          <div>
-            <span className={styles.muted}>Planning for</span>
-            <strong>{area.data.area.name}</strong>
-            <span className={styles.muted}>
-              {areaCurrency
-                ? `Budgets remain in ${areaCurrency}; no currency conversion is applied.`
-                : 'A local currency is not known. Any amount stays in the currency you specify.'}
-            </span>
-          </div>
-          <ButtonLink to="/area" variant="secondary">
-            Edit location
-          </ButtonLink>
-        </section>
-      )}
-      <section className={styles.panel} aria-labelledby="goal-form-title">
-        <h2 id="goal-form-title" className={styles.title}>
-          Choose a goal
-        </h2>
-        <GoalForm
-          draft={effective}
-          onChange={(d) => {
-            setDraft(d);
-            setErrors({});
-          }}
-          errors={shownErrors}
-          catalogue={catalogue}
-          areaCurrency={areaCurrency}
-          actions={
+      <GoalForm
+        draft={effective}
+        onChange={(d) => {
+          setDraft(d);
+          setErrors({});
+          setFailure('');
+        }}
+        errors={shownErrors}
+        catalogue={catalogue}
+        areaCurrency={areaCurrency}
+        assessment={shown}
+        disabled={saving || goalSaving}
+        onCompare={() => void save(true)}
+        actions={
+          <div className={styles.goalFooter}>
+            <ButtonLink to="/baseline/overview" variant="secondary">
+              Back to baseline
+            </ButtonLink>
             <div className={styles.actions}>
               <Button
-                variant="secondary"
+                variant="ghost"
+                className={styles.textAction}
                 onClick={runCheck}
                 loading={check.isFetching && !saving}
-                disabled={!effective.kind}
+                disabled={!effective.kind || saving || goalSaving}
               >
                 Check goal
               </Button>
               <Button
+                variant="secondary"
                 onClick={() => void save()}
-                loading={saving || goalPending}
+                loading={saving || goalSaving}
                 disabled={!effective.kind || (matchesSaved && !goalPending)}
               >
                 {matchesSaved && !goalPending ? 'Goal saved' : 'Save goal'}
               </Button>
+              <Button
+                type="submit"
+                loading={saving || goalSaving}
+                disabled={!effective.kind || !areaId}
+                endIcon="arrow-right"
+              >
+                Compare plans
+              </Button>
             </div>
-          }
-        />
-      </section>
+          </div>
+        }
+      />
+      {failure && (
+        <Notice kind="caution" title="Goal not saved">
+          {failure}
+        </Notice>
+      )}
+      {check.isError && (
+        <Notice kind="caution" title="The goal check could not load">
+          Your entries are kept. Check the connection and try again.
+        </Notice>
+      )}
       {stale && (
         <Notice kind="stale">You changed the goal after checking it. Check it again.</Notice>
       )}
@@ -240,13 +278,6 @@ function GoalEditor({ session, catalogue }: { session: SessionState; catalogue: 
           <Skeleton shape="block" />
         </LoadingRegion>
       ) : null}
-      {savedGoal && matchesSaved && !goalPending && (
-        <div className={styles.actions}>
-          <ButtonLink to="/plans" endIcon="arrow-right">
-            Compare plans
-          </ButtonLink>
-        </div>
-      )}
     </div>
   );
 }
@@ -266,17 +297,45 @@ function Body() {
   return <GoalWorkspace key={`${view.id}:${state.server?.inputsRevision ?? 0}`} session={view} />;
 }
 
+function GoalLocationContext() {
+  const { view } = usePlanningSession();
+  const areaId = view?.areaId;
+  const area = useGraphQLQuery(
+    queryKeys.areas.goalArea(areaId ?? ''),
+    GoalAreaDocument,
+    { id: areaId ?? '' },
+    { enabled: Boolean(areaId) },
+  );
+  if (!area.data?.area) return null;
+  return (
+    <section className={styles.locationContext} aria-label="Selected planning location">
+      <div>
+        <span className={styles.muted}>Planning for</span>
+        <Tooltip
+          label="Full planning location"
+          trigger={<strong className={styles.locationName}>{area.data.area.name}</strong>}
+        >
+          {area.data.area.name}
+        </Tooltip>
+      </div>
+      <ButtonLink to="/area" variant="ghost" size="sm" className={styles.textAction}>
+        Change
+      </ButtonLink>
+    </section>
+  );
+}
+
 export default function GoalsPage() {
   return (
-    <StagePage
-      stageId="goals"
-      title="Set your goal and constraints"
-      subtitle="Choose what to improve, then add the limits your community needs plans to respect."
-    >
-      <Body />
-      <ButtonLink to="/baseline/overview" variant="ghost">
-        Back to baseline
-      </ButtonLink>
-    </StagePage>
+    <div className={styles.goalPage}>
+      <StagePage
+        stageId="goals"
+        actions={<GoalLocationContext />}
+        title="What would you like to improve?"
+        subtitle="Choose a goal. We’ll compare plans against your target and constraints."
+      >
+        <Body />
+      </StagePage>
+    </div>
   );
 }

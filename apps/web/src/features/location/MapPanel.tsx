@@ -5,6 +5,8 @@ import type { MapView, PlacesAdapter } from './types';
 import styles from './Location.module.scss';
 
 interface MapPanelProps {
+  instruction?: string;
+  showInstruction?: boolean;
   adapter: PlacesAdapter;
   point: { latitude: string; longitude: string; radiusMeters?: number | null } | null;
   onPick: (latitude: string, longitude: string) => void;
@@ -21,7 +23,13 @@ const NO_MAP: Record<PlacesAdapter['provider'], string> = {
  * Optional map. Loaded only when this step is shown; an outage, rejected key or timeout
  * leaves search, device location and device location fully usable.
  */
-export function MapPanel({ adapter, point, onPick }: MapPanelProps) {
+export function MapPanel({
+  adapter,
+  point,
+  onPick,
+  showInstruction = true,
+  instruction = 'Click the map to pick a point. You review it before saving.',
+}: MapPanelProps) {
   const element = useRef<HTMLDivElement>(null);
   const view = useRef<MapView | null>(null);
   const pick = useRef(onPick);
@@ -88,10 +96,12 @@ export function MapPanel({ adapter, point, onPick }: MapPanelProps) {
             ref={element}
             className={styles.map}
             role="region"
-            aria-label="Map. Click to pick a point, which you then review before saving."
+            aria-label={
+              showInstruction ? `Map. ${instruction}` : 'Map. Click to choose your planning area.'
+            }
             aria-busy={status === 'loading'}
           />
-          <p className={styles.hint}>Click the map to pick a point. You review it before saving.</p>
+          {showInstruction && <p className={styles.hint}>{instruction}</p>}
         </>
       )}
     </div>

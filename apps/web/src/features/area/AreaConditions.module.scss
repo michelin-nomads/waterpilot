@@ -1,0 +1,194 @@
+@use 'mixins' as *;
+
+.overview {
+  display: grid;
+  gap: var(--wp-space-5);
+  min-width: 0;
+}
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--wp-space-3);
+}
+.header h2 {
+  margin: 0;
+  font-size: var(--wp-text-xl);
+  letter-spacing: -0.03em;
+}
+.eyebrow {
+  margin: 0 0 var(--wp-space-1);
+  color: var(--wp-color-accent-strong);
+  font-size: var(--wp-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+.intro {
+  margin: 0;
+  color: var(--wp-color-text-muted);
+  font-size: var(--wp-text-sm);
+}
+.grid {
+  display: grid;
+  gap: var(--wp-space-4);
+  @include tablet-up {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  @include desktop-up {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.condition {
+  @include card;
+  display: grid;
+  align-content: start;
+  gap: var(--wp-space-2);
+  padding: var(--wp-space-5);
+  box-shadow: none;
+}
+.warning {
+  --condition-color: var(--wp-color-warning);
+  --condition-soft: var(--wp-color-warning-soft);
+}
+.info {
+  --condition-color: var(--wp-color-info);
+  --condition-soft: var(--wp-color-info-soft);
+}
+.accent {
+  --condition-color: var(--wp-color-accent-strong);
+  --condition-soft: var(--wp-color-accent-soft);
+}
+.danger {
+  --condition-color: var(--wp-color-danger);
+  --condition-soft: var(--wp-color-danger-soft);
+}
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+}
+.cardHead h3 {
+  flex: 1;
+  margin: 0;
+  font-size: var(--wp-text-sm);
+}
+.icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--wp-radius-md);
+  color: var(--condition-color);
+  background: var(--condition-soft);
+}
+.value,
+.empty {
+  margin: var(--wp-space-1) 0 0;
+  line-height: 1.2;
+  font-size: var(--wp-text-2xl);
+  font-weight: 750;
+  letter-spacing: -0.03em;
+}
+.value {
+  color: var(--condition-color);
+}
+.empty {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+  color: var(--wp-color-text-muted);
+}
+.empty span {
+  font-size: var(--wp-text-sm);
+  font-weight: 500;
+  letter-spacing: normal;
+}
+.description {
+  margin: 0;
+  color: var(--wp-color-text-muted);
+  font-size: var(--wp-text-sm);
+}
+.meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--wp-space-2);
+  padding-top: var(--wp-space-2);
+  color: var(--wp-color-text-muted);
+  font-size: var(--wp-text-xs);
+}
+.insight {
+  display: flex;
+  gap: var(--wp-space-3);
+  border-radius: var(--wp-radius-md);
+  padding: var(--wp-space-5);
+  background: var(--wp-color-accent-soft);
+}
+.insightIcon {
+  color: var(--wp-color-accent-strong);
+  flex: none;
+}
+.insight h3 {
+  font-size: var(--wp-text-md);
+  margin: 0 0 var(--wp-space-1);
+}
+.insight p,
+.sourceBody p {
+  margin: 0;
+  font-size: var(--wp-text-sm);
+  color: var(--wp-color-text-muted);
+}
+.sources {
+  border: 1px solid var(--wp-color-border);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-color-surface);
+}
+.sources summary {
+  @include tap-target;
+  @include focus-visible;
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+  padding: var(--wp-space-3) var(--wp-space-4);
+  cursor: pointer;
+  font-size: var(--wp-text-sm);
+  font-weight: 600;
+}
+.sources summary > :last-child {
+  margin-left: auto;
+}
+.sources[open] summary {
+  border-bottom: 1px solid var(--wp-color-border);
+}
+.sourceBody {
+  display: grid;
+  gap: var(--wp-space-4);
+  padding: var(--wp-space-4);
+}
+.sourceRow {
+  display: grid;
+  gap: var(--wp-space-1);
+  font-size: var(--wp-text-sm);
+  overflow-wrap: anywhere;
+}
+.failure {
+  margin: 0;
+  color: var(--wp-color-danger);
+}
+.failure button {
+  @include tap-target;
+  @include focus-visible;
+  color: inherit;
+  background: none;
+  border: 0;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.period {
+  margin: 0;
+  font-size: var(--wp-text-xs);
+  color: var(--wp-color-text-muted);
+}

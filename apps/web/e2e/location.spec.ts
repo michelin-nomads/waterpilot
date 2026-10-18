@@ -32,9 +32,11 @@ async function confirm(page: Page) {
   const response = page.waitForResponse((result) =>
     (result.request().postData() ?? '').includes('mutation ConfirmLocation'),
   );
-  await page.getByRole('button', { name: 'Confirm location', exact: true }).click();
+  await page.getByRole('button', { name: 'Understand this area', exact: true }).click();
   const body = await (await response).json();
   expect(body.data.confirmLocation.error).toBeNull();
+  await expect(page).toHaveURL(/\/area$/);
+  await page.getByRole('button', { name: 'Continue to baseline' }).click();
   await expect(page).toHaveURL(/\/baseline$/);
   await expect(page.getByTestId('summary-name')).toHaveText(selectedName);
   expect(
@@ -66,7 +68,7 @@ test('search reviews a circle and automatically determines currency and timezone
   ).toHaveCount(0);
   await search.fill('Nairobi');
   await page.getByRole('option', { name: /Nairobi/ }).click();
-  const review = page.getByRole('form', { name: 'Confirm your location' });
+  const review = page.getByRole('form', { name: 'Your selected area' });
   await expect(review).toBeVisible();
   await expect(review.getByRole('radio')).toHaveCount(0);
   for (const name of [/Country/i, /Currency/i, /Time zone/i])
@@ -75,10 +77,10 @@ test('search reviews a circle and automatically determines currency and timezone
   const radius = review.getByRole('textbox', { name: /Radius/ });
   await expect(radius).toHaveValue('1');
   await radius.fill('0.5');
-  await review.getByRole('button', { name: 'Confirm location', exact: true }).click();
+  await review.getByRole('button', { name: 'Understand this area', exact: true }).click();
   await expect(page.getByText('Enter a radius from 1 to 10 km.', { exact: true })).toBeVisible();
   await radius.fill('10.1');
-  await review.getByRole('button', { name: 'Confirm location', exact: true }).click();
+  await review.getByRole('button', { name: 'Understand this area', exact: true }).click();
   await expect(page.getByText('Enter a radius from 1 to 10 km.', { exact: true })).toBeVisible();
   await radius.fill('2.5');
   await review.getByRole('button', { name: 'About the planning radius' }).focus();
@@ -140,7 +142,7 @@ test.describe('device location granted', () => {
   }) => {
     await startPlanning(page);
     await page.getByRole('button', { name: 'Use my location' }).click();
-    const review = page.getByRole('form', { name: 'Confirm your location' });
+    const review = page.getByRole('form', { name: 'Your selected area' });
     await expect(review.getByTestId('review-name')).toContainText('Lima');
     await expect(review.getByText('Device location', { exact: true })).toBeVisible();
     await expect(review.getByText('Approximately ±30 m')).toBeVisible();
@@ -197,9 +199,9 @@ test.describe('device position without reverse-geocoding results', () => {
     });
     await startPlanning(page);
     await page.getByRole('button', { name: 'Use my location' }).click();
-    const review = page.getByRole('form', { name: 'Confirm your location' });
+    const review = page.getByRole('form', { name: 'Your selected area' });
     await expect(
-      review.getByRole('button', { name: 'Confirm location', exact: true }),
+      review.getByRole('button', { name: 'Understand this area', exact: true }),
     ).toBeDisabled();
     await review.getByRole('button', { name: 'Try again', exact: true }).click();
     await expect(review.getByTestId('review-name')).toHaveText('HSR Layout, Bengaluru');

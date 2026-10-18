@@ -35,4 +35,13 @@ describe('WaterDropletLoader', () => {
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '100');
     expect(onComplete).toHaveBeenCalledTimes(1);
   });
+  it('uses request progress instead of a timer when controlled', () => {
+    const onComplete = vi.fn();
+    const { rerender } = render(<WaterDropletLoader progress={0.5} onComplete={onComplete} />);
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '50');
+    expect(screen.getByText('50%')).toBeVisible();
+    rerender(<WaterDropletLoader progress={1} onComplete={onComplete} />);
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '100');
+    expect(onComplete).not.toHaveBeenCalled();
+  });
 });

@@ -12,7 +12,7 @@ interface GoalAssessmentViewProps {
   /** Heading level for the panel title (the agent pane nests it lower). */
   headingLevel?: 2 | 3;
   /** Shortlisting is offered only where the site meets a measure's prerequisites. */
-  shortlist?: { selected: readonly string[]; toggle: (id: string) => void };
+  shortlist?: { selected: readonly string[]; toggle: (id: string) => void; disabled?: boolean };
   compact?: boolean;
 }
 
@@ -65,7 +65,7 @@ function MeasureFit({
           <input
             type="checkbox"
             checked={chosen}
-            disabled={!siteOk && !chosen}
+            disabled={shortlist.disabled || (!siteOk && !chosen)}
             onChange={() => shortlist.toggle(fit.interventionId)}
           />
           Shortlist this measure

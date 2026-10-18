@@ -48,7 +48,8 @@ test('a guest compares only feasible plans, chooses one, and tests a what-if in 
   await page.goto('/');
   await page.getByRole('button', { name: 'Start Exploring' }).click();
   await chooseFixtureLocation(page);
-  await page.getByRole('button', { name: 'Confirm location', exact: true }).click();
+  await page.getByRole('button', { name: 'Understand this area', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue to baseline' }).click();
   // 12000 people x 135 L = 1,620,000 L/day demand; 300,000 L/day from tankers (30%).
   await enter(page, 'POPULATION', '12000', null, 'Ward census table, 2011');
   await enter(page, 'PER_CAPITA_STANDARD', '135', null, 'National design standard');
