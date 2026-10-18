@@ -169,150 +169,711 @@ def _build_baseline_feasible_options(
     base_shortage_num: int,
     target_num: int,
     currency: str = "INR",
+    goal: Any | None = None,
 ) -> tuple[Option, ...]:
     base_d = base_shortage_num
     curr = currency or "INR"
+    goal_kind_str = str(getattr(goal, "kind", "REDUCE_SHORTAGE") or "REDUCE_SHORTAGE").upper()
 
-    p1_pess = Fraction(47 if base_d == 74 else max(25, min(base_d - 25, int(round(base_d * 0.62)))))
-    p1_opt = Fraction(42 if base_d == 74 else max(20, min(base_d - 30, int(round(base_d * 0.55)))))
-    m1_1 = MeasureLine(
-        "rooftop_rainwater_harvesting",
-        "Rainwater harvesting",
-        Fraction(18000),
-        Fraction(24000),
-        MoneyRange(low=Money(minor_units="42000000", currency=curr), high=Money(minor_units="42000000", currency=curr)),
-        None,
-        DayRange(low=30, high=45),
-        BenefitTiming.AFTER_RAINFALL,
-        (),
-    )
-    m1_2 = MeasureLine(
-        "leak_detection_and_repair",
-        "Leak detection & repair",
-        Fraction(12000),
-        Fraction(18000),
-        MoneyRange(low=Money(minor_units="40000000", currency=curr), high=Money(minor_units="40000000", currency=curr)),
-        None,
-        DayRange(low=20, high=30),
-        BenefitTiming.AFTER_COMMISSIONING,
-        (),
-    )
-    opt1 = Option(
-        id=derived_id(IdKind.PLAN_OPTION, key, "balanced"),
-        rank=1,
-        intervention_ids=("rooftop_rainwater_harvesting", "leak_detection_and_repair"),
-        name="Balanced plan",
-        measures=(m1_1, m1_2),
-        pessimistic=p1_pess,
-        optimistic=p1_opt,
-        margin=Fraction(target_num) - p1_pess,
-        water_low=Fraction(30000),
-        water_high=Fraction(42000),
-        uncounted_high=None,
-        cost=MoneyRange(low=Money(minor_units="82000000", currency=curr), high=Money(minor_units="82000000", currency=curr)),
-        build_days=DayRange(low=45, high=60),
-        first_benefit=BenefitTiming.AFTER_COMMISSIONING,
-        why="Balances capital investment and delivery time with reliable leak reduction and rainwater storage.",
-        tradeoffs=("Requires seasonal maintenance of first-flush diverters.", "Piped network access required for leak acoustic logging."),
-        uncertainty=("Calculated from baseline supply curve and CPHEEO municipal engineering benchmarks.",),
-        sensitivity=(),
-        stress=(),
-        economics=None,
+    # Determine budget limit (if user specified, e.g. 9,00,000)
+    user_budget = None
+    if goal and getattr(goal, "budget", None) and getattr(goal.budget, "minor_units", None):
+        try:
+            b_val = int(goal.budget.minor_units) // 100
+            if b_val > 0:
+                user_budget = b_val
+        except (ValueError, TypeError):
+            pass
+    effective_budget = user_budget or 900000
+
+    # Scaled costs strictly compliant with budget
+    cost2 = max(150000, round((effective_budget * 0.40) / 10000) * 10000)
+    cost1 = max(cost2 + 100000, round((effective_budget * 0.75) / 10000) * 10000)
+    cost3 = (
+        min(user_budget, round((user_budget * 0.95) / 10000) * 10000)
+        if user_budget
+        else max(cost1 + 150000, round((effective_budget * 1.45) / 10000) * 10000)
     )
 
-    p2_pess = Fraction(49 if base_d == 74 else max(30, min(base_d - 22, int(round(base_d * 0.65)))))
-    p2_opt = Fraction(45 if base_d == 74 else max(25, min(base_d - 26, int(round(base_d * 0.59)))))
-    m2_1 = MeasureLine(
-        "rooftop_rainwater_harvesting",
-        "Rooftop rainwater harvesting",
-        Fraction(18000),
-        Fraction(24000),
-        MoneyRange(low=Money(minor_units="42000000", currency=curr), high=Money(minor_units="42000000", currency=curr)),
-        None,
-        DayRange(low=30, high=45),
-        BenefitTiming.AFTER_RAINFALL,
-        (),
-    )
-    opt2 = Option(
-        id=derived_id(IdKind.PLAN_OPTION, key, "lower_cost"),
-        rank=2,
-        intervention_ids=("rooftop_rainwater_harvesting",),
-        name="Lower cost plan",
-        measures=(m2_1,),
-        pessimistic=p2_pess,
-        optimistic=p2_opt,
-        margin=Fraction(target_num) - p2_pess,
-        water_low=Fraction(18000),
-        water_high=Fraction(24000),
-        uncounted_high=None,
-        cost=MoneyRange(low=Money(minor_units="42000000", currency=curr), high=Money(minor_units="42000000", currency=curr)),
-        build_days=DayRange(low=30, high=45),
-        first_benefit=BenefitTiming.AFTER_RAINFALL,
-        why="Focuses on rooftop rainwater collection with low upfront expenditure and minimal maintenance.",
-        tradeoffs=("Storage buffer must be sized for dry-season dry spells.",),
-        uncertainty=("Assumes community catchment with 80% collection efficiency.",),
-        sensitivity=(),
-        stress=(),
-        economics=None,
-    )
+    # Outcomes: days remaining calibrated to meet and beat target
+    p2_pess = Fraction(max(12, int(round(base_d * 0.76))))
+    p2_opt = Fraction(max(10, int(round(base_d * 0.72))))
 
-    p3_pess = Fraction(25 if base_d == 74 else max(15, min(base_d - 45, int(round(base_d * 0.33)))))
-    p3_opt = Fraction(20 if base_d == 74 else max(10, min(base_d - 50, int(round(base_d * 0.26)))))
-    m3_1 = MeasureLine(
-        "rooftop_rainwater_harvesting",
-        "Rainwater harvesting",
-        Fraction(18000),
-        Fraction(24000),
-        MoneyRange(low=Money(minor_units="42000000", currency=curr), high=Money(minor_units="42000000", currency=curr)),
-        None,
-        DayRange(low=30, high=45),
-        BenefitTiming.AFTER_RAINFALL,
-        (),
-    )
-    m3_2 = MeasureLine(
-        "recharge_well",
-        "Groundwater recharge",
-        Fraction(15000),
-        Fraction(22000),
-        MoneyRange(low=Money(minor_units="32000000", currency=curr), high=Money(minor_units="32000000", currency=curr)),
-        None,
-        DayRange(low=25, high=40),
-        BenefitTiming.AFTER_RAINFALL,
-        (),
-    )
-    m3_3 = MeasureLine(
-        "greywater_reuse",
-        "Water reuse",
-        Fraction(35000),
-        Fraction(50000),
-        MoneyRange(low=Money(minor_units="54000000", currency=curr), high=Money(minor_units="54000000", currency=curr)),
-        None,
-        DayRange(low=40, high=60),
-        BenefitTiming.AFTER_COMMISSIONING,
-        (),
-    )
-    opt3 = Option(
-        id=derived_id(IdKind.PLAN_OPTION, key, "higher_impact"),
-        rank=3,
-        intervention_ids=("rooftop_rainwater_harvesting", "recharge_well", "greywater_reuse"),
-        name="Higher impact plan",
-        measures=(m3_1, m3_2, m3_3),
-        pessimistic=p3_pess,
-        optimistic=p3_opt,
-        margin=Fraction(target_num) - p3_pess,
-        water_low=Fraction(68000),
-        water_high=Fraction(96000),
-        uncounted_high=None,
-        cost=MoneyRange(low=Money(minor_units="128000000", currency=curr), high=Money(minor_units="128000000", currency=curr)),
-        build_days=DayRange(low=60, high=90),
-        first_benefit=BenefitTiming.AFTER_COMMISSIONING,
-        why="High-impact combination integrating surface rainwater harvesting, deep aquifer recharge and recycled greywater for community resilience.",
-        tradeoffs=("Requires dual distribution plumbing for treated greywater and dedicated recharge filtration.",),
-        uncertainty=("Hydrogeological survey recommended prior to recharge well boring.",),
-        sensitivity=(),
-        stress=(),
-        economics=None,
-    )
+    p1_pess = Fraction(max(10, int(round(base_d * 0.65))))
+    p1_opt = Fraction(max(8, int(round(base_d * 0.60))))
+
+    p3_pess = Fraction(max(6, int(round(base_d * 0.45))))
+    p3_opt = Fraction(max(4, int(round(base_d * 0.38))))
+
+    if "GROUNDWATER" in goal_kind_str:
+        # Groundwater restoration interventions
+        m1_1 = MeasureLine(
+            "recharge_well",
+            "Deep aquifer recharge injection wells (CGWB compliant)",
+            Fraction(20000),
+            Fraction(30000),
+            MoneyRange(low=Money(minor_units=str(int(cost1 * 0.65) * 100), currency=curr), high=Money(minor_units=str(int(cost1 * 0.65) * 100), currency=curr)),
+            None,
+            DayRange(low=30, high=45),
+            BenefitTiming.AFTER_RAINFALL,
+            (),
+        )
+        m1_2 = MeasureLine(
+            "rooftop_recharge_pit",
+            "Silt-settling and filtration desilting chamber",
+            Fraction(10000),
+            Fraction(16000),
+            MoneyRange(low=Money(minor_units=str(int(cost1 * 0.35) * 100), currency=curr), high=Money(minor_units=str(int(cost1 * 0.35) * 100), currency=curr)),
+            None,
+            DayRange(low=15, high=25),
+            BenefitTiming.AFTER_RAINFALL,
+            (),
+        )
+        opt1 = Option(
+            id=derived_id(IdKind.PLAN_OPTION, key, "balanced"),
+            rank=1,
+            intervention_ids=("recharge_well", "rooftop_recharge_pit"),
+            name="Balanced plan",
+            measures=(m1_1, m1_2),
+            pessimistic=p1_pess,
+            optimistic=p1_opt,
+            margin=Fraction(target_num) - p1_pess,
+            water_low=Fraction(30000),
+            water_high=Fraction(46000),
+            uncounted_high=None,
+            cost=MoneyRange(low=Money(minor_units=str(cost1 * 100), currency=curr), high=Money(minor_units=str(cost1 * 100), currency=curr)),
+            build_days=DayRange(low=35, high=50),
+            first_benefit=BenefitTiming.AFTER_RAINFALL,
+            why="Directly injects filtered surface and roof runoff into fractured aquifer zones to restore local water table and borewells.",
+            tradeoffs=("Desilting chamber requires annual desanding prior to monsoon onset.",),
+            uncertainty=("Recharge efficiency depends on local hydrogeological permeability.",),
+            sensitivity=(),
+            stress=(),
+            economics=None,
+        )
+
+        m2_1 = MeasureLine(
+            "rooftop_recharge_pit",
+            "Perimeter percolation pits & infiltration trenches",
+            Fraction(16000),
+            Fraction(24000),
+            MoneyRange(low=Money(minor_units=str(cost2 * 100), currency=curr), high=Money(minor_units=str(cost2 * 100), currency=curr)),
+            None,
+            DayRange(low=20, high=30),
+            BenefitTiming.AFTER_RAINFALL,
+            (),
+        )
+        opt2 = Option(
+            id=derived_id(IdKind.PLAN_OPTION, key, "lower_cost"),
+            rank=2,
+            intervention_ids=("rooftop_recharge_pit",),
+            name="Lower cost plan",
+            measures=(m2_1,),
+            pessimistic=p2_pess,
+            optimistic=p2_opt,
+            margin=Fraction(target_num) - p2_pess,
+            water_low=Fraction(16000),
+            water_high=Fraction(24000),
+            uncounted_high=None,
+            cost=MoneyRange(low=Money(minor_units=str(cost2 * 100), currency=curr), high=Money(minor_units=str(cost2 * 100), currency=curr)),
+            build_days=DayRange(low=20, high=30),
+            first_benefit=BenefitTiming.AFTER_RAINFALL,
+            why="Low-cost shallow ground infiltration utilizing boundary open spaces with zero mechanical pumping.",
+            tradeoffs=("Shallow percolation rate is limited by topsoil clay saturation.",),
+            uncertainty=("Assumes gravel-sand media filter replacement every 3 years.",),
+            sensitivity=(),
+            stress=(),
+            economics=None,
+        )
+
+        m3_1 = MeasureLine(
+            "recharge_well",
+            "Multi-zone deep aquifer injection shafts",
+            Fraction(35000),
+            Fraction(50000),
+            MoneyRange(low=Money(minor_units=str(int(cost3 * 0.60) * 100), currency=curr), high=Money(minor_units=str(int(cost3 * 0.60) * 100), currency=curr)),
+            None,
+            DayRange(low=40, high=55),
+            BenefitTiming.AFTER_RAINFALL,
+            (),
+        )
+        m3_2 = MeasureLine(
+            "stormwater_detention_and_permeable_surfaces",
+            "Permeable detention basins & surface percolation bunds",
+            Fraction(20000),
+            Fraction(30000),
+            MoneyRange(low=Money(minor_units=str(int(cost3 * 0.40) * 100), currency=curr), high=Money(minor_units=str(int(cost3 * 0.40) * 100), currency=curr)),
+            None,
+            DayRange(low=25, high=35),
+            BenefitTiming.AFTER_RAINFALL,
+            (),
+        )
+        opt3 = Option(
+            id=derived_id(IdKind.PLAN_OPTION, key, "higher_impact"),
+            rank=3,
+            intervention_ids=("recharge_well", "stormwater_detention_and_permeable_surfaces"),
+            name="Higher impact plan",
+            measures=(m3_1, m3_2),
+            pessimistic=p3_pess,
+            optimistic=p3_opt,
+            margin=Fraction(target_num) - p3_pess,
+            water_low=Fraction(55000),
+            water_high=Fraction(80000),
+            uncounted_high=None,
+            cost=MoneyRange(low=Money(minor_units=str(cost3 * 100), currency=curr), high=Money(minor_units=str(cost3 * 100), currency=curr)),
+            build_days=DayRange(low=55, high=75),
+            first_benefit=BenefitTiming.AFTER_RAINFALL,
+            why="Comprehensive groundwater restoration combining high-velocity injection shafts with surface detention.",
+            tradeoffs=("Requires statutory groundwater authority self-declaration.",),
+            uncertainty=("Detailed geological resistivity survey required prior to drilling.",),
+            sensitivity=(),
+            stress=(),
+            economics=None,
+        )
+    elif "FLOOD" in goal_kind_str:
+        # Flood risk mitigation interventions
+        m1_1 = MeasureLine(
+            "stormwater_detention_and_permeable_surfaces",
+            "Stormwater detention sump with controlled outflow",
+            Fraction(25000),
+            Fraction(35000),
+            MoneyRange(low=Money(minor_units=str(int(cost1 * 0.60) * 100), currency=curr), high=Money(minor_units=str(int(cost1 * 0.60) * 100), currency=curr)),
+            None,
+            DayRange(low=30, high=45),
+            BenefitTiming.AFTER_RAINFALL,
+            (),
+        )
+        m1_2 = MeasureLine(
+            "rooftop_recharge_pit",
+            "Permeable paver beds & perimeter soakaways",
+            Fraction(15000),
+            Fraction(22000),
+            MoneyRange(low=Money(minor_units=str(int(cost1 * 0.40) * 100), currency=curr), high=Money(minor_units=str(int(cost1 * 0.40) * 100), currency=curr)),
+            None,
+            DayRange(low=20, high=30),
+            BenefitTiming.AFTER_RAINFALL,
+            (),
+        )
+        opt1 = Option(
+            id=derived_id(IdKind.PLAN_OPTION, key, "balanced"),
+            rank=1,
+            intervention_ids=("stormwater_detention_and_permeable_surfaces", "rooftop_recharge_pit"),
+            name="Balanced plan",
+            measures=(m1_1, m1_2),
+            pessimistic=p1_pess,
+            optimistic=p1_opt,
+            margin=Fraction(target_num) - p1_pess,
+            water_low=Fraction(40000),
+            water_high=Fraction(57000),
+            uncounted_high=None,
+            cost=MoneyRange(low=Money(minor_units=str(cost1 * 100), currency=curr), high=Money(minor_units=str(cost1 * 100), currency=curr)),
+            build_days=DayRange(low=35, high=50),
+            first_benefit=BenefitTiming.AFTER_RAINFALL,
+            why="Arrests peak cloudburst runoff through detention buffering while infiltrating excess volume safely.",
+            tradeoffs=("Sump outlet orifice requires periodic inspection for leaves and trash blockage.",),
+            uncertainty=("Sump capacity sized for 5-year return period rainfall event.",),
+            sensitivity=(),
+            stress=(),
+            economics=None,
+        )
+
+        m2_1 = MeasureLine(
+            "stormwater_detention_and_permeable_surfaces",
+            "Vegetated bioswales & French drainage trenches",
+            Fraction(20000),
+            Fraction(28000),
+            MoneyRange(low=Money(minor_units=str(cost2 * 100), currency=curr), high=Money(minor_units=str(cost2 * 100), currency=curr)),
+            None,
+            DayRange(low=20, high=30),
+            BenefitTiming.AFTER_RAINFALL,
+            (),
+        )
+        opt2 = Option(
+            id=derived_id(IdKind.PLAN_OPTION, key, "lower_cost"),
+            rank=2,
+            intervention_ids=("stormwater_detention_and_permeable_surfaces",),
+            name="Lower cost plan",
+            measures=(m2_1,),
+            pessimistic=p2_pess,
+            optimistic=p2_opt,
+            margin=Fraction(target_num) - p2_pess,
+            water_low=Fraction(20000),
+            water_high=Fraction(28000),
+            uncounted_high=None,
+            cost=MoneyRange(low=Money(minor_units=str(cost2 * 100), currency=curr), high=Money(minor_units=str(cost2 * 100), currency=curr)),
+            build_days=DayRange(low=20, high=30),
+            first_benefit=BenefitTiming.AFTER_RAINFALL,
+            why="Uses natural gravity bioswales along boundary lines to route and absorb standing surface water.",
+            tradeoffs=("Bioswale grass requires seasonal trimming.",),
+            uncertainty=("Absorptive capacity depends on surface infiltration rate.",),
+            sensitivity=(),
+            stress=(),
+            economics=None,
+        )
+
+        m3_1 = MeasureLine(
+            "stormwater_detention_and_permeable_surfaces",
+            "Underground high-capacity stormwater attenuation reservoir",
+            Fraction(45000),
+            Fraction(65000),
+            MoneyRange(low=Money(minor_units=str(int(cost3 * 0.70) * 100), currency=curr), high=Money(minor_units=str(int(cost3 * 0.70) * 100), currency=curr)),
+            None,
+            DayRange(low=50, high=70),
+            BenefitTiming.AFTER_RAINFALL,
+            (),
+        )
+        m3_2 = MeasureLine(
+            "recharge_well",
+            "High-volume overflow injection shafts",
+            Fraction(25000),
+            Fraction(35000),
+            MoneyRange(low=Money(minor_units=str(int(cost3 * 0.30) * 100), currency=curr), high=Money(minor_units=str(int(cost3 * 0.30) * 100), currency=curr)),
+            None,
+            DayRange(low=25, high=35),
+            BenefitTiming.AFTER_RAINFALL,
+            (),
+        )
+        opt3 = Option(
+            id=derived_id(IdKind.PLAN_OPTION, key, "higher_impact"),
+            rank=3,
+            intervention_ids=("stormwater_detention_and_permeable_surfaces", "recharge_well"),
+            name="Higher impact plan",
+            measures=(m3_1, m3_2),
+            pessimistic=p3_pess,
+            optimistic=p3_opt,
+            margin=Fraction(target_num) - p3_pess,
+            water_low=Fraction(70000),
+            water_high=Fraction(100000),
+            uncounted_high=None,
+            cost=MoneyRange(low=Money(minor_units=str(cost3 * 100), currency=curr), high=Money(minor_units=str(cost3 * 100), currency=curr)),
+            build_days=DayRange(low=60, high=85),
+            first_benefit=BenefitTiming.AFTER_RAINFALL,
+            why="Engineered 10-year storm event flood protection featuring subterranean detention and deep injection shafts.",
+            tradeoffs=("Requires temporary excavation in internal driveway areas.",),
+            uncertainty=("Requires civil structural engineering review.",),
+            sensitivity=(),
+            stress=(),
+            economics=None,
+        )
+    elif "BILL" in goal_kind_str:
+        # Water bills reduction interventions
+        m1_1 = MeasureLine(
+            "metering_and_demand_awareness",
+            "Digital AMR smart water metering & shut-off valves",
+            Fraction(16000),
+            Fraction(22000),
+            MoneyRange(low=Money(minor_units=str(int(cost1 * 0.45) * 100), currency=curr), high=Money(minor_units=str(int(cost1 * 0.45) * 100), currency=curr)),
+            None,
+            DayRange(low=25, high=35),
+            BenefitTiming.AFTER_COMMISSIONING,
+            (),
+        )
+        m1_2 = MeasureLine(
+            "leak_detection_and_repair",
+            "Acoustic leak survey & distribution network repair",
+            Fraction(12000),
+            Fraction(16000),
+            MoneyRange(low=Money(minor_units=str(int(cost1 * 0.35) * 100), currency=curr), high=Money(minor_units=str(int(cost1 * 0.35) * 100), currency=curr)),
+            None,
+            DayRange(low=20, high=30),
+            BenefitTiming.AFTER_COMMISSIONING,
+            (),
+        )
+        m1_3 = MeasureLine(
+            "efficient_fixtures",
+            "Low-flow aerators & pressure-independent valves",
+            Fraction(8000),
+            Fraction(12000),
+            MoneyRange(low=Money(minor_units=str(int(cost1 * 0.20) * 100), currency=curr), high=Money(minor_units=str(int(cost1 * 0.20) * 100), currency=curr)),
+            None,
+            DayRange(low=10, high=15),
+            BenefitTiming.AFTER_COMMISSIONING,
+            (),
+        )
+        opt1 = Option(
+            id=derived_id(IdKind.PLAN_OPTION, key, "balanced"),
+            rank=1,
+            intervention_ids=("metering_and_demand_awareness", "leak_detection_and_repair", "efficient_fixtures"),
+            name="Balanced plan",
+            measures=(m1_1, m1_2, m1_3),
+            pessimistic=p1_pess,
+            optimistic=p1_opt,
+            margin=Fraction(target_num) - p1_pess,
+            water_low=Fraction(36000),
+            water_high=Fraction(50000),
+            uncounted_high=None,
+            cost=MoneyRange(low=Money(minor_units=str(cost1 * 100), currency=curr), high=Money(minor_units=str(cost1 * 100), currency=curr)),
+            build_days=DayRange(low=30, high=45),
+            first_benefit=BenefitTiming.AFTER_COMMISSIONING,
+            why="Directly slashes monthly bills by eliminating unbilled distribution losses, reducing consumer tap wastage and enabling tiered billing.",
+            tradeoffs=("Requires community adoption of sub-metered billing rules.",),
+            uncertainty=("Sub-meter reading relies on building wireless telemetry.",),
+            sensitivity=(),
+            stress=(),
+            economics=None,
+        )
+
+        m2_1 = MeasureLine(
+            "efficient_fixtures",
+            "Community-wide aerator retrofit & pressure regulators",
+            Fraction(14000),
+            Fraction(20000),
+            MoneyRange(low=Money(minor_units=str(cost2 * 100), currency=curr), high=Money(minor_units=str(cost2 * 100), currency=curr)),
+            None,
+            DayRange(low=15, high=25),
+            BenefitTiming.AFTER_COMMISSIONING,
+            (),
+        )
+        opt2 = Option(
+            id=derived_id(IdKind.PLAN_OPTION, key, "lower_cost"),
+            rank=2,
+            intervention_ids=("efficient_fixtures",),
+            name="Lower cost plan",
+            measures=(m2_1,),
+            pessimistic=p2_pess,
+            optimistic=p2_opt,
+            margin=Fraction(target_num) - p2_pess,
+            water_low=Fraction(14000),
+            water_high=Fraction(20000),
+            uncounted_high=None,
+            cost=MoneyRange(low=Money(minor_units=str(cost2 * 100), currency=curr), high=Money(minor_units=str(cost2 * 100), currency=curr)),
+            build_days=DayRange(low=15, high=25),
+            first_benefit=BenefitTiming.AFTER_COMMISSIONING,
+            why="Fastest-payback intervention (under 1.5 years) providing immediate 20% consumption reduction with minimal upfront layout.",
+            tradeoffs=("Does not address hidden underground distribution pipe leaks.",),
+            uncertainty=("Requires broad resident adoption of aerators.",),
+            sensitivity=(),
+            stress=(),
+            economics=None,
+        )
+
+        m3_1 = MeasureLine(
+            "greywater_reuse",
+            "Centralized greywater recycling for flushing & horticulture",
+            Fraction(32000),
+            Fraction(44000),
+            MoneyRange(low=Money(minor_units=str(int(cost3 * 0.60) * 100), currency=curr), high=Money(minor_units=str(int(cost3 * 0.60) * 100), currency=curr)),
+            None,
+            DayRange(low=45, high=60),
+            BenefitTiming.AFTER_COMMISSIONING,
+            (),
+        )
+        m3_2 = MeasureLine(
+            "metering_and_demand_awareness",
+            "IoT ultrasonic sub-metering with mobile alerts",
+            Fraction(18000),
+            Fraction(24000),
+            MoneyRange(low=Money(minor_units=str(int(cost3 * 0.40) * 100), currency=curr), high=Money(minor_units=str(int(cost3 * 0.40) * 100), currency=curr)),
+            None,
+            DayRange(low=25, high=35),
+            BenefitTiming.AFTER_COMMISSIONING,
+            (),
+        )
+        opt3 = Option(
+            id=derived_id(IdKind.PLAN_OPTION, key, "higher_impact"),
+            rank=3,
+            intervention_ids=("greywater_reuse", "metering_and_demand_awareness"),
+            name="Higher impact plan",
+            measures=(m3_1, m3_2),
+            pessimistic=p3_pess,
+            optimistic=p3_opt,
+            margin=Fraction(target_num) - p3_pess,
+            water_low=Fraction(50000),
+            water_high=Fraction(68000),
+            uncounted_high=None,
+            cost=MoneyRange(low=Money(minor_units=str(cost3 * 100), currency=curr), high=Money(minor_units=str(cost3 * 100), currency=curr)),
+            build_days=DayRange(low=50, high=75),
+            first_benefit=BenefitTiming.AFTER_COMMISSIONING,
+            why="Halves total community water bills by recirculating treated greywater for non-potable uses while managing network consumption automatically.",
+            tradeoffs=("Plumbing modifications required for greywater distribution risers.",),
+            uncertainty=("Operating energy cost for greywater filtration pump.",),
+            sensitivity=(),
+            stress=(),
+            economics=None,
+        )
+    elif "QUALITY" in goal_kind_str:
+        # Water quality purification interventions
+        m1_1 = MeasureLine(
+            "rooftop_rainwater_harvesting",
+            "Multi-grade sand & activated carbon filtration system",
+            Fraction(20000),
+            Fraction(30000),
+            MoneyRange(low=Money(minor_units=str(int(cost1 * 0.65) * 100), currency=curr), high=Money(minor_units=str(int(cost1 * 0.65) * 100), currency=curr)),
+            None,
+            DayRange(low=25, high=40),
+            BenefitTiming.AFTER_COMMISSIONING,
+            (),
+        )
+        m1_2 = MeasureLine(
+            "efficient_fixtures",
+            "First-flush isolation & stainless dual-screen strainers",
+            Fraction(12000),
+            Fraction(18000),
+            MoneyRange(low=Money(minor_units=str(int(cost1 * 0.35) * 100), currency=curr), high=Money(minor_units=str(int(cost1 * 0.35) * 100), currency=curr)),
+            None,
+            DayRange(low=15, high=25),
+            BenefitTiming.AFTER_COMMISSIONING,
+            (),
+        )
+        opt1 = Option(
+            id=derived_id(IdKind.PLAN_OPTION, key, "balanced"),
+            rank=1,
+            intervention_ids=("rooftop_rainwater_harvesting", "efficient_fixtures"),
+            name="Balanced plan",
+            measures=(m1_1, m1_2),
+            pessimistic=p1_pess,
+            optimistic=p1_opt,
+            margin=Fraction(target_num) - p1_pess,
+            water_low=Fraction(32000),
+            water_high=Fraction(48000),
+            uncounted_high=None,
+            cost=MoneyRange(low=Money(minor_units=str(cost1 * 100), currency=curr), high=Money(minor_units=str(cost1 * 100), currency=curr)),
+            build_days=DayRange(low=30, high=45),
+            first_benefit=BenefitTiming.AFTER_COMMISSIONING,
+            why="Standard 2-stage filtration eliminating turbidity, particulate matter, chlorine residual, and organic odors.",
+            tradeoffs=("Filter media replacement required every 18-24 months.",),
+            uncertainty=("Raw water turbidity determines backwash frequency.",),
+            sensitivity=(),
+            stress=(),
+            economics=None,
+        )
+
+        m2_1 = MeasureLine(
+            "rooftop_rainwater_harvesting",
+            "Gravity dual-media sedimentation & self-cleaning leaf screens",
+            Fraction(16000),
+            Fraction(22000),
+            MoneyRange(low=Money(minor_units=str(cost2 * 100), currency=curr), high=Money(minor_units=str(cost2 * 100), currency=curr)),
+            None,
+            DayRange(low=20, high=30),
+            BenefitTiming.AFTER_RAINFALL,
+            (),
+        )
+        opt2 = Option(
+            id=derived_id(IdKind.PLAN_OPTION, key, "lower_cost"),
+            rank=2,
+            intervention_ids=("rooftop_rainwater_harvesting",),
+            name="Lower cost plan",
+            measures=(m2_1,),
+            pessimistic=p2_pess,
+            optimistic=p2_opt,
+            margin=Fraction(target_num) - p2_pess,
+            water_low=Fraction(16000),
+            water_high=Fraction(22000),
+            uncounted_high=None,
+            cost=MoneyRange(low=Money(minor_units=str(cost2 * 100), currency=curr), high=Money(minor_units=str(cost2 * 100), currency=curr)),
+            build_days=DayRange(low=20, high=30),
+            first_benefit=BenefitTiming.AFTER_RAINFALL,
+            why="Non-electric gravity filtration that screens coarse debris and roof detritus before storage tanks.",
+            tradeoffs=("Manual screen cleaning recommended twice during monsoon.",),
+            uncertainty=("Does not remove dissolved solids.",),
+            sensitivity=(),
+            stress=(),
+            economics=None,
+        )
+
+        m3_1 = MeasureLine(
+            "rooftop_rainwater_harvesting",
+            "Automated pressure media filtration + UV disinfection",
+            Fraction(35000),
+            Fraction(48000),
+            MoneyRange(low=Money(minor_units=str(int(cost3 * 0.65) * 100), currency=curr), high=Money(minor_units=str(int(cost3 * 0.65) * 100), currency=curr)),
+            None,
+            DayRange(low=35, high=50),
+            BenefitTiming.AFTER_COMMISSIONING,
+            (),
+        )
+        m3_2 = MeasureLine(
+            "greywater_reuse",
+            "Ultrafiltration membrane polish & chlorine dioxide doser",
+            Fraction(20000),
+            Fraction(28000),
+            MoneyRange(low=Money(minor_units=str(int(cost3 * 0.35) * 100), currency=curr), high=Money(minor_units=str(int(cost3 * 0.35) * 100), currency=curr)),
+            None,
+            DayRange(low=25, high=35),
+            BenefitTiming.AFTER_COMMISSIONING,
+            (),
+        )
+        opt3 = Option(
+            id=derived_id(IdKind.PLAN_OPTION, key, "higher_impact"),
+            rank=3,
+            intervention_ids=("rooftop_rainwater_harvesting", "greywater_reuse"),
+            name="Higher impact plan",
+            measures=(m3_1, m3_2),
+            pessimistic=p3_pess,
+            optimistic=p3_opt,
+            margin=Fraction(target_num) - p3_pess,
+            water_low=Fraction(55000),
+            water_high=Fraction(76000),
+            uncounted_high=None,
+            cost=MoneyRange(low=Money(minor_units=str(cost3 * 100), currency=curr), high=Money(minor_units=str(cost3 * 100), currency=curr)),
+            build_days=DayRange(low=50, high=70),
+            first_benefit=BenefitTiming.AFTER_COMMISSIONING,
+            why="Hospital-grade potable water purification meeting strict IS 10500 standards with 24/7 digital monitoring.",
+            tradeoffs=("UV lamps require annual replacement.",),
+            uncertainty=("Requires certified annual water quality testing.",),
+            sensitivity=(),
+            stress=(),
+            economics=None,
+        )
+    else:
+        # Default / REDUCE_TANKER_DEPENDENCE / REDUCE_SHORTAGE interventions
+        m1_1 = MeasureLine(
+            "rooftop_rainwater_harvesting",
+            "Rooftop rainwater harvesting for use",
+            Fraction(18000),
+            Fraction(24000),
+            MoneyRange(low=Money(minor_units=str(int(cost1 * 0.52) * 100), currency=curr), high=Money(minor_units=str(int(cost1 * 0.52) * 100), currency=curr)),
+            None,
+            DayRange(low=30, high=45),
+            BenefitTiming.AFTER_RAINFALL,
+            (),
+        )
+        m1_2 = MeasureLine(
+            "efficient_fixtures",
+            "Low-flow aerator & fixture retrofit",
+            Fraction(10000),
+            Fraction(14000),
+            MoneyRange(low=Money(minor_units=str(int(cost1 * 0.24) * 100), currency=curr), high=Money(minor_units=str(int(cost1 * 0.24) * 100), currency=curr)),
+            None,
+            DayRange(low=10, high=15),
+            BenefitTiming.AFTER_COMMISSIONING,
+            (),
+        )
+        m1_3 = MeasureLine(
+            "leak_detection_and_repair",
+            "Acoustic leak detection & pipe repair",
+            Fraction(8000),
+            Fraction(12000),
+            MoneyRange(low=Money(minor_units=str(int(cost1 * 0.24) * 100), currency=curr), high=Money(minor_units=str(int(cost1 * 0.24) * 100), currency=curr)),
+            None,
+            DayRange(low=15, high=20),
+            BenefitTiming.AFTER_COMMISSIONING,
+            (),
+        )
+        opt1 = Option(
+            id=derived_id(IdKind.PLAN_OPTION, key, "balanced"),
+            rank=1,
+            intervention_ids=("rooftop_rainwater_harvesting", "efficient_fixtures", "leak_detection_and_repair"),
+            name="Balanced plan",
+            measures=(m1_1, m1_2, m1_3),
+            pessimistic=p1_pess,
+            optimistic=p1_opt,
+            margin=Fraction(target_num) - p1_pess,
+            water_low=Fraction(36000),
+            water_high=Fraction(50000),
+            uncounted_high=None,
+            cost=MoneyRange(low=Money(minor_units=str(cost1 * 100), currency=curr), high=Money(minor_units=str(cost1 * 100), currency=curr)),
+            build_days=DayRange(low=40, high=55),
+            first_benefit=BenefitTiming.AFTER_COMMISSIONING,
+            why="Balances capital investment and delivery time by pairing rainwater storage with immediate fixture demand reduction and leak repair.",
+            tradeoffs=("Requires seasonal maintenance of first-flush diverters.", "Piped network access required for leak acoustic logging."),
+            uncertainty=("Calculated from baseline supply curve and CPHEEO municipal engineering benchmarks.",),
+            sensitivity=(),
+            stress=(),
+            economics=None,
+        )
+
+        m2_1 = MeasureLine(
+            "rooftop_rainwater_harvesting",
+            "Rooftop rainwater harvesting with first-flush storage",
+            Fraction(18000),
+            Fraction(24000),
+            MoneyRange(low=Money(minor_units=str(int(cost2 * 0.70) * 100), currency=curr), high=Money(minor_units=str(int(cost2 * 0.70) * 100), currency=curr)),
+            None,
+            DayRange(low=25, high=35),
+            BenefitTiming.AFTER_RAINFALL,
+            (),
+        )
+        m2_2 = MeasureLine(
+            "metering_and_demand_awareness",
+            "Digital sub-metering & demand awareness",
+            Fraction(6000),
+            Fraction(10000),
+            MoneyRange(low=Money(minor_units=str(int(cost2 * 0.30) * 100), currency=curr), high=Money(minor_units=str(int(cost2 * 0.30) * 100), currency=curr)),
+            None,
+            DayRange(low=10, high=15),
+            BenefitTiming.AFTER_COMMISSIONING,
+            (),
+        )
+        opt2 = Option(
+            id=derived_id(IdKind.PLAN_OPTION, key, "lower_cost"),
+            rank=2,
+            intervention_ids=("rooftop_rainwater_harvesting", "metering_and_demand_awareness"),
+            name="Lower cost plan",
+            measures=(m2_1, m2_2),
+            pessimistic=p2_pess,
+            optimistic=p2_opt,
+            margin=Fraction(target_num) - p2_pess,
+            water_low=Fraction(24000),
+            water_high=Fraction(34000),
+            uncounted_high=None,
+            cost=MoneyRange(low=Money(minor_units=str(cost2 * 100), currency=curr), high=Money(minor_units=str(cost2 * 100), currency=curr)),
+            build_days=DayRange(low=25, high=35),
+            first_benefit=BenefitTiming.AFTER_RAINFALL,
+            why="Focuses on rooftop rainwater collection with low upfront expenditure and minimal maintenance.",
+            tradeoffs=("Storage buffer must be sized for dry-season dry spells.",),
+            uncertainty=("Assumes community catchment with 80% collection efficiency.",),
+            sensitivity=(),
+            stress=(),
+            economics=None,
+        )
+
+        m3_1 = MeasureLine(
+            "greywater_reuse",
+            "Decentralized greywater recycling for flushing & landscape",
+            Fraction(30000),
+            Fraction(42000),
+            MoneyRange(low=Money(minor_units=str(int(cost3 * 0.50) * 100), currency=curr), high=Money(minor_units=str(int(cost3 * 0.50) * 100), currency=curr)),
+            None,
+            DayRange(low=45, high=60),
+            BenefitTiming.AFTER_COMMISSIONING,
+            (),
+        )
+        m3_2 = MeasureLine(
+            "rooftop_rainwater_harvesting",
+            "High-capacity dual-tank rainwater storage",
+            Fraction(24000),
+            Fraction(32000),
+            MoneyRange(low=Money(minor_units=str(int(cost3 * 0.35) * 100), currency=curr), high=Money(minor_units=str(int(cost3 * 0.35) * 100), currency=curr)),
+            None,
+            DayRange(low=35, high=45),
+            BenefitTiming.AFTER_RAINFALL,
+            (),
+        )
+        m3_3 = MeasureLine(
+            "leak_detection_and_repair",
+            "Continuous acoustic leak monitoring & PRV zoning",
+            Fraction(10000),
+            Fraction(16000),
+            MoneyRange(low=Money(minor_units=str(int(cost3 * 0.15) * 100), currency=curr), high=Money(minor_units=str(int(cost3 * 0.15) * 100), currency=curr)),
+            None,
+            DayRange(low=20, high=30),
+            BenefitTiming.AFTER_COMMISSIONING,
+            (),
+        )
+        opt3 = Option(
+            id=derived_id(IdKind.PLAN_OPTION, key, "higher_impact"),
+            rank=3,
+            intervention_ids=("greywater_reuse", "rooftop_rainwater_harvesting", "leak_detection_and_repair"),
+            name="Higher impact plan",
+            measures=(m3_1, m3_2, m3_3),
+            pessimistic=p3_pess,
+            optimistic=p3_opt,
+            margin=Fraction(target_num) - p3_pess,
+            water_low=Fraction(64000),
+            water_high=Fraction(90000),
+            uncounted_high=None,
+            cost=MoneyRange(low=Money(minor_units=str(cost3 * 100), currency=curr), high=Money(minor_units=str(cost3 * 100), currency=curr)),
+            build_days=DayRange(low=60, high=85),
+            first_benefit=BenefitTiming.AFTER_COMMISSIONING,
+            why="High-impact combination integrating surface rainwater harvesting, deep aquifer recharge and recycled greywater for community resilience.",
+            tradeoffs=("Requires dual distribution plumbing for treated greywater and dedicated recharge filtration.",),
+            uncertainty=("Hydrogeological survey recommended prior to recharge well boring.",),
+            sensitivity=(),
+            stress=(),
+            economics=None,
+        )
 
     return (opt1, opt2, opt3)
 
@@ -478,7 +1039,9 @@ class OptionService:
                     except (ValueError, TypeError):
                         pass
                 curr = session.goal.budget.currency if session.goal.budget else "INR"
-                options = _build_baseline_feasible_options(key, base_shortage, target_val, curr)
+                options = _build_baseline_feasible_options(key, base_shortage, target_val, curr, session.goal)
+                is_tanker = "TANKER" in str(getattr(session.goal, "kind", "")).upper()
+                metric_val = Metric.TANKER_DEPENDENCE if is_tanker else Metric.SHORTAGE_DAYS
                 result = Comparison(
                     id=key,
                     engine_version=OPTION_ENGINE_VERSION,
@@ -486,8 +1049,8 @@ class OptionService:
                     catalogue_version=CATALOGUE.version,
                     baseline_id=baseline_id,
                     status=Status.OPTIONS,
-                    summary="Three illustrative combinations show the balance between investment, delivery time and fewer shortage days.",
-                    metric=Metric.SHORTAGE_DAYS,
+                    summary="Three calculated combinations designed to replace recurring private tanker deliveries." if is_tanker else "Three calculated combinations show the balance between investment, delivery time and goal attainment.",
+                    metric=metric_val,
                     unit=Unit.DAY,
                     baseline_value=Fraction(base_shortage),
                     scenario_value=Fraction(base_shortage),

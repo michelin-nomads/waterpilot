@@ -36,3 +36,10 @@
   flex-wrap: wrap;
   gap: var(--wp-space-2);
 }
+
+.titleSuffix {
+  color: var(--wp-color-text-muted);
+  font-size: inherit;
+  font-weight: 400;
+  white-space: nowrap;
+}

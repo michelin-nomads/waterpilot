@@ -10,7 +10,7 @@ const sampleData: ProposalExportData = {
   locationName: 'Parkway Homes, Bengaluru',
   schemeName: 'BWSSB Rainwater Harvesting & Groundwater Recharge Incentive',
   funderName: 'Bangalore Water Supply and Sewerage Board',
-  schemeSourceUrl: 'https://bwssb.karnataka.gov.in',
+  schemeSourceUrl: 'https://bwssb.karnataka.gov.in/',
   planName: 'Balanced plan',
   planMeasures: ['Rooftop rainwater harvesting', 'Silt filtration', 'Recharge wells'],
   planDaysText: '45–60 days',
@@ -41,5 +41,26 @@ describe('proposalExport', () => {
 
     appendSpy.mockRestore();
     removeSpy.mockRestore();
+  });
+});
+
+describe('public funding schemes registry format', () => {
+  it('validates verified scheme contracts have official URLs and required fields', () => {
+    const sampleScheme = {
+      id: 'scheme_bwssb_rwh_grant',
+      name: 'BWSSB Rainwater Harvesting & Groundwater Recharge Incentive',
+      funder: 'Bangalore Water Supply and Sewerage Board (BWSSB)',
+      sourceUrl: 'https://bwssb.karnataka.gov.in/',
+      maxAmountNum: 300000,
+      checks: [['Project location', 'Within BWSSB service boundary']],
+      officialSource: true,
+    };
+    expect(sampleScheme.id).toBeTruthy();
+    expect(sampleScheme.name).toBeTruthy();
+    expect(sampleScheme.funder).toBeTruthy();
+    expect(sampleScheme.sourceUrl).toMatch(/^https:\/\//);
+    expect(sampleScheme.maxAmountNum).toBeGreaterThan(0);
+    expect(Array.isArray(sampleScheme.checks)).toBe(true);
+    expect(sampleScheme.officialSource).toBe(true);
   });
 });

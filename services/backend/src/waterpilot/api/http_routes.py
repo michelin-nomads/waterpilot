@@ -21,6 +21,7 @@ from waterpilot.domain.errors import DomainError, ErrorCode
 from waterpilot.domain.jobs import AgentRun, AgentRunStatus, JobRecord, JobStatus
 from waterpilot.domain.reports import ProposalStatus
 from waterpilot.domain.values import utc_iso
+from waterpilot.application.services.funding_registry import get_public_funding_schemes
 
 _ERRORS: dict[int | str, dict[str, object]] = {
     status: {"model": ApiError} for status in (401, 403, 404, 409, 503)
@@ -206,5 +207,18 @@ def build_http_router(
                 "Referrer-Policy": "no-referrer",
             },
         )
+
+    @router.get(
+        "/public/funding-schemes",
+        tags=["funding"],
+        summary="Fetch verified public funding opportunities for community water projects.",
+    )
+    @router.get(
+        "/funding-schemes",
+        tags=["funding"],
+        summary="Fetch verified public funding opportunities for community water projects.",
+    )
+    async def list_public_funding_schemes(request: Request) -> list[dict[str, object]]:
+        return get_public_funding_schemes()
 
     return router

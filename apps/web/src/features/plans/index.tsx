@@ -73,14 +73,13 @@ function PlansWorkspace({ session }: { session: SessionState }) {
   const found = query.data?.planningSession ?? null;
   const rawComparison = found?.planComparison ?? null;
   let effectiveGoal = session.goal;
-  if (!effectiveGoal) {
-    try {
-      const stored = localStorage.getItem(`waterpilot_goal_${session.id}`);
-      if (stored) {
-        effectiveGoal = JSON.parse(stored);
-      }
-    } catch {}
-  }
+  try {
+    const stored = localStorage.getItem(`waterpilot_goal_${session.id}`);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      effectiveGoal = { ...(session.goal ?? {}), ...parsed };
+    }
+  } catch {}
   const effectiveSession = effectiveGoal ? { ...session, goal: effectiveGoal } : session;
 
   const comparison =
@@ -129,7 +128,6 @@ function PlansWorkspace({ session }: { session: SessionState }) {
         coordinator?.selectPlanOption(optionId);
       } catch {}
     }
-    navigate('/make-it-happen');
   };
 
   if (!effectiveSession.goal) {

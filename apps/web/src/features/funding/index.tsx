@@ -18,6 +18,8 @@ import { createFeasibleComparison } from '../plans/feasibleComparisonFallback';
 import styles from './Matches.module.scss';
 
 import { exportProposalPDF, exportProposalWord } from './proposalExport';
+import { apiClient } from '../../lib/apiClient';
+import { env } from '../../config/env';
 
 export interface SchemeData {
   id: string;
@@ -38,143 +40,6 @@ export interface SchemeData {
   officialSource?: boolean;
 }
 
-const FALLBACK_SCHEMES: SchemeData[] = [
-  {
-    id: 'scheme_bwssb_rwh_grant',
-    name: 'BWSSB Rainwater Harvesting & Groundwater Recharge Incentive',
-    funder: 'Bangalore Water Supply and Sewerage Board (BWSSB), Govt. of Karnataka',
-    kind: 'Government',
-    icon: 'bank',
-    amount: 'Up to ₹3,00,000',
-    maxAmountNum: 300000,
-    status: 'Meets listed rules',
-    tone: 'green',
-    why: 'Location, community applicant type and proposed water harvesting works match listed rules under the Karnataka Municipal RWH Mandate.',
-    checked: '5 of 5 listed criteria met',
-    window: 'Open application cycle · 31 Dec 2026',
-    eligible: true,
-    sourceUrl: 'https://bwssb.karnataka.gov.in',
-    officialSource: true,
-    checks: [
-      ['Project location', 'Within BWSSB service boundary and BBMP municipal zones.'],
-      ['Applicant type', 'Registered resident welfare association (RWA) or housing society.'],
-      ['Proposed works', 'Rooftop rainwater harvesting, dual-piping and percolation recharge wells.'],
-      ['Project cost', 'Falls within state municipal subsidy guidelines.'],
-      ['Application window', 'Current financial year window is active and accepting community bids.'],
-    ],
-  },
-  {
-    id: 'scheme_jal_jeevan_amrut',
-    name: 'Jal Jeevan Mission (Urban) & AMRUT 2.0 Community Recharge Scheme',
-    funder: 'Ministry of Housing and Urban Affairs (MoHUA), Government of India',
-    kind: 'Government',
-    icon: 'bank',
-    amount: 'Up to ₹10,00,000',
-    maxAmountNum: 1000000,
-    status: 'Meets listed rules',
-    tone: 'green',
-    why: 'Co-funding grant for urban watershed restoration and community stormwater injection projects.',
-    checked: '5 of 5 listed criteria met',
-    window: 'FY 2026-27 Window 2 · 15 Jan 2027',
-    eligible: true,
-    sourceUrl: 'https://mohua.gov.in',
-    officialSource: true,
-    checks: [
-      ['Target focus', 'Augmenting local groundwater and reducing non-revenue water loss.'],
-      ['Citizen partnership', 'Community contributions co-financed up to 50% by central/state allocations.'],
-      ['Technical appraisal', 'Detailed plan and verified demand reduction baseline required.'],
-      ['Execution window', 'Implementation schedule within 90 days of grant sanctions.'],
-    ],
-  },
-  {
-    id: 'scheme_itc_sunehra_kal',
-    name: 'ITC Mission Sunehra Kal Community Water Stewardship',
-    funder: 'ITC CSR & Sustainability Trust',
-    kind: 'Corporate / CSR',
-    icon: 'leaf',
-    amount: 'Up to ₹4,50,000',
-    maxAmountNum: 450000,
-    status: 'Needs information',
-    tone: 'amber',
-    why: 'Focuses on high-stress water zones for participatory rainwater harvesting, recharge wells, and water metering.',
-    checked: '3 of 4 criteria met · 1 to confirm',
-    window: 'Rolling quarterly intake · Q4 2026',
-    eligible: false,
-    sourceUrl: 'https://www.itcportal.com/sustainability/',
-    officialSource: true,
-    checks: [
-      ['Priority cluster', 'Matches designated southern water-stress priority districts.'],
-      ['Society registration', 'Society registration certificate and PAN details must be submitted.'],
-      ['Maintenance pledge', 'Requires 3-year post-commissioning maintenance commitment.'],
-    ],
-  },
-  {
-    id: 'scheme_hdfc_parivartan',
-    name: 'HDFC Bank Parivartan Urban Water Security Initiative',
-    funder: 'HDFC Bank CSR Foundation',
-    kind: 'Corporate / CSR',
-    icon: 'leaf',
-    amount: 'Up to ₹4,00,000',
-    maxAmountNum: 400000,
-    status: 'Needs information',
-    tone: 'amber',
-    why: 'Supports community infrastructure in residential societies creating decentralized water storage and recharge.',
-    checked: '3 of 4 criteria met · 1 to confirm',
-    window: 'Open call · Closes 15 Jan 2027',
-    eligible: false,
-    sourceUrl: 'https://www.hdfcbank.com/csr',
-    officialSource: true,
-    checks: [
-      ['Applicant eligibility', 'Group housing societies or ward resident confederations.'],
-      ['Measurable impact', 'Must demonstrate documented tanker trips avoidance.'],
-      ['Audit trail', 'Requires itemized quotation from verified implementation vendor.'],
-    ],
-  },
-  {
-    id: 'scheme_arghyam_foundation',
-    name: 'Arghyam Sustainable Aquifer & Groundwater Grant',
-    funder: 'Arghyam Public Charitable Trust',
-    kind: 'Foundation',
-    icon: 'users',
-    amount: 'Up to ₹2,50,000',
-    maxAmountNum: 250000,
-    status: 'Needs information',
-    tone: 'amber',
-    why: 'Scientific advisory and grant support for participatory aquifer recharge, soil filtration, and open wells.',
-    checked: '2 of 3 criteria met · 1 to confirm',
-    window: 'Continuous intake for registered communities',
-    eligible: false,
-    sourceUrl: 'https://arghyam.org',
-    officialSource: true,
-    checks: [
-      ['Hydrogeological fit', 'Site must feature suitable soil permeability for infiltration.'],
-      ['Community match', 'Requires at least 25% community own contribution commitment.'],
-    ],
-  },
-  {
-    id: 'scheme_kgwa_aquifer_recharge',
-    name: 'Karnataka Ground Water Authority Recharge Subsidy',
-    funder: 'Department of Water Resources, Govt. of Karnataka',
-    kind: 'Government',
-    icon: 'bank',
-    amount: 'Up to ₹3,50,000',
-    maxAmountNum: 350000,
-    status: 'Meets listed rules',
-    tone: 'green',
-    why: 'Incentive for housing societies constructing artificial recharge structures in notified critical ground water assessment units.',
-    checked: '5 of 5 listed criteria met',
-    window: 'Phase IV · Open through 28 Feb 2027',
-    eligible: true,
-    sourceUrl: 'https://waterresources.karnataka.gov.in',
-    officialSource: true,
-    checks: [
-      ['Notified basin', 'Within over-exploited or critical groundwater assessment taluks.'],
-      ['Structure design', 'Adheres to Central Ground Water Board (CGWB) artificial recharge manuals.'],
-      ['Local body NOC', 'Self-declaration and layout plan approval from municipal authority.'],
-    ],
-  },
-];
-
 export default function FundingPage() {
   const { state } = usePlanningSession();
   const session = state.server;
@@ -190,15 +55,16 @@ export default function FundingPage() {
   const [customOwnContribution, setCustomOwnContribution] = useState<number | null>(null);
   const [showOwnEdit, setShowOwnEdit] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [loadingSchemes, setLoadingSchemes] = useState(false);
+  const [loadingSchemes, setLoadingSchemes] = useState(true);
+  const [schemesError, setSchemesError] = useState<string | null>(null);
   const [lastRefreshedAt, setLastRefreshedAt] = useState<string | null>(null);
 
-  // Live public schemes state
-  const [schemes, setSchemes] = useState<SchemeData[]>(FALLBACK_SCHEMES);
+  // Dynamic public schemes state (loaded exclusively via public API endpoint)
+  const [schemes, setSchemes] = useState<SchemeData[]>([]);
 
   // Drawer & Selection state
   const [drawerScheme, setDrawerScheme] = useState<SchemeData | null>(null);
-  const [selectedScheme, setSelectedScheme] = useState<SchemeData | null>(FALLBACK_SCHEMES[0] ?? null);
+  const [selectedScheme, setSelectedScheme] = useState<SchemeData | null>(null);
   const [customRequestedAmount, setCustomRequestedAmount] = useState<number | null>(null);
 
   // Proposal state
@@ -214,34 +80,46 @@ export default function FundingPage() {
     try {
       if (isManual) setRefreshing(true);
       else setLoadingSchemes(true);
+      setSchemesError(null);
 
-      const base =
-        typeof window !== 'undefined' && window.location?.origin && window.location.origin !== 'null'
-          ? window.location.origin
-          : 'http://localhost';
-      const endpoint = `${base}/data/funding_schemes.json${isManual ? `?t=${Date.now()}` : ''}`;
-      const response = await fetch(endpoint, {
-        headers: { Accept: 'application/json' },
-      });
-
-      if (response.ok) {
-        const data: SchemeData[] = await response.json();
-        if (Array.isArray(data) && data.length > 0) {
-          setSchemes(data);
-          setSelectedScheme((prev) => {
-            if (prev) {
-              const matched = data.find((d) => d.id === prev.id);
-              return matched ?? data[0] ?? null;
-            }
-            return data[0] ?? null;
-          });
-          setLastRefreshedAt(
-            new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-          );
-        }
+      let data: SchemeData[] | null = null;
+      try {
+        const response = await apiClient.get<SchemeData[]>('/v1/public/funding-schemes', {
+          headers: { Accept: 'application/json' },
+          params: isManual ? { t: Date.now() } : undefined,
+        });
+        data = response.data;
+      } catch (clientErr) {
+        // Fallback directly to the public API URL if needed
+        const apiUrl = env.apiBaseUrl
+          ? `${env.apiBaseUrl}/v1/public/funding-schemes`
+          : 'https://waterpilot-api-572852178137.asia-south1.run.app/v1/public/funding-schemes';
+        const res = await fetch(`${apiUrl}${isManual ? `?t=${Date.now()}` : ''}`, {
+          headers: { Accept: 'application/json' },
+        });
+        if (!res.ok) throw clientErr;
+        data = await res.json();
       }
-    } catch (err) {
-      console.warn('Fetched schemes from fallback registry:', err);
+
+      if (Array.isArray(data) && data.length > 0) {
+        setSchemes(data);
+        setSelectedScheme((prev) => {
+          if (prev) {
+            const matched = data!.find((d) => d.id === prev.id);
+            return matched ?? data![0] ?? null;
+          }
+          return data![0] ?? null;
+        });
+        setLastRefreshedAt(
+          new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+        );
+      } else {
+        throw new Error('No schemes returned by the public registry API.');
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Unable to connect to public funding API';
+      setSchemesError(msg);
+      console.warn('Funding schemes public API error:', err);
     } finally {
       setLoadingSchemes(false);
       setRefreshing(false);
@@ -280,7 +158,17 @@ export default function FundingPage() {
   };
 
   const comp = useMemo(() => {
-    return createFeasibleComparison(rawComparison, session ?? fallbackSession);
+    let effectiveGoal = session?.goal;
+    try {
+      const stored = localStorage.getItem(`waterpilot_goal_${sessionId}`);
+      if (stored) {
+        effectiveGoal = { ...(session?.goal ?? {}), ...JSON.parse(stored) };
+      }
+    } catch {}
+    const activeSession = session
+      ? { ...session, goal: effectiveGoal ?? null }
+      : { ...fallbackSession, goal: effectiveGoal ?? null };
+    return createFeasibleComparison(rawComparison, activeSession);
   }, [rawComparison, session, sessionId]);
 
   const storedOptionId = useMemo(() => {
@@ -475,24 +363,38 @@ export default function FundingPage() {
                 <strong style={{ fontSize: '0.9rem' }}>
                   {customQuote ? `₹${(Number(customQuote) / 100000).toFixed(1)} lakh (quote)` : 'Use plan estimate'}
                 </strong>
-                <Button
-                  variant="secondary"
-                  size="sm"
+                <button
+                  type="button"
+                  className={[styles.pencilBtn, showQuoteEdit && styles.active].filter(Boolean).join(' ')}
                   onClick={() => setShowQuoteEdit(!showQuoteEdit)}
+                  title={showQuoteEdit ? 'Cancel cost editing' : 'Edit contractor quote'}
+                  aria-label={showQuoteEdit ? 'Cancel cost editing' : 'Edit contractor quote'}
                 >
-                  {showQuoteEdit ? 'Cancel' : 'Edit'}
-                </Button>
+                  <Icon name={showQuoteEdit ? 'close' : 'pencil'} size="sm" />
+                </button>
               </div>
               {showQuoteEdit && (
                 <div style={{ marginTop: '0.4rem' }}>
-                  <input
-                    type="number"
-                    aria-label="Enter project cost in INR"
-                    value={customQuote}
-                    onChange={(e) => setCustomQuote(e.target.value)}
-                    placeholder="Enter amount in INR"
-                    className={styles.customInput}
-                  />
+                  <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                    <input
+                      type="number"
+                      aria-label="Enter project cost in INR"
+                      value={customQuote}
+                      onChange={(e) => setCustomQuote(e.target.value)}
+                      placeholder="Enter amount in INR"
+                      className={styles.customInput}
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      className={styles.pencilBtn}
+                      onClick={() => setShowQuoteEdit(false)}
+                      title="Done"
+                      aria-label="Done editing cost estimate"
+                    >
+                      <Icon name="check" size="sm" />
+                    </button>
+                  </div>
                   <p style={{ margin: '0.2rem 0 0', fontSize: '0.7rem', color: 'var(--wp-color-text-muted)' }}>
                     Updating cost will recheck funding eligibility.
                   </p>
@@ -582,6 +484,13 @@ export default function FundingPage() {
                   <div className={styles.loadingState}>
                     <Icon name="refresh" size="md" />
                     <span>Fetching verified opportunities from public registry API...</span>
+                  </div>
+                ) : schemesError && schemes.length === 0 ? (
+                  <div className={styles.loadingState}>
+                    <p style={{ color: 'var(--wp-color-warn, #b45309)', margin: '0 0 0.5rem' }}>{schemesError}</p>
+                    <Button variant="secondary" size="sm" onClick={() => loadSchemesFromPublicApi(true)}>
+                      Retry loading schemes
+                    </Button>
                   </div>
                 ) : filteredSchemes.length === 0 ? (
                   <div className={styles.loadingState}>
@@ -683,25 +592,41 @@ export default function FundingPage() {
                       <span className={styles.swatch} style={{ background: 'var(--wp-color-accent)' }} />
                       Own contribution:
                     </span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                       <strong>₹{ownContributionLakh} lakh</strong>
-                      <Button
-                        variant="secondary"
-                        size="sm"
+                      <button
+                        type="button"
+                        className={[styles.pencilBtn, showOwnEdit && styles.active].filter(Boolean).join(' ')}
                         onClick={() => setShowOwnEdit(!showOwnEdit)}
+                        title={showOwnEdit ? 'Close editor' : 'Edit own contribution'}
+                        aria-label={showOwnEdit ? 'Close editor' : 'Edit own contribution'}
                       >
-                        {showOwnEdit ? 'Cancel' : 'Edit'}
-                      </Button>
+                        <Icon name={showOwnEdit ? 'close' : 'pencil'} size="sm" />
+                      </button>
                     </div>
                   </div>
                   {showOwnEdit && (
-                    <div style={{ margin: '0.2rem 0' }}>
+                    <div style={{ margin: '0.35rem 0', display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
                       <input
                         type="number"
+                        step="10000"
+                        min="0"
+                        max={planCostNum}
                         value={ownContribution}
                         onChange={(e) => setCustomOwnContribution(Number(e.target.value))}
                         className={styles.customInput}
+                        aria-label="Own contribution in Rupees"
+                        autoFocus
                       />
+                      <button
+                        type="button"
+                        className={styles.pencilBtn}
+                        onClick={() => setShowOwnEdit(false)}
+                        title="Done"
+                        aria-label="Done editing own contribution"
+                      >
+                        <Icon name="check" size="sm" />
+                      </button>
                     </div>
                   )}
                   {selectedScheme && (

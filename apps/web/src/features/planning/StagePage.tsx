@@ -10,18 +10,27 @@ interface StagePageProps {
   stageId: PlanningStage['id'] | 'baseline';
   children: ReactNode;
   title?: string;
+  titleSuffix?: ReactNode;
   subtitle?: string;
   actions?: ReactNode;
 }
 
 /** Standard frame for a planning stage: "Step N of 6", title and subtitle. */
-export function StagePage({ stageId, children, title, subtitle, actions }: StagePageProps) {
+export function StagePage({
+  stageId,
+  children,
+  title,
+  titleSuffix,
+  subtitle,
+  actions,
+}: StagePageProps) {
   const { stage, index } = getStage(stageId);
   return (
     <div className={styles.stage}>
       <PageHeader
         eyebrow={`Step ${index + 1} of ${PLANNING_STAGES.length}`}
         title={title ?? stage.label}
+        titleSuffix={titleSuffix}
         subtitle={subtitle ?? stage.subtitle}
         actions={actions}
       />

@@ -797,6 +797,58 @@
         }
       }
     },
+    "/v1/funding-schemes": {
+      "get": {
+        "tags": [
+          "funding"
+        ],
+        "summary": "Fetch verified public funding opportunities for community water projects.",
+        "operationId": "list_public_funding_schemes_v1_funding_schemes_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response List Public Funding Schemes V1 Funding Schemes Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/public/funding-schemes": {
+      "get": {
+        "tags": [
+          "funding"
+        ],
+        "summary": "Fetch verified public funding opportunities for community water projects.",
+        "operationId": "list_public_funding_schemes_v1_public_funding_schemes_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response List Public Funding Schemes V1 Public Funding Schemes Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/agent-conversations/session/{sid}": {
       "get": {
         "tags": [

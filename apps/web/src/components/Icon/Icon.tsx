@@ -62,6 +62,8 @@ const PATHS = {
   building:
     'M3 21h18M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16M9 7h1m4 0h1M9 11h1m4 0h1M9 15h1m4 0h1',
   groundwater: 'M12 3v9m-3-3 3 3 3-3M2 17q3-3 6 0t6 0 6 0M2 21q3-3 6 0t6 0 6 0',
+  pencil: 'M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3Zm-2 2 4 4',
+  edit: 'M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3Zm-2 2 4 4',
 } as const;
 
 export type IconName = keyof typeof PATHS;

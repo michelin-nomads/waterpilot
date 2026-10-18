@@ -47,9 +47,7 @@ export function ComparisonSummaryPanels({
   const genericPosition = (v: number) => Math.max(0, Math.min(100, ((v - minVal) / span) * 100));
 
   const metricLabel =
-    comparison.metric === 'TANKER_DEPENDENCE'
-      ? 'tanker dependence'
-      : 'water shortage days';
+    comparison.metric === 'TANKER_DEPENDENCE' ? 'tanker dependence' : 'water shortage days';
 
   return (
     <div className={styles.summaryPanels}>
@@ -114,11 +112,13 @@ export function ComparisonSummaryPanels({
                     <span className={styles.planItemName}>· {o.name}</span>
                     {exceedsTarget ? (
                       <span className={styles.badgeExceeds}>
-                        ★ Exceeds target (+{bufferMin === bufferMax ? bufferMin : `${bufferMin}–${bufferMax}`}d buffer)
+                        ★ Exceeds target (+
+                        {bufferMin === bufferMax ? bufferMin : `${bufferMin}–${bufferMax}`}d buffer)
                       </span>
                     ) : meetsTarget ? (
                       <span className={styles.badgeMeets}>
-                        ✓ Meets target (+{bufferMin === bufferMax ? bufferMin : `${bufferMin}–${bufferMax}`}d buffer)
+                        ✓ Meets target (+
+                        {bufferMin === bufferMax ? bufferMin : `${bufferMin}–${bufferMax}`}d buffer)
                       </span>
                     ) : null}
                   </div>
@@ -178,7 +178,7 @@ export function ComparisonSummaryPanels({
           <div className={styles.scaleRuler} aria-hidden="true">
             <span className={styles.scaleStart}>0 days saved (Baseline: {baselineNum}d)</span>
             {comparison.targetLevel && (
-              <span className={styles.scaleTarget} style={{ left: `${targetPct}%` }}>
+              <span className={styles.scaleTarget}>
                 ▲ Target: {targetNum}d ({targetSaved}d saved)
               </span>
             )}
@@ -188,9 +188,18 @@ export function ComparisonSummaryPanels({
 
         {/* Legend */}
         <div className={styles.chartNote}>
-          <span className={styles.legendSolid} /> Guaranteed reduction (conservative)
-          <span className={styles.legendRange} /> Additional potential reduction (optimistic)
-          <i className={styles.legendTargetLine} /> Goal target threshold
+          <span className={styles.legendItem}>
+            <span className={styles.legendSolid} aria-hidden="true" />
+            <span>Guaranteed reduction (conservative)</span>
+          </span>
+          <span className={styles.legendItem}>
+            <span className={styles.legendRange} aria-hidden="true" />
+            <span>Additional potential reduction (optimistic)</span>
+          </span>
+          <span className={styles.legendItem}>
+            <i className={styles.legendTargetLine} aria-hidden="true" />
+            <span>Goal target threshold</span>
+          </span>
         </div>
 
         <p className={styles.muted}>
