@@ -1,8 +1,6 @@
 .workspace {
   display: grid;
   gap: var(--wp-space-5);
-  max-width: 1200px;
-  margin: 0 auto;
 }
 
 .headingRow {
@@ -42,7 +40,7 @@
   border: 1px solid var(--wp-color-border);
   border-radius: var(--wp-radius-lg);
   padding: var(--wp-space-4) var(--wp-space-5);
-  box-shadow: 0 4px 18px rgba(16, 35, 56, 0.05);
+  box-shadow: var(--wp-shadow-sm);
 }
 
 .planCardGrid {
@@ -175,7 +173,7 @@
   border: 1px solid var(--wp-color-border);
   border-radius: var(--wp-radius-lg);
   padding: var(--wp-space-4);
-  box-shadow: 0 2px 10px rgba(16, 35, 56, 0.04);
+  box-shadow: var(--wp-shadow-sm);
   transition: border-color var(--wp-motion-fast);
 }
 
@@ -232,13 +230,13 @@
 .pillGreen {
   background: var(--wp-color-success-soft);
   color: var(--wp-color-success);
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  border: 1px solid var(--wp-color-success);
 }
 
 .pillAmber {
   background: var(--wp-color-warning-soft);
   color: var(--wp-color-warning);
-  border: 1px solid rgba(245, 158, 11, 0.25);
+  border: 1px solid var(--wp-color-warning);
 }
 
 .pillTeal {
@@ -291,7 +289,7 @@
   border: 1px solid var(--wp-color-border);
   border-radius: var(--wp-radius-lg);
   padding: var(--wp-space-4);
-  box-shadow: 0 4px 14px rgba(16, 35, 56, 0.05);
+  box-shadow: var(--wp-shadow-sm);
 }
 
 .pictureCardAccent {
@@ -320,12 +318,51 @@
 }
 
 .meterRequest {
-  background: #38bdf8;
+  background: var(--wp-color-info, #0284c7);
 }
 
 .meterGap {
   flex: 1;
   background: var(--wp-color-surface-sunken);
+}
+
+.customInput,
+.customSelect,
+.customTextarea {
+  width: 100%;
+  padding: var(--wp-space-2) var(--wp-space-3);
+  border-radius: var(--wp-radius-md);
+  border: 1px solid var(--wp-color-border);
+  background: var(--wp-color-surface);
+  color: var(--wp-color-text);
+  font-family: inherit;
+  font-size: var(--wp-text-sm);
+  transition: border-color var(--wp-motion-fast);
+
+  &:focus {
+    outline: none;
+    border-color: var(--wp-color-accent);
+    box-shadow: 0 0 0 2px var(--wp-color-accent-soft);
+  }
+}
+
+.linkBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--wp-color-accent);
+  font-size: var(--wp-text-xs);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wp-space-1);
+
+  &:hover {
+    color: var(--wp-color-accent-strong);
+  }
 }
 
 .legendList {

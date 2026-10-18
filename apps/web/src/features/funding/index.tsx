@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import {
   Button,
@@ -6,6 +6,7 @@ import {
   Icon,
 } from '../../components';
 import {
+  AreaLocationDocument,
   PlanComparisonDocument,
 } from '../../graphql/generated/graphql';
 import { useGraphQLQuery } from '../../graphql/hooks';
@@ -109,14 +110,14 @@ export default function FundingPage() {
   const [showGoalContext, setShowGoalContext] = useState(false);
   const [showQuoteEdit, setShowQuoteEdit] = useState(false);
   const [customQuote, setCustomQuote] = useState<string>('');
-  const [ownContribution, setOwnContribution] = useState<number>(200000);
+  const [customOwnContribution, setCustomOwnContribution] = useState<number | null>(null);
   const [showOwnEdit, setShowOwnEdit] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   // Drawer & Selection state
   const [drawerScheme, setDrawerScheme] = useState<SchemeData | null>(null);
   const [selectedScheme, setSelectedScheme] = useState<SchemeData | null>(SCHEMES[0] ?? null);
-  const [requestedAmount, setRequestedAmount] = useState<number>(300000);
+  const [customRequestedAmount, setCustomRequestedAmount] = useState<number | null>(null);
 
   // Proposal state
   const [applicantName, setApplicantName] = useState('Parkway Homes Residents Association');
@@ -179,6 +180,22 @@ export default function FundingPage() {
     return comp?.options.find((o) => o.id === effectiveOptionId) ?? storedOptionData ?? comp?.options[0] ?? null;
   }, [comp, effectiveOptionId, storedOptionData]);
 
+  // Area Location resolution
+  const areaQuery = useGraphQLQuery(
+    queryKeys.areas.detail(session?.areaId ?? ''),
+    AreaLocationDocument,
+    { id: session?.areaId ?? '' },
+    { enabled: Boolean(session?.areaId) },
+  );
+  const locationName = areaQuery.data?.area?.name ?? session?.areaName ?? 'Parkway Homes, Bengaluru';
+
+  useEffect(() => {
+    if (locationName && locationName !== 'Parkway Homes, Bengaluru') {
+      setApplicantName((prev) => (prev === 'Parkway Homes Residents Association' ? `${locationName} Residents Association` : prev));
+      setProjectTitle((prev) => (prev.includes('Parkway Homes') ? `Community water security & recharge at ${locationName}` : prev));
+    }
+  }, [locationName]);
+
   // Cost calculation
   const planCostNum = useMemo(() => {
     if (customQuote && !Number.isNaN(Number(customQuote)) && Number(customQuote) > 0) {
@@ -190,10 +207,42 @@ export default function FundingPage() {
     return 740000;
   }, [activePlan, customQuote]);
 
+  // Proportional funding calculations
+  const defaultOwn = useMemo(() => Math.round(planCostNum * 0.3), [planCostNum]);
+  const ownContribution = customOwnContribution ?? defaultOwn;
+
+  const defaultGrant = useMemo(() => {
+    const maxGrant = selectedScheme?.maxAmountNum ?? 300000;
+    const remainingNeeded = Math.max(0, planCostNum - ownContribution);
+    return Math.min(maxGrant, Math.round(remainingNeeded * 0.7));
+  }, [planCostNum, ownContribution, selectedScheme]);
+
+  const requestedAmount = customRequestedAmount ?? defaultGrant;
+
   const gapToArrange = Math.max(0, planCostNum - ownContribution - (selectedScheme ? requestedAmount : 0));
   const planCostLakh = (planCostNum / 100000).toFixed(1);
   const ownContributionLakh = (ownContribution / 100000).toFixed(1);
   const gapLakh = (gapToArrange / 100000).toFixed(1);
+
+  // Timeline days resolution
+  const planDaysText = useMemo(() => {
+    if (activePlan?.buildDays?.low && activePlan?.buildDays?.high) {
+      return `${activePlan.buildDays.low}–${activePlan.buildDays.high} days`;
+    }
+    if (activePlan?.name === 'Lower cost plan') return '30–45 days';
+    if (activePlan?.name === 'Higher impact plan') return '60–90 days';
+    return '45–60 days';
+  }, [activePlan]);
+
+  // Goal & Baseline resolution
+  const targetDays = session?.goal?.target?.quantity?.value ?? comp?.targetLevel?.value ?? '56';
+  const baselineDays = comp?.baselineValue?.value ?? '74';
+  const goalSummaryText =
+    session?.goal?.kind === 'REDUCE_TANKER_DEPENDENCE'
+      ? 'Reduce tanker dependence'
+      : session?.goal?.kind === 'IMPROVE_GROUNDWATER'
+        ? 'Improve groundwater levels'
+        : 'Reduce water shortage';
 
   // Percentages for meter
   const ownPct = Math.min(100, Math.round((ownContribution / planCostNum) * 100));
@@ -216,7 +265,7 @@ export default function FundingPage() {
 Title: ${projectTitle}
 Applicant: ${applicantName}
 Applicant Type: ${applicantType}
-Contact: ${contactPerson} (${contactEmail})
+Contact: ${contactPerson || 'Authorized Representative'} (${contactEmail || 'contact@waterpilot.org'})
 Scheme: ${selectedScheme?.name ?? 'Municipal water conservation grant'}
 Funder: ${selectedScheme?.funder ?? 'City Water Supply & Sewerage Board'}
 
@@ -227,10 +276,10 @@ Total Estimated Project Cost: ₹${planCostNum.toLocaleString('en-IN')}
 Remaining Balance to Arrange: ₹${gapToArrange.toLocaleString('en-IN')}
 
 02. PROJECT NEED & OBJECTIVES
-Location: Parkway Homes, Bengaluru
+Location: ${locationName}
 Selected Plan: ${activePlan?.name ?? 'Balanced plan'}
 Interventions: ${activePlan?.measures?.map((m: { name: string }) => m.name).join('; ') ?? 'Rainwater harvesting; Leak repair'}
-Target: Tanker dependence reduced by up to 35% within 45-60 days.
+Target: ${goalSummaryText} (target ≤ ${targetDays} days vs baseline ${baselineDays} days) within ${planDaysText}.
 
 03. SUBMISSION NOTES
 ${funderNotes || 'Standard community resilience application.'}
@@ -269,7 +318,7 @@ Generated by WaterPilot on ${new Date().toLocaleDateString()}.`;
         <section className={styles.planCard} aria-labelledby="plan-banner-title">
           <div className={styles.planCardGrid}>
             <div className={styles.planCardCol}>
-              <span className={styles.planLabel}>Selected plan · Parkway Homes, Bengaluru</span>
+              <span className={styles.planLabel}>Selected plan · {locationName}</span>
               <h3 id="plan-banner-title" className={styles.planTitle}>
                 {activePlan?.name ?? 'Balanced plan'}
               </h3>
@@ -277,19 +326,18 @@ Generated by WaterPilot on ${new Date().toLocaleDateString()}.`;
                 {activePlan?.measures?.map((m: { name: string }) => m.name).join(' · ') ??
                   'Rainwater harvesting · Leak detection & repair'}
               </p>
-              <button
-                type="button"
-                className="link"
-                style={{ fontSize: '0.8rem' }}
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => setShowGoalContext(!showGoalContext)}
               >
                 {showGoalContext ? 'Hide goal & baseline' : 'View goal & baseline'}
-              </button>
+              </Button>
               {showGoalContext && (
                 <div className={styles.noteBox}>
-                  <strong>Goal:</strong> Reduce shortage/tanker dependence to ≤ 56 days/year.
+                  <strong>Goal:</strong> {goalSummaryText} to ≤ {targetDays} days/year.
                   <br />
-                  <strong>Saved baseline:</strong> 74 days/year dependence.
+                  <strong>Saved baseline:</strong> {baselineDays} days/year dependence.
                 </div>
               )}
             </div>
@@ -298,7 +346,7 @@ Generated by WaterPilot on ${new Date().toLocaleDateString()}.`;
               <span className={styles.planLabel}>Estimated implementation cost</span>
               <div className={styles.planAmount}>₹{planCostLakh} lakh</div>
               <p className={styles.planMeasures}>
-                From selected plan · 45–60 days
+                From selected plan · {planDaysText}
               </p>
             </div>
 
@@ -308,14 +356,13 @@ Generated by WaterPilot on ${new Date().toLocaleDateString()}.`;
                 <strong style={{ fontSize: '0.9rem' }}>
                   {customQuote ? `₹${(Number(customQuote) / 100000).toFixed(1)} lakh (quote)` : 'Use plan estimate'}
                 </strong>
-                <button
-                  type="button"
-                  className="link"
-                  style={{ fontSize: '0.8rem' }}
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={() => setShowQuoteEdit(!showQuoteEdit)}
                 >
                   {showQuoteEdit ? 'Cancel' : 'Edit'}
-                </button>
+                </Button>
               </div>
               {showQuoteEdit && (
                 <div style={{ marginTop: '0.4rem' }}>
@@ -325,13 +372,7 @@ Generated by WaterPilot on ${new Date().toLocaleDateString()}.`;
                     value={customQuote}
                     onChange={(e) => setCustomQuote(e.target.value)}
                     placeholder="Enter amount in INR"
-                    style={{
-                      width: '100%',
-                      padding: '0.3rem 0.5rem',
-                      borderRadius: '4px',
-                      border: '1px solid var(--wp-color-border)',
-                      fontSize: '0.85rem',
-                    }}
+                    className={styles.customInput}
                   />
                   <p style={{ margin: '0.2rem 0 0', fontSize: '0.7rem', color: 'var(--wp-color-text-muted)' }}>
                     Updating cost will recheck funding eligibility.
@@ -370,14 +411,13 @@ Generated by WaterPilot on ${new Date().toLocaleDateString()}.`;
 
               <div className={styles.applicantBar}>
                 <span>Matching for: <strong>{applicantType}</strong></span>
-                <button
-                  type="button"
-                  className="link"
-                  style={{ fontSize: '0.8rem' }}
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={() => setShowApplicantEdit(!showApplicantEdit)}
                 >
                   {showApplicantEdit ? 'Close' : 'Edit applicant'}
-                </button>
+                </Button>
               </div>
 
               {showApplicantEdit && (
@@ -385,14 +425,7 @@ Generated by WaterPilot on ${new Date().toLocaleDateString()}.`;
                   <select
                     value={applicantType}
                     onChange={(e) => setApplicantType(e.target.value)}
-                    style={{
-                      padding: '0.4rem 0.6rem',
-                      borderRadius: '6px',
-                      border: '1px solid var(--wp-color-border)',
-                      background: 'var(--wp-color-surface)',
-                      color: 'var(--wp-color-text)',
-                      fontSize: '0.85rem',
-                    }}
+                    className={styles.customSelect}
                   >
                     <option>Registered resident association</option>
                     <option>Local government / ward committee</option>
@@ -444,9 +477,13 @@ Generated by WaterPilot on ${new Date().toLocaleDateString()}.`;
                       </div>
                       <Button
                         variant="secondary"
-                        onClick={() => setDrawerScheme(s)}
+                        size="sm"
+                        onClick={() => {
+                          setDrawerScheme(s);
+                          setSelectedScheme(s);
+                        }}
                       >
-                        View details <Icon name="arrow-right" size="sm" />
+                        View details <Icon name="chevron-right" size="sm" />
                       </Button>
                     </div>
 
@@ -466,10 +503,13 @@ Generated by WaterPilot on ${new Date().toLocaleDateString()}.`;
             <aside className={styles.asideCol}>
               <section className={`${styles.pictureCard} ${styles.pictureCardAccent}`}>
                 <div className={styles.eyebrow}>Your funding picture</div>
-                <div className={styles.pictureAmount}>₹{gapLakh} lakh to arrange</div>
-                <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--wp-color-text-muted)' }}>
-                  ₹{planCostLakh} lakh cost − ₹{ownContributionLakh} lakh planned own contribution
-                  {selectedScheme && ` − ₹${(requestedAmount / 100000).toFixed(1)} lakh grant`}
+                <div className={styles.pictureAmount}>
+                  {gapToArrange === 0 ? '₹0.0 lakh to arrange · Fully funded' : `₹${gapLakh} lakh to arrange`}
+                </div>
+                <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--wp-color-text-muted)' }}>
+                  {gapToArrange === 0
+                    ? 'Project cost is fully covered by own contribution and requested grant.'
+                    : `₹${planCostLakh} lakh cost − ₹${ownContributionLakh} lakh planned own contribution − ₹${(requestedAmount / 100000).toFixed(1)} lakh grant`}
                 </p>
 
                 <div className={styles.meterBar} aria-hidden="true">
@@ -492,14 +532,13 @@ Generated by WaterPilot on ${new Date().toLocaleDateString()}.`;
                     </span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                       <strong>₹{ownContributionLakh} lakh</strong>
-                      <button
-                        type="button"
-                        className="link"
-                        style={{ fontSize: '0.75rem' }}
+                      <Button
+                        variant="secondary"
+                        size="sm"
                         onClick={() => setShowOwnEdit(!showOwnEdit)}
                       >
-                        Edit
-                      </button>
+                        {showOwnEdit ? 'Cancel' : 'Edit'}
+                      </Button>
                     </div>
                   </div>
                   {showOwnEdit && (
@@ -507,21 +546,15 @@ Generated by WaterPilot on ${new Date().toLocaleDateString()}.`;
                       <input
                         type="number"
                         value={ownContribution}
-                        onChange={(e) => setOwnContribution(Number(e.target.value))}
-                        style={{
-                          width: '100%',
-                          padding: '0.3rem',
-                          borderRadius: '4px',
-                          border: '1px solid var(--wp-color-border)',
-                          fontSize: '0.8rem',
-                        }}
+                        onChange={(e) => setCustomOwnContribution(Number(e.target.value))}
+                        className={styles.customInput}
                       />
                     </div>
                   )}
                   {selectedScheme && (
                     <div className={styles.legendRow}>
                       <span>
-                        <span className={styles.swatch} style={{ background: '#38bdf8' }} />
+                        <span className={styles.swatch} style={{ background: 'var(--wp-color-info, #0284c7)' }} />
                         Requested grant:
                       </span>
                       <strong>₹{(requestedAmount / 100000).toFixed(1)} lakh</strong>
@@ -555,14 +588,14 @@ Generated by WaterPilot on ${new Date().toLocaleDateString()}.`;
         {screen === 'proposal' && (
           <div className={styles.proposalWorkspace}>
             <div style={{ marginBottom: '1rem' }}>
-              <button
-                type="button"
-                className="link"
-                style={{ fontSize: '0.85rem' }}
+              <Button
+                variant="ghost"
+                size="sm"
+                startIcon="chevrons-left"
                 onClick={() => setScreen('discover')}
               >
-                ‹ Back to funding opportunities
-              </button>
+                Back to funding opportunities
+              </Button>
             </div>
 
             <div className={styles.headingRow}>
@@ -595,15 +628,7 @@ Generated by WaterPilot on ${new Date().toLocaleDateString()}.`;
                         type="text"
                         value={applicantName}
                         onChange={(e) => setApplicantName(e.target.value)}
-                        style={{
-                          width: '100%',
-                          padding: '0.5rem',
-                          borderRadius: '6px',
-                          border: '1px solid var(--wp-color-border)',
-                          background: 'var(--wp-color-surface)',
-                          color: 'var(--wp-color-text)',
-                          fontSize: '0.85rem',
-                        }}
+                        className={styles.customInput}
                       />
                     </div>
                     <div>
@@ -613,15 +638,7 @@ Generated by WaterPilot on ${new Date().toLocaleDateString()}.`;
                       <select
                         value={applicantType}
                         onChange={(e) => setApplicantType(e.target.value)}
-                        style={{
-                          width: '100%',
-                          padding: '0.5rem',
-                          borderRadius: '6px',
-                          border: '1px solid var(--wp-color-border)',
-                          background: 'var(--wp-color-surface)',
-                          color: 'var(--wp-color-text)',
-                          fontSize: '0.85rem',
-                        }}
+                        className={styles.customSelect}
                       >
                         <option>Registered resident association</option>
                         <option>Local government / ward committee</option>
@@ -640,15 +657,7 @@ Generated by WaterPilot on ${new Date().toLocaleDateString()}.`;
                         value={contactPerson}
                         onChange={(e) => setContactPerson(e.target.value)}
                         placeholder="Full name of representative"
-                        style={{
-                          width: '100%',
-                          padding: '0.5rem',
-                          borderRadius: '6px',
-                          border: '1px solid var(--wp-color-border)',
-                          background: 'var(--wp-color-surface)',
-                          color: 'var(--wp-color-text)',
-                          fontSize: '0.85rem',
-                        }}
+                        className={styles.customInput}
                       />
                     </div>
                     <div>
@@ -660,15 +669,7 @@ Generated by WaterPilot on ${new Date().toLocaleDateString()}.`;
                         value={contactEmail}
                         onChange={(e) => setContactEmail(e.target.value)}
                         placeholder="community@example.com"
-                        style={{
-                          width: '100%',
-                          padding: '0.5rem',
-                          borderRadius: '6px',
-                          border: '1px solid var(--wp-color-border)',
-                          background: 'var(--wp-color-surface)',
-                          color: 'var(--wp-color-text)',
-                          fontSize: '0.85rem',
-                        }}
+                        className={styles.customInput}
                       />
                     </div>
                   </div>
@@ -681,15 +682,7 @@ Generated by WaterPilot on ${new Date().toLocaleDateString()}.`;
                       type="text"
                       value={projectTitle}
                       onChange={(e) => setProjectTitle(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '0.5rem',
-                        borderRadius: '6px',
-                        border: '1px solid var(--wp-color-border)',
-                        background: 'var(--wp-color-surface)',
-                        color: 'var(--wp-color-text)',
-                        fontSize: '0.85rem',
-                      }}
+                      className={styles.customInput}
                     />
                   </div>
 
@@ -701,16 +694,8 @@ Generated by WaterPilot on ${new Date().toLocaleDateString()}.`;
                       <input
                         type="number"
                         value={requestedAmount}
-                        onChange={(e) => setRequestedAmount(Number(e.target.value))}
-                        style={{
-                          width: '100%',
-                          padding: '0.5rem',
-                          borderRadius: '6px',
-                          border: '1px solid var(--wp-color-border)',
-                          background: 'var(--wp-color-surface)',
-                          color: 'var(--wp-color-text)',
-                          fontSize: '0.85rem',
-                        }}
+                        onChange={(e) => setCustomRequestedAmount(Number(e.target.value))}
+                        className={styles.customInput}
                       />
                     </div>
                     <div>
@@ -720,16 +705,8 @@ Generated by WaterPilot on ${new Date().toLocaleDateString()}.`;
                       <input
                         type="number"
                         value={ownContribution}
-                        onChange={(e) => setOwnContribution(Number(e.target.value))}
-                        style={{
-                          width: '100%',
-                          padding: '0.5rem',
-                          borderRadius: '6px',
-                          border: '1px solid var(--wp-color-border)',
-                          background: 'var(--wp-color-surface)',
-                          color: 'var(--wp-color-text)',
-                          fontSize: '0.85rem',
-                        }}
+                        onChange={(e) => setCustomOwnContribution(Number(e.target.value))}
+                        className={styles.customInput}
                       />
                     </div>
                   </div>
@@ -743,15 +720,7 @@ Generated by WaterPilot on ${new Date().toLocaleDateString()}.`;
                       value={funderNotes}
                       onChange={(e) => setFunderNotes(e.target.value)}
                       placeholder="Local priorities, permissions or community commitments"
-                      style={{
-                        width: '100%',
-                        padding: '0.5rem',
-                        borderRadius: '6px',
-                        border: '1px solid var(--wp-color-border)',
-                        background: 'var(--wp-color-surface)',
-                        color: 'var(--wp-color-text)',
-                        fontSize: '0.85rem',
-                      }}
+                      className={styles.customTextarea}
                     />
                   </div>
                 </section>
@@ -764,7 +733,7 @@ Generated by WaterPilot on ${new Date().toLocaleDateString()}.`;
                       <div>
                         <strong>Goal & community context</strong>
                         <div style={{ color: 'var(--wp-color-text-muted)' }}>
-                          Reduce tanker dependence to ≤ 56 days · Parkway Homes, Bengaluru
+                          {goalSummaryText} to ≤ {targetDays} days · {locationName}
                         </div>
                       </div>
                     </div>
@@ -773,7 +742,7 @@ Generated by WaterPilot on ${new Date().toLocaleDateString()}.`;
                       <div>
                         <strong>Selected works & implementation schedule</strong>
                         <div style={{ color: 'var(--wp-color-text-muted)' }}>
-                          {activePlan?.measures?.map((m: { name: string }) => m.name).join(' · ')} · 45–60 days
+                          {activePlan?.measures?.map((m: { name: string }) => m.name).join(' · ') || 'Rainwater harvesting & leak repair'} · {planDaysText}
                         </div>
                       </div>
                     </div>
@@ -782,7 +751,7 @@ Generated by WaterPilot on ${new Date().toLocaleDateString()}.`;
                       <div>
                         <strong>Cost breakdown & available baseline</strong>
                         <div style={{ color: 'var(--wp-color-text-muted)' }}>
-                          ₹{planCostLakh} lakh plan estimate · 74 days/yr baseline shortage
+                          ₹{planCostLakh} lakh plan estimate · {baselineDays} days/yr baseline shortage
                         </div>
                       </div>
                     </div>
@@ -844,14 +813,14 @@ Generated by WaterPilot on ${new Date().toLocaleDateString()}.`;
         {screen === 'ready' && (
           <div className={styles.readyWorkspace}>
             <div style={{ marginBottom: '1rem' }}>
-              <button
-                type="button"
-                className="link"
-                style={{ fontSize: '0.85rem' }}
+              <Button
+                variant="ghost"
+                size="sm"
+                startIcon="chevrons-left"
                 onClick={() => setScreen('proposal')}
               >
-                ‹ Edit proposal details
-              </button>
+                Edit proposal details
+              </Button>
             </div>
 
             <div className={styles.readyBanner}>
@@ -878,7 +847,7 @@ Generated by WaterPilot on ${new Date().toLocaleDateString()}.`;
                   <p style={{ color: 'var(--wp-color-text-muted)', margin: '0 0 1.2rem' }}>
                     {applicantName}
                     <br />
-                    Bengaluru, Karnataka · Generated Proposal Preview
+                    {locationName} · Generated Proposal Preview
                   </p>
 
                   <h3 style={{ fontSize: '0.85rem', fontWeight: 700, borderTop: '1px solid var(--wp-color-border)', paddingTop: '0.8rem', margin: '0.8rem 0 0.4rem' }}>
@@ -892,14 +861,14 @@ Generated by WaterPilot on ${new Date().toLocaleDateString()}.`;
                     02 · Project need & objective
                   </h3>
                   <p>
-                    The community records 74 days/year tanker dependence. The objective is to reduce tanker reliance to ≤ 56 days/year through systematic infrastructure interventions.
+                    The community records {baselineDays} days/year baseline shortage. The objective is to {goalSummaryText.toLowerCase()} to ≤ {targetDays} days/year through systematic infrastructure interventions.
                   </p>
 
                   <h3 style={{ fontSize: '0.85rem', fontWeight: 700, borderTop: '1px solid var(--wp-color-border)', paddingTop: '0.8rem', margin: '0.8rem 0 0.4rem' }}>
                     03 · Proposed works
                   </h3>
                   <p>
-                    {activePlan?.measures?.map((m: { name: string }) => m.name).join(', ') ?? 'Rainwater harvesting and leak repair'}. Implementation window: 45 to 60 days.
+                    {activePlan?.measures?.map((m: { name: string }) => m.name).join(', ') ?? 'Rainwater harvesting and leak repair'}. Implementation window: {planDaysText}.
                   </p>
 
                   <h3 style={{ fontSize: '0.85rem', fontWeight: 700, borderTop: '1px solid var(--wp-color-border)', paddingTop: '0.8rem', margin: '0.8rem 0 0.4rem' }}>
@@ -1020,7 +989,7 @@ Generated by WaterPilot on ${new Date().toLocaleDateString()}.`;
                   aria-label="Close funding details"
                   onClick={() => setDrawerScheme(null)}
                 >
-                  ×
+                  <Icon name="close" size="sm" />
                 </button>
                 <div className={styles.eyebrow}>Funding opportunity</div>
                 <h2>{drawerScheme.name}</h2>
@@ -1106,16 +1075,8 @@ Generated by WaterPilot on ${new Date().toLocaleDateString()}.`;
                     <input
                       type="number"
                       value={requestedAmount}
-                      onChange={(e) => setRequestedAmount(Number(e.target.value))}
-                      style={{
-                        width: '100%',
-                        padding: '0.5rem',
-                        borderRadius: '6px',
-                        border: '1px solid var(--wp-color-border)',
-                        background: 'var(--wp-color-surface)',
-                        color: 'var(--wp-color-text)',
-                        fontSize: '0.9rem',
-                      }}
+                      onChange={(e) => setCustomRequestedAmount(Number(e.target.value))}
+                      className={styles.customInput}
                     />
                   </div>
                 )}
