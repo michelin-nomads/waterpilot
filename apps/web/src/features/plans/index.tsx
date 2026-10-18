@@ -128,7 +128,6 @@ function PlansWorkspace({ session }: { session: SessionState }) {
         coordinator?.selectPlanOption(optionId);
       } catch {}
     }
-    navigate('/make-it-happen');
   };
 
   if (!effectiveSession.goal) {
