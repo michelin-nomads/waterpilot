@@ -37,6 +37,18 @@ const GOAL_CHOICES: readonly { kind: GoalKind; icon: IconName; description: stri
 /** Choosing an outcome does not imply a numerical target, deadline or an achievable result. */
 function chooseGoal(draft: GoalDraft, kind: GoalKind): GoalDraft {
   if (draft.kind === kind) return draft;
+  if (kind === 'REDUCE_SHORTAGE') {
+    return {
+      ...draft,
+      kind,
+      mode: 'ABSOLUTE_LEVEL',
+      unit: 'DAY',
+      targetValue: draft.targetValue || '50',
+      targetParameter: '',
+      confirmed: false,
+      also: draft.also.filter((k) => k !== kind),
+    };
+  }
   return {
     ...draft,
     kind,

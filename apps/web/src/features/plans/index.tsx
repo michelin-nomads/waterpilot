@@ -132,21 +132,18 @@ function PlansWorkspace({ session }: { session: SessionState }) {
       )}
       {found && found.planComparison.options.length > 0 && (
         <div className={styles.selectionFooter}>
-          <ButtonLink to="/goals" variant="ghost">
-            Back
-          </ButtonLink>
+          <div className={styles.selectionInfo} aria-live="polite">
+            <span className={styles.muted}>Your selection</span>
+            <strong>
+              {currentSelection
+                ? found.planComparison.options.find((o) => o.id === selectedId)?.name
+                : 'Choose a plan when you’re ready'}
+            </strong>
+          </div>
           <div className={styles.selectionActions}>
-            <div aria-live="polite">
-              <span className={styles.muted}>Your selection</span>
-              <strong>
-                {currentSelection
-                  ? found.planComparison.options.find((o) => o.id === selectedId)?.name
-                  : 'Choose a plan when you’re ready'}
-              </strong>
-            </div>
             {currentSelection && !upstreamPending && !choosing ? (
               <ButtonLink to="/make-it-happen" endIcon="arrow-right">
-                Continue to funding
+                Proceed with selected plan
               </ButtonLink>
             ) : (
               <Button disabled>

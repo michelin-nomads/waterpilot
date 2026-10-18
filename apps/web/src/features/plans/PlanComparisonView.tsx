@@ -59,9 +59,7 @@ function OptionCard({
       <div className={styles.optionHead}>
         <span className={styles.planNumber}>Plan {option.rank}</span>
         <span className={styles.tags}>
-          {option.rank === 1 && comparison.ranking.trim() && (
-            <Badge tone="accent">Ranked first</Badge>
-          )}
+          {option.rank === 1 && <Badge tone="accent">Ranked first</Badge>}
           {selected && (
             <Badge tone="accent" icon="check">
               Chosen
@@ -407,12 +405,10 @@ export function PlanComparisonView({ comparison, selectedId, busy, onChoose }: P
           </p>
         </Notice>
       ) : (
-        comparison.status !== 'OPTIONS' && (
-          <div className={styles.head}>
-            <Badge tone={status.tone}>{status.label}</Badge>
-            <p className={styles.summary}>{comparison.summary}</p>
-          </div>
-        )
+        <div className={styles.head}>
+          <Badge tone={status.tone}>{status.label}</Badge>
+          <p className={styles.summary}>{comparison.summary}</p>
+        </div>
       )}
       {comparison.metric && (
         <dl className={styles.facts}>
@@ -479,6 +475,48 @@ export function PlanComparisonView({ comparison, selectedId, busy, onChoose }: P
       )}
       {comparison.options.length > 0 && (
         <ComparisonSummaryPanels comparison={comparison} selectedId={selectedId} />
+      )}
+      {comparison.options.length > 0 && (
+        <Accordion
+          items={[
+            {
+              id: 'assumptions',
+              title: 'Assumptions, ranking and versions',
+              content: (
+                <div className={styles.stack}>
+                  <ul className={styles.list}>
+                    {comparison.assumptions.map((a) => (
+                      <li key={a}>{a}</li>
+                    ))}
+                  </ul>
+                  {comparison.ranking && (
+                    <p className={styles.text}>Ranking: {comparison.ranking}</p>
+                  )}
+                  <p className={styles.muted}>
+                    Up to {comparison.maxOptions} plans are shown, never more than pass. Stress
+                    tests: {comparison.stressTests.join('; ')}.
+                  </p>
+                  {comparison.excluded.length > 0 && (
+                    <>
+                      <h4 className={styles.blockTitle}>Not considered</h4>
+                      <ul className={styles.list}>
+                        {comparison.excluded.map((e) => (
+                          <li key={e}>{e}</li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                  <p className={styles.muted}>
+                    Option engine {comparison.engineVersion}, scenario engine{' '}
+                    {comparison.scenarioEngineVersion}, catalogue {comparison.catalogueVersion}.
+                    {r.evaluated > 0 && ` ${r.evaluated} combinations checked.`}
+                    {r.truncated && ' The combination limit was reached.'}
+                  </p>
+                </div>
+              ),
+            },
+          ]}
+        />
       )}
       <Drawer
         open={detailOption !== null}

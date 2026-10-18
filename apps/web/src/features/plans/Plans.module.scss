@@ -555,6 +555,15 @@
   flex-wrap: wrap;
   gap: var(--wp-space-4);
 }
+.selectionInfo {
+  display: grid;
+  gap: var(--wp-space-1);
+  text-align: start;
+
+  strong {
+    font-size: var(--wp-text-md);
+  }
+}
 .selectionActions {
   display: flex;
   align-items: center;
@@ -562,11 +571,6 @@
   flex-wrap: wrap;
   gap: var(--wp-space-4);
   margin-inline-start: auto;
-}
-.selectionActions > div {
-  display: grid;
-  gap: var(--wp-space-1);
-  text-align: end;
 }
 .previewLabel {
   display: flex;
