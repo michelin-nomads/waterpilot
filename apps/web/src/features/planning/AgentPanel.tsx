@@ -93,7 +93,6 @@ function panelContent(status: AiStatusValue | undefined): PanelContent {
 export function AgentPanel({
   onUseTraditional,
   onFocusWorkspace,
-  showScenario = true,
   onCollapse,
 }: {
   onUseTraditional: () => void;
