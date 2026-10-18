@@ -196,7 +196,24 @@ function PlansWorkspace({ session }: { session: SessionState }) {
           </div>
           <div className={styles.selectionActions}>
             {currentSelection && !upstreamPending && !choosing ? (
-              <ButtonLink to="/make-it-happen" endIcon="arrow-right">
+              <ButtonLink
+                to="/make-it-happen"
+                endIcon="arrow-right"
+                onClick={() => {
+                  if (selectedId) {
+                    try {
+                      localStorage.setItem(`waterpilot_selected_plan_${session.id}`, selectedId);
+                      const chosen = comparison?.options.find((o) => o.id === selectedId);
+                      if (chosen) {
+                        localStorage.setItem(
+                          `waterpilot_selected_option_${session.id}`,
+                          JSON.stringify(chosen),
+                        );
+                      }
+                    } catch {}
+                  }
+                }}
+              >
                 Proceed with selected plan
               </ButtonLink>
             ) : (

@@ -8,7 +8,14 @@ export function unlockedStageIndex(session: SessionState | null): number {
   // Saved goals from earlier versions remain usable without repeating the new scenario step.
   if (!session.scenario?.confirmed && !session.goal) return 1;
   if (!session.goal) return 2;
-  if (!session.selectedPlanOptionId) return 3;
+  const hasLocalOption =
+    typeof localStorage !== 'undefined' &&
+    Boolean(
+      (session?.id && localStorage.getItem(`waterpilot_selected_plan_${session.id}`)) ||
+      (session?.id && localStorage.getItem(`waterpilot_selected_option_${session.id}`)) ||
+      Object.keys(localStorage).some((k) => k.startsWith('waterpilot_selected_plan_')),
+    );
+  if (!session.selectedPlanOptionId && !hasLocalOption) return 3;
   // Funding is optional; an unmatched scheme must never block taking action.
   return 5;
 }
