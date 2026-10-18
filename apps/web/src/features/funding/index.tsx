@@ -363,24 +363,38 @@ export default function FundingPage() {
                 <strong style={{ fontSize: '0.9rem' }}>
                   {customQuote ? `₹${(Number(customQuote) / 100000).toFixed(1)} lakh (quote)` : 'Use plan estimate'}
                 </strong>
-                <Button
-                  variant="secondary"
-                  size="sm"
+                <button
+                  type="button"
+                  className={[styles.pencilBtn, showQuoteEdit && styles.active].filter(Boolean).join(' ')}
                   onClick={() => setShowQuoteEdit(!showQuoteEdit)}
+                  title={showQuoteEdit ? 'Cancel cost editing' : 'Edit contractor quote'}
+                  aria-label={showQuoteEdit ? 'Cancel cost editing' : 'Edit contractor quote'}
                 >
-                  {showQuoteEdit ? 'Cancel' : 'Edit'}
-                </Button>
+                  <Icon name={showQuoteEdit ? 'close' : 'pencil'} size="sm" />
+                </button>
               </div>
               {showQuoteEdit && (
                 <div style={{ marginTop: '0.4rem' }}>
-                  <input
-                    type="number"
-                    aria-label="Enter project cost in INR"
-                    value={customQuote}
-                    onChange={(e) => setCustomQuote(e.target.value)}
-                    placeholder="Enter amount in INR"
-                    className={styles.customInput}
-                  />
+                  <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                    <input
+                      type="number"
+                      aria-label="Enter project cost in INR"
+                      value={customQuote}
+                      onChange={(e) => setCustomQuote(e.target.value)}
+                      placeholder="Enter amount in INR"
+                      className={styles.customInput}
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      className={styles.pencilBtn}
+                      onClick={() => setShowQuoteEdit(false)}
+                      title="Done"
+                      aria-label="Done editing cost estimate"
+                    >
+                      <Icon name="check" size="sm" />
+                    </button>
+                  </div>
                   <p style={{ margin: '0.2rem 0 0', fontSize: '0.7rem', color: 'var(--wp-color-text-muted)' }}>
                     Updating cost will recheck funding eligibility.
                   </p>
@@ -578,25 +592,41 @@ export default function FundingPage() {
                       <span className={styles.swatch} style={{ background: 'var(--wp-color-accent)' }} />
                       Own contribution:
                     </span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                       <strong>₹{ownContributionLakh} lakh</strong>
-                      <Button
-                        variant="secondary"
-                        size="sm"
+                      <button
+                        type="button"
+                        className={[styles.pencilBtn, showOwnEdit && styles.active].filter(Boolean).join(' ')}
                         onClick={() => setShowOwnEdit(!showOwnEdit)}
+                        title={showOwnEdit ? 'Close editor' : 'Edit own contribution'}
+                        aria-label={showOwnEdit ? 'Close editor' : 'Edit own contribution'}
                       >
-                        {showOwnEdit ? 'Cancel' : 'Edit'}
-                      </Button>
+                        <Icon name={showOwnEdit ? 'close' : 'pencil'} size="sm" />
+                      </button>
                     </div>
                   </div>
                   {showOwnEdit && (
-                    <div style={{ margin: '0.2rem 0' }}>
+                    <div style={{ margin: '0.35rem 0', display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
                       <input
                         type="number"
+                        step="10000"
+                        min="0"
+                        max={planCostNum}
                         value={ownContribution}
                         onChange={(e) => setCustomOwnContribution(Number(e.target.value))}
                         className={styles.customInput}
+                        aria-label="Own contribution in Rupees"
+                        autoFocus
                       />
+                      <button
+                        type="button"
+                        className={styles.pencilBtn}
+                        onClick={() => setShowOwnEdit(false)}
+                        title="Done"
+                        aria-label="Done editing own contribution"
+                      >
+                        <Icon name="check" size="sm" />
+                      </button>
                     </div>
                   )}
                   {selectedScheme && (

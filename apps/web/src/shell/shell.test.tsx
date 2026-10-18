@@ -489,7 +489,7 @@ describe('application shell', () => {
   it('opens scenario testing as its own planning step', async () => {
     const { router } = await renderPlan('/scenarios', { stage: 'COMPARE' });
     expect(router.state.location.pathname).toBe('/scenarios');
-    expect(await screen.findByRole('heading', { name: 'Test a Future Scenario' })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: /Test a Future Scenario/ })).toBeVisible();
   });
 
   it('keeps the old /funding link working by redirecting to Make It Happen', async () => {

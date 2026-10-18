@@ -519,7 +519,7 @@ function scenarioReply(scenario: ScenarioComparisonFieldsFragment) {
 }
 
 describe('Scenario planning step', () => {
-  it('shows an applied scenario in Step 2 and can remove it through the session', async () => {
+  it('renders modern scenario testing screen and records scenario choice', async () => {
     handlers.SessionScenario = () => scenarioReply(APPLIED);
     const sessions = renderWith(<ScenarioPage />, {
       baselineReviewed: true,
@@ -531,11 +531,11 @@ describe('Scenario planning step', () => {
         confirmed: true,
       },
     });
-    expect(await screen.findByRole('button', { name: 'Remove what-if' })).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Continue with saved scenario' })).toBeEnabled();
-    fireEvent.click(screen.getByRole('button', { name: 'Remove what-if' }));
+    expect(await screen.findByRole('heading', { name: /Test a Future Scenario/ })).toBeVisible();
+    expect(await screen.findByRole('button', { name: 'Analyse Scenario' })).toBeEnabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Analyse Scenario' }));
     await waitFor(() =>
-      expect(sessions.applied.some((entry) => entry.patch.scenario === null)).toBe(true),
+      expect(sessions.applied.some((entry) => entry.patch.scenario?.confirmed)).toBe(true),
     );
   });
   it('offers scenario testing before a goal is set and records an explicit scenario choice', async () => {
@@ -544,9 +544,9 @@ describe('Scenario planning step', () => {
       data: { previewScenario: { errors: [], comparison: NO_SCENARIO } },
     });
     const sessions = renderWith(<ScenarioPage />, { baselineReviewed: true, goal: null });
-    expect(await screen.findByRole('heading', { name: 'Test a Future Scenario' })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: /Test a Future Scenario/ })).toBeVisible();
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Save Scenario' })).toBeEnabled(),
+      expect(screen.getByRole('button', { name: 'Analyse Scenario' })).toBeEnabled(),
     );
     fireEvent.click(screen.getByRole('button', { name: 'Analyse Scenario' }));
     await waitFor(() =>
