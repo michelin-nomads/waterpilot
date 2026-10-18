@@ -400,6 +400,33 @@
 .optionFacts .outcomeRow dd {
   color: var(--wp-color-accent-strong);
 }
+.measuresModalBtn {
+  @include tap-target;
+  @include focus-visible;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: var(--wp-space-2);
+  padding: var(--wp-space-2) var(--wp-space-3);
+  margin-top: var(--wp-space-2);
+  margin-bottom: var(--wp-space-2);
+  background: var(--wp-color-surface-sunken);
+  border: 1px solid var(--wp-color-border);
+  border-radius: var(--wp-radius-md);
+  font-weight: 600;
+  font-size: var(--wp-text-sm);
+  color: var(--wp-color-accent-strong);
+  cursor: pointer;
+  transition: all var(--wp-motion-fast);
+
+  &:hover {
+    background: var(--wp-color-accent-soft);
+    border-color: var(--wp-color-accent);
+    color: var(--wp-color-accent);
+  }
+}
+
 .quickDetails {
   min-width: 0;
 }

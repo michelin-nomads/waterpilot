@@ -645,7 +645,7 @@ describe('PlansPage', () => {
     expect(screen.getByText('30.0%')).toBeInTheDocument();
     expect(screen.getByText('15.0%')).toBeInTheDocument();
     fireEvent.click(within(cards[0]!).getByText('Measures, impact & assumptions'));
-    const basis = within(cards[0]!).getByRole('list', {
+    const basis = screen.getByRole('list', {
       name: 'What efficient fixtures is computed from',
     });
     expect(within(basis).getByText(/20\.0% to 25\.0% \(your estimate\)/)).toHaveAttribute(
@@ -656,13 +656,9 @@ describe('PlansPage', () => {
 
   it('keeps supporting detail collapsed and selection unavailable until a current plan is chosen', async () => {
     renderPlans();
-    const list = await screen.findByRole('list', { name: 'Feasible plans' });
-    for (const detail of within(list).getAllByRole('region', {
-      name: 'Effects beyond your site',
-    })) {
-      expect(detail.closest('details')).not.toHaveAttribute('open');
-      expect(detail).not.toBeVisible();
-    }
+    await screen.findByRole('list', { name: 'Feasible plans' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Effects beyond your site' })).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Projected outcomes' })).toBeVisible();
     expect(screen.queryByRole('heading', { name: 'Neighbourhood impact' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Select a plan to continue' })).toBeDisabled();
@@ -705,19 +701,22 @@ describe('PlansPage', () => {
     const cards = within(list)
       .getAllByRole('listitem')
       .filter((li) => li.dataset.optionId);
-    for (const card of cards) {
+    for (let i = 0; i < cards.length; i++) {
+      const card = cards[i]!;
       fireEvent.click(within(card).getByText('Measures, impact & assumptions'));
-      const effects = within(card).getByRole('region', { name: 'Effects beyond your site' });
+      const effects = screen.getByRole('region', { name: 'Effects beyond your site' });
       expect(within(effects).getByText('30.0% now; 4.1% to 0.0% with this plan.')).toBeVisible();
       const ext = effects.querySelector('[data-finding^="ext."]')!;
       expect(ext).toHaveAttribute('data-linkage', 'UNKNOWN');
       expect(within(ext as HTMLElement).getByText('Connection unknown')).toBeInTheDocument();
+      if (i === 0) {
+        expect(screen.queryByText('Professional review')).not.toBeInTheDocument();
+      } else {
+        expect(screen.getByText(/Water quality review: required before building/)).toBeInTheDocument();
+      }
+      fireEvent.click(screen.getAllByRole('button', { name: 'Close' })[0]!);
       expect(within(card).getByRole('button', { name: 'Choose this plan' })).toBeEnabled();
     }
-    expect(within(cards[0]!).queryByText('Professional review')).not.toBeInTheDocument();
-    expect(
-      within(cards[1]!).getByText(/Water quality review: required before building/),
-    ).toBeInTheDocument();
     expect(screen.queryByText('Possible false resilience')).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Neighbourhood impact' })).not.toBeInTheDocument();
   });
@@ -833,7 +832,7 @@ describe('PlansPage', () => {
       .getAllByRole('listitem')
       .filter((li) => li.dataset.optionId)[0]!;
     fireEvent.click(within(card).getByText('Measures, impact & assumptions'));
-    const economics = within(card).getByTestId('economics');
+    const economics = screen.getByTestId('economics');
     // Upfront cost includes the person's contingency; nothing invented.
     expect(within(economics).getByTestId('econ-upfront')).toHaveTextContent(
       '₹1,10,000 to ₹1,32,000',
@@ -876,7 +875,7 @@ describe('PlansPage', () => {
     renderPlans();
     const list = await screen.findByRole('list', { name: 'Feasible plans' });
     fireEvent.click(within(list).getByText('Measures, impact & assumptions'));
-    const economics = within(within(list).getAllByRole('listitem')[0]!).getByTestId('economics');
+    const economics = screen.getByTestId('economics');
     expect(within(economics).getByText(/never converted/)).toBeInTheDocument();
     // Costs are still shown even when the tariff cannot be applied.
     expect(within(economics).getByTestId('econ-upfront')).toHaveTextContent('₹1,10,000');

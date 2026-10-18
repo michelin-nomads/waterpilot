@@ -1,7 +1,7 @@
 import { useId, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import { Accordion, Badge, Button, ButtonLink, Drawer, Icon, Notice } from '../../components';
+import { Accordion, Badge, Button, ButtonLink, Dialog, Drawer, Icon, Notice } from '../../components';
 import type {
   ComparedOptionFieldsFragment,
   PlanComparisonQuery,
@@ -48,6 +48,7 @@ function OptionCard({
   onDetails: () => void;
 }) {
   const headingId = useId();
+  const [showMeasuresModal, setShowMeasuresModal] = useState(false);
   const unit = comparison.unit ?? 'RATIO';
 
   const baseNum = comparison.baselineValue ? Number(comparison.baselineValue.value) : NaN;
@@ -170,10 +171,39 @@ function OptionCard({
           </p>
         </Notice>
       ))}
-      <details className={styles.quickDetails}>
-        <summary>
-          Measures, impact & assumptions <Icon name="chevron-down" size="sm" />
-        </summary>
+      <button
+        type="button"
+        className={styles.measuresModalBtn}
+        onClick={() => setShowMeasuresModal(true)}
+      >
+        <span>Measures, impact & assumptions</span>
+        <Icon name="chevron-right" size="sm" />
+      </button>
+
+      <Dialog
+        open={showMeasuresModal}
+        onClose={() => setShowMeasuresModal(false)}
+        title={`Plan ${option.rank}: ${option.name}`}
+        description="Measures, impact & assumptions"
+        size="lg"
+        footer={
+          <div className={styles.actions}>
+            <Button variant="secondary" onClick={() => setShowMeasuresModal(false)}>
+              Close
+            </Button>
+            <Button
+              variant={selected ? 'secondary' : 'primary'}
+              disabled={selected || busy}
+              onClick={() => {
+                onChoose();
+                setShowMeasuresModal(false);
+              }}
+            >
+              {selected ? (busy ? 'Saving your choice…' : 'Chosen plan') : 'Choose this plan'}
+            </Button>
+          </div>
+        }
+      >
         <div className={styles.evidenceContent}>
           <dl className={styles.facts}>
             <div>
@@ -294,7 +324,7 @@ function OptionCard({
             ]}
           />
         </div>
-      </details>
+      </Dialog>
       <div className={styles.actions}>
         <Button variant="secondary" onClick={onDetails}>
           View plan details
