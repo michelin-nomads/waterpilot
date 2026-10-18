@@ -51,12 +51,7 @@ export function ModernScenarioPanel({
   // Save scenario success feedback state
   const [savedSuccess, setSavedSuccess] = useState(false);
 
-  // Preview state
-  const [preview, setPreview] = useState<{
-    json: string;
-    comparison: ScenarioComparisonFieldsFragment;
-  } | null>(null);
-  const [checking, setChecking] = useState(false);
+
 
   // Derive engine adjustments from slider values
   const currentAdjustments = useMemo<ScenarioAdjustmentInput[]>(() => {
@@ -89,42 +84,29 @@ export function ModernScenarioPanel({
     return list;
   }, [rainfallDrop, groundwaterDrop, tankerSupplyDrop, urbanExpansion]);
 
-  const currentJson = JSON.stringify(currentAdjustments);
   const awaiting = saved.status === 'awaiting_confirmation';
 
-  // Run preview check against backend engine
-  async function runPreview(adjustmentsToUse = currentAdjustments) {
-    if (!adjustmentsToUse.length) return;
-    const json = JSON.stringify(adjustmentsToUse);
-    setChecking(true);
-    try {
-      const result = await client.fetchQuery({
-        queryKey: queryKeys.sessions.scenarioPreview(sessionId, revision, json),
-        queryFn: ({ signal }) =>
-          graphqlRequest(
-            PreviewScenarioDocument,
-            { sessionId, scenario: { adjustments: adjustmentsToUse } },
-            { signal },
-          ),
-      });
-      const comparison = result.previewScenario.comparison;
-      if (comparison) {
-        setPreview({ json, comparison });
-      }
-    } catch {
-      // Keep optimistic local preview calculation
-    } finally {
-      setChecking(false);
-    }
-  }
-
-  // Auto-run preview on initial mount or when sliders change (debounced)
+  // Debounced scenario preview prefetch
   useEffect(() => {
+    if (!currentAdjustments.length) return;
+    const json = JSON.stringify(currentAdjustments);
     const timer = setTimeout(() => {
-      void runPreview();
+      void client
+        .fetchQuery({
+          queryKey: queryKeys.sessions.scenarioPreview(sessionId, revision, json),
+          queryFn: ({ signal }) =>
+            graphqlRequest(
+              PreviewScenarioDocument,
+              { sessionId, scenario: { adjustments: currentAdjustments } },
+              { signal },
+            ),
+        })
+        .catch(() => {
+          // Keep optimistic local preview calculation
+        });
     }, 400);
     return () => clearTimeout(timer);
-  }, [rainfallDrop, groundwaterDrop, tankerSupplyDrop, urbanExpansion]);
+  }, [client, currentAdjustments, revision, sessionId]);
 
   // Save scenario to session with visual feedback
   function handleSaveScenario() {
@@ -200,9 +182,7 @@ export function ModernScenarioPanel({
     setInterpretedNote(customPrompt.trim());
   }
 
-  // Active comparison data (either preview or saved)
-  const activeComparison =
-    preview && preview.json === currentJson ? preview.comparison : saved.status !== 'none' ? saved : null;
+
 
   // Real-time predictive simulation model responsive to all slider adjustments
   const kpis = useMemo(() => {
@@ -707,7 +687,6 @@ export function ModernScenarioPanel({
                     setGroundwaterDrop(0);
                     setTankerSupplyDrop(0);
                     setUrbanExpansion(0);
-                    setPreview(null);
                     onSave(null);
                   }}
                 >
