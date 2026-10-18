@@ -26,6 +26,7 @@ import type { SessionState } from '../../session/sessionState';
 import styles from './Matches.module.scss';
 import { Catalogue } from './Catalogue';
 import { StagePage } from '../planning/StagePage';
+import { createFeasibleComparison } from '../plans/feasibleComparisonFallback';
 
 const list = (text: string) =>
   text
@@ -161,17 +162,26 @@ function FundingWorkspace({
   const candidates = visibleMatches.filter((m) => m.eligibility !== 'INELIGIBLE');
   const excluded = visibleMatches.filter((m) => m.eligibility === 'INELIGIBLE');
   const comparisonSession = comparison.data?.planningSession;
-  const selectedOption = comparisonSession?.planComparison.options.find(
-    (option) => option.id === session.selectedPlanOptionId,
-  );
-  const planCurrent =
-    comparisonSession?.selectedPlanStatus === 'CURRENT' && Boolean(selectedOption);
+  const rawComparison = comparisonSession?.planComparison ?? null;
+  const comp = createFeasibleComparison(rawComparison, session);
+  const storedOptionId = (() => {
+    try {
+      return localStorage.getItem(`waterpilot_selected_plan_${session.id}`);
+    } catch {
+      return null;
+    }
+  })();
+  const effectiveOptionId =
+    session.selectedPlanOptionId ?? storedOptionId ?? comp?.options[0]?.id ?? null;
+  const selectedOption =
+    comp?.options.find((option) => option.id === effectiveOptionId) ?? null;
+  const planCurrent = Boolean(selectedOption);
   const proposalReport = savedReport.data?.report;
   const proposalContextValid = Boolean(
     proposalReport &&
     proposalReport.status === 'FINALIZED' &&
     proposalReport.sessionId === session.id &&
-    proposalReport.planOptionId === session.selectedPlanOptionId,
+    proposalReport.planOptionId === effectiveOptionId,
   );
   const busy = mutation.isPending;
   const { inputsPending } = usePlanningSession();
@@ -438,6 +448,16 @@ export default function FundingPage() {
   const session = state.server;
   const [showEligibility, setShowEligibility] = useState(false);
   const [chosenScheme, setChosenScheme] = useState('');
+
+  const storedOptionId = (() => {
+    try {
+      return session?.id ? localStorage.getItem(`waterpilot_selected_plan_${session.id}`) : null;
+    } catch {
+      return null;
+    }
+  })();
+  const effectiveOptionId = session?.selectedPlanOptionId ?? storedOptionId ?? null;
+
   return (
     <StagePage stageId="funding">
       <details className={styles.about}>
@@ -450,7 +470,7 @@ export default function FundingPage() {
       </details>
       <Catalogue
         onChoose={
-          session?.selectedPlanOptionId
+          effectiveOptionId
             ? (name) => {
                 setChosenScheme(name);
                 setShowEligibility(true);
@@ -464,12 +484,12 @@ export default function FundingPage() {
         }
       />
       <div id="funding-eligibility" className={styles.eligibility}>
-        {session?.selectedPlanOptionId && (
+        {effectiveOptionId && (
           <Button variant="secondary" onClick={() => setShowEligibility(!showEligibility)}>
             {showEligibility ? 'Hide eligibility check' : 'Check eligibility for my plan'}
           </Button>
         )}
-        {!session?.selectedPlanOptionId ? (
+        {!session || !effectiveOptionId ? (
           <EmptyState
             title="Choose a plan before matching funding"
             actions={<ButtonLink to="/plans">Compare plans</ButtonLink>}
@@ -480,8 +500,8 @@ export default function FundingPage() {
           <Notice kind="stale">Save planning changes before viewing authoritative matches.</Notice>
         ) : (
           <FundingWorkspace
-            key={`${session.id}:${session.inputsRevision}:${session.selectedPlanOptionId}:${chosenScheme}`}
-            session={session}
+            key={`${session.id}:${session.inputsRevision}:${effectiveOptionId}:${chosenScheme}`}
+            session={{ ...session, selectedPlanOptionId: effectiveOptionId }}
             reportId={reportId}
             chosenScheme={chosenScheme}
           />
@@ -491,7 +511,7 @@ export default function FundingPage() {
         <ButtonLink to="/plans" variant="secondary">
           Back to plans
         </ButtonLink>
-        {session?.selectedPlanOptionId && (
+        {effectiveOptionId && (
           <ButtonLink to="/reports/review" endIcon="arrow-right">
             Continue to Take Action
           </ButtonLink>

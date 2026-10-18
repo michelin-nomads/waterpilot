@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { Button, ButtonLink, ErrorState, LoadingRegion, Notice, Skeleton } from '../../components';
@@ -71,16 +72,45 @@ function PlansWorkspace({ session }: { session: SessionState }) {
   );
   const found = query.data?.planningSession ?? null;
   const rawComparison = found?.planComparison ?? null;
-  const comparison = rawComparison ? createFeasibleComparison(rawComparison, session) : null;
+  const comparison =
+    rawComparison || query.isError || (!query.isLoading && found !== undefined)
+      ? createFeasibleComparison(rawComparison, session)
+      : null;
   const selectionStatus: SelectedPlanStatus | null = found?.selectedPlanStatus ?? null;
-  const selectedId = session.selectedPlanOptionId;
+
+  const [localSelectedId, setLocalSelectedId] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(`waterpilot_selected_plan_${session.id}`);
+    } catch {
+      return null;
+    }
+  });
+
+  const selectedId =
+    session.selectedPlanOptionId ??
+    localSelectedId ??
+    null;
+
   const staleSelection =
-    selectedId !== null && selectionStatus !== null && selectionStatus !== 'CURRENT';
+    selectedId !== null &&
+    session.selectedPlanOptionId !== null &&
+    selectionStatus !== null &&
+    selectionStatus !== 'CURRENT';
+
   const currentSelection = Boolean(
     selectedId &&
-    (selectionStatus === 'CURRENT' || !selectionStatus) &&
+    !staleSelection &&
     comparison?.options.some((option) => option.id === selectedId),
   );
+
+  const handleChoose = (optionId: string) => {
+    setLocalSelectedId(optionId);
+    try {
+      localStorage.setItem(`waterpilot_selected_plan_${session.id}`, optionId);
+    } catch {}
+    coordinator?.selectPlanOption(optionId);
+  };
+
   if (!session.goal) {
     return (
       <Notice kind="info" title="Set a goal first">
@@ -103,7 +133,7 @@ function PlansWorkspace({ session }: { session: SessionState }) {
               comparison={comparison}
               selectedId={selectedId}
               busy={choosing || !coordinator}
-              onChoose={(optionId) => coordinator?.selectPlanOption(optionId)}
+              onChoose={handleChoose}
             />
             {selectedId && staleSelection && (
               <StaleSelectionNotice

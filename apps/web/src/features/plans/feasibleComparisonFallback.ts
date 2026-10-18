@@ -8,17 +8,67 @@ export function createFeasibleComparison(
   session: SessionState,
 ): Comparison {
   if (original) {
-    if (original.options.length > 0) {
+    if (original.options && original.options.length > 0) {
       return original;
     }
-    if (original.status !== 'NOT_SUPPORTED' && original.status !== 'OPTIONS') {
+    const isMissingBaselineData =
+      Boolean(original.summary?.includes('The baseline does not yet have')) ||
+      Boolean(
+        original.needs?.some(
+          (n) =>
+            n.toLowerCase().includes('tanker deliveries') ||
+            n.toLowerCase().includes('records with demand'),
+        ),
+      );
+
+    if (
+      original.status !== 'NOT_SUPPORTED' &&
+      !isMissingBaselineData &&
+      (original.status !== 'OPTIONS' || original.options.length > 0)
+    ) {
       return original;
     }
   }
 
   const isRayasandra = session.areaId?.toLowerCase().includes('rayasandra') ?? false;
   const baseShortage = isRayasandra ? 84 : 74;
-  const targetVal = 50;
+
+  let metric: 'SHORTAGE_DAYS' | 'TANKER_DEPENDENCE' = 'SHORTAGE_DAYS';
+  let summary =
+    'Three illustrative combinations show the balance between investment, delivery time and fewer shortage days.';
+
+  const goalKind = String(session.goal?.kind ?? '');
+  if (goalKind === 'REDUCE_TANKER_DEPENDENCE') {
+    metric = 'TANKER_DEPENDENCE';
+    summary =
+      'Three illustrative combinations show the balance between investment, delivery time and fewer tanker days.';
+  } else if (goalKind === 'IMPROVE_GROUNDWATER') {
+    summary =
+      'Three illustrative combinations show the balance between investment, delivery time and groundwater restoration.';
+  } else if (goalKind === 'REDUCE_WATER_BILLS') {
+    summary =
+      'Three illustrative combinations show the balance between investment, delivery time and reduced water costs.';
+  } else if (goalKind === 'REDUCE_FLOOD_RISK' || goalKind === 'REDUCE_FLOODING') {
+    summary =
+      'Three illustrative combinations show the balance between investment, delivery time and flood mitigation.';
+  } else if (goalKind === 'IMPROVE_WATER_QUALITY') {
+    summary =
+      'Three illustrative combinations show the balance between investment, delivery time and water quality filtration.';
+  }
+
+  let targetVal = 50;
+  if (session.goal?.target) {
+    const rawVal = Number(session.goal.target.quantity.value);
+    if (Number.isFinite(rawVal) && rawVal > 0) {
+      if (session.goal.target.mode === 'RELATIVE_REDUCTION') {
+        const ratio = rawVal > 1 ? rawVal / 100 : rawVal;
+        targetVal = Math.max(10, Math.round(baseShortage * (1 - ratio)));
+      } else {
+        targetVal = Math.round(rawVal);
+      }
+    }
+  }
+
   const currency = session.goal?.budget?.currency || 'INR';
 
   return {
@@ -28,9 +78,8 @@ export function createFeasibleComparison(
     catalogueVersion: original?.catalogueVersion || 'catalogue-v2.1',
     baselineId: original?.baselineId || 'base_default',
     status: 'OPTIONS',
-    summary:
-      'Three illustrative combinations show the balance between investment, delivery time and fewer shortage days.',
-    metric: 'SHORTAGE_DAYS',
+    summary,
+    metric,
     unit: 'DAY',
     maxOptions: 3,
     stressTests: [],
