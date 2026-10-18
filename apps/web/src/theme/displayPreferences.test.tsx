@@ -13,14 +13,19 @@ import { DisplayPreferencesProvider } from './DisplayPreferencesProvider';
 
 const root = document.documentElement;
 
-function renderMenu(storage?: Storage | null) {
+function renderToggle(storage?: Storage | null) {
   render(
     <DisplayPreferencesProvider storage={storage}>
       <DisplayMenu />
     </DisplayPreferencesProvider>,
   );
-  fireEvent.click(screen.getByRole('button', { name: /display/i }));
+  return screen.getByRole('button', { name: /display/i });
 }
+
+const isSunIcon = (btn: HTMLElement) =>
+  btn.querySelector('path')?.getAttribute('d')?.startsWith('M12 17a5 5 0');
+const isMoonIcon = (btn: HTMLElement) =>
+  btn.querySelector('path')?.getAttribute('d')?.startsWith('M20 14.5A8 8');
 
 describe('stored display preferences', () => {
   it('falls back to the default theme when the stored one is unknown', () => {
@@ -49,60 +54,63 @@ describe('stored display preferences', () => {
 });
 
 describe('DisplayPreferencesProvider + DisplayMenu', () => {
-  it('follows the OS colour scheme while the theme preference is "system"', () => {
-    renderMenu();
+  it('initially picks the system theme and follows the OS colour scheme', () => {
+    const button = renderToggle();
     expect(root.dataset.theme).toBe('light');
+    expect(isMoonIcon(button)).toBe(true);
     act(() => setMediaQuery(PREFERS_DARK_QUERY, true));
     expect(root.dataset.theme).toBe('dark');
+    expect(isSunIcon(button)).toBe(true);
   });
 
-  it('offers only light, dark and system, with no palette choice', () => {
-    renderMenu();
-    expect(screen.getAllByRole('radio').map((radio) => radio.parentElement?.textContent)).toEqual([
-      'System',
-      'Light',
-      'Dark',
-    ]);
-    expect(screen.queryByText('Palette')).not.toBeInTheDocument();
-    expect(screen.queryByText('Theme')).not.toBeInTheDocument();
-    expect(screen.getByRole('radiogroup', { name: 'Theme' })).toBeInTheDocument();
-    expect(root.dataset.palette).toBe('estuary');
-  });
+  it('toggles from light to dark on click, changing moon to sunlight icon', () => {
+    setMediaQuery(PREFERS_DARK_QUERY, false);
+    const button = renderToggle();
+    expect(root.dataset.theme).toBe('light');
+    expect(isMoonIcon(button)).toBe(true);
 
-  it('persists the chosen theme', () => {
-    renderMenu();
-    fireEvent.click(screen.getByRole('radio', { name: /dark/i }));
+    fireEvent.click(button);
     expect(root.dataset.theme).toBe('dark');
-    expect(root.dataset.palette).toBe('estuary');
+    expect(isSunIcon(button)).toBe(true);
     expect(JSON.parse(window.localStorage.getItem(DISPLAY_STORAGE_KEY) ?? '{}')).toEqual({
       theme: 'dark',
     });
   });
 
+  it('toggles from dark to light on click, changing sunlight to moon icon', () => {
+    setMediaQuery(PREFERS_DARK_QUERY, true);
+    const button = renderToggle();
+    expect(root.dataset.theme).toBe('dark');
+    expect(isSunIcon(button)).toBe(true);
+
+    fireEvent.click(button);
+    expect(root.dataset.theme).toBe('light');
+    expect(isMoonIcon(button)).toBe(true);
+    expect(JSON.parse(window.localStorage.getItem(DISPLAY_STORAGE_KEY) ?? '{}')).toEqual({
+      theme: 'light',
+    });
+  });
+
   it('an explicit light theme ignores the OS dark preference', () => {
     setMediaQuery(PREFERS_DARK_QUERY, true);
-    renderMenu();
-    fireEvent.click(screen.getByRole('radio', { name: /light/i }));
+    const button = renderToggle();
+    fireEvent.click(button); // switches to light
+    expect(root.dataset.theme).toBe('light');
+    expect(isMoonIcon(button)).toBe(true);
+    act(() => setMediaQuery(PREFERS_DARK_QUERY, true));
     expect(root.dataset.theme).toBe('light');
   });
 
   it('restores the saved preference on the next load', () => {
     window.localStorage.setItem(DISPLAY_STORAGE_KEY, '{"theme":"dark","palette":"grove"}');
-    renderMenu();
+    const button = renderToggle();
     expect(root.dataset.theme).toBe('dark');
     expect(root.dataset.palette).toBe('estuary');
-    expect(screen.getByRole('radio', { name: /dark/i })).toBeChecked();
-  });
-
-  it('tells the user when storage is blocked instead of pretending to save', () => {
-    renderMenu(null);
-    fireEvent.click(screen.getByRole('radio', { name: /dark/i }));
-    expect(root.dataset.theme).toBe('dark');
-    expect(screen.getByText(/lasts for this tab only/i)).toBeInTheDocument();
+    expect(isSunIcon(button)).toBe(true);
   });
 
   it('syncs a change made in another tab', () => {
-    renderMenu();
+    const button = renderToggle();
     act(() => {
       window.dispatchEvent(
         new StorageEvent('storage', {
@@ -112,15 +120,7 @@ describe('DisplayPreferencesProvider + DisplayMenu', () => {
       );
     });
     expect(root.dataset.theme).toBe('dark');
-  });
-
-  it('closes on Escape and returns focus to the trigger', () => {
-    renderMenu();
-    const trigger = screen.getByRole('button', { name: /display/i });
-    expect(trigger).toHaveAttribute('aria-expanded', 'true');
-    screen.getByRole('radio', { name: /dark/i }).focus();
-    fireEvent.keyDown(document, { key: 'Escape' });
-    expect(trigger).toHaveAttribute('aria-expanded', 'false');
-    expect(trigger).toHaveFocus();
+    expect(isSunIcon(button)).toBe(true);
   });
 });
+
