@@ -341,7 +341,7 @@ describe('AreaPage', () => {
     expect(await screen.findByTestId('review-name')).toHaveTextContent('Test ward, Bengaluru');
     expect(screen.getByRole('combobox', { name: 'Search for a place' })).toBeVisible();
     expect(screen.queryByRole('heading', { name: 'Water conditions' })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Understand this area' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm area and check data' }));
     expect(await screen.findByRole('heading', { name: 'Water conditions' })).toBeVisible();
     expect(screen.getByRole('form', { name: 'Your selected area' })).toBeInTheDocument();
     fireEvent.click(await screen.findByRole('button', { name: 'Test a Future Scenario' }));

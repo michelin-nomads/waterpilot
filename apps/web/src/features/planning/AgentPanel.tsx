@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react';
+import { useState } from 'react';
 
 import { Tooltip } from '../../components/Tooltip/Tooltip';
 import { Button } from '../../components/Button/Button';
@@ -10,8 +10,6 @@ import { queryKeys } from '../../graphql/queryKeys';
 import styles from './AgentPanel.module.scss';
 import { usePlanningSession } from '../../session/sessionContext';
 
-const AgentGoalCheck = lazy(() => import('../goals/AgentGoalCheck'));
-const AgentScenario = lazy(() => import('../plans/AgentScenario'));
 import AgentConversation from './AgentConversation';
 
 type AiStatusValue = AiStatusQuery['aiStatus'];
@@ -174,14 +172,6 @@ export function AgentPanel({
         >
           <p>{content.body}</p>
         </EmptyState>
-      )}
-      <Suspense fallback={null}>
-        <AgentGoalCheck />
-      </Suspense>
-      {showScenario && (
-        <Suspense fallback={null}>
-          <AgentScenario />
-        </Suspense>
       )}
     </div>
   );

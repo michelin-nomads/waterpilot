@@ -58,6 +58,7 @@ export function SavedAreaUnderstanding({
         </Notice>
       )}
       <LocationStep
+        suggestDeviceLocation={!initialAreaId}
         initialArea={area && !area.providerContentExpired ? area : undefined}
         sessionId={sessionId}
         isResuming={isResuming}

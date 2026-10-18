@@ -17,6 +17,7 @@ import { AuthTestProviders } from '../../test/AuthTestProviders';
 import { FakeAuthBackend, permanent } from '../../test/fakeAuth';
 import { FakeSessionServer } from '../../test/fakeSession';
 import ScenarioPage from './ScenarioPage';
+import { ModernScenarioPanel } from './ModernScenarioPanel';
 import AgentScenario from './AgentScenario';
 import PlansPage from './index';
 import {
@@ -539,9 +540,14 @@ describe('Scenario planning step', () => {
   });
   it('offers scenario testing before a goal is set and records an explicit scenario choice', async () => {
     handlers.SessionScenario = () => scenarioReply(NO_SCENARIO);
+    handlers.PreviewScenario = () => ({
+      data: { previewScenario: { errors: [], comparison: NO_SCENARIO } },
+    });
     const sessions = renderWith(<ScenarioPage />, { baselineReviewed: true, goal: null });
     expect(await screen.findByRole('heading', { name: 'Test a Future Scenario' })).toBeVisible();
-    expect(await screen.findByRole('button', { name: 'Save Scenario' })).toBeEnabled();
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Save Scenario' })).toBeEnabled(),
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Analyse Scenario' }));
     await waitFor(() =>
       expect(sessions.applied.some((entry) => entry.patch.scenario?.confirmed)).toBe(true),
@@ -1043,4 +1049,25 @@ describe('AgentScenario (agent what-if tool)', () => {
       }),
     );
   });
+});
+
+it('renders the scenario engine preview instead of hard-coded local KPI estimates', async () => {
+  handlers.PreviewScenario = () => ({
+    data: { previewScenario: { errors: [], comparison: NO_SCENARIO } },
+  });
+  renderWith(
+    <ModernScenarioPanel
+      sessionId="ses_1"
+      revision={1}
+      scenario={null}
+      saved={NO_SCENARIO}
+      pending={false}
+      onSave={() => undefined}
+    />,
+  );
+  expect(await screen.findByText('Against the same baseline')).toBeInTheDocument();
+  expect(
+    screen.getByText('Needs at least a year of rainfall records for this location.'),
+  ).toBeInTheDocument();
+  expect(screen.queryByText('1.9 MLD')).not.toBeInTheDocument();
 });

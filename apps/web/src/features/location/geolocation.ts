@@ -15,8 +15,7 @@ export type GeolocationOutcome =
   | { kind: 'denied' | 'unavailable' | 'timeout' | 'unsupported' | 'insecure' };
 
 /**
- * Ask the browser for the device position. Call only from a user action (a button
- * press): the browser shows its own permission prompt, and the result is never used
+ * Ask the browser for the device position. Called by the device-location button or initial location suggestion: the browser shows its own permission prompt, and the result is never used
  * until the person confirms it. Never rejects; every failure is a classified outcome.
  */
 export function requestDevicePosition({

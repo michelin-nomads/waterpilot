@@ -36,8 +36,6 @@ from waterpilot.application.agent.actions import AgentActionKind, PreparedAction
 from waterpilot.application.agent.context import RunContext
 from waterpilot.application.pagination import PageArgs
 from waterpilot.application.services.baseline import Baseline, BaselineMetric
-from waterpilot.application.services.locations import ConfirmLocationInput
-from waterpilot.domain.location import AdminContext, AreaOrigin, DecimalString, ExtentKind
 from waterpilot.application.tools.goals import assessment_json
 from waterpilot.application.tools.options import (
     assessed_json,
@@ -49,10 +47,11 @@ from waterpilot.domain import baseline as bl
 from waterpilot.domain.community_baseline import CommunityBaseline
 from waterpilot.domain.errors import DomainError, ErrorCode, not_found
 from waterpilot.domain.funding import ApplicantInformation
-from waterpilot.domain.planning import CommunityType, PlanningSession, SiteProfile
+from waterpilot.domain.location import AdminContext, AreaOrigin, ExtentKind
+from waterpilot.domain.planning import CommunityType, GoalFields, PlanningSession, SiteProfile
 from waterpilot.domain.reports import ProposalSection, ProposalStatus, ReportStatus
 from waterpilot.domain.tracking import MilestoneStatus
-from waterpilot.domain.values import Frozen, Money
+from waterpilot.domain.values import DecimalString, Frozen, Money
 
 type Json = dict[str, Any]
 
@@ -142,7 +141,7 @@ class ImpactSummaryArgs(Frozen):
 
 
 class GoalArgs(Frozen):
-    goal: Json
+    goal: GoalFields
 
 
 class ScenarioArgs(Frozen):
@@ -323,7 +322,7 @@ def _inspect_baseline(rc: RunContext, _: NoArgs) -> Json:
 
 
 def _check_goal(rc: RunContext, a: GoalArgs) -> Json:
-    result = rc.services.goals.check(rc.ctx, rc.session_id, a.goal)
+    result = rc.services.goals.check(rc.ctx, rc.session_id, a.goal.model_dump(mode="json"))
     return {
         "errors": [{"field": e.field, "message": e.message} for e in result.errors],
         "assessment": assessment_json(result.assessment) if result.assessment else None,
@@ -570,15 +569,17 @@ def _set_area(rc: RunContext, a: SetAreaArgs) -> Json:
 
 def _set_goal(rc: RunContext, a: GoalArgs) -> Json:
     session = rc.session()
-    updated = rc.services.sessions.update(rc.ctx, session.id, session.version, {"goal": a.goal})
+    fields = session.goal.model_dump(mode="json", exclude={"id"}) if session.goal else {}
+    fields.update(a.goal.model_dump(mode="json", exclude_unset=True))
+    updated = rc.services.sessions.update(rc.ctx, session.id, session.version, {"goal": fields})
     return updated.model_dump(mode="json")
 
 
 def _update_constraints(rc: RunContext, a: ScenarioArgs) -> Json:
     session = rc.session()
-    updated = rc.services.sessions.update(
-        rc.ctx, session.id, session.version, {"scenario": a.scenario}
-    )
+    fields = session.scenario.model_dump(mode="json", exclude={"id"}) if session.scenario else {}
+    fields.update(a.scenario)
+    updated = rc.services.sessions.update(rc.ctx, session.id, session.version, {"scenario": fields})
     return updated.model_dump(mode="json")
 
 
@@ -617,10 +618,12 @@ def _update_site_profile(rc: RunContext, a: UpdateSiteProfileArgs) -> Json:
             f"unknown community_type {a.community_type!r}; "
             f"expected one of {[e.value for e in CommunityType]}",
         ) from None
-    profile = SiteProfile(
-        community_type=ctype,
-        occupied_homes=a.occupied_homes,
-    )
+    fields = session.site_profile.model_dump(mode="json") if session.site_profile else {}
+    if "community_type" in a.model_fields_set:
+        fields["community_type"] = ctype
+    if "occupied_homes" in a.model_fields_set:
+        fields["occupied_homes"] = a.occupied_homes
+    profile = SiteProfile.model_validate(fields)
     updated = rc.services.sessions.update(
         rc.ctx, session.id, session.version, {"site_profile": profile}
     )
@@ -629,8 +632,13 @@ def _update_site_profile(rc: RunContext, a: UpdateSiteProfileArgs) -> Json:
 
 def _update_community_baseline(rc: RunContext, a: CommunityBaseline) -> Json:
     session = rc.session()
+    fields = (
+        session.community_baseline.model_dump(mode="json") if session.community_baseline else {}
+    )
+    fields.update(a.model_dump(mode="json", exclude_unset=True))
+    baseline = CommunityBaseline.model_validate(fields)
     updated = rc.services.sessions.update(
-        rc.ctx, session.id, session.version, {"community_baseline": a}
+        rc.ctx, session.id, session.version, {"community_baseline": baseline}
     )
     return updated.model_dump(mode="json")
 
