@@ -40,7 +40,7 @@ test('reduced motion shows a static illustration and still opens the app', async
   }
 
   await expect(
-    page.getByRole('heading', { name: 'A better water plan starts here.' }),
+    page.getByRole('heading', { name: 'Understand your water. Plan a better future.' }),
   ).toBeVisible();
 });
 
@@ -86,7 +86,7 @@ test('startup shows the splash for 2 seconds and automatically opens home', asyn
   await expect(page.getByText(/A more water-secure/)).toBeVisible();
   await expect(page.getByRole('link', { name: 'Open WaterPilot' })).toHaveCount(0);
   await expect(
-    page.getByRole('heading', { name: 'A better water plan starts here.' }),
+    page.getByRole('heading', { name: 'Understand your water. Plan a better future.' }),
   ).toBeVisible();
   const duration = await page.evaluate(
     () => performance.getEntriesByName('test:splash-duration')[0]?.duration,
@@ -101,7 +101,7 @@ test('startup shows the splash for 2 seconds and automatically opens home', asyn
 test('the old splash link automatically opens home without a manual button', async ({ page }) => {
   await page.goto('/splash');
   await expect(
-    page.getByRole('heading', { name: 'A better water plan starts here.' }),
+    page.getByRole('heading', { name: 'Understand your water. Plan a better future.' }),
   ).toBeVisible();
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole('link', { name: 'Open WaterPilot' })).toHaveCount(0);
@@ -123,6 +123,6 @@ test('the HTML shows no old loader before the splash mounts', async ({ page }) =
   release();
   await expect(page.getByLabel('WaterPilot startup')).toBeVisible();
   await expect(
-    page.getByRole('heading', { name: 'A better water plan starts here.' }),
+    page.getByRole('heading', { name: 'Understand your water. Plan a better future.' }),
   ).toBeVisible();
 });

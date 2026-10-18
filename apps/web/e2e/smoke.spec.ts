@@ -15,7 +15,7 @@ async function emulatorUp(): Promise<boolean> {
   }
 }
 
-const mainHeading = 'A better water plan starts here.';
+const mainHeading = 'Understand your water. Plan a better future.';
 const header = (page: import('@playwright/test').Page) => page.locator('header').first();
 
 test('home offers both planning modes and navigates to the dedicated sign-in page', async ({
@@ -24,7 +24,7 @@ test('home offers both planning modes and navigates to the dedicated sign-in pag
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(mainHeading);
   await expect(header(page).getByText('Guest', { exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Start Exploring' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Explore on my own' })).toBeEnabled();
   await expect(page.getByRole('button', { name: 'Start with Agent' })).toBeEnabled();
   await header(page).getByRole('link', { name: 'Sign in' }).click();
   await expect(page).toHaveURL(/\/signin$/);
@@ -39,7 +39,7 @@ test('home offers both planning modes and navigates to the dedicated sign-in pag
 test('a failed guest start keeps the main screen and allows retry', async ({ page }) => {
   await page.route('**/identitytoolkit.googleapis.com/**', (route) => route.abort());
   await page.goto('/');
-  await page.getByRole('button', { name: 'Start Exploring' }).click();
+  await page.getByRole('button', { name: 'Explore on my own' }).click();
   await expect(page.getByText(/your plan could not be started/i)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Try again' })).toBeEnabled();
   await expect(header(page).getByRole('link', { name: 'Sign in' })).toBeVisible();
@@ -57,33 +57,28 @@ for (const width of [320, 390, 768, 1440, 1920, 2560]) {
     );
     const main = await page.getByRole('main').boundingBox();
     expect(main!.width).toBeGreaterThan(width * 0.95);
-    const guide = page.getByRole('region', { name: 'About planning with WaterPilot' });
-    const disclosure = guide.locator('summary');
-    await disclosure.focus();
-    await page.keyboard.press('Enter');
-    await expect(guide.getByRole('heading', { name: 'Compare your options' })).toBeVisible();
-    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
-      width,
-    );
-    await disclosure.blur();
+    const card = page.getByRole('complementary', { name: 'Your community water plan' });
+    const originalHeight = (await card.boundingBox())!.height;
+    await card.getByRole('button', { name: /Garden Heights/ }).click();
+    await expect(card.getByText('Garden Heights · Area analysis')).toBeVisible();
+    await card.getByRole('tab', { name: 'Compare', exact: true }).click();
+    await card.getByRole('button', { name: /Harvesting \+ reuse/ }).click();
+    await card.getByRole('tab', { name: 'Take action', exact: true }).click();
+    await card.getByRole('checkbox').check();
+    await card.getByRole('button', { name: 'Save report', exact: true }).click();
+    await expect(card.getByRole('link', { name: 'Download report ↓' })).toBeVisible();
+    expect((await card.boundingBox())!.height).toBeCloseTo(originalHeight, 1);
     for (const colorScheme of ['light', 'dark'] as const) {
       await page.emulateMedia({ colorScheme });
       await expect(page.locator('html')).toHaveAttribute('data-theme', colorScheme);
-      if (width === 1440 && colorScheme === 'light') {
-        await page.screenshot({
-          path: test.info().outputPath('home-expanded.png'),
-          fullPage: true,
-          animations: 'disabled',
-        });
-      }
-      await guide.screenshot({
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+        width,
+      );
+      await card.screenshot({
         animations: 'disabled',
-        path: test.info().outputPath(`planning-guide-${colorScheme}.png`),
+        path: test.info().outputPath(`water-plan-${colorScheme}.png`),
       });
     }
-    await disclosure.focus();
-    await page.keyboard.press('Enter');
-    await expect(guide.getByRole('heading', { name: 'Compare your options' })).toBeHidden();
   });
 }
 
@@ -100,7 +95,7 @@ test.describe('with the Auth emulator', () => {
     page,
   }) => {
     await page.goto('/');
-    await page.getByRole('button', { name: 'Start Exploring' }).click();
+    await page.getByRole('button', { name: 'Explore on my own' }).click();
     await expect(page).toHaveURL(/\/area$/);
     await expect(header(page).getByText('Guest')).toBeVisible();
     await expect(page.getByRole('navigation', { name: 'Primary' })).toHaveCount(0);
@@ -124,7 +119,7 @@ test.describe('with the Auth emulator', () => {
     page,
   }) => {
     await page.goto('/');
-    await page.getByRole('button', { name: 'Start Exploring' }).click();
+    await page.getByRole('button', { name: 'Explore on my own' }).click();
     await page
       .getByRole('navigation', { name: 'Planning stages' })
       .getByRole('link', { name: /goal/i })

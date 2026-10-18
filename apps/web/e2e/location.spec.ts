@@ -23,7 +23,7 @@ test.beforeEach(async ({ page }) => {
 
 async function startPlanning(page: Page) {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Start Exploring' }).click();
+  await page.getByRole('button', { name: 'Explore on my own' }).click();
   await expect(page).toHaveURL(/\/area$/);
 }
 

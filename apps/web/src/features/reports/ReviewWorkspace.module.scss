@@ -1,0 +1,384 @@
+@use 'mixins' as *;
+.stack {
+  display: grid;
+  gap: var(--wp-space-4);
+  min-width: 0;
+  align-content: start;
+}
+.card {
+  border: 1px solid var(--wp-color-border);
+  border-radius: var(--wp-radius-lg);
+  background: var(--wp-color-surface);
+  padding: var(--wp-space-5);
+  min-width: 0;
+  box-shadow: var(--wp-shadow-sm);
+}
+.context {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-4);
+}
+.contextCopy {
+  flex: 1;
+  min-width: 0;
+  h2 {
+    font-size: var(--wp-text-lg);
+    margin: 0 0 var(--wp-space-1);
+  }
+  p {
+    margin: 0 0 var(--wp-space-2);
+    color: var(--wp-color-text-muted);
+    font-size: var(--wp-text-sm);
+  }
+}
+.planName {
+  color: var(--wp-color-accent-strong);
+  font-size: var(--wp-text-xs);
+}
+.columns {
+  display: grid;
+  gap: var(--wp-space-5);
+  align-items: start;
+  @container (min-width: 58rem) {
+    grid-template-columns: minmax(0, 1fr) 20rem;
+  }
+}
+.sectionHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--wp-space-3);
+  margin-bottom: var(--wp-space-3);
+  h2 {
+    font-size: var(--wp-text-lg);
+    margin: 0;
+  }
+  > span {
+    font-size: var(--wp-text-xs);
+    color: var(--wp-color-text-muted);
+  }
+}
+.tile {
+  flex: none;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: grid;
+  place-items: center;
+  background: var(--wp-color-accent-soft);
+  color: var(--wp-color-accent-strong);
+  border-radius: var(--wp-radius-md);
+}
+.reviewList {
+  border: 1px solid var(--wp-color-border);
+  border-radius: var(--wp-radius-lg);
+  overflow: hidden;
+  background: var(--wp-color-surface);
+}
+.reviewRow {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-3);
+  width: 100%;
+  min-width: 0;
+  text-align: left;
+  padding: var(--wp-space-4);
+  border: 0;
+  border-bottom: 1px solid var(--wp-color-border);
+  background: transparent;
+  cursor: pointer;
+  color: var(--wp-color-text);
+  &:last-child {
+    border-bottom: 0;
+  }
+  &:hover {
+    background: var(--wp-color-accent-soft);
+  }
+  @include focus-visible;
+  > svg {
+    flex: none;
+    color: var(--wp-color-accent);
+  }
+}
+.rowCopy {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: var(--wp-space-1);
+  strong {
+    font-size: var(--wp-text-sm);
+  }
+  > span {
+    font-size: var(--wp-text-xs);
+    color: var(--wp-color-text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+.insight {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--wp-space-3);
+  text-align: left;
+  color: var(--wp-color-text);
+  width: 100%;
+  cursor: pointer;
+  padding: var(--wp-space-4);
+  > span:not(.tile) {
+    flex: 1;
+    min-width: 0;
+  }
+  strong {
+    font-size: var(--wp-text-sm);
+  }
+  > svg {
+    flex: none;
+    color: var(--wp-color-accent);
+  }
+  &:hover {
+    border-color: var(--wp-color-accent);
+  }
+  @include focus-visible;
+}
+.insightText {
+  display: block;
+  font-size: var(--wp-text-xs);
+  color: var(--wp-color-text-muted);
+  margin-top: var(--wp-space-1);
+  line-height: 1.6;
+}
+.nextGrid {
+  display: grid;
+  gap: var(--wp-space-4);
+  @container (min-width:42rem) {
+    grid-template-columns: 1fr 1fr;
+  }
+  > div {
+    display: flex;
+    gap: var(--wp-space-3);
+    align-items: flex-start;
+  }
+  h3 {
+    font-size: var(--wp-text-sm);
+    margin: 0 0 var(--wp-space-1);
+  }
+  p {
+    font-size: var(--wp-text-xs);
+    color: var(--wp-color-text-muted);
+    margin: 0;
+  }
+}
+.metrics,
+.fundingFacts {
+  margin: var(--wp-space-3) 0;
+  display: grid;
+  gap: var(--wp-space-2);
+  dt {
+    color: var(--wp-color-text-muted);
+    font-size: var(--wp-text-xs);
+  }
+  dd {
+    margin: var(--wp-space-1) 0 0;
+    font-weight: 650;
+    font-size: var(--wp-text-sm);
+    overflow-wrap: anywhere;
+  }
+}
+.metrics {
+  grid-template-columns: 1fr 1fr;
+  > div {
+    padding: var(--wp-space-3);
+    border: 1px solid var(--wp-color-border);
+    border-radius: var(--wp-radius-md);
+    background: var(--wp-color-bg);
+  }
+}
+.fundingFacts > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--wp-space-2);
+  dd {
+    margin: 0;
+    text-align: right;
+  }
+}
+.card > h3 {
+  font-size: var(--wp-text-sm);
+  margin: 0;
+}
+.note {
+  padding: var(--wp-space-3);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-color-accent-soft);
+  color: var(--wp-color-accent-strong);
+  font-size: var(--wp-text-xs);
+  margin: var(--wp-space-4) 0 0;
+}
+.reportStrip {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 13.75rem;
+  gap: var(--wp-space-4);
+  align-items: stretch;
+  > button {
+    height: 100%;
+  }
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+}
+.signInMessage {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-3);
+  padding: var(--wp-space-4);
+  min-height: 4rem;
+  border: 1px solid var(--wp-color-border);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-color-surface-sunken);
+  > svg {
+    color: var(--wp-color-accent);
+    flex: none;
+  }
+  p {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    font-size: var(--wp-text-sm);
+  }
+  button {
+    flex: none;
+  }
+}
+.textLink {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--wp-space-3);
+  border-top: 1px solid var(--wp-color-border);
+  padding-top: var(--wp-space-4);
+  > span {
+    display: flex;
+    align-items: center;
+    gap: var(--wp-space-1);
+    font-size: var(--wp-text-xs);
+    color: var(--wp-color-text-muted);
+  }
+}
+.facts {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--wp-space-4);
+  dt {
+    font-size: var(--wp-text-xs);
+    color: var(--wp-color-text-muted);
+    margin-bottom: var(--wp-space-1);
+  }
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+}
+.chartRow {
+  display: grid;
+  grid-template-columns: 6rem minmax(0, 1fr) 5rem;
+  align-items: center;
+  gap: var(--wp-space-2);
+  font-size: var(--wp-text-xs);
+  margin: var(--wp-space-3) 0;
+}
+.track {
+  height: 12px;
+  background: var(--wp-color-surface-sunken);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+  > span {
+    position: absolute;
+    height: 100%;
+    min-width: 2px;
+    background: var(--wp-color-accent);
+  }
+}
+@media (max-width: 600px) {
+  .context {
+    flex-wrap: wrap;
+  }
+  .contextCopy {
+    min-width: 10rem;
+  }
+  .reviewRow > span:nth-last-child(2) {
+    display: none;
+  }
+  .bottom {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .facts {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Reuse the source screens' cards with a scoped, compact drawer rhythm.
+.readonlyBody {
+  display: grid;
+  gap: var(--wp-space-4);
+  min-width: 0;
+  font-size: var(--wp-text-sm);
+  > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+  h3 {
+    font-size: var(--wp-text-md);
+    margin: 0 0 var(--wp-space-3);
+  }
+  h4 {
+    font-size: var(--wp-text-sm);
+  }
+}
+.reviewMuted {
+  margin: 0;
+  color: var(--wp-color-text-muted);
+  font-size: var(--wp-text-sm);
+  overflow-wrap: anywhere;
+}
+.reviewListText {
+  margin: 0;
+  padding-left: var(--wp-space-5);
+  display: grid;
+  gap: var(--wp-space-2);
+  overflow-wrap: anywhere;
+}
+.reviewDisclosure {
+  min-width: 0;
+  border: 1px solid var(--wp-color-border);
+  border-radius: var(--wp-radius-md);
+  padding: var(--wp-space-3) var(--wp-space-4);
+  background: var(--wp-color-surface);
+  summary {
+    cursor: pointer;
+    color: var(--wp-color-accent-strong);
+    font-size: var(--wp-text-sm);
+    font-weight: 600;
+    @include focus-visible;
+  }
+  &[open] > summary {
+    margin-bottom: var(--wp-space-4);
+  }
+  > p + ul,
+  > ul + p {
+    margin-top: var(--wp-space-3);
+  }
+}
+.reviewFundingStatus {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-2);
+  margin-bottom: var(--wp-space-3);
+}

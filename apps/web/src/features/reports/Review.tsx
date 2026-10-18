@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Button,
   ButtonLink,
+  Drawer,
   EmptyState,
   ErrorState,
   Field,
@@ -13,21 +14,13 @@ import {
   Skeleton,
 } from '../../components';
 import { useAuth } from '../../auth/authContext';
-import { Icon } from '../../components/Icon/Icon';
 import { PlanComparisonDocument, type SelectedPlanStatus } from '../../graphql/generated/graphql';
 import { useGraphQLQuery } from '../../graphql/hooks';
 import { queryKeys } from '../../graphql/queryKeys';
 import { usePlanningSession } from '../../session/sessionContext';
 import { PageHeader } from '../../shell/PageHeader';
-import { SHOW_COMMUNITY_BASELINE } from '../planning/visibility';
 import { getStage, PLANNING_STAGES } from '../../shell/stages';
-import {
-  formatDays,
-  formatMetric,
-  formatMoneyRange,
-  formatRange,
-  TIMING_LABEL,
-} from '../plans/plansFormat';
+import { ReviewWorkspace } from './ReviewWorkspace';
 import { FINALIZE_SIGN_IN_REASON, useFinalizeReport } from './useFinalizeReport';
 import styles from './Reports.module.scss';
 
@@ -54,6 +47,7 @@ export default function ReviewPage() {
     },
   );
   const [title, setTitle] = useState('Water plan');
+  const [finalizeOpen, setFinalizeOpen] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   // The report replaces the plan: show a neutral state while its page opens.
   const [finalized, setFinalized] = useState(false);
@@ -72,7 +66,7 @@ export default function ReviewPage() {
       <div className={styles.reviewPage}>
         <PageHeader
           eyebrow={`Step ${getStage('review').index + 1} of ${PLANNING_STAGES.length}`}
-          title="Review your plan"
+          title="Take Action"
         />
         <LoadingRegion label="Opening your report">
           <Skeleton shape="block" />
@@ -86,7 +80,7 @@ export default function ReviewPage() {
       <div className={styles.reviewPage}>
         <PageHeader
           eyebrow={`Step ${getStage('review').index + 1} of ${PLANNING_STAGES.length}`}
-          title="Review your plan"
+          title="Take Action"
         />
         <LoadingRegion label="Loading your current plan">
           <Skeleton shape="block" />
@@ -100,7 +94,7 @@ export default function ReviewPage() {
       <div className={styles.reviewPage}>
         <PageHeader
           eyebrow={`Step ${getStage('review').index + 1} of ${PLANNING_STAGES.length}`}
-          title="Review your plan"
+          title="Take Action"
         />
         <EmptyReview />
       </div>
@@ -109,7 +103,7 @@ export default function ReviewPage() {
 
   const missing = !current.areaId || !current.goal || !current.selectedPlanOptionId;
   const submit = async () => {
-    if (!selectionCurrent) return;
+    if (!selectionCurrent || !signedIn || !title.trim() || isPending) return;
     setMessage(null);
     try {
       const result = await finalize({ sessionId: current.id, title: title.trim() });
@@ -131,8 +125,8 @@ export default function ReviewPage() {
     <div className={styles.reviewPage}>
       <PageHeader
         eyebrow={`Step ${getStage('review').index + 1} of ${PLANNING_STAGES.length}`}
-        title="Review your plan"
-        subtitle="Check the location, goal, selected plan and assumptions before saving a read-only report."
+        title="Take Action"
+        subtitle="Review the full picture, then create your community’s final plan."
       />
       {missing ? (
         <EmptyReview current={current} />
@@ -164,169 +158,71 @@ export default function ReviewPage() {
         </Notice>
       ) : selected ? (
         <>
-          <section className={styles.reviewSection} aria-labelledby="review-location-title">
-            <div className={styles.reviewSectionHead}>
-              <div>
-                <p className={styles.meta}>Location</p>
-                <h2 id="review-location-title">{current.areaName ?? 'Selected area'}</h2>
-              </div>
-              <ButtonLink to="/area" variant="secondary">
-                Edit location
-              </ButtonLink>
-            </div>
-            <p className={styles.meta}>
-              {current.areaExtent === 'REVIEWED_BOUNDARY'
-                ? 'Calculations use the confirmed catalogue boundary. A map is not shown in this review.'
-                : current.areaExtent === 'USER_RADIUS'
-                  ? `Calculations use your declared ${current.areaRadiusMeters ?? 'unknown'} m radius. This is your planning assumption, not a surveyed society or catchment boundary.`
-                  : current.areaExtent === 'REFERENCE_POINT'
-                    ? 'Calculations use a reference point only. No area boundary has been established.'
-                    : 'This is the confirmed planning location. Review Location for its authoritative boundary details.'}
-            </p>
-          </section>
-
-          <section className={styles.reviewSection} aria-labelledby="review-goal-title">
-            <div className={styles.reviewSectionHead}>
-              <div>
-                <p className={styles.meta}>Community goal</p>
-                <h2 id="review-goal-title">
-                  {current.goal?.description ||
-                    current.goal?.kind.replaceAll('_', ' ').toLowerCase()}
-                </h2>
-              </div>
-              <ButtonLink to="/goals" variant="secondary">
-                Edit goal
-              </ButtonLink>
-            </div>
-          </section>
-
-          <section className={styles.reviewSection} aria-labelledby="review-plan-title">
-            <div className={styles.reviewSectionHead}>
-              <div>
-                <p className={styles.meta}>Selected plan</p>
-                <h2 id="review-plan-title">{selected.name}</h2>
-              </div>
-              <ButtonLink to="/plans" variant="secondary">
-                Change plan
-              </ButtonLink>
-            </div>
-            <dl className={styles.reviewFacts}>
-              <div>
-                <dt>Expected outcome with your estimates</dt>
-                <dd>
-                  {formatRange(
-                    selected.pessimistic,
-                    selected.optimistic,
-                    found!.planComparison.unit ?? 'RATIO',
-                  )}
-                </dd>
-              </div>
-              <div>
-                <dt>Cost (your estimates)</dt>
-                <dd>{formatMoneyRange(selected.cost)}</dd>
-              </div>
-              <div>
-                <dt>Build time</dt>
-                <dd>{formatDays(selected.buildDays)}</dd>
-              </div>
-              <div>
-                <dt>First benefit</dt>
-                <dd>{TIMING_LABEL[selected.firstBenefit]}</dd>
-              </div>
-              <div>
-                <dt>Water saved or added</dt>
-                <dd>
-                  {selected.waterLow && selected.waterHigh
-                    ? formatRange(selected.waterLow, selected.waterHigh, 'LITRES_PER_DAY')
-                    : 'Not known'}
-                </dd>
-              </div>
-              <div>
-                <dt>Baseline to target</dt>
-                <dd>
-                  {found!.planComparison.metric
-                    ? `${formatMetric(found!.planComparison.baselineValue, found!.planComparison.unit ?? 'RATIO')} → ${formatMetric(found!.planComparison.targetLevel, found!.planComparison.unit ?? 'RATIO')}`
-                    : 'Not available'}
-                </dd>
-              </div>
-            </dl>
-          </section>
-
-          <section className={styles.reviewSection} aria-labelledby="review-assumptions-title">
-            <div className={styles.reviewSectionHead}>
-              <div>
-                <p className={styles.meta}>Before you save</p>
-                <h2 id="review-assumptions-title">Key assumptions and limitations</h2>
-              </div>
-              {SHOW_COMMUNITY_BASELINE && (
-                <ButtonLink to="/baseline/overview" variant="secondary">
-                  Edit baseline
-                </ButtonLink>
-              )}
-            </div>
-            {found!.planComparison.assumptions.length > 0 ? (
-              <ul className={styles.assumptions}>
-                {found!.planComparison.assumptions.map((assumption) => (
-                  <li key={assumption}>{assumption}</li>
-                ))}
-                {selected.uncertainty.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            ) : (
-              <p className={styles.meta}>No additional comparison assumptions were returned.</p>
-            )}
-            <Notice kind="info" title="The server checks that this plan is still current">
-              Saving creates an immutable report snapshot. If inputs or wider-impact evidence
-              changed, return to Compare and choose again.
-            </Notice>
-          </section>
-
-          <section className={styles.review} aria-labelledby="save-report-title">
-            <h2 id="save-report-title">Save report</h2>
-            <Field id="report-title" label="Report title" required>
-              {(props) => (
-                <Input
-                  {...props}
-                  maxLength={200}
-                  value={title}
-                  onChange={(event) => setTitle(event.target.value)}
-                />
-              )}
-            </Field>
-            {(message || error) && (
-              <p className={styles.error} role="alert">
-                {message ?? 'Finalization failed. Please try again.'}
-              </p>
-            )}
-            {!signedIn && (
-              <div className={styles.signInBar}>
-                <Icon name="lock" size="lg" className={styles.signInIcon} />
-                <p className={styles.signInText}>
-                  <strong>Sign in</strong> to finalize and create your report.
-                </p>
-                <button
-                  type="button"
-                  className={styles.signInLink}
-                  onClick={() => void auth.openSignIn(FINALIZE_SIGN_IN_REASON)}
+          <ReviewWorkspace
+            current={current}
+            comparison={found!.planComparison}
+            selected={selected}
+            signedIn={signedIn}
+            onSignIn={() => void auth.openSignIn(FINALIZE_SIGN_IN_REASON)}
+            onFinalize={() => setFinalizeOpen(true)}
+          />
+          <Drawer
+            open={finalizeOpen}
+            onClose={() => {
+              if (!isPending) setFinalizeOpen(false);
+            }}
+            title="Finalize report"
+            description="Create a read-only snapshot of the details you reviewed."
+            footer={
+              <>
+                <Button
+                  variant="secondary"
+                  disabled={isPending}
+                  onClick={() => setFinalizeOpen(false)}
                 >
-                  Sign in
-                </button>
-              </div>
-            )}
-            <div className={styles.actions}>
-              <ButtonLink to="/make-it-happen" variant="secondary">
-                Back to funding
-              </ButtonLink>
-              <Button
-                loading={isPending}
-                disabled={!signedIn || !title.trim() || session.inputsPending || !selectionCurrent}
-                onClick={() => void submit()}
-              >
-                Finalize report
-              </Button>
+                  Keep reviewing
+                </Button>
+                <Button
+                  loading={isPending}
+                  disabled={
+                    !signedIn || !title.trim() || session.inputsPending || !selectionCurrent
+                  }
+                  onClick={() => void submit()}
+                >
+                  Finalize & save report
+                </Button>
+              </>
+            }
+          >
+            <div className={styles.review}>
+              <Field id="report-title" label="Report title" required>
+                {(props) => (
+                  <Input
+                    {...props}
+                    placeholder="Name your community water plan"
+                    maxLength={200}
+                    value={title}
+                    disabled={isPending}
+                    onChange={(event) => setTitle(event.target.value)}
+                  />
+                )}
+              </Field>
+              <h3>What your report includes</h3>
+              <p>
+                Saved area context, goal, selected plan and estimates, available evidence,
+                assumptions and recorded funding details.
+              </p>
+              <Notice kind="info" title="A report is a planning record" announce={false}>
+                Finalization preserves the available evidence and limitations. It does not approve a
+                project, submit a funding application or start construction.
+              </Notice>
+              {(message || error) && (
+                <p className={styles.error} role="alert">
+                  {message ?? 'Finalization failed. Please try again.'}
+                </p>
+              )}
             </div>
-          </section>
+          </Drawer>
         </>
       ) : null}
     </div>

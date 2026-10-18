@@ -15,6 +15,7 @@ import { queryKeys } from '../../graphql/queryKeys';
 import { GraphQLRequestError } from '../../graphql/requestError';
 import { EXTENT_LABEL, formatDistance } from './locationLabels';
 import styles from './Location.module.scss';
+import { LocationName } from './LocationName';
 import { LocationSummaryName } from './LocationSummaryName';
 
 interface LocationSummaryProps {
@@ -93,15 +94,25 @@ export function LocationSummaryView({
   onChange,
   actionLabel = 'Change area',
   compact = false,
-}: Omit<LocationSummaryProps, 'areaId'> & { area: AreaLocationFieldsFragment }) {
+  readOnly = false,
+}: Omit<LocationSummaryProps, 'areaId'> & {
+  area: AreaLocationFieldsFragment;
+  readOnly?: boolean;
+}) {
   return (
     <section
       aria-labelledby="location-summary-title"
       className={`${styles.card} ${compact ? styles.compact : ''}`}
     >
       <div className={styles.summaryHead}>
-        <LocationSummaryName area={area} onChange={onChange} />
-        {compact && (
+        {readOnly ? (
+          <h2 id="location-summary-title" className={styles.title}>
+            <LocationName name={area.name} fullAddress={area.formattedAddress} admin={area.admin} />
+          </h2>
+        ) : (
+          <LocationSummaryName area={area} onChange={onChange} />
+        )}
+        {compact && !readOnly && (
           <Button variant="ghost" size="sm" onClick={onChange}>
             {actionLabel}
           </Button>
@@ -112,9 +123,11 @@ export function LocationSummaryView({
           kind="stale"
           title="Place details need refreshing"
           action={
-            <Button size="sm" variant="secondary" onClick={onChange}>
-              Choose it again
-            </Button>
+            readOnly ? undefined : (
+              <Button size="sm" variant="secondary" onClick={onChange}>
+                Choose it again
+              </Button>
+            )
           }
         >
           Place details from the map provider are kept for at most 30 days. Search for the place
@@ -168,7 +181,7 @@ export function LocationSummaryView({
           for one.
         </p>
       )}
-      {!compact && (
+      {!compact && !readOnly && (
         <div className={styles.actions}>
           <Button variant="secondary" startIcon="map" onClick={onChange}>
             {actionLabel}

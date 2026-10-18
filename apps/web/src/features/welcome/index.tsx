@@ -4,14 +4,17 @@ import { useNavigate } from 'react-router-dom';
 import { AuthFailure } from '../../auth/authErrors';
 import { useAuth } from '../../auth/authContext';
 import { Button } from '../../components/Button/Button';
-import { Icon } from '../../components/Icon/Icon';
 import { LoadingRegion, Skeleton } from '../../components/Skeleton/Skeleton';
 import { ErrorState } from '../../components/StatePanel/StatePanel';
 import { useOnlineStatus } from '../../lib/useOnlineStatus';
 import { usePlanningSession } from '../../session/sessionContext';
 import { pathForSessionStage } from '../../shell/stages';
-import { toSessionMode, usePreferredPlanningMode, type PlanningMode } from '../planning/planningMode';
-import { PlanningGuide } from './PlanningGuide';
+import {
+  toSessionMode,
+  usePreferredPlanningMode,
+  type PlanningMode,
+} from '../planning/planningMode';
+import { WaterPlanPreview } from './WaterPlanPreview';
 import styles from './Welcome.module.scss';
 
 const GUEST_PAUSED = 'New guest sessions are paused right now. Try again later or sign in.';
@@ -60,82 +63,97 @@ export default function WelcomePage() {
   }
   return (
     <div className={styles.page}>
-      <header className={styles.hero}>
-        <p className={styles.eyebrow}>Water planning for your community</p>
-        <h1 className={styles.title}>A better water plan starts here.</h1>
-        <p className={styles.subtitle}>
-          Understand your situation and explore practical improvements for your community.
-        </p>
-      </header>
-
-      {auth.status === 'error' ? (
-        <ErrorState title="Sign-in could not load" onRetry={auth.reload} headingLevel={2}>
-          WaterPilot could not load its sign-in service, so planning cannot start yet. Check your
-          connection and try again.
-        </ErrorState>
-      ) : (
-        <>
-          <section className={styles.choices} aria-label="Choose how to plan">
-            <article className={styles.choice}>
-              <span className={styles.choiceIcon}>
-                <Icon name="sparkle" size="lg" />
-              </span>
-              <h2 className={styles.choiceTitle}>Guide me with WaterPilot</h2>
-              <p className={styles.choiceText}>
-                Tell us what you need. Your agent will guide you while the workspace updates beside
-                it.
+      <div className={styles.heroGrid}>
+        <header className={styles.hero}>
+          <p className={styles.eyebrow}>Water planning for your community</p>
+          <h1 className={styles.title}>
+            Understand your water.
+            <br /> <em>Plan a better future.</em>
+          </h1>
+          <p className={styles.subtitle}>
+            Gemini Understands. The engine calculates. <strong>You decide</strong>
+          </p>
+          <p className={styles.principle}>
+            WaterPilot helps communities understand local water challenges, compare practical
+            solutions, and turn them into a plan of action.
+          </p>
+          {auth.status === 'error' ? (
+            <ErrorState title="Sign-in could not load" onRetry={auth.reload} headingLevel={2}>
+              WaterPilot could not load its sign-in service, so planning cannot start yet. Check
+              your connection and try again.
+            </ErrorState>
+          ) : (
+            <>
+              <div className={styles.actions} aria-label="Choose how to plan">
+                <Button
+                  size="lg"
+                  endIcon="arrow-right"
+                  loading={startingMode === 'agent'}
+                  disabled={startingMode !== null && startingMode !== 'agent'}
+                  aria-disabled={!online || undefined}
+                  aria-describedby={!online ? offlineNoteId : undefined}
+                  onClick={() => void start('agent')}
+                >
+                  {failed && mode === 'agent' ? 'Try again' : 'Start with Agent'}
+                </Button>
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  loading={startingMode === 'traditional'}
+                  disabled={startingMode !== null && startingMode !== 'traditional'}
+                  aria-disabled={!online || undefined}
+                  aria-describedby={!online ? offlineNoteId : undefined}
+                  onClick={() => void start('traditional')}
+                >
+                  {failed && mode === 'traditional' ? 'Try again' : 'Explore on my own'}
+                </Button>
+              </div>
+              <p className={styles.note}>
+                <span aria-hidden="true">✓</span> Start with guided help. No account needed to
+                explore.
               </p>
-              <Button
-                className={styles.choiceButton}
-                size="lg"
-                endIcon="arrow-right"
-                loading={startingMode === 'agent'}
-                disabled={startingMode !== null && startingMode !== 'agent'}
-                aria-disabled={!online || undefined}
-                aria-describedby={!online ? offlineNoteId : undefined}
-                onClick={() => void start('agent')}
-              >
-                {failed && mode === 'agent' ? 'Try again' : 'Start with Agent'}
-              </Button>
-            </article>
-            <article className={styles.choice}>
-              <span className={styles.choiceIcon}>
-                <Icon name="chart" size="lg" />
-              </span>
-              <h2 className={styles.choiceTitle}>Explore on my own</h2>
-              <p className={styles.choiceText}>
-                Use the same tools at your own pace, with help available whenever you need it.
-              </p>
-              <Button
-                className={styles.choiceButton}
-                variant="secondary"
-                size="lg"
-                endIcon="arrow-right"
-                loading={startingMode === 'traditional'}
-                disabled={startingMode !== null && startingMode !== 'traditional'}
-                aria-disabled={!online || undefined}
-                aria-describedby={!online ? offlineNoteId : undefined}
-                onClick={() => void start('traditional')}
-              >
-                {failed && mode === 'traditional' ? 'Try again' : 'Start Exploring'}
-              </Button>
-            </article>
-          </section>
-          {failed && (
-            <div role="alert" className={styles.error}>
-              {startError}
-            </div>
+              {failed && (
+                <div role="alert" className={styles.error}>
+                  {startError}
+                </div>
+              )}
+              {!online && (
+                <p id={offlineNoteId} className={styles.coverage}>
+                  You are offline. Starting needs a connection.
+                </p>
+              )}
+            </>
           )}
-          <>
-            <PlanningGuide />
-            {!online && (
-              <span id={offlineNoteId} className={styles.coverage}>
-                You are offline. Starting needs a connection.
-              </span>
-            )}
-          </>
-        </>
-      )}
+        </header>
+        <WaterPlanPreview />
+      </div>
+      <section className={styles.how} aria-label="How WaterPilot works">
+        <p className={styles.sectionLabel}>From water questions to a way forward</p>
+        <ol className={styles.steps}>
+          <li>
+            <h2>
+              <span>1</span>Understand your area
+            </h2>
+            <p>Choose your location and build a picture of your community’s water situation.</p>
+          </li>
+          <li>
+            <h2>
+              <span>2</span>Compare what could help
+            </h2>
+            <p>Explore options such as rainwater harvesting and water reuse against your goals.</p>
+          </li>
+          <li>
+            <h2>
+              <span>3</span>Put a plan into motion
+            </h2>
+            <p>Create a report to share, explore funding eligibility, and track next steps.</p>
+          </li>
+        </ol>
+      </section>
+      <footer className={styles.footer}>
+        <p>Made for communities planning a more water-resilient future.</p>
+        <p>Sign in when you’re ready to save your report.</p>
+      </footer>
     </div>
   );
 }

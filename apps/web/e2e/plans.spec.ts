@@ -46,7 +46,7 @@ test('a guest compares only feasible plans, chooses one, and tests a what-if in 
   page,
 }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Start Exploring' }).click();
+  await page.getByRole('button', { name: 'Explore on my own' }).click();
   await chooseFixtureLocation(page);
   await page.getByRole('button', { name: 'Understand this area', exact: true }).click();
   await page.getByRole('button', { name: 'Continue to baseline' }).click();

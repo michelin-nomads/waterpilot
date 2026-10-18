@@ -222,7 +222,7 @@ describe('planning session in the app', () => {
     );
     await vi.waitFor(() => expect(backend.calls).toContain('signOut'));
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'A better water plan starts here.' }),
+      await screen.findByRole('heading', { level: 1, name: 'Understand your water. Plan a better future.' }),
     ).toBeInTheDocument();
     await vi.waitFor(async () => expect(await recovery.forUid('user-1')).toEqual([]));
     expect(screen.queryByText(GOAL_A.description)).not.toBeInTheDocument();
@@ -253,7 +253,7 @@ describe('planning session in the app', () => {
     );
     await vi.waitFor(() => expect(backend.calls).toContain('signOut'));
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'A better water plan starts here.' }),
+      await screen.findByRole('heading', { level: 1, name: 'Understand your water. Plan a better future.' }),
     ).toBeInTheDocument();
   });
 
@@ -329,7 +329,7 @@ describe('planning session in the app', () => {
     const recovery = new MemoryRecoveryStore();
     const { router } = renderApp({ sessions, recovery, path: '/goals', resumeExisting: false });
 
-    await screen.findByRole('heading', { level: 1, name: 'A better water plan starts here.' });
+    await screen.findByRole('heading', { level: 1, name: 'Understand your water. Plan a better future.' });
     expect(router.state.location.pathname).toBe('/');
     expect(session().state.status).toBe('none');
     expect(screen.queryByText(GOAL_A.description)).not.toBeInTheDocument();

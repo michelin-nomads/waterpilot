@@ -311,15 +311,61 @@ function OptionCard({
   );
 }
 
-function PlanDetails({
+export function PlanDetails({
   option,
   comparison,
+  compact = false,
 }: {
   option: ComparedOptionFieldsFragment;
   comparison: Comparison;
+  compact?: boolean;
 }) {
   const unit = comparison.unit ?? 'RATIO';
-  const topRank = option.rank === 1 && Boolean(comparison.ranking.trim());
+  const topRank = option.rank === 1 && Boolean(comparison.ranking?.trim());
+  if (compact)
+    return (
+      <div className={styles.detailContent}>
+        <div className={styles.detailHead}>
+          <h3 className={styles.optionTitle}>{option.name}</h3>
+          <Badge tone="accent">Selected plan</Badge>
+        </div>
+        <dl className={styles.detailKpis} aria-label="Plan outcomes">
+          <div>
+            <dt>Outcome with your estimates</dt>
+            <dd>{formatOutcomeRange(option.pessimistic, option.optimistic, unit)}</dd>
+          </div>
+          <div>
+            <dt>Cost</dt>
+            <dd>{formatMoneyRange(option.cost)}</dd>
+          </div>
+          <div>
+            <dt>Build time</dt>
+            <dd>{formatDays(option.buildDays)}</dd>
+          </div>
+          <div>
+            <dt>First benefit</dt>
+            <dd>{TIMING_LABEL[option.firstBenefit] ?? 'Not recorded'}</dd>
+          </div>
+        </dl>
+        <section className={styles.block}>
+          <h4 className={styles.blockTitle}>What’s included</h4>
+          {option.measures?.length ? (
+            <ul className={styles.list}>
+              {option.measures.map((measure) => (
+                <li key={measure.interventionId}>
+                  <strong>{measure.name}</strong>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className={styles.muted}>
+              No individual measure breakdown was returned for this plan.
+            </p>
+          )}
+        </section>
+        {option.why && <p className={styles.text}>{option.why}</p>}
+      </div>
+    );
   return (
     <div className={styles.detailContent}>
       <div className={styles.detailHead}>

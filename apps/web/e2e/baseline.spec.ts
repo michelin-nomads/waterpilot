@@ -55,7 +55,7 @@ const card = (page: Page, metric: string) => page.locator(`[data-baseline-metric
 
 test('a guest builds a baseline from values they know and revises it', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Start Exploring' }).click();
+  await page.getByRole('button', { name: 'Explore on my own' }).click();
   await chooseFixtureLocation(page);
 
   await page.getByRole('button', { name: 'Understand this area' }).click();

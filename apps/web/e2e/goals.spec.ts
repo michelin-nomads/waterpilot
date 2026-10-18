@@ -45,7 +45,7 @@ test('a guest checks a goal against their baseline, saves it, and sees an imposs
   page,
 }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Start Exploring' }).click();
+  await page.getByRole('button', { name: 'Explore on my own' }).click();
   await chooseFixtureLocation(page);
   await page.getByRole('button', { name: 'Understand this area', exact: true }).click();
   await page.getByRole('button', { name: 'Continue to baseline' }).click();

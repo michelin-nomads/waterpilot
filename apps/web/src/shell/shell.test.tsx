@@ -65,7 +65,7 @@ async function renderPlan(
   return { router, sessions };
 }
 
-const MAIN_HEADING = 'A better water plan starts here.';
+const MAIN_HEADING = 'Understand your water. Plan a better future.';
 const SIGN_IN_HEADING = 'Welcome to WaterPilot';
 
 describe('main screen', () => {
@@ -73,7 +73,7 @@ describe('main screen', () => {
     const backend = new FakeAuthBackend();
     const router = await renderAt('/', backend);
     expect(screen.getByRole('heading', { level: 1, name: MAIN_HEADING })).toBeVisible();
-    expect(screen.getByText(/coverage varies by location/i)).toBeInTheDocument();
+    expect(screen.getByText(/No account needed to explore/i)).toBeInTheDocument();
     const header = appHeader();
     expect(within(header).getByRole('link', { name: 'Sign in' })).toHaveAttribute(
       'href',
@@ -88,7 +88,7 @@ describe('main screen', () => {
   it('plans without signing in: starting begins a guest session, then opens the first stage', async () => {
     const backend = new FakeAuthBackend();
     const router = await renderAt('/', backend);
-    fireEvent.click(screen.getByRole('button', { name: 'Start Exploring' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Explore on my own' }));
     await screen.findByRole('heading', { level: 1, name: 'Understand your area' });
     expect(router.state.location.pathname).toBe('/area');
     expect(backend.calls).toEqual(['signInAsGuest']);
@@ -137,24 +137,16 @@ describe('main screen', () => {
     expect(window.localStorage.getItem(PLANNING_MODE_STORAGE_KEY)).toBe('agent');
   });
 
-  it('presents WaterPilot Agent first with the primary CTA and keeps local previews secondary', async () => {
+  it('presents Agent first and shows the interactive planning preview', async () => {
     await renderAt('/', new FakeAuthBackend(guest()));
-    const choices = screen.getByRole('region', { name: 'Choose how to plan' });
-    expect(
-      within(choices)
-        .getAllByRole('heading', { level: 2 })
-        .map((heading) => heading.textContent),
-    ).toEqual(['Guide me with WaterPilot', 'Explore on my own']);
-    const agentCard = within(choices)
-      .getByRole('heading', { name: 'Guide me with WaterPilot' })
-      .closest('article')!;
-    const explorerCard = within(choices)
-      .getByRole('heading', { name: 'Explore on my own' })
-      .closest('article')!;
-    expect(within(agentCard).getByRole('button', { name: 'Start with Agent' }).className).not.toBe(
-      within(explorerCard).getByRole('button', { name: 'Start Exploring' }).className,
+    const agent = screen.getByRole('button', { name: 'Start with Agent' });
+    const explorer = screen.getByRole('button', { name: 'Explore on my own' });
+    expect(agent.className).not.toBe(explorer.className);
+    expect(screen.getByRole('tab', { name: 'Understand' })).toHaveAttribute(
+      'aria-selected',
+      'true',
     );
-    expect(screen.getByText('How WaterPilot works').closest('details')).not.toHaveAttribute('open');
+    expect(screen.getByRole('complementary', { name: 'Your community water plan' })).toBeVisible();
   });
 
   it('never offers to continue a plan: unfinished plans are not kept', async () => {
@@ -163,14 +155,14 @@ describe('main screen', () => {
     await renderAt('/', new FakeAuthBackend(guest()), sessions);
     expect(screen.queryByRole('button', { name: 'Continue planning' })).not.toBeInTheDocument();
     expect(screen.queryByText(/in progress/i)).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Start Exploring' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Explore on my own' })).toBeInTheDocument();
   });
 
   it('explains when guest sessions are paused and keeps Sign in available', async () => {
     const backend = new FakeAuthBackend();
     backend.failures.set('signInAsGuest', new AuthFailure('method-disabled'));
     await renderAt('/', backend);
-    fireEvent.click(screen.getByRole('button', { name: 'Start Exploring' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Explore on my own' }));
     expect(await screen.findByText(/new guest sessions are paused/i)).toBeInTheDocument();
     expect(within(appHeader()).getByRole('link', { name: 'Sign in' })).toBeInTheDocument();
   });
@@ -179,7 +171,7 @@ describe('main screen', () => {
     const backend = new FakeAuthBackend();
     backend.failures.set('signInAsGuest', new AuthFailure('network'));
     const router = await renderAt('/', backend);
-    fireEvent.click(screen.getByRole('button', { name: 'Start Exploring' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Explore on my own' }));
     expect(await screen.findByText(/your plan could not be started/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     await screen.findByRole('heading', { level: 1, name: 'Understand your area' });

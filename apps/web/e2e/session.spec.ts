@@ -55,7 +55,7 @@ async function expectSettled(count: () => number, expected: number) {
 
 async function startPlanning(page: Page, mode: 'Traditional' | 'With the assistant') {
   await page.goto('/');
-  const button = mode === 'Traditional' ? 'Start Exploring' : 'Start with Agent';
+  const button = mode === 'Traditional' ? 'Explore on my own' : 'Start with Agent';
   await page.getByRole('button', { name: button }).click();
   await expect(page).toHaveURL(/\/area$/);
 }
@@ -95,7 +95,7 @@ test('a plan is not kept: reloading ends it and Welcome offers a fresh start', a
   await expect(page.getByRole('button', { name: 'Continue planning' })).toHaveCount(0);
   await expect(page.getByText(/in progress/i)).toHaveCount(0);
   // The guest account stays, so the start screen is the choice of how to plan.
-  await expect(page.getByRole('button', { name: 'Start Exploring' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Explore on my own' })).toBeVisible();
 });
 
 test('saving remains until the server acknowledges, then the status disappears', async ({
@@ -160,7 +160,7 @@ test('a signed-in person plans with an avatar in the header; signing out asks fi
   await page.getByRole('button', { name: 'Create account' }).click();
   await expect(page).toHaveURL(/\/$/);
 
-  await page.getByRole('button', { name: 'Start Exploring' }).click();
+  await page.getByRole('button', { name: 'Explore on my own' }).click();
   await expect(page).toHaveURL(/\/area$/);
   const header = page
     .getByRole('link', { name: 'WaterPilot home' })
@@ -173,7 +173,7 @@ test('a signed-in person plans with an avatar in the header; signing out asks fi
   await header.getByRole('button', { name: 'Sign out' }).click();
   const confirm = page.getByRole('dialog', { name: 'Sign out and lose your plan?' });
   await confirm.getByRole('button', { name: 'Sign out and lose plan' }).click();
-  await expect(page.getByRole('button', { name: 'Start Exploring' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Explore on my own' })).toBeVisible();
   await expect.poll(async () => (await recoveryRecords(page)).length).toBe(0);
 });
 
