@@ -280,3 +280,16 @@
     overflow-wrap: anywhere;
   }
 }
+
+.headerIllustration {
+  width: 260px;
+  height: 90px;
+  opacity: 0.95;
+  pointer-events: none;
+
+  @include tablet-up {
+    width: 340px;
+    height: 110px;
+  }
+}
+

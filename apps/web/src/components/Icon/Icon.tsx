@@ -53,6 +53,10 @@ const PATHS = {
     'M3 3l18 18M10.6 5.1A9.7 9.7 0 0 1 12 5c6 0 10 7 10 7a17 17 0 0 1-3.2 3.9M6.6 6.6A16.6 16.6 0 0 0 2 12s4 7 10 7a9.7 9.7 0 0 0 4.3-1M9.9 9.9a3 3 0 0 0 4.2 4.2',
   bulb: 'M9 18h6m-5 3h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3Z',
   clipboard: 'M9 4h6v3H9zM7 5H5v16h14V5h-2M9 12h6m-6 4h4',
+  'cloud-rain': 'M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.5 8.2M8 19v2m4-2v2m4-2v2',
+  'shield-check': 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Zm-3-10 2 2 4-4',
+  building: 'M3 21h18M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16M9 7h1m4 0h1M9 11h1m4 0h1M9 15h1m4 0h1',
+  groundwater: 'M12 3v9m-3-3 3 3 3-3M2 17q3-3 6 0t6 0 6 0M2 21q3-3 6 0t6 0 6 0',
 } as const;
 
 export type IconName = keyof typeof PATHS;

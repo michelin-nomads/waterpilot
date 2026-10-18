@@ -9,7 +9,8 @@ import { usePlanningSession } from '../../session/sessionContext';
 import type { SessionState } from '../../session/sessionState';
 import { SHOW_COMMUNITY_BASELINE } from '../planning/visibility';
 import { StagePage } from '../planning/StagePage';
-import { WhatIfPanel } from './WhatIfPanel';
+import { ModernScenarioPanel } from './ModernScenarioPanel';
+import { ScenicHeaderIllustration } from './ScenicHeaderIllustration';
 import styles from './Plans.module.scss';
 
 export default function ScenarioPage() {
@@ -43,14 +44,17 @@ export default function ScenarioPage() {
     }
   }
   return (
-    <StagePage stageId="scenario">
+    <StagePage
+      stageId="scenario"
+      actions={<ScenicHeaderIllustration className={styles.headerIllustration} />}
+    >
       {failed && (
         <Notice kind="caution">
           The scenario could not be saved. Your entries are kept; try again.
         </Notice>
       )}
       {saved && view ? (
-        <WhatIfPanel
+        <ModernScenarioPanel
           key={`${view.id}:${revision}`}
           sessionId={view.id}
           revision={revision}
@@ -58,6 +62,7 @@ export default function ScenarioPage() {
           saved={saved}
           pending={saving || inputsPending}
           onSave={(scenario) => void save(scenario)}
+          onContinueToGoal={() => navigate('/goals')}
         />
       ) : query.isError ? (
         <ErrorState title="Scenario data could not load" onRetry={() => void query.refetch()}>
