@@ -454,7 +454,7 @@ describe('application shell', () => {
       'step',
     );
     expect(screen.getByText('Step 1 of 6', { selector: 'p:not(nav p)' })).toBeInTheDocument();
-    expect(document.title).toBe('Understand your area · WaterPilot');
+    expect(document.title).toBe('Understand your area · WaterPilot — AI-Redefined Water Saving');
   });
 
   it('shows the signed-in navigation without Reports current while Review is open', async () => {

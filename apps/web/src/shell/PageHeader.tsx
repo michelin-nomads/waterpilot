@@ -15,7 +15,7 @@ interface PageHeaderProps {
  */
 export function PageHeader({ title, eyebrow, subtitle, actions }: PageHeaderProps) {
   useEffect(() => {
-    document.title = `${title} · WaterPilot`;
+    document.title = `${title} · WaterPilot — AI-Redefined Water Saving`;
   }, [title]);
 
   return (
