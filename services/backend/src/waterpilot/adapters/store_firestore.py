@@ -164,18 +164,51 @@ class _UnitOfWork:
 _active: ContextVar[_UnitOfWork | None] = ContextVar("waterpilot_firestore_uow", default=None)
 
 
+def _sanitize_for_firestore(val: Any) -> Any:
+    if isinstance(val, dict):
+        return {k: _sanitize_for_firestore(v) for k, v in val.items()}
+    if isinstance(val, (list, tuple)):
+        # Firestore forbids arrays containing arrays (at any nesting level).
+        # Wrap nested arrays in a single-key map to satisfy Firestore's schema requirements.
+        sanitized = []
+        for item in val:
+            if isinstance(item, (list, tuple)):
+                sanitized.append({"_nested_list": _sanitize_for_firestore(item)})
+            else:
+                sanitized.append(_sanitize_for_firestore(item))
+        return sanitized
+    return val
+
+
+def _desanitize_from_firestore(data: Any) -> Any:
+    if isinstance(data, dict):
+        if len(data) == 1 and "_nested_list" in data:
+            return _desanitize_from_firestore(data["_nested_list"])
+        return {
+            k: _desanitize_from_firestore(v)
+            for k, v in data.items()
+            if not k.startswith("_") or k == "_nested_list"
+        }
+    if isinstance(data, list):
+        return [_desanitize_from_firestore(item) for item in data]
+    return data
+
+
 def _encode(model: BaseModel, sort_key: str) -> dict[str, Any]:
-    data: dict[str, Any] = model.model_dump(mode="json")
-    size = len(json.dumps(data, separators=(",", ":")).encode())
+    raw_data = model.model_dump(mode="json")
+    size = len(json.dumps(raw_data, separators=(",", ":")).encode())
     if size > MAX_DOCUMENT_BYTES:
         raise DomainError(ErrorCode.VALIDATION_FAILED, "this record is too large to store")
+    data: dict[str, Any] = _sanitize_for_firestore(raw_data)
     data[SORT_FIELD] = sort_key
     data[WRITTEN_AT_FIELD] = firestore.SERVER_TIMESTAMP
     return data
 
 
 def _strip(data: Mapping[str, Any] | None) -> dict[str, Any]:
-    return {k: v for k, v in (data or {}).items() if not k.startswith("_")}
+    if not data:
+        return {}
+    return _desanitize_from_firestore(dict(data))
 
 
 def _data(snap: firestore.DocumentSnapshot[Any]) -> dict[str, Any]:
@@ -379,7 +412,12 @@ class FirestoreCatalogue[T: BaseModel](_Collection[T]):
     """Reference data written by trusted importers/engines, read by services."""
 
     def add(self, item: T) -> None:
-        self._client.collection(self.name).document(str(getattr(item, "id"))).set(  # noqa: B009
+        doc_id = str(getattr(item, "id"))  # noqa: B009
+        uow = _active.get()
+        if uow is not None:
+            uow.write((self.name, doc_id), "set", self._encode(item))
+            return
+        self._client.collection(self.name).document(doc_id).set(
             self._encode(item)
         )
 

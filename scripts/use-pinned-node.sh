@@ -54,6 +54,7 @@ if [ ! -x "$bin/node" ]; then
 fi
 
 # Confirm the pin resolved to the exact node/npm the repo expects.
+PATH="$bin:$PATH"
 got_node="$("$bin/node" --version)"
 got_npm="$("$bin/npm" --version)"
 if [ "$got_node" != "$version" ]; then

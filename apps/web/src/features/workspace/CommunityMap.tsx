@@ -1,8 +1,9 @@
+import { Link } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { env } from '../../config/env';
 import { loadGoogleMaps, onAuthFailure } from '../location/googleMapsLoader';
-import { Button, ButtonLink } from '../../components/Button/Button';
+import { Button } from '../../components/Button/Button';
 import { Icon } from '../../components/Icon/Icon';
 import { Notice } from '../../components/Notice/Notice';
 import type { CommunityItem, NearbyCentre } from './useCommunityDirectory';
@@ -44,6 +45,7 @@ export function CommunityMap({
   joining,
   actionError,
   onJoin,
+  onLeave,
 }: {
   rows: CommunityItem[];
   centre: NearbyCentre | null;
@@ -53,6 +55,7 @@ export function CommunityMap({
   joining: boolean;
   actionError: { id: string; message: string } | null;
   onJoin: (id: string) => void;
+  onLeave: (community: CommunityItem) => void;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const [popupHost] = useState(() => document.createElement('div'));
@@ -109,7 +112,7 @@ export function CommunityMap({
       const popup = new maps.InfoWindow({
         content: popupHost,
         headerDisabled: true,
-        maxWidth: 320,
+        maxWidth: 240,
       });
       runtime.current = { map, maps, markers, advanced: Boolean(mapId), popup };
       setStatus('ready');
@@ -232,30 +235,45 @@ export function CommunityMap({
                   <Icon name="close" size="sm" />
                 </button>
                 <div className={styles.popupHeading}>
-                  <Icon name="droplet" size="lg" />
+                  <span className={styles.popupIcon} aria-hidden="true">
+                    <Icon name="droplet" size="sm" />
+                  </span>
                   <h3>{selected.name}</h3>
                 </div>
                 <p>
                   {distance !== null ? `${(distance / 1000).toLocaleString()} km · ` : ''}
                   {selected.memberCount} {selected.memberCount === 1 ? 'member' : 'members'}
                 </p>
-                {isJoined(selected) ? (
-                  <Button disabled startIcon="check">
-                    Joined
-                  </Button>
-                ) : (
-                  <Button loading={joining} onClick={() => onJoin(selected.id)}>
-                    Join community
-                  </Button>
-                )}
-                {actionError?.id === selected.id && (
-                  <p role="alert" className={styles.error}>
-                    {actionError.message}
-                  </p>
-                )}
-                <ButtonLink variant="ghost" size="sm" to={`/communities/${selected.id}`}>
-                  View community
-                </ButtonLink>
+                <div className={styles.popupActions}>
+                  {isJoined(selected) ? (
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      fullWidth
+                      loading={joining}
+                      onClick={() => onLeave(selected)}
+                    >
+                      Leave community
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      fullWidth
+                      loading={joining}
+                      onClick={() => onJoin(selected.id)}
+                    >
+                      Join community
+                    </Button>
+                  )}
+                  {actionError?.id === selected.id && (
+                    <p role="alert" className={styles.error}>
+                      {actionError.message}
+                    </p>
+                  )}
+                  <Link className={styles.viewLink} to={`/communities/${selected.id}`}>
+                    View community
+                  </Link>
+                </div>
               </section>,
               popupHost,
             )}

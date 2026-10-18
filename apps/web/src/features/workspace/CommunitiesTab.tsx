@@ -79,6 +79,7 @@ export default function CommunitiesTab() {
               directory.actionError?.id === community.id ? directory.actionError.message : null
             }
             onJoin={() => void directory.joinCommunity(community.id, false)}
+            onLeave={() => void directory.leaveCommunity(community)}
           />
         ))}
       </ul>
@@ -160,6 +161,7 @@ export default function CommunitiesTab() {
           joining={directory.joining}
           actionError={directory.actionError}
           onJoin={(id) => void directory.joinCommunity(id, false)}
+          onLeave={(community) => void directory.leaveCommunity(community)}
         />
       </div>
     </div>

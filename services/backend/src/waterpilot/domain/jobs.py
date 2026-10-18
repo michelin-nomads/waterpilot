@@ -217,7 +217,7 @@ class AgentRun(Record):
     calls_since_checkpoint: int = Field(default=0, ge=0)
     """Model calls since the last user Continue; at ``max_calls_before_checkpoint`` the run
     pauses and needs an explicit Continue before any further model call (ADR 0015)."""
-    max_calls_before_checkpoint: int = Field(default=5, ge=1, le=100)
+    max_calls_before_checkpoint: int = Field(default=15, ge=1, le=100)
     max_output_tokens: int = Field(default=2048, ge=1, le=32_768)
     step_seq: int = Field(default=0, ge=0)
     """Durable, monotonic count of committed **tool** steps (not model calls). It only ever

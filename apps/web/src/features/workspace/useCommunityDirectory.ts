@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 
 import { useAuth } from '../../auth/authContext';
-import { newIdempotencyKey, unwrapPayload } from '../../graphql/client';
+import { MutationFailure, newIdempotencyKey, unwrapPayload } from '../../graphql/client';
 import {
   CommunitiesDocument,
   JoinCommunityDocument,
+  LeaveCommunityDocument,
   MyMembershipsDocument,
   NearbyCommunitiesDocument,
   ReportsDocument,
@@ -94,6 +95,7 @@ export function useCommunityDirectory() {
     { enabled: nearbyMode && centre !== null },
   );
   const join = useGraphQLMutation('joinCommunity', JoinCommunityDocument);
+  const leave = useGraphQLMutation('leaveCommunity', LeaveCommunityDocument);
 
   const rows = useMemo(() => {
     const source: CommunityItem[] = mineMode
@@ -148,6 +150,32 @@ export function useCommunityDirectory() {
     }
   };
 
+  const leaveCommunity = async (community: CommunityItem) => {
+    if (
+      !community.viewerMembership ||
+      !window.confirm(`Leave ${community.name}? Member-only history will no longer be accessible.`)
+    )
+      return;
+    setActionError(null);
+    setOptimistic((state) => ({ ...state, [community.id]: false }));
+    try {
+      const result = await leave.mutateAsync({
+        communityId: community.id,
+        expectedVersion: community.viewerMembership.version,
+      });
+      unwrapPayload(result.leaveCommunity);
+    } catch (error) {
+      setOptimistic((state) => ({ ...state, [community.id]: true }));
+      setActionError({
+        id: community.id,
+        message:
+          error instanceof MutationFailure
+            ? error.message
+            : 'Could not leave this community. Your membership was restored; try again.',
+      });
+    }
+  };
+
   const changeView = (next: DirectoryView) => {
     setView(next);
     // Archived communities are listed under All and Mine only.
@@ -188,7 +216,8 @@ export function useCommunityDirectory() {
     isJoined: (community: CommunityItem) =>
       optimistic[community.id] ?? Boolean(community.viewerMembership),
     joinCommunity,
-    joining: join.isPending,
+    leaveCommunity,
+    joining: join.isPending || leave.isPending,
     actionError,
   };
 }

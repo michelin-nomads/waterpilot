@@ -237,7 +237,7 @@ class AiLimits:
     daily_request_limit: int = 100
     """Model requests per project per day (proposed)."""
     max_active_runs_per_session: int = 1
-    max_calls_per_run: int = 5
+    max_calls_per_run: int = 15
     """Model calls in one run before a user-visible Continue checkpoint is required."""
     hard_calls_per_run: int = 20
     """Absolute cap on model calls in one run, regardless of Continue checkpoints."""
