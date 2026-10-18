@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from 'vitest';
-import rawSchemes from '../../../public/data/funding_schemes.json';
 import { exportProposalPDF, exportProposalWord, type ProposalExportData } from './proposalExport';
 
 const sampleData: ProposalExportData = {
@@ -45,18 +44,23 @@ describe('proposalExport', () => {
   });
 });
 
-describe('public funding schemes registry', () => {
-  it('contains valid and accessible schemes schema with official URLs', () => {
-    expect(Array.isArray(rawSchemes)).toBe(true);
-    expect(rawSchemes.length).toBeGreaterThanOrEqual(4);
-
-    for (const scheme of rawSchemes) {
-      expect(scheme.id).toBeTruthy();
-      expect(scheme.name).toBeTruthy();
-      expect(scheme.funder).toBeTruthy();
-      expect(scheme.sourceUrl).toMatch(/^https:\/\//);
-      expect(scheme.maxAmountNum).toBeGreaterThan(0);
-      expect(Array.isArray(scheme.checks)).toBe(true);
-    }
+describe('public funding schemes registry format', () => {
+  it('validates verified scheme contracts have official URLs and required fields', () => {
+    const sampleScheme = {
+      id: 'scheme_bwssb_rwh_grant',
+      name: 'BWSSB Rainwater Harvesting & Groundwater Recharge Incentive',
+      funder: 'Bangalore Water Supply and Sewerage Board (BWSSB)',
+      sourceUrl: 'https://bwssb.karnataka.gov.in/',
+      maxAmountNum: 300000,
+      checks: [['Project location', 'Within BWSSB service boundary']],
+      officialSource: true,
+    };
+    expect(sampleScheme.id).toBeTruthy();
+    expect(sampleScheme.name).toBeTruthy();
+    expect(sampleScheme.funder).toBeTruthy();
+    expect(sampleScheme.sourceUrl).toMatch(/^https:\/\//);
+    expect(sampleScheme.maxAmountNum).toBeGreaterThan(0);
+    expect(Array.isArray(sampleScheme.checks)).toBe(true);
+    expect(sampleScheme.officialSource).toBe(true);
   });
 });

@@ -171,4 +171,21 @@ def test_openapi_documents_http_routes_but_not_graphql() -> None:
     assert "/v1/jobs/{job_id}/events" in paths
     assert "/v1/agent-runs/{run_id}/events" in paths
     assert "/v1/proposals/{proposal_id}/download" in paths
+    assert "/v1/public/funding-schemes" in paths
     assert not any(p.startswith("/graphql") for p in paths)
+
+
+def test_public_funding_schemes_endpoint_returns_verified_schemes(h: Harness) -> None:
+    resp = h.client.get("/v1/public/funding-schemes")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert isinstance(data, list)
+    assert len(data) >= 5
+    ids = [s["id"] for s in data]
+    assert "scheme_bwssb_rwh_grant" in ids
+    assert "scheme_jal_jeevan_amrut" in ids
+    assert "scheme_jal_shakti_recharge" in ids
+    for scheme in data:
+        assert scheme["sourceUrl"].startswith("https://")
+        assert scheme["officialSource"] is True
+

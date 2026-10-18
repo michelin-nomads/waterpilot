@@ -18,6 +18,8 @@ import { createFeasibleComparison } from '../plans/feasibleComparisonFallback';
 import styles from './Matches.module.scss';
 
 import { exportProposalPDF, exportProposalWord } from './proposalExport';
+import { apiClient } from '../../lib/apiClient';
+import { env } from '../../config/env';
 
 export interface SchemeData {
   id: string;
@@ -80,28 +82,33 @@ export default function FundingPage() {
       else setLoadingSchemes(true);
       setSchemesError(null);
 
-      const base =
-        typeof window !== 'undefined' && window.location?.origin && window.location.origin !== 'null'
-          ? window.location.origin
-          : 'http://localhost';
-      const endpoint = `${base}/data/funding_schemes.json${isManual ? `?t=${Date.now()}` : ''}`;
-      const response = await fetch(endpoint, {
-        headers: { Accept: 'application/json' },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to load funding schemes: HTTP ${response.status}`);
+      let data: SchemeData[] | null = null;
+      try {
+        const response = await apiClient.get<SchemeData[]>('/v1/public/funding-schemes', {
+          headers: { Accept: 'application/json' },
+          params: isManual ? { t: Date.now() } : undefined,
+        });
+        data = response.data;
+      } catch (clientErr) {
+        // Fallback directly to the public API URL if needed
+        const apiUrl = env.apiBaseUrl
+          ? `${env.apiBaseUrl}/v1/public/funding-schemes`
+          : 'https://waterpilot-api-572852178137.asia-south1.run.app/v1/public/funding-schemes';
+        const res = await fetch(`${apiUrl}${isManual ? `?t=${Date.now()}` : ''}`, {
+          headers: { Accept: 'application/json' },
+        });
+        if (!res.ok) throw clientErr;
+        data = await res.json();
       }
 
-      const data: SchemeData[] = await response.json();
       if (Array.isArray(data) && data.length > 0) {
         setSchemes(data);
         setSelectedScheme((prev) => {
           if (prev) {
-            const matched = data.find((d) => d.id === prev.id);
-            return matched ?? data[0] ?? null;
+            const matched = data!.find((d) => d.id === prev.id);
+            return matched ?? data![0] ?? null;
           }
-          return data[0] ?? null;
+          return data![0] ?? null;
         });
         setLastRefreshedAt(
           new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
