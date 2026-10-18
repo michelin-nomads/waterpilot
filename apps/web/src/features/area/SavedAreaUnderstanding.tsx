@@ -35,9 +35,19 @@ export function SavedAreaUnderstanding({
         <Skeleton shape="block" />
       </LoadingRegion>
     );
-  if (initialAreaId && (!location.data?.area || location.isError) && !refresh)
+  // Retrieve previously confirmed area from sessionStorage if query is empty
+  const storedArea = (() => {
+    if (!initialAreaId) return null;
+    try {
+      const raw = sessionStorage.getItem(`waterpilot.confirmed_area.${sessionId}`);
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return null;
+  })();
+
+  const area = location.data?.area ?? storedArea ?? undefined;
+  if (initialAreaId && !area && location.isError && !refresh)
     return <LocationSummary areaId={initialAreaId} onChange={() => setRefresh(true)} />;
-  const area = location.data?.area;
   return (
     <>
       {area?.providerContentExpired && (
