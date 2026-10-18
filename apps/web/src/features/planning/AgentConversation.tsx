@@ -21,6 +21,11 @@ import {
 } from './planningInteraction';
 import { AgentResultData } from './AgentResultData';
 import { FormattedMessage } from './FormattedMessage';
+import { LocationSearch } from '../location/LocationSearch';
+import { usePlaces } from '../location/placesContext';
+import { useLocationSelection } from './planningInteraction';
+import { agentNavigation } from './agentNavigation';
+import { stageForPath } from '../../shell/stages';
 
 const friendlyToolTitle = (name?: string) => {
   if (!name) return 'Activity';
@@ -54,6 +59,10 @@ export default function AgentConversation({
   const pageStage = sessionStageForPath(pathname);
   const locationInteraction = useLocationInteraction(view?.id);
   const confirmSuggestedLocation = useLocationConfirmation(view?.id);
+  const selectLocation = useLocationSelection(view?.id);
+  const places = usePlaces();
+  const [locationSearchOpen, setLocationSearchOpen] = useState(false);
+  const [navigationMessage, setNavigationMessage] = useState<string | null>(null);
   const interaction = planningInteraction(
     state.server,
     pageStage,
@@ -303,8 +312,17 @@ export default function AgentConversation({
 
   function submitPrompt(promptText: string) {
     if (!sid || !promptText.trim() || active || busy || isSaving) return;
+    const navigation = agentNavigation(promptText, pathname, state.server);
+    if (navigation) {
+      setNavigationMessage(navigation.message);
+      setInput('');
+      if (navigation.path) navigate(navigation.path);
+      return;
+    }
+    setNavigationMessage(null);
     startKey.current ??= crypto.randomUUID();
     void perform(async () => {
+      await coordinator?.refresh();
       const value = await agentCommand('', {
         sessionId: sid,
         prompt: promptText.trim(),
@@ -381,21 +399,25 @@ export default function AgentConversation({
           if (event.result?.error && !prepared) return null;
           return (
             <article key={itemKey} className={styles.result}>
-              <div className={styles.resultHeader}>
-                <div className={styles.toolBadge}>
-                  <Icon name="sparkle" size="sm" />
-                  <h3>{friendlyToolTitle(event.name)}</h3>
+              {prepared && (
+                <div className={styles.resultHeader}>
+                  <div className={styles.toolBadge}>
+                    <Icon name="sparkle" size="sm" />
+                    <h3>{friendlyToolTitle(event.name)}</h3>
+                  </div>
+                  {prepared && <span className={styles.preparedBadge}>Action proposal</span>}
                 </div>
-                {prepared && <span className={styles.preparedBadge}>Action proposal</span>}
-              </div>
+              )}
               {event.result?.error ? (
                 <p role="alert">{event.result.error.message}</p>
-              ) : prepared ||
-                ['inspect_coverage', 'inspect_planning_state'].includes(event.name ?? '') ? (
+              ) : prepared ? (
                 <AgentResultData value={data} toolName={prepared ? undefined : event.name} />
               ) : (
                 <details>
-                  <summary>View tool details</summary>
+                  <summary className={styles.activitySummary}>
+                    <Icon name="check" size="sm" />
+                    <span>{friendlyToolTitle(event.name)}</span>
+                  </summary>
                   <AgentResultData value={data} toolName={prepared ? undefined : event.name} />
                 </details>
               )}
@@ -435,6 +457,16 @@ export default function AgentConversation({
             </article>
           );
         })}
+        {navigationMessage && (
+          <div className={styles.assistantBubbleWrapper}>
+            <div className={styles.agentAvatar}>
+              <Icon name="sparkle" size="sm" />
+            </div>
+            <div className={styles.assistantMessage} role="status">
+              {navigationMessage}
+            </div>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
@@ -517,7 +549,8 @@ export default function AgentConversation({
         </div>
       )}
 
-      {(!state.server?.areaId ||
+      {(selectLocation ||
+        !state.server?.areaId ||
         suggestedLocation ||
         interaction.location.status === 'resolving' ||
         interaction.location.status === 'confirming') && (
@@ -531,7 +564,9 @@ export default function AgentConversation({
                   ? 'Finding location…'
                   : interaction.location.status === 'confirming'
                     ? 'Confirming area…'
-                    : 'Choose a location'}
+                    : state.server?.areaId
+                      ? 'Selected location'
+                      : 'Choose a location'}
             </strong>
             <p>
               {suggestedLocation
@@ -540,21 +575,13 @@ export default function AgentConversation({
                   ? 'Search or pick a point while we check.'
                   : interaction.location.status === 'confirming'
                     ? 'Saving your area and checking data.'
-                    : 'Select an area to begin your assessment.'}
+                    : (interaction.location.candidateName ??
+                      state.server?.areaName ??
+                      'Select an area to begin your assessment.')}
             </p>
             {suggestedLocation && <span>Check pin and radius.</span>}
           </div>
           <div className={styles.locationPromptActions}>
-            <Button
-              size="sm"
-              variant="ghost"
-              className={styles.sendButton}
-              aria-label="Choose location in workspace"
-              title="View location in workspace"
-              onClick={onFocusWorkspace ?? onUseTraditional}
-            >
-              <Icon name="external" size="sm" />
-            </Button>
             {suggestedLocation && confirmSuggestedLocation && (
               <Button
                 size="sm"
@@ -569,6 +596,16 @@ export default function AgentConversation({
             )}
           </div>
         </section>
+      )}
+      {locationSearchOpen && selectLocation && (
+        <LocationSearch
+          adapter={places}
+          showHint={false}
+          onSelect={(place) => {
+            selectLocation(place);
+            setLocationSearchOpen(false);
+          }}
+        />
       )}
       {!active && (
         <div className={styles.suggestionsContainer}>
@@ -599,6 +636,10 @@ export default function AgentConversation({
           submitPrompt(input);
         }}
       >
+        <div className={styles.composerFooter} role="status">
+          <span>{`Working on: ${stageForPath(pathname)?.label ?? 'your water plan'}`}</span>
+          {isSaving && <span>Saving workspace changes…</span>}
+        </div>
         <VisuallyHidden>
           <label htmlFor="agent-message">Message</label>
         </VisuallyHidden>
@@ -615,15 +656,28 @@ export default function AgentConversation({
               }
             }}
             placeholder={
-              state.server?.areaId
-                ? 'Ask about your current water plan…'
-                : 'Which town, neighbourhood or society are you planning for?'
+              state.server?.areaId ? 'Ask about your current water plan…' : 'Ask about a location…'
             }
             rows={1}
             maxLength={12000}
             disabled={!sid || isSaving}
           />
           <div className={styles.searchBarActions}>
+            {selectLocation && (
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className={styles.sendButton}
+                aria-label="Search another location"
+                title="Search another location"
+                aria-expanded={locationSearchOpen}
+                disabled={active || busy}
+                onClick={() => setLocationSearchOpen((open) => !open)}
+              >
+                <Icon name="search" size="sm" />
+              </Button>
+            )}
             {active ? (
               <Button
                 type="button"

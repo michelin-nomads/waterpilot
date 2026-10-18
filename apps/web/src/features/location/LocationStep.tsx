@@ -15,13 +15,17 @@ import { queryKeys } from '../../graphql/queryKeys';
 import { CandidateReview, type LocationDraft } from './CandidateReview';
 import { GEOLOCATION_MESSAGE, requestDevicePosition, type GeolocationOutcome } from './geolocation';
 import { LocationSearch } from './LocationSearch';
+import { placeName } from './locationLabels';
 import { MapPanel } from './MapPanel';
 import { usePlaces } from './placesContext';
 import { resolveLocation } from './resolveLocation';
 import type { Place } from './types';
 import { useConfirmLocation, type LocationDraftInput } from './useConfirmLocation';
 import styles from './Location.module.scss';
-import { publishLocationInteraction } from '../planning/planningInteraction';
+import {
+  publishLocationInteraction,
+  registerLocationSelection,
+} from '../planning/planningInteraction';
 
 interface LocationStepProps {
   onConfirmed: (area: AreaLocationFieldsFragment) => void;
@@ -76,8 +80,9 @@ export function LocationStep({
       }
       try {
         const raw =
-          (sessionId ? sessionStorage.getItem(`waterpilot.baseline.${initialArea.id}.${sessionId}`) : null) ??
-          sessionStorage.getItem(`waterpilot.baseline.${initialArea.id}`);
+          (sessionId
+            ? sessionStorage.getItem(`waterpilot.baseline.${initialArea.id}.${sessionId}`)
+            : null) ?? sessionStorage.getItem(`waterpilot.baseline.${initialArea.id}`);
         if (raw) {
           const parsed = JSON.parse(raw);
           if (parsed?.baseline) return parsed;
@@ -157,7 +162,11 @@ export function LocationStep({
                 : draft
                   ? 'suggested'
                   : 'absent',
-      candidateName: draft?.place.name,
+      candidateName: previewPlace
+        ? (placeName(previewPlace) ?? previewPlace.name)
+        : draft
+          ? (placeName(draft.place) ?? draft.place.name)
+          : undefined,
     });
   }, [
     sessionId,
@@ -170,6 +179,7 @@ export function LocationStep({
     result,
     initialArea,
     previewRadius,
+    previewPlace,
   ]);
   useEffect(
     () => () => {
@@ -243,10 +253,7 @@ export function LocationStep({
             `waterpilot.baseline.${areaId}.${sessionId}`,
             JSON.stringify(response.area),
           );
-          sessionStorage.setItem(
-            `waterpilot.baseline.${areaId}`,
-            JSON.stringify(response.area),
-          );
+          sessionStorage.setItem(`waterpilot.baseline.${areaId}`, JSON.stringify(response.area));
         } catch {}
       })
       .catch(() => {
@@ -294,6 +301,7 @@ export function LocationStep({
         if (!place) throw new Error(LOOKUP_FAILED);
         if (token !== selection.current) return;
         setDraft({ ...candidate, place });
+        setPreviewPlace(place);
       } catch {
         if (token === selection.current) setFailure({ message: LOOKUP_FAILED, fields: [] });
       } finally {
@@ -303,15 +311,27 @@ export function LocationStep({
     [adapter],
   );
 
-  const review = (candidate: LocationDraft) => {
-    userCleared.current = false;
-    clearResults();
-    const token = ++selection.current;
-    setFailure(NO_FAILURE);
-    setGeoOutcome(null);
-    setResolving(true);
-    void resolveDraft(candidate, token);
-  };
+  const review = useCallback(
+    (candidate: LocationDraft) => {
+      // A new candidate must not restore the previous area's cached results.
+      userCleared.current = true;
+      clearResults();
+      const token = ++selection.current;
+      setFailure(NO_FAILURE);
+      setGeoOutcome(null);
+      setResolving(true);
+      setDraft(candidate);
+      setPreviewPlace(candidate.place);
+      void resolveDraft(candidate, token);
+    },
+    [clearResults, resolveDraft],
+  );
+  useEffect(() => {
+    if (!sessionId) return;
+    return registerLocationSelection(sessionId, (place) =>
+      review({ origin: 'PLACE_SEARCH', place }),
+    );
+  }, [sessionId, review]);
   const back = () => {
     userCleared.current = true;
     clearResults();
@@ -414,12 +434,9 @@ export function LocationStep({
             `waterpilot.baseline.${area.id}.${sessionId}`,
             JSON.stringify(response.area),
           );
-          sessionStorage.setItem(
-            `waterpilot.baseline.${area.id}`,
-            JSON.stringify(response.area),
-          );
+          sessionStorage.setItem(`waterpilot.baseline.${area.id}`, JSON.stringify(response.area));
         } catch {
-          console.log()
+          console.log();
         }
         if (token !== selection.current) return;
         setLoadingProgress(1);
