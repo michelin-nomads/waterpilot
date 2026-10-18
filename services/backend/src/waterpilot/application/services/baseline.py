@@ -427,10 +427,14 @@ class BaselineService:
             start_date = as_of - timedelta(days=365)
             window = Window(start_date, as_of)
             demand_lpd = Fraction(public_profile.demand_lpd)
-            supply_shortage = demand_lpd * Fraction(78, 100)
+            shortage_ratio = public_profile.reliable_supply_ratio
+            supply_shortage = demand_lpd * shortage_ratio
             supply_normal = demand_lpd * Fraction(105, 100)
+            shortage_count = public_profile.shortage_days
+            start_shortage = 60
+            end_shortage = start_shortage + shortage_count
             daily_vals = [
-                supply_shortage if 75 <= d_i < 113 else supply_normal
+                supply_shortage if start_shortage <= d_i < end_shortage else supply_normal
                 for d_i in range(window.days)
             ]
             delivered = DailySeries(start_date, tuple(daily_vals))
@@ -524,8 +528,8 @@ class BaselineService:
                 as_of=date(2024, 1, 1),
                 quality=EvidenceQuality.VALIDATED,
                 method=ObservationMethod.MODEL_OUTPUT,
-                uncertainty="Ratio of dependable supply to demand (0.78)",
-                note="High Stress: Dependable supply falls short of peak demand",
+                uncertainty=f"Ratio of dependable supply to demand ({engine.decimal_text(public_profile.water_stress_ratio)})",
+                note=f"{public_profile.water_stress_level}: Dependable supply meets {engine.decimal_text(public_profile.reliable_supply_ratio * 100)}% of demand",
                 demo=False,
             )
             metrics_list.append(
@@ -543,7 +547,7 @@ class BaselineService:
                     as_of=as_of,
                     evidence=(stress_link,),
                     assumptions=(
-                        "High stress indicates dependable municipal supply is below full community demand.",
+                        f"{public_profile.water_stress_level} indicates dependable municipal supply is below full community demand.",
                     ),
                     supporting=(),
                     demo=False,
