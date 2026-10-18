@@ -21,7 +21,8 @@ export function SavedAreaUnderstanding({
   const [initialAreaId] = useState(areaId);
   const [ready, setReady] = useState(false);
   const [refresh, setRefresh] = useState(false);
-  const { inputsPending } = usePlanningSession();
+  const { view, inputsPending, coordinator } = usePlanningSession();
+  const isResuming = Boolean(view?.baselineReviewed || (view?.stage && view.stage !== 'UNDERSTAND'));
   const navigate = useNavigate();
   const location = useGraphQLQuery(
     queryKeys.areas.detail(initialAreaId ?? ''),
@@ -35,9 +36,20 @@ export function SavedAreaUnderstanding({
         <Skeleton shape="block" />
       </LoadingRegion>
     );
-  if (initialAreaId && (!location.data?.area || location.isError) && !refresh)
+  // Retrieve previously confirmed area from sessionStorage if query is empty
+  const storedArea = (() => {
+    try {
+      const raw =
+        (initialAreaId ? sessionStorage.getItem(`waterpilot.confirmed_area.${initialAreaId}`) : null) ??
+        (sessionId && isResuming ? sessionStorage.getItem(`waterpilot.confirmed_area.${sessionId}`) : null);
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return null;
+  })();
+
+  const area = location.data?.area ?? storedArea ?? undefined;
+  if (initialAreaId && !area && location.isError && !refresh)
     return <LocationSummary areaId={initialAreaId} onChange={() => setRefresh(true)} />;
-  const area = location.data?.area;
   return (
     <>
       {area?.providerContentExpired && (
@@ -48,14 +60,23 @@ export function SavedAreaUnderstanding({
       <LocationStep
         initialArea={area && !area.providerContentExpired ? area : undefined}
         sessionId={sessionId}
-        onConfirmed={() => undefined}
+        isResuming={isResuming}
+        onConfirmed={(confirmedArea) => {
+          try {
+            sessionStorage.setItem(`waterpilot.confirmed_area.${sessionId}`, JSON.stringify(confirmedArea));
+            sessionStorage.setItem(`waterpilot.confirmed_area.${confirmedArea.id}`, JSON.stringify(confirmedArea));
+          } catch {}
+        }}
         onResultsChange={setReady}
       />
       {ready && !inputsPending && (
         <StepActions
           primary={
             <Button
-              onClick={() => navigate(SHOW_COMMUNITY_BASELINE ? '/baseline' : '/scenarios')}
+              onClick={() => {
+                coordinator?.markBaselineReviewed();
+                navigate(SHOW_COMMUNITY_BASELINE ? '/baseline' : '/scenarios');
+              }}
               endIcon="arrow-right"
             >
               {SHOW_COMMUNITY_BASELINE ? 'Continue to baseline' : 'Test a Future Scenario'}

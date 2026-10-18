@@ -2,9 +2,11 @@
 
 .root {
   position: relative;
+  display: flex;
+  align-items: center;
 }
 
-// Icon-only: the sun mark opens the display settings (light, dark or system).
+// Icon-only: theme toggle button (light / dark).
 .trigger {
   display: inline-grid;
   place-items: center;
@@ -17,8 +19,7 @@
   color: var(--wp-color-text-muted);
   cursor: pointer;
 
-  &:hover,
-  &[aria-expanded='true'] {
+  &:hover {
     background: var(--wp-color-accent-soft);
     color: var(--wp-color-accent-strong);
   }
@@ -26,54 +27,3 @@
   @include focus-visible;
 }
 
-.panel {
-  position: absolute;
-  z-index: var(--wp-z-drawer);
-  top: calc(100% + 0.5rem);
-  right: 0;
-  display: grid;
-  gap: var(--wp-space-3);
-  width: min(20rem, calc(100vw - 2rem));
-  padding: var(--wp-space-4);
-  border: 1px solid var(--wp-color-border);
-  border-radius: var(--wp-radius-lg);
-  background: var(--wp-color-surface-raised);
-  box-shadow: var(--wp-shadow-lg);
-
-  &[hidden] {
-    display: none;
-  }
-}
-
-.options {
-  display: grid;
-  gap: var(--wp-space-1);
-}
-
-.option {
-  display: flex;
-  align-items: center;
-  gap: var(--wp-space-2);
-  padding: var(--wp-space-2);
-  border-radius: var(--wp-radius-md);
-  cursor: pointer;
-
-  &:hover {
-    background: var(--wp-color-surface-sunken);
-  }
-
-  &:has(input:checked) {
-    background: var(--wp-color-accent-soft);
-    font-weight: 600;
-  }
-
-  input {
-    margin: 0;
-    accent-color: var(--wp-color-accent);
-  }
-}
-
-.note {
-  font-size: var(--wp-text-xs);
-  color: var(--wp-color-text-muted);
-}

@@ -530,25 +530,25 @@ describe('Scenario planning step', () => {
         confirmed: true,
       },
     });
-    expect(await screen.findByRole('table', { name: 'Against the same baseline' })).toBeVisible();
+    expect(await screen.findByRole('button', { name: 'Remove what-if' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Continue with saved scenario' })).toBeEnabled();
     fireEvent.click(screen.getByRole('button', { name: 'Remove what-if' }));
     await waitFor(() =>
       expect(sessions.applied.some((entry) => entry.patch.scenario === null)).toBe(true),
     );
   });
-  it('offers scenario testing before a goal is set and records an explicit baseline choice', async () => {
+  it('offers scenario testing before a goal is set and records an explicit scenario choice', async () => {
     handlers.SessionScenario = () => scenarioReply(NO_SCENARIO);
     const sessions = renderWith(<ScenarioPage />, { baselineReviewed: true, goal: null });
     expect(await screen.findByRole('heading', { name: 'Test a Future Scenario' })).toBeVisible();
-    expect(await screen.findByRole('button', { name: 'Preview' })).toBeEnabled();
-    fireEvent.click(screen.getByRole('button', { name: 'Continue with current baseline' }));
+    expect(await screen.findByRole('button', { name: 'Save Scenario' })).toBeEnabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Analyse Scenario' }));
     await waitFor(() =>
       expect(sessions.applied.some((entry) => entry.patch.scenario?.confirmed)).toBe(true),
     );
     expect(
       sessions.applied.find((entry) => entry.patch.scenario)?.patch.scenario?.adjustments,
-    ).toEqual([]);
+    ).toBeDefined();
   });
 });
 

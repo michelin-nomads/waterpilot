@@ -27,6 +27,7 @@ interface LocationStepProps {
   onCancel?: () => void;
   initialArea?: AreaLocationFieldsFragment & { placeId?: string | null };
   sessionId?: string;
+  isResuming?: boolean;
   onResultsChange?: (ready: boolean) => void;
 }
 
@@ -53,27 +54,52 @@ export function LocationStep({
   onCancel,
   initialArea,
   sessionId,
+  isResuming = false,
   onResultsChange,
 }: LocationStepProps) {
   const adapter = usePlaces();
   const queryClient = useQueryClient();
   const [working, setWorking] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
-  const [result, setResult] = useState<AreaBaselineQuery['area'] | null>(null);
+  const userCleared = useRef(false);
+  const justSubmitted = useRef(false);
+  const [result, setResult] = useState<AreaBaselineQuery['area'] | null>(() => {
+    if (initialArea?.id && isResuming) {
+      if (sessionId) {
+        const cached = queryClient.getQueryData<AreaBaselineQuery>(
+          queryKeys.baseline.area(initialArea.id, sessionId),
+        );
+        if (cached?.area) return cached.area;
+      }
+      try {
+        const raw =
+          (sessionId ? sessionStorage.getItem(`waterpilot.baseline.${initialArea.id}.${sessionId}`) : null) ??
+          sessionStorage.getItem(`waterpilot.baseline.${initialArea.id}`);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed?.baseline) return parsed;
+        }
+      } catch {}
+    }
+    return null;
+  });
   const resultsElement = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!result) return;
-    const frame = requestAnimationFrame(() => {
-      const target = resultsElement.current;
-      target?.scrollIntoView({
-        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
-          ? 'instant'
-          : 'smooth',
-        block: 'start',
+    if (justSubmitted.current) {
+      justSubmitted.current = false;
+      const frame = requestAnimationFrame(() => {
+        const target = resultsElement.current;
+        target?.scrollIntoView({
+          behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+            ? 'instant'
+            : 'smooth',
+          block: 'start',
+        });
+        target?.focus({ preventScroll: true });
       });
-      target?.focus({ preventScroll: true });
-    });
-    return () => cancelAnimationFrame(frame);
+      return () => cancelAnimationFrame(frame);
+    }
   }, [result]);
   const clearResults = useCallback(() => {
     setResult(null);
@@ -116,6 +142,107 @@ export function LocationStep({
     [],
   );
 
+  // Notify parent if baseline was restored from query cache on mount
+  useEffect(() => {
+    if (result) {
+      onResultsChange?.(true);
+    }
+  }, [result, onResultsChange]);
+
+  // Automatically restore or fetch baseline water conditions when initialArea is present
+  useEffect(() => {
+    const areaId = initialArea?.id;
+    if (!areaId || !sessionId || result || userCleared.current || !isResuming) return;
+
+    // 1. Try TanStack query cache
+    const cached = queryClient.getQueryData<AreaBaselineQuery>(
+      queryKeys.baseline.area(areaId, sessionId),
+    );
+    if (cached?.area) {
+      setResult(cached.area);
+      onResultsChange?.(true);
+      return;
+    }
+
+    // 2. Try sessionStorage
+    try {
+      const raw =
+        sessionStorage.getItem(`waterpilot.baseline.${areaId}.${sessionId}`) ??
+        sessionStorage.getItem(`waterpilot.baseline.${areaId}`);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.baseline) {
+          setResult(parsed);
+          onResultsChange?.(true);
+          return;
+        }
+      }
+    } catch {}
+
+    // 3. Automatically fetch baseline water conditions from backend if resuming from a later stage
+    if (!isResuming) return;
+
+    let cancelled = false;
+    void queryClient
+      .fetchQuery({
+        queryKey: queryKeys.baseline.area(areaId, sessionId),
+        queryFn: ({ signal }) =>
+          graphqlRequest(AreaBaselineDocument, { areaId, sessionId }, { signal }),
+        staleTime: 5 * 60_000,
+        retry: false,
+      })
+      .then((response) => {
+        if (cancelled || !response.area) return;
+        setResult(response.area);
+        onResultsChange?.(true);
+        try {
+          sessionStorage.setItem(
+            `waterpilot.baseline.${areaId}.${sessionId}`,
+            JSON.stringify(response.area),
+          );
+          sessionStorage.setItem(
+            `waterpilot.baseline.${areaId}`,
+            JSON.stringify(response.area),
+          );
+        } catch {}
+      })
+      .catch(() => {
+        // If baseline fetch fails, keep candidate review intact
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [initialArea?.id, sessionId, result, queryClient, onResultsChange, isResuming]);
+
+  // Preserve and restore draft when initialArea is provided
+  useEffect(() => {
+    if (
+      initialArea &&
+      initialArea.centroidLat != null &&
+      initialArea.centroidLon != null &&
+      !draft &&
+      !userCleared.current
+    ) {
+      setDraft({
+        origin: initialArea.origin === 'CATALOGUE' ? 'CUSTOM' : initialArea.origin,
+        accuracyMeters: initialArea.accuracyMeters ?? undefined,
+        place: {
+          placeId: initialArea.placeId ?? '',
+          name: initialArea.name,
+          formattedAddress: initialArea.formattedAddress,
+          latitude: initialArea.centroidLat,
+          longitude: initialArea.centroidLon,
+          countryCode: initialArea.countryCode,
+          scope: initialArea.scope,
+          types: [],
+          admin: initialArea.admin,
+        },
+      });
+      setPreviewRadius(initialArea.radiusMeters ?? 1000);
+    }
+  }, [initialArea, draft]);
+
   const resolveDraft = useCallback(
     async (candidate: LocationDraft, token: number) => {
       setPreviewPlace(candidate.place);
@@ -134,6 +261,7 @@ export function LocationStep({
   );
 
   const review = (candidate: LocationDraft) => {
+    userCleared.current = false;
     clearResults();
     const token = ++selection.current;
     setFailure(NO_FAILURE);
@@ -142,6 +270,7 @@ export function LocationStep({
     void resolveDraft(candidate, token);
   };
   const back = () => {
+    userCleared.current = true;
     clearResults();
     selection.current += 1;
     setFailure(NO_FAILURE);
@@ -151,6 +280,7 @@ export function LocationStep({
   };
 
   async function locateDevice() {
+    userCleared.current = false;
     clearResults();
     const token = ++selection.current;
     setResolving(true);
@@ -175,6 +305,7 @@ export function LocationStep({
 
   const pickOnMap = useCallback(
     (latitude: string, longitude: string) => {
+      userCleared.current = false;
       clearResults();
       const token = ++selection.current;
       setResolving(true);
@@ -188,6 +319,8 @@ export function LocationStep({
   async function submit(input: LocationDraftInput) {
     if (working) return;
     const token = selection.current;
+    userCleared.current = false;
+    justSubmitted.current = true;
     setFailure(NO_FAILURE);
     setLoadingProgress(0);
     setWorking(true);
@@ -211,10 +344,20 @@ export function LocationStep({
           queryKey: queryKeys.baseline.area(area.id, sessionId),
           queryFn: ({ signal }) =>
             graphqlRequest(AreaBaselineDocument, { areaId: area.id, sessionId }, { signal }),
-          staleTime: 0,
+          staleTime: 5 * 60_000,
           retry: false,
         });
         if (!response.area) throw new Error('The area returned no water conditions.');
+        try {
+          sessionStorage.setItem(
+            `waterpilot.baseline.${area.id}.${sessionId}`,
+            JSON.stringify(response.area),
+          );
+          sessionStorage.setItem(
+            `waterpilot.baseline.${area.id}`,
+            JSON.stringify(response.area),
+          );
+        } catch {}
         if (token !== selection.current) return;
         setLoadingProgress(1);
         setResult({ ...response.area });
@@ -243,9 +386,12 @@ export function LocationStep({
   const updateExtent = useCallback(
     (radius: number | null) => {
       setPreviewRadius(radius);
-      clearResults();
+      if (radius != null && radius !== (initialArea?.radiusMeters ?? 1000)) {
+        userCleared.current = true;
+        clearResults();
+      }
     },
-    [clearResults],
+    [clearResults, initialArea?.radiusMeters],
   );
 
   const mapPoint = useMemo(() => {
@@ -275,6 +421,7 @@ export function LocationStep({
           <LocationSearch
             adapter={adapter}
             showHint={false}
+            initialValue={initialArea?.name ?? ''}
             onSelect={(place) => review({ origin: 'PLACE_SEARCH', place })}
             action={
               <Button

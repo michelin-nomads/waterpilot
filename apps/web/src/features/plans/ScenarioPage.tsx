@@ -1,16 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { Button, ButtonLink, ErrorState, LoadingRegion, Notice, Skeleton } from '../../components';
+import { Button, ErrorState, LoadingRegion, Notice, Skeleton } from '../../components';
 import { SessionScenarioDocument } from '../../graphql/generated/graphql';
 import { useGraphQLQuery } from '../../graphql/hooks';
 import { queryKeys } from '../../graphql/queryKeys';
 import { usePlanningSession } from '../../session/sessionContext';
 import type { SessionState } from '../../session/sessionState';
-import { SHOW_COMMUNITY_BASELINE } from '../planning/visibility';
 import { StagePage } from '../planning/StagePage';
 import { ModernScenarioPanel } from './ModernScenarioPanel';
-import { ScenicHeaderIllustration } from './ScenicHeaderIllustration';
 import styles from './Plans.module.scss';
 
 export default function ScenarioPage() {
@@ -44,10 +42,7 @@ export default function ScenarioPage() {
     }
   }
   return (
-    <StagePage
-      stageId="scenario"
-      actions={<ScenicHeaderIllustration className={styles.headerIllustration} />}
-    >
+    <StagePage stageId="scenario">
       {failed && (
         <Notice kind="caution">
           The scenario could not be saved. Your entries are kept; try again.
@@ -61,8 +56,8 @@ export default function ScenarioPage() {
           scenario={view.scenario}
           saved={saved}
           pending={saving || inputsPending}
-          onSave={(scenario) => void save(scenario)}
-          onContinueToGoal={() => navigate('/goals')}
+          onSave={(scenario) => void save(scenario, false)}
+          onAnalyse={(scenario) => void save(scenario, true)}
         />
       ) : query.isError ? (
         <ErrorState title="Scenario data could not load" onRetry={() => void query.refetch()}>
@@ -73,23 +68,8 @@ export default function ScenarioPage() {
           <Skeleton shape="block" />
         </LoadingRegion>
       )}
-      <div className={styles.actions}>
-        <ButtonLink
-          to={SHOW_COMMUNITY_BASELINE ? '/baseline/overview' : '/area'}
-          variant="secondary"
-        >
-          Back to your area
-        </ButtonLink>
-        <Button
-          variant="secondary"
-          disabled={!coordinator || inputsPending || saving}
-          onClick={() =>
-            void save({ adjustments: [], interpretedFrom: null, confirmed: true }, true)
-          }
-        >
-          Continue with current baseline
-        </Button>
-        {state.server?.scenario?.confirmed && (
+      {state.server?.scenario?.confirmed && (
+        <div className={styles.actions}>
           <Button
             disabled={saving || inputsPending}
             onClick={() => navigate('/goals')}
@@ -97,8 +77,8 @@ export default function ScenarioPage() {
           >
             Continue with saved scenario
           </Button>
-        )}
-      </div>
+        </div>
+      )}
     </StagePage>
   );
 }

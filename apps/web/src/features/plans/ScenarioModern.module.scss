@@ -618,6 +618,19 @@
   margin-top: 4px;
 }
 
+.savedBanner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  color: #166534;
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .saveBtn {
   background: #ffffff;
   color: #0284c7;
@@ -641,6 +654,12 @@
     opacity: 0.5;
     cursor: not-allowed;
   }
+}
+
+.saveBtnSuccess {
+  border-color: #16a34a !important;
+  color: #16a34a !important;
+  background: #f0fdf4 !important;
 }
 
 .analyseBtn {

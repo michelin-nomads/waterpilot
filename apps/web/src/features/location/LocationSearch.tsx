@@ -1,4 +1,4 @@
-import { useId, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { useEffect, useId, useState, type KeyboardEvent, type ReactNode } from 'react';
 
 import { Badge, Button, Spinner } from '../../components';
 import {
@@ -16,6 +16,7 @@ interface LocationSearchProps {
   onSelect: (place: Place) => void;
   action?: ReactNode;
   showHint?: boolean;
+  initialValue?: string;
 }
 
 function statusText(
@@ -48,15 +49,23 @@ export function LocationSearch({
   onSelect,
   action,
   showHint = true,
+  initialValue = '',
 }: LocationSearchProps) {
   const id = useId();
   const listId = `${id}-list`;
-  const [text, setText] = useState('');
+  const [text, setText] = useState(initialValue);
   const [attempt, setAttempt] = useState(0);
   const [active, setActive] = useState(-1);
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(!initialValue);
   const [selecting, setSelecting] = useState(false);
   const [selectError, setSelectError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialValue && !text) {
+      setText(initialValue);
+      setOpen(false);
+    }
+  }, [initialValue]);
   const state = useSuggestions(adapter, text, attempt);
   const { suggestions } = state;
   const expanded = open && suggestions.length > 0;

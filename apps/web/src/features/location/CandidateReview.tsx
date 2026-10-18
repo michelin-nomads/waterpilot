@@ -58,9 +58,13 @@ export function CandidateReview({
   const nameUnavailable = place.name === 'Location name unavailable';
   const inaccurate = (draft.accuracyMeters ?? 0) > INACCURATE_FIX_M;
 
+  const initialRadiusMeters = Math.round(initialRadiusKm * 1000);
   useEffect(() => {
-    onExtentPreview?.(radiusError(radiusKm) === null ? Math.round(Number(radiusKm) * 1000) : null);
-  }, [radiusKm, onExtentPreview]);
+    const currentMeters = radiusError(radiusKm) === null ? Math.round(Number(radiusKm) * 1000) : null;
+    if (currentMeters !== initialRadiusMeters) {
+      onExtentPreview?.(currentMeters);
+    }
+  }, [radiusKm, initialRadiusMeters, onExtentPreview]);
 
   function submit(event: FormEvent) {
     event.preventDefault();

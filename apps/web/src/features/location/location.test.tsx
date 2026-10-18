@@ -217,9 +217,11 @@ beforeEach(() => {
   geolocation = { getCurrentPosition: vi.fn() };
   Object.defineProperty(navigator, 'geolocation', { value: geolocation, configurable: true });
   Object.defineProperty(window, 'isSecureContext', { value: true, configurable: true });
+  sessionStorage.clear();
 });
 
 afterEach(() => {
+  sessionStorage.clear();
   apiClient.defaults.adapter = originalAdapter;
 });
 
