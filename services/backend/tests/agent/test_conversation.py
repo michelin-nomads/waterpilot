@@ -233,3 +233,26 @@ def test_loop_counts_survive_runtime_restart():
         AgentToolRuntime(agent.services, CTX, run.id).call("list_interventions", {})
     with pytest.raises(DomainError, match="already called"):
         AgentToolRuntime(agent.services, CTX, run.id).call("list_interventions", {})
+
+
+def test_local_demo_edit_commands_require_explicit_intent_and_saved_prerequisites() -> None:
+    import json
+
+    from waterpilot.application.ports import ModelRequest
+
+    provider = LocalAgentProvider("local-test")
+    for prompt, workspace, expected in (
+        ("Set goal to reduce shortage", {"area_id": "area", "baseline_reviewed": True}, "set_goal"),
+        ("Set occupied homes to 80", {"area_id": "area"}, "update_site_profile"),
+        ("Help me choose a goal", {"area_id": "area"}, "inspect_planning_state"),
+        ("Set goal to reduce shortage", {}, "inspect_planning_state"),
+    ):
+        result = provider.generate(
+            ModelRequest(
+                model_id="local-test",
+                task="proposal_narrative",
+                max_output_tokens=300,
+                prompt=f"user: {prompt}\nAuthoritative workspace: {json.dumps(workspace)}",
+            )
+        )
+        assert json.loads(result.text)["tool"] == expected

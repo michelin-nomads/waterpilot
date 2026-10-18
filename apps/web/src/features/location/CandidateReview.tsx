@@ -1,4 +1,4 @@
-import { useEffect, useId, useState, type FormEvent } from 'react';
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 
 import { Badge, Button, Field, Input, Notice, Tooltip } from '../../components';
 import type { AreaOrigin } from '../../graphql/generated/graphql';
@@ -8,6 +8,7 @@ import { isFixturePlace, type Place } from './types';
 import type { LocationDraftInput } from './useConfirmLocation';
 import styles from './Location.module.scss';
 import { LocationName } from './LocationName';
+import { registerLocationConfirmation } from '../planning/planningInteraction';
 
 export interface LocationDraft {
   origin: Exclude<AreaOrigin, 'CATALOGUE'>;
@@ -16,6 +17,7 @@ export interface LocationDraft {
 }
 
 interface CandidateReviewProps {
+  sessionId?: string;
   initialRadiusKm?: number;
   draft: LocationDraft;
   pending: boolean;
@@ -41,6 +43,7 @@ function radiusError(km: string): string | null {
 /** Review a circular planning area; regional settings are inferred by the API on confirmation. */
 export function CandidateReview({
   draft,
+  sessionId,
   initialRadiusKm = 1,
   pending,
   canSave,
@@ -52,6 +55,7 @@ export function CandidateReview({
   onExtentPreview,
 }: CandidateReviewProps) {
   const id = useId();
+  const formRef = useRef<HTMLFormElement>(null);
   const { place, origin } = draft;
   const [radiusKm, setRadiusKm] = useState(String(initialRadiusKm));
   const [error, setError] = useState<string | null>(null);
@@ -66,8 +70,23 @@ export function CandidateReview({
     }
   }, [radiusKm, initialRadiusMeters, onExtentPreview]);
 
+  useEffect(() => {
+    if (!sessionId) return;
+    const available =
+      !pending &&
+      canSave &&
+      Boolean(place.countryCode) &&
+      !nameUnavailable &&
+      radiusError(radiusKm) === null;
+    return registerLocationConfirmation(
+      sessionId,
+      available ? () => formRef.current?.requestSubmit() : null,
+    );
+  }, [sessionId, pending, canSave, place.countryCode, nameUnavailable, radiusKm]);
+
   function submit(event: FormEvent) {
     event.preventDefault();
+    if (pending || !canSave) return;
     const invalid = radiusError(radiusKm);
     setError(invalid);
     if (invalid || !place.countryCode || nameUnavailable) return;
@@ -90,7 +109,13 @@ export function CandidateReview({
   }
 
   return (
-    <form className={styles.review} onSubmit={submit} noValidate aria-labelledby={`${id}-title`}>
+    <form
+      ref={formRef}
+      className={styles.review}
+      onSubmit={submit}
+      noValidate
+      aria-labelledby={`${id}-title`}
+    >
       <div className={styles.summaryHead}>
         <h2 id={`${id}-title`} className={styles.title}>
           Your selected area
@@ -212,7 +237,7 @@ export function CandidateReview({
           loading={pending}
           disabled={!canSave || !place.countryCode || nameUnavailable}
         >
-          Understand this area
+          Confirm area and check data
         </Button>
         <Button variant="ghost" onClick={onBack}>
           Change area

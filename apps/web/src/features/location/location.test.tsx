@@ -1,5 +1,14 @@
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  renderHook,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import { StrictMode } from 'react';
+import { useLocationConfirmation } from '../planning/planningInteraction';
 import { MapPanel } from './MapPanel';
 import { MemoryRouter } from 'react-router-dom';
 import type { AxiosAdapter, InternalAxiosRequestConfig } from 'axios';
@@ -214,7 +223,11 @@ beforeEach(() => {
     AreaReadiness: () => ({ errors: [{ message: 'later', extensions: { code: 'INTERNAL' } }] }),
   };
   apiClient.defaults.adapter = stub;
-  geolocation = { getCurrentPosition: vi.fn() };
+  geolocation = {
+    getCurrentPosition: vi.fn((_ok, fail: PositionErrorCallback) =>
+      fail({ code: 2 } as GeolocationPositionError),
+    ),
+  };
   Object.defineProperty(navigator, 'geolocation', { value: geolocation, configurable: true });
   Object.defineProperty(window, 'isSecureContext', { value: true, configurable: true });
   sessionStorage.clear();
@@ -249,7 +262,7 @@ async function search(text: string) {
 async function confirmReview() {
   await screen.findByRole('form', { name: 'Your selected area' });
   await act(async () =>
-    fireEvent.click(screen.getByRole('button', { name: /understand this area/i })),
+    fireEvent.click(screen.getByRole('button', { name: /confirm area and check data/i })),
   );
 }
 
@@ -349,7 +362,7 @@ describe('location step', () => {
   it('explains a denied location permission and keeps every other path open', async () => {
     renderStep();
     await screen.findByRole('combobox');
-    expect(geolocation.getCurrentPosition).not.toHaveBeenCalled();
+    expect(geolocation.getCurrentPosition).toHaveBeenCalledOnce();
     geolocation.getCurrentPosition.mockImplementation((_ok, fail: PositionErrorCallback) =>
       fail({
         code: 1,
@@ -447,7 +460,9 @@ describe('location step', () => {
       } as GeolocationPosition),
     );
     fireEvent.click(screen.getByRole('button', { name: /use my location/i }));
-    expect(await screen.findByRole('button', { name: /^Understand this area$/ })).toBeDisabled();
+    expect(
+      await screen.findByRole('button', { name: /^Confirm area and check data$/ }),
+    ).toBeDisabled();
     places.reverseResult = [
       {
         ...KORAMANGALA,
@@ -790,7 +805,7 @@ describe('understand area interaction', () => {
     const form = await screen.findByRole('form', { name: 'Your selected area' });
     expect(screen.queryByRole('heading', { name: 'Water conditions' })).not.toBeInTheDocument();
     expect(sent.some((s) => s.op === 'AreaBaseline')).toBe(false);
-    fireEvent.click(screen.getByRole('button', { name: 'Understand this area' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm area and check data' }));
     await screen.findByRole('progressbar', { name: 'Understanding your area…' });
     await waitFor(() => expect(complete).toBeTypeOf('function'));
     await waitFor(() =>
@@ -836,4 +851,34 @@ describe('understand area interaction', () => {
     expect(await screen.findByRole('heading', { name: 'Water conditions' })).toBeVisible();
     expect(calls).toBe(2);
   });
+});
+
+it('suggests device location on initial entry without saving it automatically', async () => {
+  geolocation.getCurrentPosition.mockImplementation((ok: PositionCallback) =>
+    ok({ coords: { latitude: 12.93, longitude: 77.62, accuracy: 25 } } as GeolocationPosition),
+  );
+  const places = new FakePlaces();
+  places.reverseResult = [KORAMANGALA];
+  renderStep(places);
+  await screen.findByRole('form', { name: 'Your selected area' });
+  expect(geolocation.getCurrentPosition).toHaveBeenCalledOnce();
+  expect(confirms()).toHaveLength(0);
+});
+
+it('uses the same location confirmation from the agent and blocks duplicate submission', async () => {
+  geolocation.getCurrentPosition.mockImplementation((ok: PositionCallback) =>
+    ok({ coords: { latitude: 12.93, longitude: 77.62, accuracy: 25 } } as GeolocationPosition),
+  );
+  const places = new FakePlaces();
+  places.reverseResult = [KORAMANGALA];
+  renderStep(places);
+  await screen.findByRole('form', { name: 'Your selected area' });
+  const action = renderHook(() => useLocationConfirmation('ses_1'));
+  await waitFor(() => expect(action.result.current).toBeTypeOf('function'));
+  const confirmFromAgent = action.result.current!;
+  await act(async () => {
+    confirmFromAgent();
+    confirmFromAgent();
+  });
+  await waitFor(() => expect(confirms()).toHaveLength(1));
 });

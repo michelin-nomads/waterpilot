@@ -54,7 +54,13 @@ export function CommunityBaselineForm({
         sources: [],
       },
   );
-  const [homes, setHomes] = useState(String(view?.siteProfile?.occupiedHomes ?? ''));
+  const savedHomes = String(view?.siteProfile?.occupiedHomes ?? '');
+  const [previousHomes, setPreviousHomes] = useState(savedHomes);
+  const [homes, setHomes] = useState(savedHomes);
+  if (savedHomes !== previousHomes) {
+    setPreviousHomes(savedHomes);
+    if (homes === previousHomes) setHomes(savedHomes);
+  }
   const [concern, setConcern] = useState(
     existing?.concern ? (CONCERNS.includes(existing.concern) ? existing.concern : 'other') : '',
   );

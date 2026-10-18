@@ -33,15 +33,17 @@ function renderInline(text: string): ReactNode[] {
 }
 
 function normalizeMarkdown(raw: string): string {
-  return raw
-    // Break before numbered list items if they are inline (e.g. "...India 2. **Parkway...")
-    .replace(/([^\n])\s+(\d+\.\s+(?:\*\*|[A-Z]))/g, '$1\n$2')
-    // Break after numbered list items if next sentence is inline (e.g. "...India Which one...")
-    .replace(/(\b\d{5,6}[,\s\w]*?)\s+(Which one|Once you|Please|Let me|Would you)/g, '$1\n\n$2')
-    // Break before bullet points if inline (e.g. "...data on: * Annual...")
-    .replace(/([^\n])\s+(\*\s+[A-Z])/g, '$1\n$2')
-    // Break after colon before lists (e.g. "data on: *")
-    .replace(/(:\s*)(\*|\d+\.)/g, ':\n\n$2');
+  return (
+    raw
+      // Break before numbered list items if they are inline (e.g. "...India 2. **Parkway...")
+      .replace(/([^\n])\s+(\d+\.\s+(?:\*\*|[A-Z]))/g, '$1\n$2')
+      // Break after numbered list items if next sentence is inline (e.g. "...India Which one...")
+      .replace(/(\b\d{5,6}[,\s\w]*?)\s+(Which one|Once you|Please|Let me|Would you)/g, '$1\n\n$2')
+      // Break before bullet points if inline (e.g. "...data on: * Annual...")
+      .replace(/([^\n])\s+(\*\s+[A-Z])/g, '$1\n$2')
+      // Break after colon before lists (e.g. "data on: *")
+      .replace(/(:\s*)(\*|\d+\.)/g, ':\n\n$2')
+  );
 }
 
 export function FormattedMessage({ text }: { text: string }) {
@@ -53,18 +55,31 @@ export function FormattedMessage({ text }: { text: string }) {
   return (
     <>
       {rawBlocks.map((block, blockIdx) => {
-        const trimmed = block.trim();
-        if (!trimmed) return null;
+        const trimmed = block
+          .trim()
+          .replace(/^#{1,6}\s*$/gm, '')
+          .trim();
+        if (!trimmed || /^(?:-{3,}|\*{3,})$/.test(trimmed)) return null;
+        const heading = /^(#{1,6})\s+(.+)$/.exec(trimmed);
+        if (heading)
+          return (
+            <p key={blockIdx}>
+              <strong>{renderInline(heading[2])}</strong>
+            </p>
+          );
 
-        const lines = trimmed.split('\n').map((l) => l.trim()).filter(Boolean);
+        const lines = trimmed
+          .split('\n')
+          .map((l) => l.trim())
+          .filter(Boolean);
 
         // Check if block is an ordered list
-        const isOrderedList = lines.every((l) => /^\d+[\.\)]\s/.test(l));
+        const isOrderedList = lines.every((l) => /^\d+[.)]\s/.test(l));
         if (isOrderedList) {
           return (
             <ol key={blockIdx} style={{ margin: '8px 0', paddingLeft: '20px' }}>
               {lines.map((line, lineIdx) => {
-                const itemText = line.replace(/^\d+[\.\)]\s*/, '');
+                const itemText = line.replace(/^\d+[.)]\s*/, '');
                 return <li key={lineIdx}>{renderInline(itemText)}</li>;
               })}
             </ol>
@@ -72,12 +87,12 @@ export function FormattedMessage({ text }: { text: string }) {
         }
 
         // Check if block is an unordered list
-        const isUnorderedList = lines.every((l) => /^[\*\-\•]\s/.test(l));
+        const isUnorderedList = lines.every((l) => /^[*•-]\s/.test(l));
         if (isUnorderedList) {
           return (
             <ul key={blockIdx} style={{ margin: '8px 0', paddingLeft: '20px' }}>
               {lines.map((line, lineIdx) => {
-                const itemText = line.replace(/^[\*\-\•]\s*/, '');
+                const itemText = line.replace(/^[*•-]\s*/, '');
                 return <li key={lineIdx}>{renderInline(itemText)}</li>;
               })}
             </ul>
@@ -85,7 +100,7 @@ export function FormattedMessage({ text }: { text: string }) {
         }
 
         // Mixed block containing list items
-        const hasListItems = lines.some((l) => /^[\*\-\•\d+\.]\s/.test(l));
+        const hasListItems = lines.some((l) => /^[*•\d+.-]\s/.test(l));
         if (hasListItems) {
           const elements: ReactNode[] = [];
           let currentList: { type: 'ol' | 'ul'; items: string[] } | null = null;
@@ -94,34 +109,37 @@ export function FormattedMessage({ text }: { text: string }) {
             if (!currentList) return;
             const ListTag = currentList.type;
             elements.push(
-              <ListTag key={`list-${elements.length}`} style={{ margin: '8px 0', paddingLeft: '20px' }}>
+              <ListTag
+                key={`list-${elements.length}`}
+                style={{ margin: '8px 0', paddingLeft: '20px' }}
+              >
                 {currentList.items.map((it, idx) => (
                   <li key={idx}>{renderInline(it)}</li>
                 ))}
-              </ListTag>
+              </ListTag>,
             );
             currentList = null;
           };
 
           for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
-            const isOl = /^\d+[\.\)]\s/.test(line);
-            const isUl = /^[\*\-\•]\s/.test(line);
+            const isOl = /^\d+[.)]\s/.test(line);
+            const isUl = /^[*•-]\s/.test(line);
 
             if (isOl) {
               if (currentList && currentList.type !== 'ol') flushList();
               if (!currentList) currentList = { type: 'ol', items: [] };
-              currentList.items.push(line.replace(/^\d+[\.\)]\s*/, ''));
+              currentList.items.push(line.replace(/^\d+[.)]\s*/, ''));
             } else if (isUl) {
               if (currentList && currentList.type !== 'ul') flushList();
               if (!currentList) currentList = { type: 'ul', items: [] };
-              currentList.items.push(line.replace(/^[\*\-\•]\s*/, ''));
+              currentList.items.push(line.replace(/^[*•-]\s*/, ''));
             } else {
               flushList();
               elements.push(
                 <p key={`p-${elements.length}`} style={{ margin: '6px 0' }}>
                   {renderInline(line)}
-                </p>
+                </p>,
               );
             }
           }

@@ -449,9 +449,12 @@
   line-height: 1.4;
   color: var(--wp-color-text);
   resize: none;
-  min-height: 22px;
-  max-height: 100px;
-  padding: 4px 0;
+  min-width: 0;
+  width: 100%;
+  min-height: 2.25rem;
+  max-height: 6rem;
+  padding: var(--wp-space-2) 0;
+  box-sizing: border-box;
 
   &::placeholder {
     color: var(--wp-color-text-muted);
@@ -478,6 +481,8 @@
 
 .requestsInfo {
   display: inline-flex;
+  flex-wrap: wrap;
+  line-height: 1.5;
   align-items: center;
   gap: 5px;
   font-size: var(--wp-text-xs);
