@@ -121,20 +121,46 @@
 }
 .insight {
   display: flex;
+  align-items: flex-start;
   gap: var(--wp-space-3);
-  border-radius: var(--wp-radius-md);
-  padding: var(--wp-space-5);
-  background: var(--wp-color-accent-soft);
+  border-radius: var(--wp-radius-lg);
+  padding: var(--wp-space-4) var(--wp-space-5);
+  background: linear-gradient(135deg, rgba(8, 119, 122, 0.09) 0%, rgba(8, 119, 122, 0.03) 100%);
+  border: 1px solid rgba(8, 119, 122, 0.18);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 .insightIcon {
-  color: var(--wp-color-accent-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(8, 119, 122, 0.14);
+  color: var(--wp-color-accent);
   flex: none;
+  margin-top: 2px;
 }
-.insight h3 {
+.insightContent {
+  flex: 1;
+}
+.insightTitle {
   font-size: var(--wp-text-md);
+  font-weight: 700;
+  color: var(--wp-color-text);
   margin: 0 0 var(--wp-space-1);
 }
-.insight p,
+.insightText {
+  margin: 0;
+  font-size: var(--wp-text-sm);
+  line-height: 1.55;
+  color: var(--wp-color-text-muted);
+
+  strong {
+    color: var(--wp-color-text);
+    font-weight: 700;
+  }
+}
 .sourceBody p {
   margin: 0;
   font-size: var(--wp-text-sm);

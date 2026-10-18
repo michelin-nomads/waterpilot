@@ -102,7 +102,7 @@ it('displays all 6 conditions when fully populated with public data', () => {
       evidence: [],
     },
   ];
-  render(<AreaConditions selected baseline={data} />);
+  render(<AreaConditions selected baseline={data} areaName="Koramangala, Bengaluru" />);
   expect(screen.getByText('6 of 6 available')).toBeVisible();
   expect(card('Water stress').getByText('High Stress (78%)')).toBeVisible();
   expect(card('Rainfall').getByText('1,010.5 mm')).toBeVisible();
@@ -110,4 +110,9 @@ it('displays all 6 conditions when fully populated with public data', () => {
   expect(card('Current water deficit').getByText('2.0 MLD')).toBeVisible();
   expect(card('Water shortage days').getByText('3 days')).toBeVisible();
   expect(card('Groundwater').getByText('16.50 m below ground')).toBeVisible();
+  const insightCard = screen.getByTestId('key-insight-card');
+  expect(within(insightCard).getByRole('heading', { name: 'Key Insight' })).toBeVisible();
+  expect(within(insightCard).getByText(/Koramangala faces/)).toBeVisible();
+  expect(within(insightCard).getByText('high water stress')).toBeVisible();
+  expect(within(insightCard).getByText('3 days')).toBeVisible();
 });
