@@ -21,6 +21,7 @@ import { resolveLocation } from './resolveLocation';
 import type { Place } from './types';
 import { useConfirmLocation, type LocationDraftInput } from './useConfirmLocation';
 import styles from './Location.module.scss';
+import { publishLocationInteraction } from '../planning/planningInteraction';
 
 interface LocationStepProps {
   onConfirmed: (area: AreaLocationFieldsFragment) => void;
@@ -28,6 +29,7 @@ interface LocationStepProps {
   initialArea?: AreaLocationFieldsFragment & { placeId?: string | null };
   sessionId?: string;
   isResuming?: boolean;
+  suggestDeviceLocation?: boolean;
   onResultsChange?: (ready: boolean) => void;
 }
 
@@ -56,6 +58,7 @@ export function LocationStep({
   sessionId,
   isResuming = false,
   onResultsChange,
+  suggestDeviceLocation = false,
 }: LocationStepProps) {
   const adapter = usePlaces();
   const queryClient = useQueryClient();
@@ -135,6 +138,46 @@ export function LocationStep({
   );
   const [failure, setFailure] = useState<FailureState>(NO_FAILURE);
   const selection = useRef(0);
+  useEffect(() => {
+    if (!sessionId) return;
+    publishLocationInteraction(sessionId, {
+      status:
+        pending || working
+          ? 'confirming'
+          : resolving
+            ? 'resolving'
+            : failure.message || geoOutcome
+              ? 'failed'
+              : result ||
+                  (initialArea &&
+                    draft?.place.latitude === initialArea.centroidLat &&
+                    draft?.place.longitude === initialArea.centroidLon &&
+                    previewRadius === initialArea.radiusMeters)
+                ? 'confirmed'
+                : draft
+                  ? 'suggested'
+                  : 'absent',
+      candidateName: draft?.place.name,
+    });
+  }, [
+    sessionId,
+    pending,
+    working,
+    resolving,
+    failure.message,
+    geoOutcome,
+    draft,
+    result,
+    initialArea,
+    previewRadius,
+  ]);
+  useEffect(
+    () => () => {
+      if (sessionId) publishLocationInteraction(sessionId, null);
+    },
+    [sessionId],
+  );
+
   useEffect(
     () => () => {
       selection.current += 1;
@@ -279,8 +322,7 @@ export function LocationStep({
     setPreviewPlace(null);
   };
 
-  async function locateDevice() {
-    userCleared.current = false;
+  const locateDevice = useCallback(async () => {
     clearResults();
     const token = ++selection.current;
     setResolving(true);
@@ -301,7 +343,24 @@ export function LocationStep({
       },
       token,
     );
-  }
+  }, [clearResults, resolveDraft]);
+
+  const initialDeviceAttempt = useRef(false);
+  useEffect(() => {
+    if (!suggestDeviceLocation || initialArea || initialDeviceAttempt.current) return;
+    let cancelled = false;
+    const initialSelection = selection.current;
+    // Defer until after mount so StrictMode's discarded mount cannot request twice.
+    void Promise.resolve().then(() => {
+      if (cancelled || initialDeviceAttempt.current || selection.current !== initialSelection)
+        return;
+      initialDeviceAttempt.current = true;
+      void locateDevice();
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [suggestDeviceLocation, initialArea, locateDevice]);
 
   const pickOnMap = useCallback(
     (latitude: string, longitude: string) => {
@@ -316,8 +375,10 @@ export function LocationStep({
     [resolveDraft, clearResults],
   );
 
+  const confirmationLock = useRef(false);
   async function submit(input: LocationDraftInput) {
-    if (working) return;
+    if (confirmationLock.current) return;
+    confirmationLock.current = true;
     const token = selection.current;
     userCleared.current = false;
     justSubmitted.current = true;
@@ -357,7 +418,9 @@ export function LocationStep({
             `waterpilot.baseline.${area.id}`,
             JSON.stringify(response.area),
           );
-        } catch {}
+        } catch {
+          console.log()
+        }
         if (token !== selection.current) return;
         setLoadingProgress(1);
         setResult({ ...response.area });
@@ -373,12 +436,13 @@ export function LocationStep({
             }
           : {
               message: saved
-                ? 'Could not load water conditions. Click “Understand this area” to try again.'
+                ? 'Could not load water conditions. Click “Confirm area and check data” to try again.'
                 : 'Could not save the location. Check your connection and try again.',
               fields: [],
             },
       );
     } finally {
+      confirmationLock.current = false;
       if (token === selection.current) setWorking(false);
     }
   }
@@ -457,6 +521,7 @@ export function LocationStep({
         </section>
         {draft && (
           <CandidateReview
+            sessionId={sessionId}
             key={`${draft.origin}:${draft.place.latitude}:${draft.place.longitude}`}
             onExtentPreview={updateExtent}
             initialRadiusKm={(initialArea?.radiusMeters ?? 1000) / 1000}

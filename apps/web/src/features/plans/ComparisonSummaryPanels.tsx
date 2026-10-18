@@ -14,6 +14,26 @@ export function ComparisonSummaryPanels({
 }) {
   const unit = comparison.unit ?? 'RATIO';
   const preview = comparison.options.find((o) => o.id === selectedId) ?? comparison.options[0];
+
+  const baselineNum = comparison.baselineValue ? Number(comparison.baselineValue.value) : NaN;
+  const targetNum = comparison.targetLevel ? Number(comparison.targetLevel.value) : NaN;
+  const isReduction =
+    comparison.metric === 'SHORTAGE_DAYS' ||
+    comparison.metric === 'TANKER_DEPENDENCE' ||
+    (Number.isFinite(baselineNum) && Number.isFinite(targetNum) && baselineNum >= targetNum);
+
+  // If reduction metric: scale 0% = 0 days saved (baseline), 100% = baselineNum days saved (zero shortage)
+  const targetSaved =
+    Number.isFinite(baselineNum) && Number.isFinite(targetNum)
+      ? Math.max(0, baselineNum - targetNum)
+      : 0;
+
+  const targetPct =
+    Number.isFinite(baselineNum) && baselineNum > 0
+      ? Math.max(0, Math.min(100, (targetSaved / baselineNum) * 100))
+      : 50;
+
+  // Fallback scale for non-reduction metrics
   const values = [
     comparison.baselineValue,
     comparison.targetLevel,
@@ -21,13 +41,16 @@ export function ComparisonSummaryPanels({
   ]
     .map((n) => (n ? Number(n.value) : NaN))
     .filter(Number.isFinite);
-  const min = Math.min(0, ...values);
-  const max = Math.max(0, ...values);
-  const span = max - min || 1;
-  const position = (v: number) => Math.max(0, Math.min(100, ((v - min) / span) * 100));
-  const metric = comparison.metric
-    ? comparison.metric.toLowerCase().replaceAll('_', ' ')
-    : 'your goal';
+  const minVal = Math.min(0, ...values);
+  const maxVal = Math.max(0, ...values);
+  const span = maxVal - minVal || 1;
+  const genericPosition = (v: number) => Math.max(0, Math.min(100, ((v - minVal) / span) * 100));
+
+  const metricLabel =
+    comparison.metric === 'TANKER_DEPENDENCE'
+      ? 'tanker dependence'
+      : 'water shortage days';
+
   return (
     <div className={styles.summaryPanels}>
       <section className={styles.summaryPanel} aria-labelledby="outlook-title">
@@ -37,37 +60,111 @@ export function ComparisonSummaryPanels({
           </span>
           <div>
             <h3 id="outlook-title">Projected outcomes</h3>
-            <p className={styles.muted}>Compare {metric} under each plan.</p>
+            <p className={styles.muted}>
+              Compare expected {metricLabel} and progress toward your goal under each plan.
+            </p>
           </div>
         </header>
+
         <div className={styles.chartContext}>
-          <span>Current: {formatMetric(comparison.baselineValue, unit)}</span>
-          <span>Target: {formatMetric(comparison.targetLevel, unit)}</span>
+          <span className={styles.contextPill}>
+            Current baseline: {formatMetric(comparison.baselineValue, unit)}
+          </span>
+          {comparison.targetLevel && (
+            <span className={styles.contextPill}>
+              Target: {formatMetric(comparison.targetLevel, unit)}
+              {targetSaved > 0 && ` (≥${targetSaved} days saved needed)`}
+            </span>
+          )}
         </div>
+
         <ul className={styles.rangeChart} aria-label="Projected outcome ranges">
           {comparison.options.map((o) => {
-            const a = o.pessimistic == null ? NaN : Number(o.pessimistic.value);
-            const b = o.optimistic == null ? NaN : Number(o.optimistic.value);
+            const opt = o.optimistic == null ? NaN : Number(o.optimistic.value);
+            const pess = o.pessimistic == null ? NaN : Number(o.pessimistic.value);
+            const remLow = Math.min(opt, pess);
+            const remHigh = Math.max(opt, pess);
+
+            const savedLow = Number.isFinite(baselineNum) ? Math.max(0, baselineNum - remHigh) : 0;
+            const savedHigh = Number.isFinite(baselineNum) ? Math.max(0, baselineNum - remLow) : 0;
+
+            const pctMin =
+              isReduction && Number.isFinite(baselineNum) && baselineNum > 0
+                ? Math.max(0, Math.min(100, (savedLow / baselineNum) * 100))
+                : genericPosition(remLow);
+            const pctMax =
+              isReduction && Number.isFinite(baselineNum) && baselineNum > 0
+                ? Math.max(0, Math.min(100, (savedHigh / baselineNum) * 100))
+                : genericPosition(remHigh);
+
+            const bufferMin = Number.isFinite(targetNum) ? targetNum - remHigh : 0;
+            const bufferMax = Number.isFinite(targetNum) ? targetNum - remLow : 0;
+            const meetsTarget = bufferMin >= 0;
+            const exceedsTarget = bufferMin >= 10;
+
             return (
-              <li key={o.id} data-chosen={o.id === selectedId || undefined}>
+              <li
+                key={o.id}
+                data-chosen={o.id === selectedId || undefined}
+                className={styles.rangeItem}
+              >
                 <div className={styles.rangeLabel}>
-                  <span>Plan {o.rank}</span>
-                  <strong>{formatOutcomeRange(o.pessimistic, o.optimistic, unit)}</strong>
+                  <div className={styles.planIdentityRow}>
+                    <span className={styles.planRank}>Plan {o.rank}</span>
+                    <span className={styles.planItemName}>· {o.name}</span>
+                    {exceedsTarget ? (
+                      <span className={styles.badgeExceeds}>
+                        ★ Exceeds target (+{bufferMin === bufferMax ? bufferMin : `${bufferMin}–${bufferMax}`}d buffer)
+                      </span>
+                    ) : meetsTarget ? (
+                      <span className={styles.badgeMeets}>
+                        ✓ Meets target (+{bufferMin === bufferMax ? bufferMin : `${bufferMin}–${bufferMax}`}d buffer)
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className={styles.outcomeMetricsRow}>
+                    <strong className={styles.remainingFigure}>
+                      {formatOutcomeRange(o.pessimistic, o.optimistic, unit)}
+                    </strong>
+                    {isReduction && savedHigh > 0 && (
+                      <span className={styles.savingsFigure}>
+                        ↓{' '}
+                        {savedLow === savedHigh
+                          ? `${savedLow} days`
+                          : `${savedLow} to ${savedHigh} days`}{' '}
+                        saved ({Math.round((savedHigh / baselineNum) * 100)}% reduction)
+                      </span>
+                    )}
+                  </div>
                 </div>
+
                 <div className={styles.rangeTrack} aria-hidden="true">
-                  {Number.isFinite(a) && Number.isFinite(b) && (
+                  {/* Base guaranteed reduction bar (solid teal) */}
+                  <span
+                    className={styles.rangeBandSolid}
+                    style={{
+                      left: '0%',
+                      width: `${Math.max(1, pctMin)}%`,
+                    }}
+                  />
+                  {/* Range extension (optimistic) */}
+                  {pctMax > pctMin && (
                     <span
-                      className={styles.rangeBand}
+                      className={styles.rangeBandRange}
                       style={{
-                        left: `${Math.min(99.4, position(Math.min(a, b)))}%`,
-                        width: `${Math.max(0.6, position(Math.max(a, b)) - Math.min(99.4, position(Math.min(a, b))))}%`,
+                        left: `${pctMin}%`,
+                        width: `${Math.max(1, pctMax - pctMin)}%`,
                       }}
                     />
                   )}
+                  {/* Target milestone marker */}
                   {comparison.targetLevel && (
                     <span
                       className={styles.targetMarker}
-                      style={{ left: `${position(Number(comparison.targetLevel.value))}%` }}
+                      style={{
+                        left: `${isReduction ? targetPct : genericPosition(Number(comparison.targetLevel.value))}%`,
+                      }}
+                      title={`Target threshold: ${targetNum} days`}
                     />
                   )}
                 </div>
@@ -75,11 +172,30 @@ export function ComparisonSummaryPanels({
             );
           })}
         </ul>
-        <p className={styles.chartNote}>
-          <span /> Low-to-high estimate range <i /> Goal target
-        </p>
+
+        {/* Scale Axis */}
+        {isReduction && Number.isFinite(baselineNum) && baselineNum > 0 && (
+          <div className={styles.scaleRuler} aria-hidden="true">
+            <span className={styles.scaleStart}>0 days saved (Baseline: {baselineNum}d)</span>
+            {comparison.targetLevel && (
+              <span className={styles.scaleTarget} style={{ left: `${targetPct}%` }}>
+                ▲ Target: {targetNum}d ({targetSaved}d saved)
+              </span>
+            )}
+            <span className={styles.scaleEnd}>{baselineNum} days saved (Zero shortage)</span>
+          </div>
+        )}
+
+        {/* Legend */}
+        <div className={styles.chartNote}>
+          <span className={styles.legendSolid} /> Guaranteed reduction (conservative)
+          <span className={styles.legendRange} /> Additional potential reduction (optimistic)
+          <i className={styles.legendTargetLine} /> Goal target threshold
+        </div>
+
         <p className={styles.muted}>
-          Outcomes use your current estimates. Time-based projections are not yet available.
+          Outcomes use baseline data and CPHEEO municipal engineering models. Higher bars indicate
+          greater water security and reduction in tanker dependence.
         </p>
       </section>
       <section className={styles.summaryPanel} aria-labelledby="neighbourhood-title">

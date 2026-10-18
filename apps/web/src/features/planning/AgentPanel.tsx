@@ -10,9 +10,10 @@ import { queryKeys } from '../../graphql/queryKeys';
 import styles from './AgentPanel.module.scss';
 import { usePlanningSession } from '../../session/sessionContext';
 
+import AgentConversation from './AgentConversation';
+
 const AgentGoalCheck = lazy(() => import('../goals/AgentGoalCheck'));
 const AgentScenario = lazy(() => import('../plans/AgentScenario'));
-import AgentConversation from './AgentConversation';
 
 type AiStatusValue = AiStatusQuery['aiStatus'];
 
@@ -162,26 +163,28 @@ export function AgentPanel({
           onFocusWorkspace={onFocusWorkspace}
         />
       ) : (
-        <EmptyState
-          icon="sparkle"
-          title={content.title}
-          headingLevel={3}
-          actions={
-            <Button variant="secondary" startIcon="list" onClick={onUseTraditional}>
-              Use Traditional mode
-            </Button>
-          }
-        >
-          <p>{content.body}</p>
-        </EmptyState>
-      )}
-      <Suspense fallback={null}>
-        <AgentGoalCheck />
-      </Suspense>
-      {showScenario && (
-        <Suspense fallback={null}>
-          <AgentScenario />
-        </Suspense>
+        <>
+          <EmptyState
+            icon="sparkle"
+            title={content.title}
+            headingLevel={3}
+            actions={
+              <Button variant="secondary" startIcon="list" onClick={onUseTraditional}>
+                Use Traditional mode
+              </Button>
+            }
+          >
+            <p>{content.body}</p>
+          </EmptyState>
+          <Suspense fallback={null}>
+            <AgentGoalCheck />
+          </Suspense>
+          {showScenario && (
+            <Suspense fallback={null}>
+              <AgentScenario />
+            </Suspense>
+          )}
+        </>
       )}
     </div>
   );

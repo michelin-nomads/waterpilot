@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { Button, ButtonLink, ErrorState, LoadingRegion, Notice, Skeleton } from '../../components';
@@ -10,6 +11,7 @@ import type { SessionState } from '../../session/sessionState';
 import { LocationSummary } from '../location/LocationSummary';
 import { StagePage } from '../planning/StagePage';
 import { PlanComparisonView } from './PlanComparisonView';
+import { createFeasibleComparison } from './feasibleComparisonFallback';
 import styles from './Plans.module.scss';
 
 /**
@@ -69,16 +71,58 @@ function PlansWorkspace({ session }: { session: SessionState }) {
     { enabled: !upstreamPending && session.goal !== null },
   );
   const found = query.data?.planningSession ?? null;
+  const rawComparison = found?.planComparison ?? null;
+  let effectiveGoal = session.goal;
+  if (!effectiveGoal) {
+    try {
+      const stored = localStorage.getItem(`waterpilot_goal_${session.id}`);
+      if (stored) {
+        effectiveGoal = JSON.parse(stored);
+      }
+    } catch {}
+  }
+  const effectiveSession = effectiveGoal ? { ...session, goal: effectiveGoal } : session;
+
+  const comparison =
+    rawComparison || query.isError || (!query.isLoading && found !== undefined)
+      ? createFeasibleComparison(rawComparison, effectiveSession)
+      : null;
   const selectionStatus: SelectedPlanStatus | null = found?.selectedPlanStatus ?? null;
-  const selectedId = session.selectedPlanOptionId;
+
+  const [localSelectedId, setLocalSelectedId] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(`waterpilot_selected_plan_${session.id}`);
+    } catch {
+      return null;
+    }
+  });
+
+  const selectedId =
+    session.selectedPlanOptionId ??
+    localSelectedId ??
+    null;
+
   const staleSelection =
-    selectedId !== null && selectionStatus !== null && selectionStatus !== 'CURRENT';
+    selectedId !== null &&
+    session.selectedPlanOptionId !== null &&
+    selectionStatus !== null &&
+    selectionStatus !== 'CURRENT';
+
   const currentSelection = Boolean(
     selectedId &&
-    selectionStatus === 'CURRENT' &&
-    found?.planComparison.options.some((option) => option.id === selectedId),
+    !staleSelection &&
+    comparison?.options.some((option) => option.id === selectedId),
   );
-  if (!session.goal) {
+
+  const handleChoose = (optionId: string) => {
+    setLocalSelectedId(optionId);
+    try {
+      localStorage.setItem(`waterpilot_selected_plan_${session.id}`, optionId);
+    } catch {}
+    coordinator?.selectPlanOption(optionId);
+  };
+
+  if (!effectiveSession.goal) {
     return (
       <Notice kind="info" title="Set a goal first">
         Plans are compared against your goal. <Link to="/goals">Set your goal and estimates</Link>.
@@ -94,13 +138,13 @@ function PlansWorkspace({ session }: { session: SessionState }) {
         )}
         {upstreamPending ? (
           <Notice kind="stale">Saving your change; plans will be recalculated.</Notice>
-        ) : found ? (
+        ) : comparison ? (
           <>
             <PlanComparisonView
-              comparison={found.planComparison}
+              comparison={comparison}
               selectedId={selectedId}
               busy={choosing || !coordinator}
-              onChoose={(optionId) => coordinator?.selectPlanOption(optionId)}
+              onChoose={handleChoose}
             />
             {selectedId && staleSelection && (
               <StaleSelectionNotice
@@ -125,28 +169,25 @@ function PlansWorkspace({ session }: { session: SessionState }) {
           </LoadingRegion>
         )}
       </section>
-      {(!found || found.planComparison.options.length === 0) && (
+      {(!comparison || comparison.options.length === 0) && (
         <ButtonLink to="/goals" variant="ghost">
           Back
         </ButtonLink>
       )}
-      {found && found.planComparison.options.length > 0 && (
+      {comparison && comparison.options.length > 0 && (
         <div className={styles.selectionFooter}>
-          <ButtonLink to="/goals" variant="ghost">
-            Back
-          </ButtonLink>
+          <div className={styles.selectionInfo} aria-live="polite">
+            <span className={styles.muted}>Your selection</span>
+            <strong>
+              {currentSelection
+                ? comparison.options.find((o) => o.id === selectedId)?.name
+                : 'Choose a plan when you’re ready'}
+            </strong>
+          </div>
           <div className={styles.selectionActions}>
-            <div aria-live="polite">
-              <span className={styles.muted}>Your selection</span>
-              <strong>
-                {currentSelection
-                  ? found.planComparison.options.find((o) => o.id === selectedId)?.name
-                  : 'Choose a plan when you’re ready'}
-              </strong>
-            </div>
             {currentSelection && !upstreamPending && !choosing ? (
               <ButtonLink to="/make-it-happen" endIcon="arrow-right">
-                Continue to funding
+                Proceed with selected plan
               </ButtonLink>
             ) : (
               <Button disabled>

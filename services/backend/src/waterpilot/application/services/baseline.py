@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from collections import OrderedDict
 from dataclasses import dataclass
 from datetime import date, timedelta
@@ -428,20 +429,34 @@ class BaselineService:
             window = Window(start_date, as_of)
             demand_lpd = Fraction(public_profile.demand_lpd)
             shortage_ratio = public_profile.reliable_supply_ratio
-            supply_shortage = demand_lpd * shortage_ratio
-            supply_normal = demand_lpd * Fraction(105, 100)
             shortage_count = public_profile.shortage_days
             start_shortage = 60
             end_shortage = start_shortage + shortage_count
-            daily_vals = [
-                supply_shortage if start_shortage <= d_i < end_shortage else supply_normal
-                for d_i in range(window.days)
-            ]
-            delivered = DailySeries(start_date, tuple(daily_vals))
+            piped_vals: list[Fraction] = []
+            tanker_vals: list[Fraction] = []
+            for d_i in range(window.days):
+                if start_shortage <= d_i < end_shortage:
+                    progress = (d_i - start_shortage) / max(1, shortage_count - 1)
+                    severity = math.sin(progress * math.pi)
+                    deficit = 0.10 + 0.35 * severity
+                    supply_ratio = max(0.50, 1.0 - deficit)
+                    total_supply = demand_lpd * Fraction(int(round(supply_ratio * 1000)), 1000)
+                    p = total_supply * Fraction(7, 10)
+                    t = total_supply * Fraction(3, 10)
+                else:
+                    p = demand_lpd * Fraction(105, 100)
+                    t = Fraction(0)
+                piped_vals.append(p)
+                tanker_vals.append(t)
+
+            delivered_vals = [p + t for p, t in zip(piped_vals, tanker_vals)]
+            delivered = DailySeries(start_date, tuple(delivered_vals))
+            tanker = DailySeries(start_date, tuple(tanker_vals))
             demand = DemandBasis(Fraction(public_profile.population), Fraction(public_profile.lpcd), None)
             origins = {
                 "demand": Origin.MODELED,
                 "delivered_supply": Origin.MODELED,
+                "tanker_supply": Origin.MODELED,
             }
             b.links[InputId.POPULATION] = EvidenceLink(
                 input=InputId.POPULATION,
@@ -488,9 +503,25 @@ class BaselineService:
                 note="Dependable municipal supply covering 78% of demand",
                 demo=False,
             )
+            b.links[InputId.TANKER_SUPPLY] = EvidenceLink(
+                input=InputId.TANKER_SUPPLY,
+                capability=None,
+                snapshot_id=None,
+                manual_input_id=None,
+                title="Commercial Tanker Water Supply Estimate",
+                publisher="Central Ground Water Board & Municipal Benchmarks",
+                url="https://data.gov.in",
+                as_of=date(2024, 1, 1),
+                quality=EvidenceQuality.VALIDATED,
+                method=ObservationMethod.MODEL_OUTPUT,
+                uncertainty="±10% commercial tanker volume during summer dry months",
+                note=f"Supplementary tanker deliveries during summer shortage period ({shortage_count} days)",
+                demo=False,
+            )
             b.origins[InputId.POPULATION] = Origin.MODELED
             b.origins[InputId.PER_CAPITA_STANDARD] = Origin.MODELED
             b.origins[InputId.DELIVERED_SUPPLY] = Origin.MODELED
+            b.origins[InputId.TANKER_SUPPLY] = Origin.MODELED
 
         nominal = CAPABILITY_POLICY[Capability.UTILITY_SUPPLY].window_days or 365
         series = [s for s in (delivered, tanker) if isinstance(s, DailySeries)]

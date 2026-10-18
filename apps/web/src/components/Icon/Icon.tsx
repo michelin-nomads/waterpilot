@@ -9,6 +9,8 @@ const PATHS = {
   'chevron-right': 'm9 6 6 6-6 6',
   'chevron-down': 'm6 9 6 6 6-6',
   'arrow-right': 'M5 12h14m-6-6 6 6-6 6',
+  play: 'm8 5 11 7-11 7V5Z',
+  stop: 'M6 6h12v12H6z',
   check: 'm5 12.5 4.5 4.5L19 7.5',
   alert: 'M12 3 2 20h20L12 3Zm0 6v5m0 3h.01',
   'alert-circle': 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Zm0-14v5m0 3h.01',

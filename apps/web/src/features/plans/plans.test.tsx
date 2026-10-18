@@ -17,6 +17,7 @@ import { AuthTestProviders } from '../../test/AuthTestProviders';
 import { FakeAuthBackend, permanent } from '../../test/fakeAuth';
 import { FakeSessionServer } from '../../test/fakeSession';
 import ScenarioPage from './ScenarioPage';
+import { ModernScenarioPanel } from './ModernScenarioPanel';
 import AgentScenario from './AgentScenario';
 import PlansPage from './index';
 import {
@@ -539,9 +540,14 @@ describe('Scenario planning step', () => {
   });
   it('offers scenario testing before a goal is set and records an explicit scenario choice', async () => {
     handlers.SessionScenario = () => scenarioReply(NO_SCENARIO);
+    handlers.PreviewScenario = () => ({
+      data: { previewScenario: { errors: [], comparison: NO_SCENARIO } },
+    });
     const sessions = renderWith(<ScenarioPage />, { baselineReviewed: true, goal: null });
     expect(await screen.findByRole('heading', { name: 'Test a Future Scenario' })).toBeVisible();
-    expect(await screen.findByRole('button', { name: 'Save Scenario' })).toBeEnabled();
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Save Scenario' })).toBeEnabled(),
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Analyse Scenario' }));
     await waitFor(() =>
       expect(sessions.applied.some((entry) => entry.patch.scenario?.confirmed)).toBe(true),
@@ -628,11 +634,11 @@ describe('PlansPage', () => {
       .getAllByRole('listitem')
       .filter((li) => li.dataset.optionId);
     expect(cards).toHaveLength(2);
-    expect(screen.queryByText('Feasible plans found')).not.toBeInTheDocument();
-    expect(screen.queryByText(/no other combination passes/i)).not.toBeInTheDocument();
+    expect(screen.getByText('Feasible plans found')).toBeInTheDocument();
+    expect(screen.getByText(/no other combination passes/i)).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Assumptions, ranking and versions' }),
-    ).not.toBeInTheDocument();
+      screen.getByRole('button', { name: 'Assumptions, ranking and versions' }),
+    ).toBeInTheDocument();
     expect(within(cards[0]!).getByText('0.0% to 4.1%')).toBeInTheDocument();
     expect(within(cards[0]!).getByText('₹5,000 to ₹9,000')).toBeInTheDocument();
     expect(within(cards[0]!).getByText('10 to 30 days')).toBeInTheDocument();
@@ -660,7 +666,9 @@ describe('PlansPage', () => {
     expect(screen.getByRole('heading', { name: 'Projected outcomes' })).toBeVisible();
     expect(screen.getByRole('heading', { name: 'Neighbourhood impact' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Select a plan to continue' })).toBeDisabled();
-    expect(screen.queryByRole('link', { name: 'Continue to funding' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: /proceed with selected plan/i }),
+    ).not.toBeInTheDocument();
   });
 
   it('opens selected plan details without finalizing and returns its selection to Compare', async () => {
@@ -785,7 +793,7 @@ describe('PlansPage', () => {
   it('lets the user continue once a plan is chosen and still current', async () => {
     handlers.PlanComparison = () => reply(comparison(), NO_SCENARIO, 'CURRENT');
     renderPlans({ goal: GOAL, inputsRevision: 1, selectedPlanOptionId: 'opt_a' });
-    expect(await screen.findByRole('link', { name: /continue to funding/i })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: /proceed with selected plan/i })).toHaveAttribute(
       'href',
       '/make-it-happen',
     );
@@ -802,7 +810,9 @@ describe('PlansPage', () => {
     expect(notice).toHaveAttribute('data-notice', 'caution');
     expect(notice).toHaveTextContent(/changed its wider-system impact/i);
     // Cannot continue with a stale selection.
-    expect(screen.queryByRole('link', { name: /continue to funding/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: /proceed with selected plan/i }),
+    ).not.toBeInTheDocument();
     // Re-choosing stores the current assessment through the session.
     fireEvent.click(within(notice as HTMLElement).getByRole('button', { name: /choose again/i }));
     await waitFor(() =>
@@ -1043,4 +1053,24 @@ describe('AgentScenario (agent what-if tool)', () => {
       }),
     );
   });
+});
+
+it('renders the scenario testing screen matching expected UX', async () => {
+  handlers.PreviewScenario = () => ({
+    data: { previewScenario: { errors: [], comparison: NO_SCENARIO } },
+  });
+  renderWith(
+    <ModernScenarioPanel
+      sessionId="ses_1"
+      revision={1}
+      scenario={null}
+      saved={NO_SCENARIO}
+      pending={false}
+      onSave={() => undefined}
+    />,
+  );
+  expect(await screen.findByText('1.9 MLD')).toBeInTheDocument();
+  expect(screen.getByText('Supply Reliability')).toBeInTheDocument();
+  expect(screen.getByText('Tanker Dependency')).toBeInTheDocument();
+  expect(screen.getByText('Water Stress')).toBeInTheDocument();
 });

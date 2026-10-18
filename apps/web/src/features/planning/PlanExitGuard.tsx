@@ -5,6 +5,7 @@ import { Button } from '../../components/Button/Button';
 import { Dialog } from '../../components/Dialog/Dialog';
 import { usePlanningSession } from '../../session/sessionContext';
 import { stageForPath } from '../../shell/stages';
+import { useLocationInteraction } from './planningInteraction';
 
 /**
  * Plans are not stored as drafts, so leaving the planner (or closing the tab) ends the
@@ -13,7 +14,6 @@ import { stageForPath } from '../../shell/stages';
  */
 export function PlanExitGuard() {
   const { coordinator, state } = usePlanningSession();
-  const planning = state.status === 'ready';
 
   // Read at navigation time, so a plan discarded a moment ago never prompts again.
   const blocker = useBlocker(
@@ -21,14 +21,20 @@ export function PlanExitGuard() {
       coordinator?.getState().status === 'ready' && stageForPath(nextLocation.pathname) === null,
   );
 
+  const location = useLocationInteraction(state.server?.id);
+  const unsaved =
+    state.status === 'ready' &&
+    (!['idle', 'saved'].includes(state.save) ||
+      ['suggested', 'resolving', 'confirming'].includes(location.status));
   useEffect(() => {
-    if (!planning) return;
+    // Saved active sessions recover on reload. Only unsaved changes need a browser warning.
+    if (!unsaved) return;
     const warn = (event: BeforeUnloadEvent) => {
       event.preventDefault();
     };
     window.addEventListener('beforeunload', warn);
     return () => window.removeEventListener('beforeunload', warn);
-  }, [planning]);
+  }, [unsaved]);
 
   return (
     <Dialog

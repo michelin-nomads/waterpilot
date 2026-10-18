@@ -590,3 +590,51 @@ def test_confirm_location_binds_searched_place_and_normalizes_extent() -> None:
     assert cov.data["location"]["name"] == "Millers The Memoir"
     base = w.runtime.call("inspect_baseline", {}, prior_step=w.reload_run().step_seq)
     assert base.data["location"]["name"] == "Millers The Memoir"
+
+
+def test_goal_tool_declares_required_kind_and_updates_authoritative_session() -> None:
+    from pydantic import ValidationError
+
+    from waterpilot.application.agent.registry import GoalArgs
+
+    try:
+        GoalArgs.model_validate({"goal": {}})
+    except ValidationError as error:
+        assert any(item["loc"] == ("goal", "kind") for item in error.errors())
+    else:
+        raise AssertionError("An empty goal must not reach the goal service")
+    w = World(with_area=True)
+    w.runtime.call("set_goal", {"goal": {"kind": "reduce_shortage"}}, prior_step=0)
+    saved = w.services.sessions.get(_ctx(OWNER), w.session.id)
+    assert saved.goal is not None
+    assert saved.goal.kind is GoalKind.REDUCE_SHORTAGE
+
+
+def test_agent_edits_preserve_unmentioned_profile_and_goal_fields() -> None:
+    w = World(with_area=True)
+    w.runtime.call(
+        "update_site_profile",
+        {"community_type": "apartment", "occupied_homes": 80},
+        prior_step=0,
+    )
+    w.runtime.call(
+        "update_site_profile", {"occupied_homes": 100}, prior_step=w.reload_run().step_seq
+    )
+    saved = w.services.sessions.get(_ctx(OWNER), w.session.id)
+    assert saved.site_profile is not None
+    assert saved.site_profile.occupied_homes == 100
+    assert saved.site_profile.community_type is not None
+    w.runtime.call(
+        "set_goal",
+        {"goal": {"kind": "reduce_shortage", "description": "Keep this description"}},
+        prior_step=w.reload_run().step_seq,
+    )
+    w.runtime.call(
+        "set_goal",
+        {"goal": {"kind": "reduce_shortage", "timeline_days": 90}},
+        prior_step=w.reload_run().step_seq,
+    )
+    saved = w.services.sessions.get(_ctx(OWNER), w.session.id)
+    assert saved.goal is not None
+    assert saved.goal.description == "Keep this description"
+    assert saved.goal.timeline_days == 90

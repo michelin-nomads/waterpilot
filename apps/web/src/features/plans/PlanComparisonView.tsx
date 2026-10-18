@@ -49,6 +49,41 @@ function OptionCard({
 }) {
   const headingId = useId();
   const unit = comparison.unit ?? 'RATIO';
+
+  const baseNum = comparison.baselineValue ? Number(comparison.baselineValue.value) : NaN;
+  const optNum = option.optimistic ? Number(option.optimistic.value) : NaN;
+  const pessNum = option.pessimistic ? Number(option.pessimistic.value) : NaN;
+  const targetNum = comparison.targetLevel ? Number(comparison.targetLevel.value) : NaN;
+
+  let savingsText: string | null = null;
+  let statusBadge: { text: string; kind: 'meets' | 'exceeds' } | null = null;
+
+  if (
+    Number.isFinite(baseNum) &&
+    Number.isFinite(optNum) &&
+    Number.isFinite(pessNum) &&
+    baseNum > 0
+  ) {
+    const minRem = Math.min(optNum, pessNum);
+    const maxRem = Math.max(optNum, pessNum);
+    const savedLow = Math.max(0, baseNum - maxRem);
+    const savedHigh = Math.max(0, baseNum - minRem);
+    const pct = Math.round((savedHigh / baseNum) * 100);
+    if (savedHigh > 0) {
+      const rangeStr =
+        savedLow === savedHigh ? `${savedLow} days` : `${savedLow} to ${savedHigh} days`;
+      savingsText = `↓ ${rangeStr} saved (${pct}% reduction)`;
+    }
+    if (Number.isFinite(targetNum)) {
+      const buffer = targetNum - maxRem;
+      if (buffer >= 10) {
+        statusBadge = { text: '★ Exceeds target', kind: 'exceeds' };
+      } else if (buffer >= 0) {
+        statusBadge = { text: '✓ Meets target', kind: 'meets' };
+      }
+    }
+  }
+
   return (
     <li
       className={styles.option}
@@ -59,9 +94,7 @@ function OptionCard({
       <div className={styles.optionHead}>
         <span className={styles.planNumber}>Plan {option.rank}</span>
         <span className={styles.tags}>
-          {option.rank === 1 && comparison.ranking.trim() && (
-            <Badge tone="accent">Ranked first</Badge>
-          )}
+          {option.rank === 1 && <Badge tone="accent">Ranked first</Badge>}
           {selected && (
             <Badge tone="accent" icon="check">
               Chosen
@@ -109,7 +142,23 @@ function OptionCard({
                 ? 'Tanker dependence'
                 : 'Projected outcome'}
           </dt>
-          <dd>{formatOutcomeRange(option.pessimistic, option.optimistic, unit)}</dd>
+          <dd className={styles.outcomeCardValue}>
+            <div className={styles.outcomeRowMain}>
+              <strong>{formatOutcomeRange(option.pessimistic, option.optimistic, unit)}</strong>
+              {statusBadge && (
+                <span
+                  className={
+                    statusBadge.kind === 'exceeds'
+                      ? styles.outcomeCardBadgeExceeds
+                      : styles.outcomeCardBadgeMeets
+                  }
+                >
+                  {statusBadge.text}
+                </span>
+              )}
+            </div>
+            {savingsText && <div className={styles.outcomeCardSavings}>{savingsText}</div>}
+          </dd>
         </div>
       </dl>
       {option.impact.falseResilience.map((finding) => (
@@ -407,12 +456,10 @@ export function PlanComparisonView({ comparison, selectedId, busy, onChoose }: P
           </p>
         </Notice>
       ) : (
-        comparison.status !== 'OPTIONS' && (
-          <div className={styles.head}>
-            <Badge tone={status.tone}>{status.label}</Badge>
-            <p className={styles.summary}>{comparison.summary}</p>
-          </div>
-        )
+        <div className={styles.head}>
+          <Badge tone={status.tone}>{status.label}</Badge>
+          <p className={styles.summary}>{comparison.summary}</p>
+        </div>
       )}
       {comparison.metric && (
         <dl className={styles.facts}>
@@ -479,6 +526,50 @@ export function PlanComparisonView({ comparison, selectedId, busy, onChoose }: P
       )}
       {comparison.options.length > 0 && (
         <ComparisonSummaryPanels comparison={comparison} selectedId={selectedId} />
+      )}
+      {comparison.options.length > 0 && (
+        <Accordion
+          items={[
+            {
+              id: 'assumptions',
+              title: 'Assumptions, ranking and versions',
+              content: (
+                <div className={styles.stack}>
+                  <ul className={styles.list}>
+                    {(comparison.assumptions ?? []).map((a) => (
+                      <li key={a}>{a}</li>
+                    ))}
+                  </ul>
+                  {comparison.ranking && (
+                    <p className={styles.text}>Ranking: {comparison.ranking}</p>
+                  )}
+                  <p className={styles.muted}>
+                    Up to {comparison.maxOptions ?? 3} plans are shown, never more than pass.
+                    {comparison.stressTests && comparison.stressTests.length > 0
+                      ? ` Stress tests: ${comparison.stressTests.join('; ')}.`
+                      : ''}
+                  </p>
+                  {comparison.excluded && comparison.excluded.length > 0 && (
+                    <>
+                      <h4 className={styles.blockTitle}>Not considered</h4>
+                      <ul className={styles.list}>
+                        {comparison.excluded.map((e) => (
+                          <li key={e}>{e}</li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                  <p className={styles.muted}>
+                    Option engine {comparison.engineVersion}, scenario engine{' '}
+                    {comparison.scenarioEngineVersion}, catalogue {comparison.catalogueVersion}.
+                    {r.evaluated > 0 && ` ${r.evaluated} combinations checked.`}
+                    {r.truncated && ' The combination limit was reached.'}
+                  </p>
+                </div>
+              ),
+            },
+          ]}
+        />
       )}
       <Drawer
         open={detailOption !== null}
