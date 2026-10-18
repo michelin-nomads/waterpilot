@@ -133,6 +133,13 @@ export function AgentPanel({
           >
             {statusLabel}
           </Tooltip>
+          <div className={styles.headerBadges}>
+            {aiStatus?.modelId && (
+              <span className={styles.modelTag} title={aiStatus.modelId}>
+                {aiStatus.modelId}
+              </span>
+            )}
+          </div>
         </div>
         {onCollapse && (
           <Button
@@ -147,13 +154,6 @@ export function AgentPanel({
             <Icon name="chevrons-left" size="sm" />
           </Button>
         )}
-        <div className={styles.headerBadges}>
-          {aiStatus?.modelId && (
-            <span className={styles.modelTag} title={aiStatus.modelId}>
-              {aiStatus.modelId}
-            </span>
-          )}
-        </div>
       </div>
       {keepConversation ? (
         <AgentConversation
