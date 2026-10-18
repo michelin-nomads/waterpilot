@@ -93,20 +93,27 @@ export function AreaConditions({
   const units = baseline ? baselineUnits(baseline, unitSystem) : null;
   const rows = CONDITIONS.map((condition) => {
     const metric = baseline?.metrics.find((m) => m.metric === condition.key);
-    // Environmental indicators retain their API names, period and units in the source panel.
     const indicator =
       condition.key === 'rainfall' || condition.key === 'groundwater'
         ? baseline?.indicators.find(
             (i) =>
-              i.capability === (condition.key === 'rainfall' ? 'RAINFALL' : 'GROUNDWATER') &&
+              (condition.key === 'rainfall'
+                ? i.capability === 'RAINFALL'
+                : i.capability === 'GROUNDWATER_LEVEL' ||
+                  i.capability === 'GROUNDWATER_ABSTRACTION') &&
               i.value !== null,
           )
         : undefined;
     const result = metric ?? indicator;
     const available =
       result?.value != null && result.unit != null && result.availability !== 'UNAVAILABLE';
-    const value =
+    let value =
       available && units ? quantityText(formatQuantity(result.value!, result.unit!, units)) : null;
+    if (value && condition.key === 'water_stress') {
+      const ratioNum = Number(result?.value ?? '0');
+      const level = ratioNum >= 0.7 ? 'High Stress' : ratioNum >= 0.4 ? 'Moderate' : 'Low Stress';
+      value = `${level} (${value})`;
+    }
     return { ...condition, result, value, window: indicator?.window ?? baseline?.window };
   });
   const count = rows.filter((row) => row.value !== null).length;
