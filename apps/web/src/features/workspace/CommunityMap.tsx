@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { createPortal } from 'react-dom';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { env } from '../../config/env';
 import { loadGoogleMaps, onAuthFailure } from '../location/googleMapsLoader';
 import { Button } from '../../components/Button/Button';
@@ -46,7 +46,11 @@ export function CommunityMap({
   actionError,
   onJoin,
   onLeave,
+  selectedCommunityId,
+  onSelectCommunity,
 }: {
+  selectedCommunityId?: string | null;
+  onSelectCommunity?: (id: string | null) => void;
   rows: CommunityItem[];
   centre: NearbyCentre | null;
   radius: number;
@@ -67,7 +71,16 @@ export function CommunityMap({
     advanced: boolean;
     popup: MapPopup;
   } | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [localSelectedId, setLocalSelectedId] = useState<string | null>(null);
+  const selectedId = selectedCommunityId === undefined ? localSelectedId : selectedCommunityId;
+  const setSelectedId = useCallback(
+    (id: string | null) => {
+      if (onSelectCommunity) onSelectCommunity(id);
+      else setLocalSelectedId(id);
+    },
+    [onSelectCommunity],
+  );
+  const pinElements = useRef(new Map<string, HTMLElement>());
   const selected = rows.find((row) => row.id === selectedId && row.status === 'ACTIVE') ?? null;
   const distance = selected ? distanceMeters(selected.id) : null;
   const [status, setStatus] = useState<'loading' | 'ready' | 'failed'>('loading');
@@ -135,6 +148,8 @@ export function CommunityMap({
     const { map, maps, markers, advanced } = runtime.current;
     const cleanups: Array<() => void> = [];
     const markerAnchors = anchors.current;
+    const elements = pinElements.current;
+    elements.clear();
     markerAnchors.clear();
     const bounds = { north: -90, south: 90, east: -180, west: 180 };
     points.forEach((point) => {
@@ -146,6 +161,7 @@ export function CommunityMap({
       if (advanced) {
         const link = document.createElement('button');
         link.type = 'button';
+        elements.set(point.id, link);
         link.onclick = () => setSelectedId(point.id);
         link.className = styles.mapPin;
 
@@ -196,15 +212,19 @@ export function CommunityMap({
       runtime.current?.popup.close();
       cleanups.forEach((cleanup) => cleanup());
       markerAnchors.clear();
+      elements.clear();
     };
-  }, [centre, radius, points, status]);
+  }, [centre, radius, points, status, setSelectedId]);
 
   useEffect(() => {
+    pinElements.current.forEach((element, id) =>
+      element.setAttribute('aria-pressed', String(id === selectedId)),
+    );
     const view = runtime.current;
     const anchor = selected ? anchors.current.get(selected.id) : null;
     if (view && anchor) view.popup.open({ map: view.map, anchor, shouldFocus: false });
     else view?.popup.close();
-  }, [selected, points, status]);
+  }, [selected, selectedId, points, status]);
 
   return (
     <aside className={styles.mapAside} aria-label="Community map">

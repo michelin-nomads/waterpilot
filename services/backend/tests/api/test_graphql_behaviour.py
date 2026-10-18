@@ -829,3 +829,26 @@ def test_pilot_mode_fails_closed_for_data_but_health_stays_up(
     ide = client.get("/graphql", headers={"accept": "text/html"})
     assert ide.status_code != 200 and "graphiql" not in ide.text.lower()
     assert not (tmp_path / "cwd" / ".local-object-store").exists()
+
+
+def test_community_inherits_report_location_without_area_input(h: Harness) -> None:
+    session = ready_session(h, "t-alice", key="inherit-area-session")
+    report = finalize(h, "t-alice", session["id"], key="inherit-area-report")["report"]
+    result = h.gql(
+        CREATE_COMMUNITY,
+        {
+            "input": {
+                "name": "Report location community",
+                "reportId": report["id"],
+                "contactName": "Demo contact",
+                "idempotencyKey": "inherit-area-community",
+            }
+        },
+        "t-alice",
+    )["data"]["createCommunity"]
+    assert result["error"] is None, result
+    community = h.store.communities.get(result["community"]["id"])
+    assert community.area_id == AREA_ID
+    area = h.store.areas.get(AREA_ID)
+    assert (community.latitude, community.longitude) == (area.centroid_lat, area.centroid_lon)
+    assert community.geohash is not None

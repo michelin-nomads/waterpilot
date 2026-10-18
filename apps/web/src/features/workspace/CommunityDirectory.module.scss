@@ -410,3 +410,26 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+.cardSelected {
+  border-color: var(--wp-color-accent);
+  box-shadow: 0 0 0 1px var(--wp-color-accent);
+}
+.cardTitleButton {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--wp-color-text);
+  font: inherit;
+  font-weight: inherit;
+  text-align: left;
+  cursor: pointer;
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+.mapPin[aria-pressed='true'] {
+  background: var(--wp-color-accent);
+  box-shadow: 0 0 0 3px var(--wp-color-accent-soft);
+}

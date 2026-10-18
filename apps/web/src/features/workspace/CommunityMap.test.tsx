@@ -95,4 +95,33 @@ it('opens a map preview and routes Join through the existing callback, then refl
   fireEvent.click(within(preview).getByRole('button', { name: 'Leave community' }));
   expect(props.onLeave).toHaveBeenCalledWith(row);
   expect(within(preview).queryByRole('button', { name: 'Join community' })).not.toBeInTheDocument();
+  const select = vi.fn();
+  rerender(
+    <MemoryRouter>
+      <CommunityMap
+        {...props}
+        isJoined={() => false}
+        selectedCommunityId={null}
+        onSelectCommunity={select}
+      />
+    </MemoryRouter>,
+  );
+  expect(
+    screen.queryByRole('region', { name: 'Community preview: DEMO · HSR circle' }),
+  ).not.toBeInTheDocument();
+  rerender(
+    <MemoryRouter>
+      <CommunityMap
+        {...props}
+        isJoined={() => false}
+        selectedCommunityId="demo"
+        onSelectCommunity={select}
+      />
+    </MemoryRouter>,
+  );
+  expect(
+    screen.getByRole('region', { name: 'Community preview: DEMO · HSR circle' }),
+  ).toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: 'Close community preview' }));
+  expect(select).toHaveBeenCalledWith(null);
 });

@@ -149,7 +149,7 @@ export default function ReportDetailPage() {
         </p>
       )}
       <div className={styles.reportTabs} role="tablist" aria-label="Report sections">
-        {(['overview', 'evidence', 'implementation'] as const).map((section) => (
+        {(['overview'] as const).map((section) => (
           <button
             key={section}
             type="button"

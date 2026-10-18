@@ -4,7 +4,7 @@ import { ActionMenu } from '../../components/ActionMenu/ActionMenu';
 import { Badge } from '../../components/Badge/Badge';
 import { Icon } from '../../components/Icon/Icon';
 import type { ReportsQuery } from '../../graphql/generated/graphql';
-import { AreaExtentTile } from './AreaExtentTile';
+import { ReportMapPreview } from './ReportMapPreview';
 import type { BoundingBox } from './extentGeometry';
 import { COMMUNITY_TYPE_LABEL, formatDate, formatHomes, formatPlace } from './reportLabels';
 import styles from './Workspace.module.scss';
@@ -38,12 +38,16 @@ export function ReportCard({ report, onArchive }: ReportCardProps) {
     <li className={styles.card}>
       <div className={styles.media}>
         {area ? (
-          <AreaExtentTile
+          <ReportMapPreview
             name={area.name}
-            centroidLatitude={Number(area.centroidLat)}
-            centroidLongitude={Number(area.centroidLon)}
+            latitude={Number(area.centroidLat)}
+            longitude={Number(area.centroidLon)}
             box={toBox(area.boundaryBox)}
-            radiusChosen={area.extent === 'USER_RADIUS'}
+            radiusMeters={
+              area.extent === 'USER_RADIUS' && area.radiusMeters != null
+                ? Number(area.radiusMeters)
+                : null
+            }
           />
         ) : (
           <div className={styles.placeholder}>

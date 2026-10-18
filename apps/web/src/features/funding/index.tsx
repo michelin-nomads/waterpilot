@@ -25,6 +25,7 @@ import { usePlanningSession } from '../../session/sessionContext';
 import type { SessionState } from '../../session/sessionState';
 import { PageHeader } from '../../shell/PageHeader';
 import styles from './Matches.module.scss';
+import { Catalogue } from './Catalogue';
 
 const list = (text: string) =>
   text
@@ -102,7 +103,15 @@ function MatchCard({ match, reportId }: { match: FundingMatchFieldsFragment; rep
   );
 }
 
-function FundingWorkspace({ session, reportId }: { session: SessionState; reportId?: string }) {
+function FundingWorkspace({
+  session,
+  reportId,
+  chosenScheme,
+}: {
+  session: SessionState;
+  reportId?: string;
+  chosenScheme: string;
+}) {
   const [applicant, setApplicant] = useState('');
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState(session.goal?.budget?.currency ?? '');
@@ -110,7 +119,7 @@ function FundingWorkspace({ session, reportId }: { session: SessionState; report
   const [information, setInformation] = useState('');
   const [ranking, setRanking] = useState(false);
   const [queryText, setQueryText] = useState('');
-  const [schemeSearch, setSchemeSearch] = useState('');
+  const [schemeSearch, setSchemeSearch] = useState(chosenScheme);
   const [error, setError] = useState('');
   const [results, setResults] = useState<FundingMatchFieldsFragment[] | null>(null);
   const [after, setAfter] = useState<string | null>(null);
@@ -427,28 +436,61 @@ export default function FundingPage() {
   const [params] = useSearchParams();
   const reportId = params.get('reportId') ?? undefined;
   const session = state.server;
+  const [showEligibility, setShowEligibility] = useState(false);
+  const [chosenScheme, setChosenScheme] = useState('');
   return (
     <div>
       <PageHeader
-        title="Funding opportunities"
-        subtitle="Explore funding for your selected plan."
+        title="Find funding opportunities"
+        subtitle="Explore relevant funding options for water improvements in your community."
       />
-      {!session?.selectedPlanOptionId ? (
-        <EmptyState
-          title="Choose a plan before matching funding"
-          actions={<ButtonLink to="/plans">Compare plans</ButtonLink>}
-        >
-          Funding checks use your saved location and selected plan.
-        </EmptyState>
-      ) : inputsPending ? (
-        <Notice kind="stale">Save planning changes before viewing authoritative matches.</Notice>
-      ) : (
-        <FundingWorkspace
-          key={`${session.id}:${session.inputsRevision}:${session.selectedPlanOptionId}`}
-          session={session}
-          reportId={reportId}
-        />
-      )}
+      <details className={styles.about}>
+        <summary>About funding</summary>
+        <p>
+          Catalogue records are curated, not guaranteed awards. Synthetic schemes are demonstrations
+          only. Eligibility uses your location, plan and declared information; relevance cannot
+          override it.
+        </p>
+      </details>
+      <Catalogue
+        onChoose={
+          session?.selectedPlanOptionId
+            ? (name) => {
+                setChosenScheme(name);
+                setShowEligibility(true);
+                requestAnimationFrame(() =>
+                  document
+                    .getElementById('funding-eligibility')
+                    ?.scrollIntoView({ behavior: 'instant', block: 'start' }),
+                );
+              }
+            : undefined
+        }
+      />
+      <div id="funding-eligibility" className={styles.eligibility}>
+        {session?.selectedPlanOptionId && (
+          <Button variant="secondary" onClick={() => setShowEligibility(!showEligibility)}>
+            {showEligibility ? 'Hide eligibility check' : 'Check eligibility for my plan'}
+          </Button>
+        )}
+        {!session?.selectedPlanOptionId ? (
+          <EmptyState
+            title="Choose a plan before matching funding"
+            actions={<ButtonLink to="/plans">Compare plans</ButtonLink>}
+          >
+            Funding checks use your saved location and selected plan.
+          </EmptyState>
+        ) : !showEligibility ? null : inputsPending ? (
+          <Notice kind="stale">Save planning changes before viewing authoritative matches.</Notice>
+        ) : (
+          <FundingWorkspace
+            key={`${session.id}:${session.inputsRevision}:${session.selectedPlanOptionId}:${chosenScheme}`}
+            session={session}
+            reportId={reportId}
+            chosenScheme={chosenScheme}
+          />
+        )}
+      </div>
     </div>
   );
 }

@@ -962,6 +962,14 @@ export type MatchFundingMutationVariables = Exact<{
 
 export type MatchFundingMutation = { matchFunding: { matches: Array<{ id: string, version: number, sessionId: string, planOptionId: string, metCount: number, notMetCount: number, needsCheckCount: number, window: WindowStatus, status: FundingMatchStatus, rulesVersion: string, eligibility: EligibilityStatus, relevanceOrder: number | null, rankingStatus: string, rankingReason: string, eligibilityEvidence: Array<{ criterionId: string, status: CriterionStatus, reason: string }>, results: Array<{ criterionId: string, status: CriterionStatus, reason: string }>, scheme: { id: string, name: string, funder: string, summary: string, currency: string, opensOn: string | null, closesOn: string | null, sourceUrl: string, lastVerifiedAt: string, deadlineAt: string | null, deadlineTimezone: string | null, sourceHash: string | null, status: CatalogueStatus, officialSource: boolean, geography: Array<string>, applicantCategories: Array<string>, interventions: Array<string>, amountRules: string | null, evidence: EvidenceQuality, requiredDocuments: Array<string>, maxAmount: { minorUnits: string, currency: string, exponent: number } | null, criteria: Array<{ id: string, text: string, machineCheckable: boolean }> } }> | null, error: { code: ErrorCode, message: string, currentVersion: number | null, requestId: string, fieldErrors: Array<{ field: string, message: string }> } | null } };
 
+export type FundingCatalogueQueryVariables = Exact<{
+  first?: number | null | undefined;
+  after?: string | null | undefined;
+}>;
+
+
+export type FundingCatalogueQuery = { fundingSchemes: { nodes: Array<{ id: string, name: string, funder: string, summary: string, evidence: EvidenceQuality, status: CatalogueStatus, officialSource: boolean, sourceUrl: string, lastVerifiedAt: string, amountRules: string | null, interventions: Array<string>, maxAmount: { minorUnits: string, currency: string, exponent: number } | null }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
 export type GoalAssessmentFieldsFragment = { outcome: GoalOutcome, summary: string, nextSteps: Array<string>, catalogueVersion: string, baselineId: string | null, target: { outcome: GoalOutcome, message: string, metric: string | null, unit: Unit | null, baseline: string | null, targetLevel: string | null, caveats: Array<string> }, constraints: Array<{ code: string, message: string, outcome: GoalOutcome | null }>, conflicts: Array<{ code: string, message: string, outcome: GoalOutcome | null }>, interventions: Array<{ interventionId: string, name: string, family: InterventionFamily, relevant: boolean, outcome: GoalOutcome, benefit: string, preferred: boolean, site: { outcome: GoalOutcome, message: string }, cost: { outcome: GoalOutcome, message: string } | null, time: { outcome: GoalOutcome, message: string } | null }> };
 
 export type InterventionCatalogueQueryVariables = Exact<{ [key: string]: never; }>;
@@ -3522,6 +3530,39 @@ fragment FundingMatchFields on FundingMatch {
     }
   }
 }`) as unknown as TypedDocumentString<MatchFundingMutation, MatchFundingMutationVariables>;
+export const FundingCatalogueDocument = new TypedDocumentString(`
+    query FundingCatalogue($first: Int, $after: String) {
+  fundingSchemes(first: $first, after: $after) {
+    nodes {
+      id
+      name
+      funder
+      summary
+      evidence
+      status
+      officialSource
+      sourceUrl
+      lastVerifiedAt
+      amountRules
+      interventions
+      maxAmount {
+        ...MoneyFields
+      }
+    }
+    pageInfo {
+      ...PageInfoFields
+    }
+  }
+}
+    fragment MoneyFields on Money {
+  minorUnits
+  currency
+  exponent
+}
+fragment PageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`) as unknown as TypedDocumentString<FundingCatalogueQuery, FundingCatalogueQueryVariables>;
 export const InterventionCatalogueDocument = new TypedDocumentString(`
     query InterventionCatalogue {
   interventionCatalogue {

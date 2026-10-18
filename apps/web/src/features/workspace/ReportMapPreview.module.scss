@@ -1,0 +1,22 @@
+.preview {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--wp-radius-md);
+  aspect-ratio: 160 / 100;
+}
+
+.host,
+.canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.fallback {
+  position: absolute;
+  bottom: var(--wp-space-2);
+  left: var(--wp-space-2);
+  padding: var(--wp-space-1) var(--wp-space-2);
+  background: var(--wp-color-surface);
+  color: var(--wp-color-text-muted);
+  font-size: var(--wp-text-xs);
+}

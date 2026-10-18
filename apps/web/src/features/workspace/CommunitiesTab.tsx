@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ButtonLink } from '../../components/Button/Button';
 import { Select } from '../../components/Field/Field';
 import { LoadingRegion, Skeleton } from '../../components/Skeleton/Skeleton';
@@ -31,6 +32,7 @@ function emptyText(search: string, view: DirectoryView): string {
 /** Communities in the same layout as Reports: toolbar, cards, and clear empty states. */
 export default function CommunitiesTab() {
   const directory = useCommunityDirectory();
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const places = usePlaces();
   const { view, rows } = directory;
 
@@ -72,6 +74,8 @@ export default function CommunitiesTab() {
           <CommunityCard
             key={community.id}
             community={community}
+            selected={selectedId === community.id}
+            onSelect={() => setSelectedId(community.id)}
             joined={directory.isJoined(community)}
             distanceMeters={directory.distanceMeters(community.id)}
             joining={directory.joining}
@@ -154,6 +158,8 @@ export default function CommunitiesTab() {
         </div>
         <CommunityMap
           rows={rows}
+          selectedCommunityId={selectedId}
+          onSelectCommunity={setSelectedId}
           centre={view === 'nearby' ? directory.centre : null}
           radius={directory.radius}
           isJoined={directory.isJoined}
