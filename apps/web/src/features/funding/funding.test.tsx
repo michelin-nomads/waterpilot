@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import rawSchemes from '../../../public/data/funding_schemes.json';
 import { exportProposalPDF, exportProposalWord, type ProposalExportData } from './proposalExport';
 
 const sampleData: ProposalExportData = {
@@ -10,7 +11,7 @@ const sampleData: ProposalExportData = {
   locationName: 'Parkway Homes, Bengaluru',
   schemeName: 'BWSSB Rainwater Harvesting & Groundwater Recharge Incentive',
   funderName: 'Bangalore Water Supply and Sewerage Board',
-  schemeSourceUrl: 'https://bwssb.karnataka.gov.in',
+  schemeSourceUrl: 'https://bwssb.karnataka.gov.in/',
   planName: 'Balanced plan',
   planMeasures: ['Rooftop rainwater harvesting', 'Silt filtration', 'Recharge wells'],
   planDaysText: '45–60 days',
@@ -41,5 +42,21 @@ describe('proposalExport', () => {
 
     appendSpy.mockRestore();
     removeSpy.mockRestore();
+  });
+});
+
+describe('public funding schemes registry', () => {
+  it('contains valid and accessible schemes schema with official URLs', () => {
+    expect(Array.isArray(rawSchemes)).toBe(true);
+    expect(rawSchemes.length).toBeGreaterThanOrEqual(4);
+
+    for (const scheme of rawSchemes) {
+      expect(scheme.id).toBeTruthy();
+      expect(scheme.name).toBeTruthy();
+      expect(scheme.funder).toBeTruthy();
+      expect(scheme.sourceUrl).toMatch(/^https:\/\//);
+      expect(scheme.maxAmountNum).toBeGreaterThan(0);
+      expect(Array.isArray(scheme.checks)).toBe(true);
+    }
   });
 });
