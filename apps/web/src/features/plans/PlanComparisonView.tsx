@@ -1,7 +1,7 @@
 import { useId, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import { Accordion, Badge, Button, Drawer, Notice } from '../../components';
+import { Accordion, Badge, Button, ButtonLink, Drawer, Icon, Notice } from '../../components';
 import type {
   ComparedOptionFieldsFragment,
   PlanComparisonQuery,
@@ -11,6 +11,7 @@ import {
   formatLitres,
   formatMetric,
   formatMoneyRange,
+  formatOutcomeRange,
   formatRange,
   ORIGIN_LABEL,
   STATUS,
@@ -18,7 +19,8 @@ import {
 } from './plansFormat';
 import { EconomicsCard } from './EconomicsCard';
 import styles from './Plans.module.scss';
-import { ImpactContextPanel, OptionImpact } from './WiderImpactView';
+import { ComparisonSummaryPanels } from './ComparisonSummaryPanels';
+import { OptionImpact } from './WiderImpactView';
 
 export type Comparison = NonNullable<PlanComparisonQuery['planningSession']>['planComparison'];
 
@@ -55,149 +57,195 @@ function OptionCard({
       data-selected={selected || undefined}
     >
       <div className={styles.optionHead}>
-        <h3 id={headingId} className={styles.optionTitle}>
-          <span className={styles.rank}>Plan {option.rank}</span> {option.name}
-        </h3>
-        {selected && (
-          <Badge tone="accent" icon="check">
-            Chosen
-          </Badge>
-        )}
+        <span className={styles.planNumber}>Plan {option.rank}</span>
+        <span className={styles.tags}>
+          {option.rank === 1 && comparison.ranking.trim() && (
+            <Badge tone="accent">Ranked first</Badge>
+          )}
+          {selected && (
+            <Badge tone="accent" icon="check">
+              Chosen
+            </Badge>
+          )}
+        </span>
       </div>
-      <dl className={styles.facts}>
+      <div className={styles.planIdentity}>
+        <span className={styles.planIcon}>
+          <Icon name={option.measures.length > 1 ? 'layers' : 'droplet'} size="lg" />
+        </span>
+        <h3 id={headingId} className={styles.optionTitle}>
+          {option.name}
+        </h3>
+      </div>
+      <p className={styles.planMeasures}>{option.measures.map((m) => m.name).join(' · ')}</p>
+      <dl className={styles.optionFacts}>
         <div>
-          <dt>Result with your estimates</dt>
-          <dd>{formatRange(option.pessimistic, option.optimistic, unit)}</dd>
-        </div>
-        <div>
-          <dt>Past the target, at your low estimates</dt>
-          <dd>{formatMetric(option.margin, unit)}</dd>
-        </div>
-        <div>
-          <dt>Cost (your estimates)</dt>
+          <dt>
+            <Icon name="wallet" size="sm" />
+            Estimated cost
+          </dt>
           <dd>{formatMoneyRange(option.cost)}</dd>
         </div>
         <div>
-          <dt>Build time (your estimates)</dt>
+          <dt>
+            <Icon name="calendar" size="sm" />
+            Implementation
+          </dt>
           <dd>{formatDays(option.buildDays)}</dd>
         </div>
         <div>
-          <dt>First benefit</dt>
+          <dt>
+            <Icon name="sun" size="sm" />
+            First benefit
+          </dt>
           <dd>{TIMING_LABEL[option.firstBenefit]}</dd>
         </div>
-        <div>
-          <dt>Water saved or added</dt>
-          <dd>
-            {option.waterLow && option.waterHigh
-              ? formatRange(option.waterLow, option.waterHigh, 'LITRES_PER_DAY')
-              : 'Not known'}
-          </dd>
+        <div className={styles.outcomeRow}>
+          <dt>
+            <Icon name="chart" size="sm" />
+            {comparison.metric === 'SHORTAGE_DAYS'
+              ? 'Shortage days'
+              : comparison.metric === 'TANKER_DEPENDENCE'
+                ? 'Tanker dependence'
+                : 'Projected outcome'}
+          </dt>
+          <dd>{formatOutcomeRange(option.pessimistic, option.optimistic, unit)}</dd>
         </div>
       </dl>
-      <div className={styles.block}>
-        <h4 className={styles.blockTitle}>Measures</h4>
-        <ul className={styles.list}>
-          {option.measures.map((m) => (
-            <li key={m.interventionId}>
-              <strong>{m.name}</strong>:{' '}
-              {m.waterLow && m.waterHigh
-                ? formatRange(m.waterLow, m.waterHigh, 'LITRES_PER_DAY')
-                : 'effect not known'}
-              {m.cost ? `, ${formatMoneyRange(m.cost)}` : ''}
-              {m.recurring ? `, ${formatMoneyRange(m.recurring)}/yr to run` : ''}
-              {m.buildDays ? `, ${formatDays(m.buildDays)}` : ''}
-              {m.effects.length > 0 && (
-                <ul className={styles.list} aria-label={`What ${m.name} is computed from`}>
-                  {m.effects.map((e) => (
-                    <li key={e.key} data-effect-origin={e.origin}>
-                      {e.label}: {formatRange(e.low, e.high, e.unit)} ({ORIGIN_LABEL[e.origin]})
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </li>
-          ))}
-        </ul>
-        <p className={styles.muted}>
-          Each line counts only what the measures before it leave, so the lines add up without
-          double counting. Effect values are your estimates unless marked otherwise; the catalogue
-          supplies none.
-        </p>
-      </div>
-      {option.economics && <EconomicsCard economics={option.economics} />}
-      <OptionImpact impact={option.impact} />
-      <Accordion
-        items={[
-          {
-            id: `${option.id}-why`,
-            title: 'Why this plan, tradeoffs and uncertainty',
-            content: (
-              <div className={styles.stack}>
-                <p className={styles.text}>{option.why}</p>
-                {option.tradeoffs.length > 0 && (
-                  <ul className={styles.list}>
-                    {option.tradeoffs.map((t) => (
-                      <li key={t}>{t}</li>
-                    ))}
-                  </ul>
-                )}
-                <ul className={styles.list}>
-                  {option.uncertainty.map((u) => (
-                    <li key={u}>{u}</li>
-                  ))}
-                </ul>
-                {option.uncountedHigh && (
-                  <p className={styles.muted}>
-                    Not counted: up to {formatLitres(option.uncountedHigh)} beyond the tanker
-                    deliveries it would replace.
-                  </p>
-                )}
-              </div>
-            ),
-          },
-          {
-            id: `${option.id}-sensitivity`,
-            title: 'Sensitivity and stress tests',
-            content: (
-              <div className={styles.stack}>
-                {option.sensitivity.length > 0 ? (
-                  <ul className={styles.list}>
-                    {option.sensitivity.map((s) => (
-                      <li key={`${s.interventionId}.${s.key}`}>
-                        {s.label} ({s.interventionId.replace(/_/g, ' ')}): moves the result by{' '}
-                        {formatMetric(s.swing, unit)} from low to high.
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className={styles.muted}>Your estimates for this plan have no range.</p>
-                )}
-                <table className={styles.table}>
-                  <caption className={styles.caption}>At your low estimates</caption>
-                  <thead>
-                    <tr>
-                      <th scope="col">Stress</th>
-                      <th scope="col">Result</th>
-                      <th scope="col">Meets the target</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {option.stress.map((s) => (
-                      <tr key={s.key}>
-                        <th scope="row">{s.label}</th>
-                        <td>{s.value ? formatMetric(s.value, unit) : 'Does not apply'}</td>
-                        <td>
-                          {s.meetsTarget === null ? 'Does not apply' : s.meetsTarget ? 'Yes' : 'No'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ),
-          },
-        ]}
-      />
+      {option.impact.falseResilience.map((finding) => (
+        <Notice key={finding.id} kind="caution" title="Possible false resilience" announce={false}>
+          <p className={styles.text}>{finding.statement}</p>
+          <p className={styles.muted}>{finding.uncertainty}</p>
+          <p className={styles.muted}>
+            Based on: {finding.citations.map((c) => c.label).join('; ')}
+          </p>
+        </Notice>
+      ))}
+      <details className={styles.quickDetails}>
+        <summary>
+          Measures, impact & assumptions <Icon name="chevron-down" size="sm" />
+        </summary>
+        <div className={styles.evidenceContent}>
+          <dl className={styles.facts}>
+            <div>
+              <dt>Past the target, at your low estimates</dt>
+              <dd>{formatMetric(option.margin, unit)}</dd>
+            </div>
+            <div>
+              <dt>Water saved or added</dt>
+              <dd>{formatRange(option.waterLow, option.waterHigh, 'LITRES_PER_DAY')}</dd>
+            </div>
+          </dl>
+          <div className={styles.block}>
+            <h4 className={styles.blockTitle}>Measures</h4>
+            <ul className={styles.list}>
+              {option.measures.map((m) => (
+                <li key={m.interventionId}>
+                  <strong>{m.name}</strong>:{' '}
+                  {m.waterLow && m.waterHigh
+                    ? formatRange(m.waterLow, m.waterHigh, 'LITRES_PER_DAY')
+                    : 'effect not known'}
+                  {m.cost ? `, ${formatMoneyRange(m.cost)}` : ''}
+                  {m.recurring ? `, ${formatMoneyRange(m.recurring)}/yr to run` : ''}
+                  {m.buildDays ? `, ${formatDays(m.buildDays)}` : ''}
+                  {m.effects.length > 0 && (
+                    <ul className={styles.list} aria-label={`What ${m.name} is computed from`}>
+                      {m.effects.map((e) => (
+                        <li key={e.key} data-effect-origin={e.origin}>
+                          {e.label}: {formatRange(e.low, e.high, e.unit)} ({ORIGIN_LABEL[e.origin]})
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              ))}
+            </ul>
+            <p className={styles.muted}>
+              Each line counts only what the measures before it leave, so the lines add up without
+              double counting. Effect values are your estimates unless marked otherwise; the
+              catalogue supplies none.
+            </p>
+          </div>
+          {option.economics && <EconomicsCard economics={option.economics} />}
+          <OptionImpact impact={option.impact} showWarnings={false} />
+          <Accordion
+            items={[
+              {
+                id: `${option.id}-why`,
+                title: 'Why this plan, tradeoffs and uncertainty',
+                content: (
+                  <div className={styles.stack}>
+                    <p className={styles.text}>{option.why}</p>
+                    {option.tradeoffs.length > 0 && (
+                      <ul className={styles.list}>
+                        {option.tradeoffs.map((t) => (
+                          <li key={t}>{t}</li>
+                        ))}
+                      </ul>
+                    )}
+                    <ul className={styles.list}>
+                      {option.uncertainty.map((u) => (
+                        <li key={u}>{u}</li>
+                      ))}
+                    </ul>
+                    {option.uncountedHigh && (
+                      <p className={styles.muted}>
+                        Not counted: up to {formatLitres(option.uncountedHigh)} beyond the tanker
+                        deliveries it would replace.
+                      </p>
+                    )}
+                  </div>
+                ),
+              },
+              {
+                id: `${option.id}-sensitivity`,
+                title: 'Sensitivity and stress tests',
+                content: (
+                  <div className={styles.stack}>
+                    {option.sensitivity.length > 0 ? (
+                      <ul className={styles.list}>
+                        {option.sensitivity.map((s) => (
+                          <li key={`${s.interventionId}.${s.key}`}>
+                            {s.label} ({s.interventionId.replace(/_/g, ' ')}): moves the result by{' '}
+                            {formatMetric(s.swing, unit)} from low to high.
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className={styles.muted}>Your estimates for this plan have no range.</p>
+                    )}
+                    <table className={styles.table}>
+                      <caption className={styles.caption}>At your low estimates</caption>
+                      <thead>
+                        <tr>
+                          <th scope="col">Stress</th>
+                          <th scope="col">Result</th>
+                          <th scope="col">Meets the target</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {option.stress.map((s) => (
+                          <tr key={s.key}>
+                            <th scope="row">{s.label}</th>
+                            <td>{s.value ? formatMetric(s.value, unit) : 'Does not apply'}</td>
+                            <td>
+                              {s.meetsTarget === null
+                                ? 'Does not apply'
+                                : s.meetsTarget
+                                  ? 'Yes'
+                                  : 'No'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ),
+              },
+            ]}
+          />
+        </div>
+      </details>
       <div className={styles.actions}>
         <Button variant="secondary" onClick={onDetails}>
           View plan details
@@ -232,7 +280,7 @@ function PlanDetails({
       <dl className={styles.detailKpis} aria-label="Plan outcomes">
         <div>
           <dt>Outcome with your estimates</dt>
-          <dd>{formatRange(option.pessimistic, option.optimistic, unit)}</dd>
+          <dd>{formatOutcomeRange(option.pessimistic, option.optimistic, unit)}</dd>
         </div>
         <div>
           <dt>Cost</dt>
@@ -297,9 +345,11 @@ function PlanDetails({
         </h4>
         <p className={styles.text}>{option.why}</p>
         <ul className={styles.list}>
-          {[...option.tradeoffs, ...option.uncertainty].map((item, index) => (
-            <li key={`${index}-${item}`}>{item}</li>
-          ))}
+          {[...comparison.assumptions, ...option.tradeoffs, ...option.uncertainty].map(
+            (item, index) => (
+              <li key={`${index}-${item}`}>{item}</li>
+            ),
+          )}
           {option.uncountedHigh && (
             <li>
               Not counted: up to {formatLitres(option.uncountedHigh)} beyond replaced tanker
@@ -310,6 +360,17 @@ function PlanDetails({
         {comparison.ranking && (
           <p className={styles.muted}>Current ordering: {comparison.ranking}</p>
         )}
+        {comparison.excluded.length > 0 && (
+          <div className={styles.block}>
+            <h4 className={styles.blockTitle}>Measures not included</h4>
+            <ul className={styles.list}>
+              {comparison.excluded.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        <p className={styles.muted}>{comparison.summary}</p>
       </section>
       <OptionImpact impact={option.impact} />
     </div>
@@ -327,11 +388,32 @@ export function PlanComparisonView({ comparison, selectedId, busy, onChoose }: P
     comparison.scenarioValue &&
     comparison.baselineValue.exact !== comparison.scenarioValue.exact;
   return (
-    <div className={styles.stack} data-status={comparison.status}>
-      <div className={styles.head}>
-        <Badge tone={status.tone}>{status.label}</Badge>
-        <p className={styles.summary}>{comparison.summary}</p>
-      </div>
+    <div className={`${styles.stack} ${styles.comparison}`} data-status={comparison.status}>
+      {comparison.status === 'NOT_SUPPORTED' ? (
+        <Notice
+          kind="info"
+          title="Plan comparison is not available for this goal yet"
+          announce={false}
+          action={
+            <ButtonLink to="/goals" variant="secondary">
+              Review your goal
+            </ButtonLink>
+          }
+        >
+          <p>{comparison.summary}</p>
+          <p>
+            You can return to your goal to explore another water priority. Plan options will appear
+            here when a comparison is available for your selected goal and area.
+          </p>
+        </Notice>
+      ) : (
+        comparison.status !== 'OPTIONS' && (
+          <div className={styles.head}>
+            <Badge tone={status.tone}>{status.label}</Badge>
+            <p className={styles.summary}>{comparison.summary}</p>
+          </div>
+        )
+      )}
       {comparison.metric && (
         <dl className={styles.facts}>
           <div>
@@ -396,54 +478,8 @@ export function PlanComparisonView({ comparison, selectedId, busy, onChoose }: P
         </ol>
       )}
       {comparison.options.length > 0 && (
-        <section className={styles.block} aria-labelledby="impact-context">
-          <h3 id="impact-context" className={styles.blockTitle}>
-            What the wider effects rest on
-          </h3>
-          <ImpactContextPanel
-            context={comparison.impactContext}
-            engineVersion={comparison.impactEngineVersion}
-          />
-        </section>
+        <ComparisonSummaryPanels comparison={comparison} selectedId={selectedId} />
       )}
-      <Accordion
-        items={[
-          {
-            id: 'assumptions',
-            title: 'Assumptions, ranking and versions',
-            content: (
-              <div className={styles.stack}>
-                <ul className={styles.list}>
-                  {comparison.assumptions.map((a) => (
-                    <li key={a}>{a}</li>
-                  ))}
-                </ul>
-                {comparison.ranking && <p className={styles.text}>Ranking: {comparison.ranking}</p>}
-                <p className={styles.muted}>
-                  Up to {comparison.maxOptions} plans are shown, never more than pass. Stress tests:{' '}
-                  {comparison.stressTests.join('; ')}.
-                </p>
-                {comparison.excluded.length > 0 && (
-                  <>
-                    <h4 className={styles.blockTitle}>Not considered</h4>
-                    <ul className={styles.list}>
-                      {comparison.excluded.map((e) => (
-                        <li key={e}>{e}</li>
-                      ))}
-                    </ul>
-                  </>
-                )}
-                <p className={styles.muted}>
-                  Option engine {comparison.engineVersion}, scenario engine{' '}
-                  {comparison.scenarioEngineVersion}, catalogue {comparison.catalogueVersion}.
-                  {r.evaluated > 0 && ` ${r.evaluated} combinations checked.`}
-                  {r.truncated && ' The combination limit was reached.'}
-                </p>
-              </div>
-            ),
-          },
-        ]}
-      />
       <Drawer
         open={detailOption !== null}
         onClose={() => setDetailOptionId(null)}

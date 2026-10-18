@@ -586,6 +586,31 @@ describe('planning modes', () => {
     expect(sessions.calls.filter((call) => call.startsWith('create'))).toEqual([]);
   });
 
+  it('collapses and restores the agent without remounting the workspace or changing mode', async () => {
+    setMediaQuery(DESKTOP_QUERY, true);
+    await renderPlan('/area', { mode: 'AGENT' });
+    const workspace = screen.getByRole('region', { name: 'Workspace' });
+    const heading = screen.getByRole('heading', { name: 'WaterPilot Agent' });
+    const handle = screen.getByRole('separator', { name: 'Resize conversation pane' });
+    fireEvent.keyDown(handle, { key: 'ArrowRight' });
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse WaterPilot Agent' }));
+    expect(heading.closest('[inert]')).toHaveAttribute('aria-hidden', 'true');
+    expect(
+      screen.queryByRole('separator', { name: 'Resize conversation pane' }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Workspace' })).toBe(workspace);
+    fireEvent.click(screen.getByRole('button', { name: 'Expand WaterPilot Agent' }));
+    expect(screen.getByRole('heading', { name: 'WaterPilot Agent' })).toBe(heading);
+    expect(heading).toBeVisible();
+    expect(screen.getByRole('separator', { name: 'Resize conversation pane' })).toHaveAttribute(
+      'aria-valuenow',
+      String(AGENT_WIDTH.default + 16),
+    );
+    expect(
+      screen.getByRole('radio', { name: /WaterPilot Agent: Plan with AI assistance/ }),
+    ).toBeChecked();
+  });
+
   it('desktop conversation pane resizes from the keyboard within bounds and persists', async () => {
     setMediaQuery(DESKTOP_QUERY, true);
     await renderPlan('/area', { mode: 'AGENT' });

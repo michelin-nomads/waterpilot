@@ -293,3 +293,308 @@
   }
 }
 
+// Keep the comparison surface open; details belong in disclosures and the drawer.
+.comparisonPanel {
+  display: grid;
+  gap: var(--wp-space-5);
+  min-width: 0;
+  > .title {
+    font-size: var(--wp-text-lg);
+  }
+}
+.comparisonPanel > .locationContext {
+  border: 0;
+  padding: 0 0 var(--wp-space-4);
+  border-radius: 0;
+  border-bottom: 1px solid var(--wp-color-border);
+  background: transparent;
+}
+.options {
+  gap: var(--wp-space-5);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+}
+.option {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-4);
+  background: var(--wp-color-surface);
+  &[data-selected='true'] {
+    background: var(--wp-color-surface);
+    box-shadow: 0 0 0 2px var(--wp-color-accent-soft);
+  }
+}
+.planNumber {
+  color: var(--wp-color-text-muted);
+  font-size: var(--wp-text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.planIdentity {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-3);
+  min-height: 3.5rem;
+}
+.planIdentity .optionTitle {
+  font-size: var(--wp-text-xl);
+  line-height: 1.3;
+  letter-spacing: -0.025em;
+  overflow-wrap: anywhere;
+}
+.planIcon,
+.supportIcon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--wp-radius-md);
+  color: var(--wp-color-accent-strong);
+  background: var(--wp-color-accent-soft);
+}
+.planMeasures {
+  margin: 0;
+  min-height: 2.5rem;
+  font-size: var(--wp-text-sm);
+  color: var(--wp-color-text-muted);
+}
+.optionFacts {
+  margin: 0;
+  display: grid;
+}
+.optionFacts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--wp-space-3);
+  padding: var(--wp-space-3) 0;
+  border-top: 1px solid var(--wp-color-border);
+}
+.optionFacts dt {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+  color: var(--wp-color-text-muted);
+  font-size: var(--wp-text-sm);
+}
+.optionFacts dt svg {
+  flex: none;
+  color: var(--wp-color-accent-strong);
+}
+.optionFacts dd {
+  margin: 0;
+  max-width: 55%;
+  text-align: right;
+  font-size: var(--wp-text-sm);
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+.optionFacts .outcomeRow dd {
+  color: var(--wp-color-accent-strong);
+}
+.quickDetails {
+  min-width: 0;
+}
+.quickDetails summary {
+  @include tap-target;
+  @include focus-visible;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wp-space-2);
+  padding-block: var(--wp-space-2);
+  font-weight: 600;
+  font-size: var(--wp-text-sm);
+  color: var(--wp-color-accent-strong);
+  cursor: pointer;
+}
+.quickDetails[open] > summary {
+  margin-bottom: var(--wp-space-3);
+}
+.evidenceContent {
+  display: grid;
+  gap: var(--wp-space-5);
+  padding-block: var(--wp-space-3);
+}
+.option > .actions {
+  flex-wrap: wrap;
+  gap: var(--wp-space-2);
+  padding-top: var(--wp-space-2);
+}
+.option > .actions > button {
+  flex: 1 1 auto;
+}
+.summaryPanels {
+  display: grid;
+  gap: var(--wp-space-5);
+  margin-top: var(--wp-space-4);
+  @include desktop-up {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  }
+}
+.summaryPanel {
+  @include card;
+  display: grid;
+  align-content: start;
+  gap: var(--wp-space-4);
+  min-width: 0;
+  box-shadow: none;
+}
+.supportHead {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-3);
+}
+.supportHead h3 {
+  margin: 0 0 var(--wp-space-1);
+  font-size: var(--wp-text-lg);
+}
+.supportIcon {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+.chartContext {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-2) var(--wp-space-5);
+  font-size: var(--wp-text-sm);
+  color: var(--wp-color-text-muted);
+}
+.rangeChart {
+  display: grid;
+  gap: var(--wp-space-5);
+  padding: var(--wp-space-3) 0;
+  margin: 0;
+  list-style: none;
+}
+.rangeLabel {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--wp-space-3);
+  margin-bottom: var(--wp-space-3);
+  font-size: var(--wp-text-sm);
+}
+.rangeLabel strong {
+  font-weight: 600;
+}
+.rangeTrack {
+  position: relative;
+  height: 0.75rem;
+  border-radius: var(--wp-radius-pill);
+  background: var(--wp-color-surface-sunken);
+}
+.rangeBand {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: var(--wp-radius-pill);
+  background: var(--wp-color-accent);
+  max-width: 100%;
+}
+.rangeChart [data-chosen='true'] .rangeLabel {
+  color: var(--wp-color-accent-strong);
+}
+.targetMarker {
+  position: absolute;
+  width: 2px;
+  top: -0.25rem;
+  bottom: -0.25rem;
+  background: var(--wp-color-text);
+}
+.chartNote {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--wp-space-2);
+  margin: 0;
+  font-size: var(--wp-text-xs);
+  color: var(--wp-color-text-muted);
+}
+.chartNote span {
+  width: 1rem;
+  height: 0.5rem;
+  border-radius: var(--wp-radius-pill);
+  background: var(--wp-color-accent);
+}
+.chartNote i {
+  height: 1rem;
+  width: 2px;
+  background: var(--wp-color-text);
+  margin-left: var(--wp-space-3);
+}
+.impactPreview {
+  display: grid;
+  gap: var(--wp-space-2);
+  padding: var(--wp-space-4);
+  background: var(--wp-color-accent-soft);
+  border-radius: var(--wp-radius-md);
+}
+.impactPreview strong {
+  font-size: var(--wp-text-md);
+  font-weight: 600;
+}
+.nearbySummary {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--wp-space-2);
+  color: var(--wp-color-text-muted);
+  font-size: var(--wp-text-sm);
+}
+.nearbySummary svg {
+  flex: none;
+  margin-top: 0.2rem;
+}
+.nearbySummary p {
+  margin: 0;
+}
+.selectionFooter {
+  @include card;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--wp-space-4);
+}
+.selectionActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--wp-space-4);
+  margin-inline-start: auto;
+}
+.selectionActions > div {
+  display: grid;
+  gap: var(--wp-space-1);
+  text-align: end;
+}
+.previewLabel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--wp-space-3);
+  color: var(--wp-color-text-muted);
+  font-size: var(--wp-text-sm);
+}
+.optionHead {
+  min-height: 1.75rem;
+}
+.comparison > .head {
+  justify-content: flex-start;
+  gap: var(--wp-space-3);
+}
+.comparison > .head .summary {
+  font-size: var(--wp-text-sm);
+  max-width: 72ch;
+}
+.comparison > .facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-3) var(--wp-space-6);
+  padding: var(--wp-space-2) 0;
+  > div {
+    display: flex;
+    align-items: baseline;
+    gap: var(--wp-space-2);
+  }
+}

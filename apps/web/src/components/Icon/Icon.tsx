@@ -4,6 +4,8 @@ import styles from './Icon.module.scss';
 const PATHS = {
   info: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Zm0-6v-5m0-3h.01',
   close: 'M6 6l12 12M18 6 6 18',
+  'chevrons-left': 'm11 6-6 6 6 6m7-12-6 6 6 6',
+  'chevrons-right': 'm6 6 6 6-6 6m7-12 6 6-6 6',
   'chevron-right': 'm9 6 6 6-6 6',
   'chevron-down': 'm6 9 6 6 6-6',
   'arrow-right': 'M5 12h14m-6-6 6 6-6 6',
@@ -55,7 +57,8 @@ const PATHS = {
   clipboard: 'M9 4h6v3H9zM7 5H5v16h14V5h-2M9 12h6m-6 4h4',
   'cloud-rain': 'M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.5 8.2M8 19v2m4-2v2m4-2v2',
   'shield-check': 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Zm-3-10 2 2 4-4',
-  building: 'M3 21h18M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16M9 7h1m4 0h1M9 11h1m4 0h1M9 15h1m4 0h1',
+  building:
+    'M3 21h18M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16M9 7h1m4 0h1M9 11h1m4 0h1M9 15h1m4 0h1',
   groundwater: 'M12 3v9m-3-3 3 3 3-3M2 17q3-3 6 0t6 0 6 0M2 21q3-3 6 0t6 0 6 0',
 } as const;
 

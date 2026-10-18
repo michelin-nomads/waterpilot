@@ -74,6 +74,7 @@ describe('AgentPanel AI status fallback', () => {
     const onUse = vi.fn();
     renderPanel(onUse);
     await panel('DISABLED');
+    expect(screen.getByRole('button', { name: 'Agent status: Not connected' })).toBeInTheDocument();
     expect(screen.getByText(/turned off in this build/i)).toBeInTheDocument();
     // The workspace fallback is always offered.
     fireEvent.click(screen.getByRole('button', { name: /use traditional mode/i }));
@@ -111,6 +112,7 @@ describe('AgentPanel AI status fallback', () => {
       aiStatus({ available: true, reason: null, budgetConfigured: true, requestsRemaining: 42 });
     renderPanel();
     await panel('available');
+    expect(screen.getByRole('button', { name: 'Agent status: Connected' })).toBeInTheDocument();
     expect(screen.getByText(/gemini-2\.5-flash/i)).toBeInTheDocument();
     expect(await screen.findByText(/42 of 100 requests/i)).toBeInTheDocument();
   });

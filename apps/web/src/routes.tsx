@@ -88,6 +88,10 @@ export const routes: RouteObject[] = [
             ? [
                 { path: 'design-system', lazy: lazyPage(() => import('./features/design-system')) },
                 {
+                  path: 'design-system/compare-plans',
+                  lazy: lazyPage(() => import('./features/design-system/ComparePlansPreview')),
+                },
+                {
                   path: 'simulations/sjr-parkway-homes',
                   lazy: lazyPage(() => import('./features/simulation')),
                 },

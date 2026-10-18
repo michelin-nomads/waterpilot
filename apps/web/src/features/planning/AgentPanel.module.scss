@@ -7,15 +7,19 @@
 }
 
 .header {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--wp-space-2);
+  padding-right: 2rem;
+  column-gap: var(--wp-space-2);
+  row-gap: 0.375rem;
   padding-bottom: var(--wp-space-2);
   border-bottom: 1px solid var(--wp-color-border);
 }
 
 .headerTitle {
+  min-width: 0;
+  white-space: nowrap;
   display: flex;
   align-items: center;
   gap: var(--wp-space-2);
@@ -26,19 +30,38 @@
 }
 
 .title {
-  font-size: var(--wp-text-md);
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: calc(var(--wp-text-md) + 2px);
   font-weight: 600;
   color: var(--wp-color-text);
   margin: 0;
 }
 
 .headerBadges {
+  grid-column: 1 / -1;
+  min-width: 0;
+  flex-wrap: wrap;
+  white-space: nowrap;
+  > * {
+    flex-shrink: 0;
+    font-size: 0.6875rem;
+    line-height: 1.35;
+    padding: 0.0625rem 0.4375rem;
+    font-weight: 500;
+  }
   display: flex;
   align-items: center;
   gap: var(--wp-space-2);
 }
 
 .modelTag {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: var(--wp-text-xs);
   font-family: var(--wp-font-mono);
   color: var(--wp-color-text-muted);
@@ -406,7 +429,9 @@
   border: 1px solid var(--wp-color-border);
   border-radius: 24px;
   padding: 4px 6px 4px 14px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 
   &:focus-within {
     border-color: var(--wp-color-accent);
@@ -486,5 +511,48 @@
 
   &:hover {
     opacity: 0.8;
+  }
+}
+
+.collapseButton {
+  position: absolute;
+  top: var(--wp-workspace-inset);
+  right: 0;
+  padding: 0;
+  width: 1.75rem;
+  min-height: 2.25rem;
+  height: 2.25rem;
+  border-right: 0;
+  border-radius: var(--wp-radius-md) 0 0 var(--wp-radius-md);
+  background: var(--wp-color-accent-soft);
+  border-color: color-mix(in srgb, var(--wp-color-accent) 35%, var(--wp-color-surface));
+  &:hover svg {
+    transform: translateX(-2px);
+  }
+  svg {
+    transition: transform 180ms ease;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collapseButton svg {
+    transition: none;
+  }
+}
+
+.statusDot {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--wp-color-text-muted);
+  &[data-status='connected'] {
+    background: var(--wp-color-success);
+  }
+  &[data-status='disconnected'] {
+    background: var(--wp-color-danger);
+  }
+  &[data-status='paused'] {
+    background: var(--wp-color-warning);
   }
 }

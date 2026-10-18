@@ -1,6 +1,8 @@
 import { useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
 import { Navigate, Outlet, useLocation, useOutletContext } from 'react-router-dom';
 
+import { Icon } from '../../components/Icon/Icon';
+import { Button } from '../../components/Button/Button';
 import { ResizeHandle } from '../../components/ResizeHandle/ResizeHandle';
 import { DESKTOP_QUERY, useMediaQuery } from '../../lib/useMediaQuery';
 import { usePlanningSession } from '../../session/sessionContext';
@@ -71,6 +73,8 @@ export default function PlanningLayout() {
   const agentMode = mode === 'agent';
   const tabbed = agentMode && !isDesktop;
   const split = agentMode && isDesktop;
+  const [agentCollapsed, setAgentCollapsed] = useState(false);
+  const collapsed = split && agentCollapsed;
   const [agentWidth, setAgentWidth] = useAgentWidth();
   const maxAgentWidth = useAgentMaxWidth(panesRef, split);
   const paneWidth = Math.min(agentWidth, maxAgentWidth);
@@ -136,30 +140,60 @@ export default function PlanningLayout() {
         </div>
       )}
 
-      <div ref={panesRef} className={styles.panes} data-mode={mode} style={panesStyle}>
+      <div
+        ref={panesRef}
+        className={styles.panes}
+        data-mode={mode}
+        data-agent-collapsed={collapsed}
+        style={panesStyle}
+      >
         <aside
           className={styles.agentPane}
           {...paneProps('conversation')}
           hidden={!agentMode || (tabbed && pane !== 'conversation')}
         >
-          <AgentPanel
-            showScenario={false}
-            onUseTraditional={() => setMode('traditional')}
-            onFocusWorkspace={() => setPane('workspace')}
-          />
+          <div
+            id={`${id}-agent-content`}
+            inert={collapsed}
+            aria-hidden={collapsed || undefined}
+            className={styles.agentContent}
+          >
+            <AgentPanel
+              onCollapse={split ? () => setAgentCollapsed(true) : undefined}
+              showScenario={false}
+              onUseTraditional={() => setMode('traditional')}
+              onFocusWorkspace={() => setPane('workspace')}
+            />
+          </div>
         </aside>
         {split ? (
-          <ResizeHandle
-            value={paneWidth}
-            min={AGENT_WIDTH.min}
-            max={maxAgentWidth}
-            defaultValue={AGENT_WIDTH.default}
-            onChange={setAgentWidth}
-            label="Resize conversation pane"
-            valueText={(px) => `Conversation pane ${px} pixels wide`}
-            controls={panelId('conversation')}
-          />
+          <div className={styles.resizeSlot} hidden={collapsed}>
+            <ResizeHandle
+              value={paneWidth}
+              min={AGENT_WIDTH.min}
+              max={maxAgentWidth}
+              defaultValue={AGENT_WIDTH.default}
+              onChange={setAgentWidth}
+              label="Resize conversation pane"
+              valueText={(px) => `Conversation pane ${px} pixels wide`}
+              controls={panelId('conversation')}
+            />
+          </div>
         ) : null}
+        {collapsed && (
+          <Button
+            variant="secondary"
+            size="sm"
+            className={styles.expandButton}
+            aria-label="Expand WaterPilot Agent"
+            title="Expand WaterPilot Agent"
+            aria-expanded={false}
+            aria-controls={`${id}-agent-content`}
+            onClick={() => setAgentCollapsed(false)}
+          >
+            <Icon name="chevrons-right" size="sm" />
+          </Button>
+        )}
         <section className={styles.workspace} {...paneProps('workspace')}>
           <div className={styles.workspaceNav}>
             <StageNav />

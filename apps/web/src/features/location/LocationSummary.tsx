@@ -6,7 +6,10 @@ import {
   PermissionState,
   Skeleton,
 } from '../../components';
-import { AreaLocationDocument } from '../../graphql/generated/graphql';
+import {
+  AreaLocationDocument,
+  type AreaLocationFieldsFragment,
+} from '../../graphql/generated/graphql';
 import { useGraphQLQuery } from '../../graphql/hooks';
 import { queryKeys } from '../../graphql/queryKeys';
 import { GraphQLRequestError } from '../../graphql/requestError';
@@ -74,6 +77,23 @@ export function LocationSummary({
     );
   }
 
+  return (
+    <LocationSummaryView
+      area={area}
+      onChange={onChange}
+      actionLabel={actionLabel}
+      compact={compact}
+    />
+  );
+}
+
+/** Shared location preview for loaded locations and explicitly labelled UI fixtures. */
+export function LocationSummaryView({
+  area,
+  onChange,
+  actionLabel = 'Change area',
+  compact = false,
+}: Omit<LocationSummaryProps, 'areaId'> & { area: AreaLocationFieldsFragment }) {
   return (
     <section
       aria-labelledby="location-summary-title"

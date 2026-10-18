@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { Button, ButtonLink, ErrorState, LoadingRegion, Notice, Skeleton } from '../../components';
 import { PlanComparisonDocument } from '../../graphql/generated/graphql';
@@ -7,6 +7,7 @@ import { useGraphQLQuery } from '../../graphql/hooks';
 import { queryKeys } from '../../graphql/queryKeys';
 import { usePlanningSession } from '../../session/sessionContext';
 import type { SessionState } from '../../session/sessionState';
+import { LocationSummary } from '../location/LocationSummary';
 import { StagePage } from '../planning/StagePage';
 import { PlanComparisonView } from './PlanComparisonView';
 import styles from './Plans.module.scss';
@@ -55,6 +56,7 @@ function StaleSelectionNotice({
 
 function PlansWorkspace({ session }: { session: SessionState }) {
   const { coordinator, state } = usePlanningSession();
+  const navigate = useNavigate();
   const revision = state.server?.inputsRevision ?? session.inputsRevision;
   const upstreamPending =
     'goal' in state.pending || 'scenario' in state.pending || 'areaId' in state.pending;
@@ -86,20 +88,9 @@ function PlansWorkspace({ session }: { session: SessionState }) {
 
   return (
     <div className={styles.page}>
-      <section className={styles.panel} aria-labelledby="plans-title">
-        <h2 id="plans-title" className={styles.title}>
-          Options for your goal
-        </h2>
-        {found?.planComparison.impactContext.areaName && (
-          <section className={styles.locationContext} aria-label="Selected planning location">
-            <div>
-              <span className={styles.muted}>Comparing plans for</span>
-              <strong>{found.planComparison.impactContext.areaName}</strong>
-            </div>
-            <ButtonLink to="/area" variant="secondary" size="sm">
-              Edit location
-            </ButtonLink>
-          </section>
+      <section className={styles.comparisonPanel} aria-labelledby="plans-title">
+        {session.areaId && (
+          <LocationSummary areaId={session.areaId} onChange={() => navigate('/area')} compact />
         )}
         {upstreamPending ? (
           <Notice kind="stale">Saving your change; plans will be recalculated.</Notice>
@@ -134,11 +125,35 @@ function PlansWorkspace({ session }: { session: SessionState }) {
           </LoadingRegion>
         )}
       </section>
-      {currentSelection && !upstreamPending && (
-        <div className={styles.actions}>
-          <ButtonLink to="/make-it-happen" endIcon="arrow-right">
-            Continue to funding
+      {(!found || found.planComparison.options.length === 0) && (
+        <ButtonLink to="/goals" variant="ghost">
+          Back
+        </ButtonLink>
+      )}
+      {found && found.planComparison.options.length > 0 && (
+        <div className={styles.selectionFooter}>
+          <ButtonLink to="/goals" variant="ghost">
+            Back
           </ButtonLink>
+          <div className={styles.selectionActions}>
+            <div aria-live="polite">
+              <span className={styles.muted}>Your selection</span>
+              <strong>
+                {currentSelection
+                  ? found.planComparison.options.find((o) => o.id === selectedId)?.name
+                  : 'Choose a plan when you’re ready'}
+              </strong>
+            </div>
+            {currentSelection && !upstreamPending && !choosing ? (
+              <ButtonLink to="/make-it-happen" endIcon="arrow-right">
+                Continue to funding
+              </ButtonLink>
+            ) : (
+              <Button disabled>
+                {choosing ? 'Saving your choice…' : 'Select a plan to continue'}
+              </Button>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -166,13 +181,10 @@ export default function PlansPage() {
   return (
     <StagePage
       stageId="plans"
-      title="Compare plan options"
-      subtitle="Review current options against your goal, estimates and site constraints."
+      title="Compare plans"
+      subtitle="Explore the balance between cost, implementation time and water impact."
     >
       <Body />
-      <ButtonLink to="/goals" variant="ghost">
-        Back to goal
-      </ButtonLink>
     </StagePage>
   );
 }

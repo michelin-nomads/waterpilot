@@ -61,6 +61,14 @@ export function formatRange(low: Exact, high: Exact, unit: Unit): string {
   return a === b ? a : `${a} to ${b}`;
 }
 
+/** Display an outcome interval in ascending order; source estimate order stays intact. */
+export function formatOutcomeRange(low: Exact, high: Exact, unit: Unit): string {
+  if (!low || !high) return 'Not known';
+  return Number(low.value) <= Number(high.value)
+    ? formatRange(low, high, unit)
+    : formatRange(high, low, unit);
+}
+
 export function formatMoney(m: Money): string {
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',

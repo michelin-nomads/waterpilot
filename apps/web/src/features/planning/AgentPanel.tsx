@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState } from 'react';
 
-import { Badge } from '../../components/Badge/Badge';
+import { Tooltip } from '../../components/Tooltip/Tooltip';
 import { Button } from '../../components/Button/Button';
 import { Icon } from '../../components/Icon/Icon';
 import { EmptyState } from '../../components/StatePanel/StatePanel';
@@ -96,10 +96,12 @@ export function AgentPanel({
   onUseTraditional,
   onFocusWorkspace,
   showScenario = true,
+  onCollapse,
 }: {
   onUseTraditional: () => void;
   onFocusWorkspace?: () => void;
   showScenario?: boolean;
+  onCollapse?: () => void;
 }) {
   const query = useGraphQLQuery(queryKeys.ai.status(), AiStatusDocument, {});
   const { view } = usePlanningSession();
@@ -109,18 +111,48 @@ export function AgentPanel({
   const keepConversation = query.data?.aiStatus.available || (view && enabledSession === view.id);
   const aiStatus = query.data?.aiStatus;
   const content = panelContent(aiStatus);
+  const statusLabel = aiStatus?.available ? 'Connected' : content.badge;
+  const statusTone = aiStatus?.available
+    ? 'connected'
+    : !aiStatus
+      ? 'unknown'
+      : content.state === 'DISABLED'
+        ? 'disconnected'
+        : 'paused';
   return (
     <div className={styles.agent} data-ai-status={content.state}>
       <div className={styles.header}>
         <div className={styles.headerTitle}>
           <Icon name="sparkle" size="md" className={styles.sparkleIcon} />
           <h2 className={styles.title}>WaterPilot Agent</h2>
+          <Tooltip
+            label={`Agent status: ${statusLabel}`}
+            trigger={
+              <span className={styles.statusDot} data-status={statusTone} aria-hidden="true" />
+            }
+          >
+            {statusLabel}
+          </Tooltip>
         </div>
+        {onCollapse && (
+          <Button
+            variant="secondary"
+            size="sm"
+            className={styles.collapseButton}
+            aria-label="Collapse WaterPilot Agent"
+            title="Collapse WaterPilot Agent"
+            aria-expanded={true}
+            onClick={onCollapse}
+          >
+            <Icon name="chevrons-left" size="sm" />
+          </Button>
+        )}
         <div className={styles.headerBadges}>
           {aiStatus?.modelId && (
-            <span className={styles.modelTag}>{aiStatus.modelId}</span>
+            <span className={styles.modelTag} title={aiStatus.modelId}>
+              {aiStatus.modelId}
+            </span>
           )}
-          <Badge tone={content.badgeTone}>{content.badge}</Badge>
         </div>
       </div>
       {keepConversation ? (

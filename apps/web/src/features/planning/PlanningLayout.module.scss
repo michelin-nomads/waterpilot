@@ -39,7 +39,7 @@
     &[data-mode='agent'] {
       grid-template-columns:
         var(--wp-agent-pane-width, var(--wp-agent-width))
-        auto
+        0px
         minmax(0, 1fr);
       column-gap: var(--wp-space-2);
       align-items: stretch;
@@ -97,23 +97,28 @@
     gap: 0;
 
     &[data-mode='agent'] {
+      > .workspace {
+        grid-column: 3;
+      }
+      position: relative;
+      transition: grid-template-columns 280ms cubic-bezier(0.22, 1, 0.36, 1);
       column-gap: 0;
     }
   }
 
   .agentPane {
-    position: static;
+    position: relative;
+    top: auto;
     align-self: stretch;
     height: 100%;
     max-height: none;
     min-height: 0;
-    padding: var(--wp-workspace-inset);
-    padding-bottom: var(--wp-space-7);
+    padding: 0;
     border: 0;
     border-radius: 0;
     background: var(--wp-color-bg);
-    overflow: auto;
-    scrollbar-gutter: stable;
+    overflow: hidden;
+    scrollbar-gutter: auto;
     overscroll-behavior: contain;
   }
 
@@ -131,5 +136,99 @@
     position: sticky;
     top: 0;
     z-index: 2;
+  }
+}
+
+.agentContent {
+  height: 100%;
+  min-height: 0;
+  &[hidden] {
+    display: none;
+  }
+}
+
+@include desktop-up {
+  .agentContent {
+    position: relative;
+    box-sizing: border-box;
+    width: var(--wp-agent-pane-width, var(--wp-agent-width));
+    padding: var(--wp-workspace-inset);
+    padding-bottom: var(--wp-space-7);
+    overflow-y: auto;
+    transition:
+      opacity 220ms ease,
+      transform 280ms ease,
+      visibility 280ms;
+  }
+  .panes[data-mode='agent'][data-agent-collapsed='true'] {
+    grid-template-columns: 0px 0px minmax(0, 1fr);
+    .agentContent {
+      opacity: 0;
+      transform: translateX(-1rem);
+      visibility: hidden;
+    }
+  }
+}
+
+.resizeSlot {
+  position: relative;
+  z-index: 2;
+  > * {
+    position: absolute;
+    inset: 0 auto 0 -0.375rem;
+  }
+}
+
+.expandButton {
+  position: absolute;
+  top: var(--wp-workspace-inset);
+  left: 0;
+  z-index: 3;
+  width: 1.75rem;
+  height: 2.25rem;
+  min-height: 2.25rem;
+  padding: 0;
+  border-radius: 0 var(--wp-radius-md) var(--wp-radius-md) 0;
+  border-left: 0;
+  background: var(--wp-color-surface);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--wp-color-accent) 15%, transparent);
+  animation: agentTabEnter 220ms ease-out;
+  svg {
+    animation: agentTabNudge 1.8s ease-in-out 2;
+  }
+  &:hover svg {
+    transform: translateX(2px);
+  }
+}
+
+@keyframes agentTabEnter {
+  from {
+    opacity: 0;
+    transform: translateX(-0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes agentTabNudge {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panes[data-mode='agent'],
+  .agentContent {
+    transition: none;
+  }
+  .expandButton,
+  .expandButton svg {
+    animation: none;
   }
 }

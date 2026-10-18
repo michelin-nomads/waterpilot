@@ -51,11 +51,17 @@ function FindingItem({ finding }: { finding: ImpactFindingFieldsFragment }) {
 }
 
 /** One option's wider effects, shown with the option before anything is chosen. */
-export function OptionImpact({ impact }: { impact: WiderImpactFieldsFragment }) {
+export function OptionImpact({
+  impact,
+  showWarnings = true,
+}: {
+  impact: WiderImpactFieldsFragment;
+  showWarnings?: boolean;
+}) {
   return (
     <section className={styles.block} aria-label="Effects beyond your site" data-impact={impact.id}>
       <h4 className={styles.blockTitle}>Effects at your site and beyond</h4>
-      {impact.falseResilience.map((f) => (
+      {(showWarnings ? impact.falseResilience : []).map((f) => (
         <Notice key={f.id} kind="caution" title="Possible false resilience" announce={false}>
           <p className={styles.text} data-finding={f.id}>
             {f.statement}

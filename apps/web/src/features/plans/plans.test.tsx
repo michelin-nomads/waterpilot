@@ -435,7 +435,42 @@ function reply(
 
 beforeEach(() => {
   sent = [];
-  handlers = { PlanComparison: () => reply(comparison()) };
+  handlers = {
+    PlanComparison: () => reply(comparison()),
+    AreaLocation: () => ({
+      data: {
+        area: {
+          id: 'are_1',
+          name: 'Synthville',
+          centroidLat: '12.9352',
+          centroidLon: '77.6245',
+          countryCode: 'IN',
+          timezone: 'Asia/Kolkata',
+          currency: 'INR',
+          unitSystem: 'METRIC',
+          regionSetByUser: [],
+          evidence: 'SYNTHETIC',
+          origin: 'PLACE_SEARCH',
+          scope: 'LOCALITY',
+          extent: 'USER_RADIUS',
+          radiusMeters: 1000,
+          private: false,
+          formattedAddress: 'Synthville',
+          accuracyMeters: null,
+          hasBoundary: true,
+          providerContentExpired: false,
+          placeId: 'fixture:synthville',
+          admin: {
+            countryName: 'India',
+            admin1: null,
+            admin2: null,
+            locality: null,
+            sublocality: null,
+          },
+        },
+      },
+    }),
+  };
   apiClient.defaults.adapter = stub;
 });
 
@@ -584,19 +619,26 @@ describe('PlansPage', () => {
 
   it('shows only the feasible plans, with exact figures rounded for display', async () => {
     renderPlans();
-    expect(await screen.findByRole('heading', { name: 'Compare plan options' })).toBeVisible();
-    expect(await screen.findByText('Comparing plans for')).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Compare plans' })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Synthville' })).toBeVisible();
+    expect(screen.getByText('1 km planning radius')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Change area' })).toBeVisible();
     const list = await screen.findByRole('list', { name: 'Feasible plans' });
     const cards = within(list)
       .getAllByRole('listitem')
       .filter((li) => li.dataset.optionId);
     expect(cards).toHaveLength(2);
-    expect(screen.getByText(/no other combination passes/i)).toBeInTheDocument();
-    expect(within(cards[0]!).getByText('4.1% to 0.0%')).toBeInTheDocument();
+    expect(screen.queryByText('Feasible plans found')).not.toBeInTheDocument();
+    expect(screen.queryByText(/no other combination passes/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Assumptions, ranking and versions' }),
+    ).not.toBeInTheDocument();
+    expect(within(cards[0]!).getByText('0.0% to 4.1%')).toBeInTheDocument();
     expect(within(cards[0]!).getByText('₹5,000 to ₹9,000')).toBeInTheDocument();
     expect(within(cards[0]!).getByText('10 to 30 days')).toBeInTheDocument();
     expect(screen.getByText('30.0%')).toBeInTheDocument();
     expect(screen.getByText('15.0%')).toBeInTheDocument();
+    fireEvent.click(within(cards[0]!).getByText('Measures, impact & assumptions'));
     const basis = within(cards[0]!).getByRole('list', {
       name: 'What efficient fixtures is computed from',
     });
@@ -604,6 +646,21 @@ describe('PlansPage', () => {
       'data-effect-origin',
       'USER_ESTIMATE',
     );
+  });
+
+  it('keeps supporting detail collapsed and selection unavailable until a current plan is chosen', async () => {
+    renderPlans();
+    const list = await screen.findByRole('list', { name: 'Feasible plans' });
+    for (const detail of within(list).getAllByRole('region', {
+      name: 'Effects beyond your site',
+    })) {
+      expect(detail.closest('details')).not.toHaveAttribute('open');
+      expect(detail).not.toBeVisible();
+    }
+    expect(screen.getByRole('heading', { name: 'Projected outcomes' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Neighbourhood impact' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Select a plan to continue' })).toBeDisabled();
+    expect(screen.queryByRole('link', { name: 'Continue to funding' })).not.toBeInTheDocument();
   });
 
   it('opens selected plan details without finalizing and returns its selection to Compare', async () => {
@@ -616,6 +673,15 @@ describe('PlansPage', () => {
     expect(within(drawer).getByRole('heading', { name: 'Water-efficient fixtures' })).toBeVisible();
     expect(within(drawer).getByText(/no monthly chart is available/i)).toBeVisible();
     expect(within(drawer).getByText('Ranked first')).toBeVisible();
+    expect(
+      within(drawer).getByText('Measures in one option are assumed to be built at the same time.'),
+    ).toBeVisible();
+    expect(within(drawer).getByText(/Current ordering: Fewest measures/)).toBeVisible();
+    expect(
+      within(drawer).getByText(
+        'Additional storage: its water effect is not modelled, so it cannot count.',
+      ),
+    ).toBeVisible();
     expect(within(drawer).getByRole('button', { name: 'Select this plan' })).toBeEnabled();
     fireEvent.click(within(drawer).getByRole('button', { name: 'Select this plan' }));
     await waitFor(() =>
@@ -632,6 +698,7 @@ describe('PlansPage', () => {
       .getAllByRole('listitem')
       .filter((li) => li.dataset.optionId);
     for (const card of cards) {
+      fireEvent.click(within(card).getByText('Measures, impact & assumptions'));
       const effects = within(card).getByRole('region', { name: 'Effects beyond your site' });
       expect(within(effects).getByText('30.0% now; 4.1% to 0.0% with this plan.')).toBeVisible();
       const ext = effects.querySelector('[data-finding^="ext."]')!;
@@ -645,6 +712,7 @@ describe('PlansPage', () => {
     ).toBeInTheDocument();
     expect(screen.queryByText('Possible false resilience')).not.toBeInTheDocument();
 
+    fireEvent.click(screen.getByText('Connections, sources & limitations'));
     const boundaries = screen.getByRole('table', { name: 'Influence boundaries' });
     const shared = within(boundaries)
       .getAllByRole('row')
@@ -776,6 +844,7 @@ describe('PlansPage', () => {
     const card = within(list)
       .getAllByRole('listitem')
       .filter((li) => li.dataset.optionId)[0]!;
+    fireEvent.click(within(card).getByText('Measures, impact & assumptions'));
     const economics = within(card).getByTestId('economics');
     // Upfront cost includes the person's contingency; nothing invented.
     expect(within(economics).getByTestId('econ-upfront')).toHaveTextContent(
@@ -818,6 +887,7 @@ describe('PlansPage', () => {
       );
     renderPlans();
     const list = await screen.findByRole('list', { name: 'Feasible plans' });
+    fireEvent.click(within(list).getByText('Measures, impact & assumptions'));
     const economics = within(within(list).getAllByRole('listitem')[0]!).getByTestId('economics');
     expect(within(economics).getByText(/never converted/)).toBeInTheDocument();
     // Costs are still shown even when the tariff cannot be applied.
