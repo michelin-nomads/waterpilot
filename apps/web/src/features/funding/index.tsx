@@ -1,14 +1,8 @@
+import { LoadingRegion } from '../../components/Skeleton/Skeleton';
 import { useEffect, useMemo, useState } from 'react';
 
-import {
-  Button,
-  ButtonLink,
-  Icon,
-} from '../../components';
-import {
-  AreaLocationDocument,
-  PlanComparisonDocument,
-} from '../../graphql/generated/graphql';
+import { Button, ButtonLink, Icon } from '../../components';
+import { AreaLocationDocument, PlanComparisonDocument } from '../../graphql/generated/graphql';
 import { useGraphQLQuery } from '../../graphql/hooks';
 import { queryKeys } from '../../graphql/queryKeys';
 import { usePlanningSession } from '../../session/sessionContext';
@@ -46,7 +40,9 @@ export default function FundingPage() {
   const sessionId = session?.id ?? '';
 
   const [screen, setScreen] = useState<'discover' | 'proposal' | 'ready'>('discover');
-  const [filter, setFilter] = useState<'All sources' | 'Government' | 'Corporate / CSR' | 'Foundation'>('All sources');
+  const [filter, setFilter] = useState<
+    'All sources' | 'Government' | 'Corporate / CSR' | 'Foundation'
+  >('All sources');
   const [applicantType, setApplicantType] = useState('Registered resident association');
   const [showApplicantEdit, setShowApplicantEdit] = useState(false);
   const [showGoalContext, setShowGoalContext] = useState(false);
@@ -71,7 +67,9 @@ export default function FundingPage() {
   const [applicantName, setApplicantName] = useState('Parkway Homes Residents Association');
   const [contactPerson, setContactPerson] = useState('');
   const [contactEmail, setContactEmail] = useState('');
-  const [projectTitle, setProjectTitle] = useState('Community rainwater harvesting & recharge at Parkway Homes');
+  const [projectTitle, setProjectTitle] = useState(
+    'Community rainwater harvesting & recharge at Parkway Homes',
+  );
   const [funderNotes, setFunderNotes] = useState('');
   const [reviewedCheck, setReviewedCheck] = useState(true);
 
@@ -190,7 +188,12 @@ export default function FundingPage() {
   }, [sessionId]);
 
   const activePlan = useMemo(() => {
-    return comp?.options.find((o) => o.id === effectiveOptionId) ?? storedOptionData ?? comp?.options[0] ?? null;
+    return (
+      comp?.options.find((o) => o.id === effectiveOptionId) ??
+      storedOptionData ??
+      comp?.options[0] ??
+      null
+    );
   }, [comp, effectiveOptionId, storedOptionData]);
 
   // Area Location resolution
@@ -200,12 +203,21 @@ export default function FundingPage() {
     { id: session?.areaId ?? '' },
     { enabled: Boolean(session?.areaId) },
   );
-  const locationName = areaQuery.data?.area?.name ?? session?.areaName ?? 'Parkway Homes, Bengaluru';
+  const locationName =
+    areaQuery.data?.area?.name ?? session?.areaName ?? 'Parkway Homes, Bengaluru';
 
   useEffect(() => {
     if (locationName && locationName !== 'Parkway Homes, Bengaluru') {
-      setApplicantName((prev) => (prev === 'Parkway Homes Residents Association' ? `${locationName} Residents Association` : prev));
-      setProjectTitle((prev) => (prev.includes('Parkway Homes') ? `Community water security & recharge at ${locationName}` : prev));
+      setApplicantName((prev) =>
+        prev === 'Parkway Homes Residents Association'
+          ? `${locationName} Residents Association`
+          : prev,
+      );
+      setProjectTitle((prev) =>
+        prev.includes('Parkway Homes')
+          ? `Community water security & recharge at ${locationName}`
+          : prev,
+      );
     }
   }, [locationName]);
 
@@ -232,7 +244,10 @@ export default function FundingPage() {
 
   const requestedAmount = customRequestedAmount ?? defaultGrant;
 
-  const gapToArrange = Math.max(0, planCostNum - ownContribution - (selectedScheme ? requestedAmount : 0));
+  const gapToArrange = Math.max(
+    0,
+    planCostNum - ownContribution - (selectedScheme ? requestedAmount : 0),
+  );
   const planCostLakh = (planCostNum / 100000).toFixed(1);
   const ownContributionLakh = (ownContribution / 100000).toFixed(1);
   const gapLakh = (gapToArrange / 100000).toFixed(1);
@@ -259,7 +274,9 @@ export default function FundingPage() {
 
   // Percentages for meter
   const ownPct = Math.min(100, Math.round((ownContribution / planCostNum) * 100));
-  const grantPct = selectedScheme ? Math.min(100 - ownPct, Math.round((requestedAmount / planCostNum) * 100)) : 0;
+  const grantPct = selectedScheme
+    ? Math.min(100 - ownPct, Math.round((requestedAmount / planCostNum) * 100))
+    : 0;
 
   const filteredSchemes = useMemo(() => {
     if (filter === 'All sources') return schemes;
@@ -320,7 +337,6 @@ export default function FundingPage() {
       }
     >
       <div className={styles.workspace}>
-
         {/* Selected Plan Summary Banner */}
         <section className={styles.planCard} aria-labelledby="plan-banner-title">
           <div className={styles.planCardGrid}>
@@ -352,26 +368,29 @@ export default function FundingPage() {
             <div className={styles.planCardCol}>
               <span className={styles.planLabel}>Estimated implementation cost</span>
               <div className={styles.planAmount}>₹{planCostLakh} lakh</div>
-              <p className={styles.planMeasures}>
-                From selected plan · {planDaysText}
-              </p>
+              <p className={styles.planMeasures}>From selected plan · {planDaysText}</p>
             </div>
 
             <div className={styles.planCardCol}>
               <span className={styles.planLabel}>Your cost estimate</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <strong style={{ fontSize: '0.9rem' }}>
-                  {customQuote ? `₹${(Number(customQuote) / 100000).toFixed(1)} lakh (quote)` : 'Use plan estimate'}
+                  {customQuote
+                    ? `₹${(Number(customQuote) / 100000).toFixed(1)} lakh (quote)`
+                    : 'Use plan estimate'}
                 </strong>
-                <button
+                <Button
+                  variant="ghost"
+                  iconOnly
+                  startIcon={showQuoteEdit ? 'close' : 'edit'}
                   type="button"
-                  className={[styles.pencilBtn, showQuoteEdit && styles.active].filter(Boolean).join(' ')}
+
                   onClick={() => setShowQuoteEdit(!showQuoteEdit)}
                   title={showQuoteEdit ? 'Cancel cost editing' : 'Edit contractor quote'}
                   aria-label={showQuoteEdit ? 'Cancel cost editing' : 'Edit contractor quote'}
                 >
-                  <Icon name={showQuoteEdit ? 'close' : 'pencil'} size="sm" />
-                </button>
+                  {''}
+                </Button>
               </div>
               {showQuoteEdit && (
                 <div style={{ marginTop: '0.4rem' }}>
@@ -385,17 +404,26 @@ export default function FundingPage() {
                       className={styles.customInput}
                       autoFocus
                     />
-                    <button
+                    <Button
+                      variant="ghost"
+                      iconOnly
+                      startIcon="check"
                       type="button"
-                      className={styles.pencilBtn}
+
                       onClick={() => setShowQuoteEdit(false)}
                       title="Done"
                       aria-label="Done editing cost estimate"
                     >
-                      <Icon name="check" size="sm" />
-                    </button>
+                      {''}
+                    </Button>
                   </div>
-                  <p style={{ margin: '0.2rem 0 0', fontSize: '0.7rem', color: 'var(--wp-color-text-muted)' }}>
+                  <p
+                    style={{
+                      margin: '0.2rem 0 0',
+                      fontSize: '0.7rem',
+                      color: 'var(--wp-color-text-muted)',
+                    }}
+                  >
                     Updating cost will recheck funding eligibility.
                   </p>
                 </div>
@@ -409,9 +437,13 @@ export default function FundingPage() {
 
         {/* Selected Scheme Notification Banner if on discover */}
         {screen === 'discover' && selectedScheme && (
-          <div className={styles.noteBox} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div
+            className={styles.noteBox}
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+          >
             <div>
-              <strong>Selected:</strong> {selectedScheme.name} · Planned request ₹{(requestedAmount / 100000).toFixed(1)} lakh · Approval pending.
+              <strong>Selected:</strong> {selectedScheme.name} · Planned request ₹
+              {(requestedAmount / 100000).toFixed(1)} lakh · Approval pending.
             </div>
             <Button variant="primary" onClick={() => setScreen('proposal')}>
               Prepare proposal draft
@@ -426,10 +458,18 @@ export default function FundingPage() {
               <div className={styles.sectionHead}>
                 <div>
                   <h2>Funding opportunities</h2>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      marginTop: '0.25rem',
+                    }}
+                  >
                     <span className={styles.registryBadge}>
                       <span className={styles.liveDot} />
-                      Public Data API · Verified Registry {lastRefreshedAt ? `· Checked ${lastRefreshedAt}` : ''}
+                      Public Data API · Verified Registry{' '}
+                      {lastRefreshedAt ? `· Checked ${lastRefreshedAt}` : ''}
                     </span>
                   </div>
                 </div>
@@ -439,10 +479,14 @@ export default function FundingPage() {
               </div>
 
               <div className={styles.applicantBar}>
-                <span>Matching for: <strong>{applicantType}</strong></span>
+                <span>
+                  Matching for: <strong>{applicantType}</strong>
+                </span>
                 <Button
                   variant="secondary"
                   size="sm"
+                  iconOnly
+                  startIcon={showApplicantEdit ? 'close' : 'edit'}
                   onClick={() => setShowApplicantEdit(!showApplicantEdit)}
                 >
                   {showApplicantEdit ? 'Close' : 'Edit applicant'}
@@ -466,29 +510,34 @@ export default function FundingPage() {
 
               {/* Category Filter Tabs */}
               <div className={styles.tabsRow}>
-                {(['All sources', 'Government', 'Corporate / CSR', 'Foundation'] as const).map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    className={`${styles.tabBtn} ${filter === t ? styles.tabBtnActive : ''}`}
-                    onClick={() => setFilter(t)}
-                  >
-                    {t}
-                  </button>
-                ))}
+                {(['All sources', 'Government', 'Corporate / CSR', 'Foundation'] as const).map(
+                  (t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      className={`${styles.tabBtn} ${filter === t ? styles.tabBtnActive : ''}`}
+                      onClick={() => setFilter(t)}
+                    >
+                      {t}
+                    </button>
+                  ),
+                )}
               </div>
 
               {/* Opportunity Cards List */}
               <div className={styles.schemesStack}>
                 {loadingSchemes ? (
-                  <div className={styles.loadingState}>
-                    <Icon name="refresh" size="md" />
-                    <span>Fetching verified opportunities from public registry API...</span>
-                  </div>
+                  <LoadingRegion label="Loading funding opportunities…" />
                 ) : schemesError && schemes.length === 0 ? (
                   <div className={styles.loadingState}>
-                    <p style={{ color: 'var(--wp-color-warn, #b45309)', margin: '0 0 0.5rem' }}>{schemesError}</p>
-                    <Button variant="secondary" size="sm" onClick={() => loadSchemesFromPublicApi(true)}>
+                    <p style={{ color: 'var(--wp-color-warn, #b45309)', margin: '0 0 0.5rem' }}>
+                      {schemesError}
+                    </p>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => loadSchemesFromPublicApi(true)}
+                    >
                       Retry loading schemes
                     </Button>
                   </div>
@@ -504,13 +553,26 @@ export default function FundingPage() {
                     <article key={s.id} className={styles.fundCard}>
                       <div className={styles.fundCardHead}>
                         <div className={styles.fundTile}>
-                          <Icon name={s.icon === 'bank' ? 'building' : s.icon === 'leaf' ? 'droplet' : 'users'} size="md" />
+                          <Icon
+                            name={
+                              s.icon === 'bank'
+                                ? 'building'
+                                : s.icon === 'leaf'
+                                  ? 'droplet'
+                                  : 'users'
+                            }
+                            size="md"
+                          />
                         </div>
                         <div className={styles.fundTitles}>
                           <h3>{s.name}</h3>
-                          <p>{s.funder} · {s.kind}</p>
+                          <p>
+                            {s.funder} · {s.kind}
+                          </p>
                         </div>
-                        <span className={`${styles.fundStatusPill} ${s.tone === 'green' ? styles.pillGreen : styles.pillAmber}`}>
+                        <span
+                          className={`${styles.fundStatusPill} ${s.tone === 'green' ? styles.pillGreen : styles.pillAmber}`}
+                        >
                           {s.status}
                         </span>
                       </div>
@@ -548,15 +610,19 @@ export default function FundingPage() {
                         </Button>
                       </div>
 
-                      <div className={styles.fundMeta}>
-                        {s.window} · Publisher source verified
-                      </div>
+                      <div className={styles.fundMeta}>{s.window} · Publisher source verified</div>
                     </article>
                   ))
                 )}
               </div>
 
-              <p style={{ fontSize: '0.75rem', color: 'var(--wp-color-text-muted)', marginTop: '0.5rem' }}>
+              <p
+                style={{
+                  fontSize: '0.75rem',
+                  color: 'var(--wp-color-text-muted)',
+                  marginTop: '0.5rem',
+                }}
+              >
                 Source checks shown on each scheme. Closed or incompatible schemes are excluded.
               </p>
             </div>
@@ -566,7 +632,9 @@ export default function FundingPage() {
               <section className={`${styles.pictureCard} ${styles.pictureCardAccent}`}>
                 <div className={styles.eyebrow}>Your funding picture</div>
                 <div className={styles.pictureAmount}>
-                  {gapToArrange === 0 ? '₹0.0 lakh to arrange · Fully funded' : `₹${gapLakh} lakh to arrange`}
+                  {gapToArrange === 0
+                    ? '₹0.0 lakh to arrange · Fully funded'
+                    : `₹${gapLakh} lakh to arrange`}
                 </div>
                 <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--wp-color-text-muted)' }}>
                   {gapToArrange === 0
@@ -575,9 +643,17 @@ export default function FundingPage() {
                 </p>
 
                 <div className={styles.meterBar} aria-hidden="true">
-                  <span className={styles.meterOwn} style={{ width: `${ownPct}%` }} title="Own contribution" />
+                  <span
+                    className={styles.meterOwn}
+                    style={{ width: `${ownPct}%` }}
+                    title="Own contribution"
+                  />
                   {grantPct > 0 && (
-                    <span className={styles.meterRequest} style={{ width: `${grantPct}%` }} title="Requested grant" />
+                    <span
+                      className={styles.meterRequest}
+                      style={{ width: `${grantPct}%` }}
+                      title="Requested grant"
+                    />
                   )}
                   <span className={styles.meterGap} title="Balance to arrange" />
                 </div>
@@ -589,24 +665,37 @@ export default function FundingPage() {
                   </div>
                   <div className={styles.legendRow}>
                     <span>
-                      <span className={styles.swatch} style={{ background: 'var(--wp-color-accent)' }} />
+                      <span
+                        className={styles.swatch}
+                        style={{ background: 'var(--wp-color-accent)' }}
+                      />
                       Own contribution:
                     </span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                       <strong>₹{ownContributionLakh} lakh</strong>
-                      <button
+                      <Button
+                        variant="ghost"
+                        iconOnly
+                        startIcon={showOwnEdit ? 'close' : 'edit'}
                         type="button"
-                        className={[styles.pencilBtn, showOwnEdit && styles.active].filter(Boolean).join(' ')}
+
                         onClick={() => setShowOwnEdit(!showOwnEdit)}
                         title={showOwnEdit ? 'Close editor' : 'Edit own contribution'}
                         aria-label={showOwnEdit ? 'Close editor' : 'Edit own contribution'}
                       >
-                        <Icon name={showOwnEdit ? 'close' : 'pencil'} size="sm" />
-                      </button>
+                        {''}
+                      </Button>
                     </div>
                   </div>
                   {showOwnEdit && (
-                    <div style={{ margin: '0.35rem 0', display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                    <div
+                      style={{
+                        margin: '0.35rem 0',
+                        display: 'flex',
+                        gap: '0.4rem',
+                        alignItems: 'center',
+                      }}
+                    >
                       <input
                         type="number"
                         step="10000"
@@ -618,21 +707,27 @@ export default function FundingPage() {
                         aria-label="Own contribution in Rupees"
                         autoFocus
                       />
-                      <button
+                      <Button
+                        variant="ghost"
+                        iconOnly
+                        startIcon="check"
                         type="button"
-                        className={styles.pencilBtn}
+
                         onClick={() => setShowOwnEdit(false)}
                         title="Done"
                         aria-label="Done editing own contribution"
                       >
-                        <Icon name="check" size="sm" />
-                      </button>
+                        {''}
+                      </Button>
                     </div>
                   )}
                   {selectedScheme && (
                     <div className={styles.legendRow}>
                       <span>
-                        <span className={styles.swatch} style={{ background: 'var(--wp-color-info, #0284c7)' }} />
+                        <span
+                          className={styles.swatch}
+                          style={{ background: 'var(--wp-color-info, #0284c7)' }}
+                        />
                         Requested grant:
                       </span>
                       <strong>₹{(requestedAmount / 100000).toFixed(1)} lakh</strong>
@@ -650,12 +745,29 @@ export default function FundingPage() {
               </section>
 
               <section className={styles.pictureCard}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    marginBottom: '0.5rem',
+                  }}
+                >
                   <Icon name="search" size="sm" />
-                  <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700 }}>How WaterPilot helps</h3>
+                  <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700 }}>
+                    How WaterPilot helps
+                  </h3>
                 </div>
-                <p style={{ fontSize: '0.78rem', color: 'var(--wp-color-text-muted)', margin: 0, lineHeight: 1.4 }}>
-                  Finds verified opportunities from municipal, CSR and foundation publishers and checks project type, cost and applicant criteria.
+                <p
+                  style={{
+                    fontSize: '0.78rem',
+                    color: 'var(--wp-color-text-muted)',
+                    margin: 0,
+                    lineHeight: 1.4,
+                  }}
+                >
+                  Finds verified opportunities from municipal, CSR and foundation publishers and
+                  checks project type, cost and applicant criteria.
                 </p>
               </section>
             </aside>
@@ -681,7 +793,8 @@ export default function FundingPage() {
                 <div className={styles.eyebrow}>Proposal workspace</div>
                 <h1>Prepare your funding proposal</h1>
                 <p>
-                  Confirm applicant details. WaterPilot will use the project data you have already saved.
+                  Confirm applicant details. WaterPilot will use the project data you have already
+                  saved.
                 </p>
               </div>
               <span className={`${styles.fundStatusPill} ${styles.pillTeal}`}>
@@ -694,12 +807,21 @@ export default function FundingPage() {
                 <section className={styles.pictureCard}>
                   <div className={styles.sectionHead} style={{ marginBottom: '1rem' }}>
                     <h2>Applicant & request</h2>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--wp-color-text-muted)' }}>* Required</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--wp-color-text-muted)' }}>
+                      * Required
+                    </span>
                   </div>
 
                   <div className={styles.formGrid2}>
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.2rem' }}>
+                      <label
+                        style={{
+                          display: 'block',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          marginBottom: '0.2rem',
+                        }}
+                      >
                         Applicant / association name *
                       </label>
                       <input
@@ -710,7 +832,14 @@ export default function FundingPage() {
                       />
                     </div>
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.2rem' }}>
+                      <label
+                        style={{
+                          display: 'block',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          marginBottom: '0.2rem',
+                        }}
+                      >
                         Applicant type *
                       </label>
                       <select
@@ -727,7 +856,14 @@ export default function FundingPage() {
 
                   <div className={styles.formGrid2} style={{ marginTop: '0.8rem' }}>
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.2rem' }}>
+                      <label
+                        style={{
+                          display: 'block',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          marginBottom: '0.2rem',
+                        }}
+                      >
                         Contact person *
                       </label>
                       <input
@@ -739,7 +875,14 @@ export default function FundingPage() {
                       />
                     </div>
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.2rem' }}>
+                      <label
+                        style={{
+                          display: 'block',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          marginBottom: '0.2rem',
+                        }}
+                      >
                         Contact email *
                       </label>
                       <input
@@ -753,7 +896,14 @@ export default function FundingPage() {
                   </div>
 
                   <div style={{ marginTop: '0.8rem' }}>
-                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.2rem' }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        marginBottom: '0.2rem',
+                      }}
+                    >
                       Project title *
                     </label>
                     <input
@@ -766,7 +916,14 @@ export default function FundingPage() {
 
                   <div className={styles.formGrid2} style={{ marginTop: '0.8rem' }}>
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.2rem' }}>
+                      <label
+                        style={{
+                          display: 'block',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          marginBottom: '0.2rem',
+                        }}
+                      >
                         Requested support (INR) *
                       </label>
                       <input
@@ -777,7 +934,14 @@ export default function FundingPage() {
                       />
                     </div>
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.2rem' }}>
+                      <label
+                        style={{
+                          display: 'block',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          marginBottom: '0.2rem',
+                        }}
+                      >
                         Planned own contribution (INR)
                       </label>
                       <input
@@ -790,7 +954,14 @@ export default function FundingPage() {
                   </div>
 
                   <div style={{ marginTop: '0.8rem' }}>
-                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.2rem' }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        marginBottom: '0.2rem',
+                      }}
+                    >
                       Anything else the funder should know?
                     </label>
                     <textarea
@@ -820,7 +991,9 @@ export default function FundingPage() {
                       <div>
                         <strong>Selected works & implementation schedule</strong>
                         <div style={{ color: 'var(--wp-color-text-muted)' }}>
-                          {activePlan?.measures?.map((m: { name: string }) => m.name).join(' · ') || 'Rainwater harvesting & leak repair'} · {planDaysText}
+                          {activePlan?.measures?.map((m: { name: string }) => m.name).join(' · ') ||
+                            'Rainwater harvesting & leak repair'}{' '}
+                          · {planDaysText}
                         </div>
                       </div>
                     </div>
@@ -829,7 +1002,8 @@ export default function FundingPage() {
                       <div>
                         <strong>Cost breakdown & available baseline</strong>
                         <div style={{ color: 'var(--wp-color-text-muted)' }}>
-                          ₹{planCostLakh} lakh plan estimate · {baselineDays} days/yr baseline shortage
+                          ₹{planCostLakh} lakh plan estimate · {baselineDays} days/yr baseline
+                          shortage
                         </div>
                       </div>
                     </div>
@@ -841,7 +1015,9 @@ export default function FundingPage() {
               <aside className={styles.asideCol}>
                 <section className={`${styles.pictureCard} ${styles.pictureCardAccent}`}>
                   <h2>Your proposal package</h2>
-                  <p style={{ fontSize: '0.78rem', color: 'var(--wp-color-text-muted)', margin: 0 }}>
+                  <p
+                    style={{ fontSize: '0.78rem', color: 'var(--wp-color-text-muted)', margin: 0 }}
+                  >
                     Tailored to {selectedScheme?.name ?? 'municipal water conservation grant'}.
                   </p>
                   <div className={styles.docList}>
@@ -860,7 +1036,15 @@ export default function FundingPage() {
                     ))}
                   </div>
 
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.78rem', margin: '1rem 0' }}>
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      fontSize: '0.78rem',
+                      margin: '1rem 0',
+                    }}
+                  >
                     <input
                       type="checkbox"
                       checked={reviewedCheck}
@@ -878,7 +1062,14 @@ export default function FundingPage() {
                     <Icon name="file" size="sm" /> Generate proposal draft
                   </Button>
 
-                  <p style={{ fontSize: '0.7rem', color: 'var(--wp-color-text-muted)', margin: '0.6rem 0 0', textAlign: 'center' }}>
+                  <p
+                    style={{
+                      fontSize: '0.7rem',
+                      color: 'var(--wp-color-text-muted)',
+                      margin: '0.6rem 0 0',
+                      textAlign: 'center',
+                    }}
+                  >
                     Review before sending. WaterPilot will not submit automatically.
                   </p>
                 </section>
@@ -894,7 +1085,8 @@ export default function FundingPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                startIcon="chevrons-left"
+                startIcon="edit"
+                iconOnly
                 onClick={() => setScreen('proposal')}
               >
                 Edit proposal details
@@ -907,8 +1099,15 @@ export default function FundingPage() {
               </div>
               <div>
                 <h3 style={{ margin: 0, fontWeight: 700 }}>Proposal draft prepared</h3>
-                <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: 'var(--wp-color-text-muted)' }}>
-                  {selectedScheme?.name} · Requested support ₹{(requestedAmount / 100000).toFixed(1)} lakh · Ready for final submission
+                <p
+                  style={{
+                    margin: '0.2rem 0 0',
+                    fontSize: '0.8rem',
+                    color: 'var(--wp-color-text-muted)',
+                  }}
+                >
+                  {selectedScheme?.name} · Requested support ₹
+                  {(requestedAmount / 100000).toFixed(1)} lakh · Ready for final submission
                 </p>
               </div>
             </div>
@@ -916,40 +1115,73 @@ export default function FundingPage() {
             <div className={styles.proposalGrid}>
               <div className={styles.mainCol}>
                 <section className={styles.documentPage}>
-                  <div className={styles.docPageHeader}>
-                    WaterPilot · Project Funding Proposal
-                  </div>
-                  <h2 className={styles.docPageTitle}>
-                    {projectTitle}
-                  </h2>
+                  <div className={styles.docPageHeader}>WaterPilot · Project Funding Proposal</div>
+                  <h2 className={styles.docPageTitle}>{projectTitle}</h2>
                   <p style={{ color: 'var(--wp-color-text-muted)', margin: '0 0 1.2rem' }}>
                     {applicantName}
                     <br />
                     {locationName} · Generated Proposal Preview
                   </p>
 
-                  <h3 style={{ fontSize: '0.85rem', fontWeight: 700, borderTop: '1px solid var(--wp-color-border)', paddingTop: '0.8rem', margin: '0.8rem 0 0.4rem' }}>
+                  <h3
+                    style={{
+                      fontSize: '0.85rem',
+                      fontWeight: 700,
+                      borderTop: '1px solid var(--wp-color-border)',
+                      paddingTop: '0.8rem',
+                      margin: '0.8rem 0 0.4rem',
+                    }}
+                  >
                     01 · Funding request
                   </h3>
                   <p>
-                    We respectfully request ₹{requestedAmount.toLocaleString('en-IN')} towards the proposed community water security works under the {selectedScheme?.name}.
+                    We respectfully request ₹{requestedAmount.toLocaleString('en-IN')} towards the
+                    proposed community water security works under the {selectedScheme?.name}.
                   </p>
 
-                  <h3 style={{ fontSize: '0.85rem', fontWeight: 700, borderTop: '1px solid var(--wp-color-border)', paddingTop: '0.8rem', margin: '0.8rem 0 0.4rem' }}>
+                  <h3
+                    style={{
+                      fontSize: '0.85rem',
+                      fontWeight: 700,
+                      borderTop: '1px solid var(--wp-color-border)',
+                      paddingTop: '0.8rem',
+                      margin: '0.8rem 0 0.4rem',
+                    }}
+                  >
                     02 · Project need & objective
                   </h3>
                   <p>
-                    The community records {baselineDays} days/year baseline shortage. The objective is to {goalSummaryText.toLowerCase()} to ≤ {targetDays} days/year through systematic infrastructure interventions.
+                    The community records {baselineDays} days/year baseline shortage. The objective
+                    is to {goalSummaryText.toLowerCase()} to ≤ {targetDays} days/year through
+                    systematic infrastructure interventions.
                   </p>
 
-                  <h3 style={{ fontSize: '0.85rem', fontWeight: 700, borderTop: '1px solid var(--wp-color-border)', paddingTop: '0.8rem', margin: '0.8rem 0 0.4rem' }}>
+                  <h3
+                    style={{
+                      fontSize: '0.85rem',
+                      fontWeight: 700,
+                      borderTop: '1px solid var(--wp-color-border)',
+                      paddingTop: '0.8rem',
+                      margin: '0.8rem 0 0.4rem',
+                    }}
+                  >
                     03 · Proposed works
                   </h3>
                   <p>
-                    {activePlan?.measures?.map((m: { name: string }) => m.name).join(', ') ?? 'Rainwater harvesting and leak repair'}. Implementation window: {planDaysText}.
+                    {activePlan?.measures?.map((m: { name: string }) => m.name).join(', ') ??
+                      'Rainwater harvesting and leak repair'}
+                    . Implementation window: {planDaysText}.
                   </p>
 
-                  <h3 style={{ fontSize: '0.85rem', fontWeight: 700, borderTop: '1px solid var(--wp-color-border)', paddingTop: '0.8rem', margin: '0.8rem 0 0.4rem' }}>
+                  <h3
+                    style={{
+                      fontSize: '0.85rem',
+                      fontWeight: 700,
+                      borderTop: '1px solid var(--wp-color-border)',
+                      paddingTop: '0.8rem',
+                      margin: '0.8rem 0 0.4rem',
+                    }}
+                  >
                     04 · Proposed budget
                   </h3>
                   <table className={styles.docTable}>
@@ -966,15 +1198,24 @@ export default function FundingPage() {
                         <td>Planned own contribution</td>
                         <td>₹{ownContribution.toLocaleString('en-IN')}</td>
                       </tr>
-                      <tr style={{ fontWeight: 700, borderTop: '2px solid var(--wp-color-border)' }}>
+                      <tr
+                        style={{ fontWeight: 700, borderTop: '2px solid var(--wp-color-border)' }}
+                      >
                         <td>Balance to arrange</td>
                         <td>₹{gapToArrange.toLocaleString('en-IN')}</td>
                       </tr>
                     </tbody>
                   </table>
 
-                  <p style={{ fontSize: '0.7rem', color: 'var(--wp-color-text-muted)', marginTop: '1rem' }}>
-                    Draft generated using verified site baseline. Funder grant approval is subject to application review.
+                  <p
+                    style={{
+                      fontSize: '0.7rem',
+                      color: 'var(--wp-color-text-muted)',
+                      marginTop: '1rem',
+                    }}
+                  >
+                    Draft generated using verified site baseline. Funder grant approval is subject
+                    to application review.
                   </p>
                 </section>
               </div>
@@ -983,7 +1224,13 @@ export default function FundingPage() {
               <aside className={styles.asideCol}>
                 <section className={`${styles.pictureCard} ${styles.pictureCardAccent}`}>
                   <h2>Download your proposal</h2>
-                  <p style={{ fontSize: '0.78rem', color: 'var(--wp-color-text-muted)', margin: '0 0 1rem' }}>
+                  <p
+                    style={{
+                      fontSize: '0.78rem',
+                      color: 'var(--wp-color-text-muted)',
+                      margin: '0 0 1rem',
+                    }}
+                  >
                     Includes cover letter, budget tables & attachment checklist.
                   </p>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
@@ -1004,7 +1251,8 @@ export default function FundingPage() {
                       <div>
                         <strong>Review guidelines</strong>
                         <div style={{ fontSize: '0.75rem', color: 'var(--wp-color-text-muted)' }}>
-                          Confirm deadline, cost eligibility & applicant criteria on official portal.
+                          Confirm deadline, cost eligibility & applicant criteria on official
+                          portal.
                         </div>
                       </div>
                     </div>
@@ -1039,10 +1287,21 @@ export default function FundingPage() {
 
                 <section className={styles.pictureCard}>
                   <h3>After applying</h3>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--wp-color-text-muted)', margin: '0 0 0.8rem' }}>
+                  <p
+                    style={{
+                      fontSize: '0.75rem',
+                      color: 'var(--wp-color-text-muted)',
+                      margin: '0 0 0.8rem',
+                    }}
+                  >
                     Save your acknowledgement and track progress in Take Action.
                   </p>
-                  <ButtonLink to="/reports/review" variant="primary" endIcon="arrow-right" style={{ width: '100%' }}>
+                  <ButtonLink
+                    to="/reports/review"
+                    variant="primary"
+                    endIcon="arrow-right"
+                    style={{ width: '100%' }}
+                  >
                     Continue to Take Action
                   </ButtonLink>
                 </section>
@@ -1071,29 +1330,54 @@ export default function FundingPage() {
                 </button>
                 <div className={styles.eyebrow}>Funding opportunity</div>
                 <h2>{drawerScheme.name}</h2>
-                <p style={{ margin: '0 0 0.4rem', color: 'var(--wp-color-text-muted)', fontSize: '0.8rem' }}>
+                <p
+                  style={{
+                    margin: '0 0 0.4rem',
+                    color: 'var(--wp-color-text-muted)',
+                    fontSize: '0.8rem',
+                  }}
+                >
                   {drawerScheme.funder} · {drawerScheme.kind}
                 </p>
-                <span className={`${styles.fundStatusPill} ${drawerScheme.tone === 'green' ? styles.pillGreen : styles.pillAmber}`}>
+                <span
+                  className={`${styles.fundStatusPill} ${drawerScheme.tone === 'green' ? styles.pillGreen : styles.pillAmber}`}
+                >
                   {drawerScheme.status}
                 </span>
               </header>
 
               <div className={styles.drawerBody}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', padding: '1rem', background: 'var(--wp-color-surface-sunken)', borderRadius: '8px' }}>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '1rem',
+                    padding: '1rem',
+                    background: 'var(--wp-color-surface-sunken)',
+                    borderRadius: '8px',
+                  }}
+                >
                   <div>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--wp-color-text-muted)' }}>Potential support</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--wp-color-text-muted)' }}>
+                      Potential support
+                    </span>
                     <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{drawerScheme.amount}</div>
                   </div>
                   <div>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--wp-color-text-muted)' }}>Application window</span>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{drawerScheme.window.replace('Open application window · ', '')}</div>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--wp-color-text-muted)' }}>
+                      Application window
+                    </span>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>
+                      {drawerScheme.window.replace('Open application window · ', '')}
+                    </div>
                   </div>
                 </div>
 
                 <div className={styles.drawerSection}>
                   <h3>Why this fits your plan</h3>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--wp-color-text-muted)', margin: 0 }}>
+                  <p
+                    style={{ fontSize: '0.85rem', color: 'var(--wp-color-text-muted)', margin: 0 }}
+                  >
                     {drawerScheme.why}
                   </p>
                   <div className={styles.noteBox} style={{ marginTop: '0.5rem' }}>
@@ -1114,9 +1398,18 @@ export default function FundingPage() {
                 </div>
 
                 <div className={styles.drawerSection}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '0.4rem',
+                    }}
+                  >
                     <h3 style={{ margin: 0 }}>Eligibility checks</h3>
-                    <span className={`${styles.fundStatusPill} ${drawerScheme.eligible ? styles.pillTeal : styles.pillAmber}`}>
+                    <span
+                      className={`${styles.fundStatusPill} ${drawerScheme.eligible ? styles.pillTeal : styles.pillAmber}`}
+                    >
                       {drawerScheme.eligible ? '5 / 5 met' : 'Needs confirmation'}
                     </span>
                   </div>
@@ -1135,7 +1428,8 @@ export default function FundingPage() {
                 <div className={styles.drawerSection}>
                   <h3>What it covers</h3>
                   <p style={{ fontSize: '0.8rem', color: 'var(--wp-color-text-muted)', margin: 0 }}>
-                    Collection systems, storage tanks, recharge filtration and piping works. Routine maintenance is excluded under grant terms.
+                    Collection systems, storage tanks, recharge filtration and piping works. Routine
+                    maintenance is excluded under grant terms.
                   </p>
                 </div>
 
@@ -1146,7 +1440,8 @@ export default function FundingPage() {
                       <Icon name="file" size="sm" /> Project proposal (WaterPilot can draft this)
                     </div>
                     <div className={styles.docListItem}>
-                      <Icon name="check" size="sm" className={styles.checkItemIcon} /> Selected plan & cost breakdown (Ready)
+                      <Icon name="check" size="sm" className={styles.checkItemIcon} /> Selected plan
+                      & cost breakdown (Ready)
                     </div>
                     <div className={styles.docListItem}>
                       <Icon name="file" size="sm" /> Society registration certificate
@@ -1159,7 +1454,14 @@ export default function FundingPage() {
 
                 {drawerScheme.eligible && (
                   <div className={styles.drawerSection}>
-                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.3rem' }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        marginBottom: '0.3rem',
+                      }}
+                    >
                       Amount to request (INR) *
                     </label>
                     <input
@@ -1193,16 +1495,6 @@ export default function FundingPage() {
             </div>
           </div>
         )}
-
-        {/* Global Footer Navigation */}
-        <div className={styles.stepActions}>
-          <ButtonLink to="/plans" variant="secondary" startIcon="chevrons-left">
-            Back to Compare Plans
-          </ButtonLink>
-          <ButtonLink to="/reports/review" variant="primary" endIcon="arrow-right">
-            Continue to Take Action
-          </ButtonLink>
-        </div>
       </div>
     </StagePage>
   );

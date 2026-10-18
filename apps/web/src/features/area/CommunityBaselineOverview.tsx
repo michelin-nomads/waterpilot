@@ -1,4 +1,12 @@
-import { Badge, Button, Icon, ErrorState, LoadingRegion, Skeleton } from '../../components';
+import {
+  Badge,
+  ButtonLink,
+  Button,
+  Icon,
+  ErrorState,
+  LoadingRegion,
+  Skeleton,
+} from '../../components';
 import { AreaBaselineDocument } from '../../graphql/generated/graphql';
 import { useGraphQLQuery } from '../../graphql/hooks';
 import { queryKeys } from '../../graphql/queryKeys';
@@ -129,9 +137,9 @@ export function CommunityBaselineOverview({
               </span>
               Community details
             </h2>
-            <Link to="/baseline" className={styles.editLink}>
+            <ButtonLink to="/baseline" variant="ghost" iconOnly startIcon="edit">
               Edit details
-            </Link>
+            </ButtonLink>
           </div>
           <p>
             {view?.siteProfile?.occupiedHomes
@@ -151,9 +159,9 @@ export function CommunityBaselineOverview({
             </span>
             Supply composition
           </h2>
-          <Link to="/baseline" className={styles.editLink}>
+          <ButtonLink to="/baseline" variant="ghost" iconOnly startIcon="edit">
             Edit sources
-          </Link>
+          </ButtonLink>
         </div>
         {!record?.sources.length ? (
           <p>

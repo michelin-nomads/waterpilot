@@ -1,3 +1,4 @@
+import { LoadingRegion } from '../../components/Skeleton/Skeleton';
 import { useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
@@ -86,7 +87,7 @@ function TrackingHome() {
           </Button>
         </EmptyState>
       ) : projects.isPending ? (
-        <p role="status">Loading projects…</p>
+        <LoadingRegion label="Loading projects…" />
       ) : projects.isError ? (
         <ErrorState
           title="Projects could not load"
@@ -218,7 +219,7 @@ function TrackingCreate() {
           </Button>
         </EmptyState>
       ) : reports.isPending ? (
-        <p role="status">Loading finalized reports…</p>
+        <LoadingRegion label="Loading finalized reports…" />
       ) : reports.isError ? (
         <ErrorState
           title="Finalized reports could not load"
@@ -425,7 +426,7 @@ function TrackingDetail({ projectId }: { projectId: string }) {
   if (projectQuery.isPending)
     return (
       <main className={styles.page}>
-        <p role="status">Loading project…</p>
+        <LoadingRegion label="Loading project…" />
       </main>
     );
   if (projectQuery.isError || !project)
@@ -783,7 +784,7 @@ function TrackingDetail({ projectId }: { projectId: string }) {
             Retry to view recorded evidence.
           </ErrorState>
         ) : observationsQuery.isPending ? (
-          <p role="status">Loading observations…</p>
+          <LoadingRegion label="Loading observations…" />
         ) : observations.length === 0 ? (
           <p>No observations recorded. Missing evidence remains unknown.</p>
         ) : (

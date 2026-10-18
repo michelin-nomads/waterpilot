@@ -113,7 +113,13 @@ export function LocationSummaryView({
           <LocationSummaryName area={area} onChange={onChange} />
         )}
         {compact && !readOnly && (
-          <Button variant="ghost" size="sm" onClick={onChange}>
+          <Button
+            variant="ghost"
+            size="sm"
+            iconOnly={actionLabel.startsWith('Edit')}
+            startIcon={actionLabel.startsWith('Edit') ? 'edit' : undefined}
+            onClick={onChange}
+          >
             {actionLabel}
           </Button>
         )}
@@ -183,7 +189,12 @@ export function LocationSummaryView({
       )}
       {!compact && !readOnly && (
         <div className={styles.actions}>
-          <Button variant="secondary" startIcon="map" onClick={onChange}>
+          <Button
+            variant="secondary"
+            iconOnly={actionLabel.startsWith('Edit')}
+            startIcon={actionLabel.startsWith('Edit') ? 'edit' : 'map'}
+            onClick={onChange}
+          >
             {actionLabel}
           </Button>
         </div>

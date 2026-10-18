@@ -117,6 +117,8 @@ export default function BaselinePage() {
                   }
                   secondary={
                     <Button
+                      startIcon="edit"
+                      iconOnly
                       variant="secondary"
                       disabled={saving}
                       onClick={() => navigate('/baseline')}

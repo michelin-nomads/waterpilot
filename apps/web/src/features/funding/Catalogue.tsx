@@ -1,3 +1,4 @@
+import { LoadingRegion } from '../../components/Skeleton/Skeleton';
 import { useState } from 'react';
 import {
   Badge,
@@ -108,7 +109,7 @@ export function Catalogue({ onChoose }: { onChoose?: (name: string) => void }) {
           )}
         </Field>
       </div>
-      {query.isLoading && <p role="status">Loading funding catalogue…</p>}
+      {query.isLoading && <LoadingRegion label="Loading funding catalogue…" />}
       {query.isError && (
         <ErrorState title="Funding catalogue unavailable" onRetry={() => void query.refetch()}>
           {query.error.message}

@@ -85,6 +85,9 @@ export default function DesignSystemPage() {
       </p>
 
       <Section title="Buttons">
+        <Button variant="secondary" iconOnly startIcon="edit">
+          Edit example
+        </Button>
         <div className={styles.row}>
           <Button>Primary</Button>
           <Button variant="secondary">Secondary</Button>

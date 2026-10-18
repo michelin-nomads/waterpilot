@@ -14,6 +14,7 @@ interface CommonProps {
   startIcon?: IconName;
   endIcon?: IconName;
   fullWidth?: boolean;
+  iconOnly?: boolean;
   children: ReactNode;
 }
 
@@ -36,6 +37,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     startIcon,
     endIcon,
     fullWidth = false,
+    iconOnly = false,
     loading = false,
     type = 'button',
     className,
@@ -55,15 +57,18 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   return (
     <button
       {...rest}
+      title={rest.title ?? (iconOnly && typeof children === 'string' ? children : undefined)}
       ref={ref}
       type={type}
-      className={classNames(variant, size, fullWidth, className)}
+      className={[classNames(variant, size, fullWidth, className), iconOnly && styles.iconOnly]
+        .filter(Boolean)
+        .join(' ')}
       aria-busy={loading || undefined}
       aria-disabled={loading || rest['aria-disabled'] || undefined}
       onClick={handleClick}
     >
       {loading ? <Spinner size="sm" /> : startIcon && <Icon name={startIcon} size="sm" />}
-      <span>{children}</span>
+      <span className={iconOnly ? styles.iconLabel : undefined}>{children}</span>
       {endIcon && <Icon name={endIcon} size="sm" />}
     </button>
   );
@@ -77,14 +82,21 @@ export function ButtonLink({
   startIcon,
   endIcon,
   fullWidth = false,
+  iconOnly = false,
   className,
   children,
   ...rest
 }: ButtonLinkProps) {
   return (
-    <Link className={classNames(variant, size, fullWidth, className)} {...rest}>
+    <Link
+      title={rest.title ?? (iconOnly && typeof children === 'string' ? children : undefined)}
+      className={[classNames(variant, size, fullWidth, className), iconOnly && styles.iconOnly]
+        .filter(Boolean)
+        .join(' ')}
+      {...rest}
+    >
       {startIcon && <Icon name={startIcon} size="sm" />}
-      <span>{children}</span>
+      <span className={iconOnly ? styles.iconLabel : undefined}>{children}</span>
       {endIcon && <Icon name={endIcon} size="sm" />}
     </Link>
   );

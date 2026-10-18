@@ -36,7 +36,8 @@ from waterpilot.domain.communities import (
     membership_id,
 )
 from waterpilot.domain.errors import DomainError, ErrorCode, not_found
-from waterpilot.domain.ids import IdKind, new_id, require_id
+from waterpilot.domain.ids import IdKind, derived_id, new_id, require_id
+from waterpilot.domain.planning import Area
 from waterpilot.domain.values import DecimalString, Frozen
 
 NEARBY_CANDIDATES_PER_CELL = 50
@@ -216,21 +217,35 @@ class CommunityService:
             area = store.areas.get(report.area_id)
             location: dict[str, Any] = {}
             public_area_id = None
-            if area is not None and area.owner_uid is None:
+            if area is not None:
+                # Community creation publishes a separate location reference. The
+                # original owned area and report remain private and unchanged.
+                if area.owner_uid is not None:
+                    if area.owner_uid != principal.uid:
+                        raise not_found("report location")
+                    public_area_id = derived_id(IdKind.AREA, "community-report-location", report.id)
+                    if store.areas.get(public_area_id) is None:
+                        store.areas.add(
+                            Area(
+                                id=public_area_id,
+                                name=area.name,
+                                country_code=area.country_code,
+                                timezone=area.timezone,
+                                centroid_lat=area.centroid_lat,
+                                centroid_lon=area.centroid_lon,
+                                evidence=area.evidence,
+                                created_at=now,
+                                formatted_address=area.formatted_address,
+                            )
+                        )
+                else:
+                    public_area_id = area.id
                 lat, lon = geo.parse_point(area.centroid_lat, area.centroid_lon)
-                public_area_id = area.id
                 location = {
                     "latitude": area.centroid_lat,
                     "longitude": area.centroid_lon,
                     "geohash": geo.encode(lat, lon),
                 }
-            elif payload.area_id is not None:
-                raise DomainError(
-                    ErrorCode.VALIDATION_FAILED,
-                    "a device or typed-in location stays private; choose a searched place "
-                    "to share it with a community",
-                    field="areaId",
-                )
 
             community = store.communities.insert(
                 Community(

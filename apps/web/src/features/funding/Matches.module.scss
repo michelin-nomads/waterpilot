@@ -365,38 +365,6 @@
   }
 }
 
-.pencilBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  padding: 0;
-  border-radius: var(--wp-radius-sm);
-  border: 1px solid var(--wp-color-border);
-  background: var(--wp-color-surface);
-  color: var(--wp-color-accent);
-  cursor: pointer;
-  transition: all var(--wp-motion-fast);
-
-  &:hover {
-    background: var(--wp-color-accent-soft);
-    border-color: var(--wp-color-accent);
-    color: var(--wp-color-accent-strong);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--wp-color-focus);
-    outline-offset: 2px;
-  }
-
-  &.active {
-    background: var(--wp-color-accent-soft);
-    border-color: var(--wp-color-accent);
-    color: var(--wp-color-accent-strong);
-  }
-}
-
 .legendList {
   display: grid;
   gap: var(--wp-space-2);

@@ -43,7 +43,7 @@ export default function CreateCommunityPage() {
     () => reports.data?.reports.nodes.find((report) => report.id === reportId) ?? null,
     [reportId, reports.data],
   );
-  const canShareArea = Boolean(selectedReport?.area && !selectedReport.area.private);
+  const canShareArea = Boolean(selectedReport?.area);
 
   const submit = async () => {
     if (
@@ -143,8 +143,9 @@ export default function CreateCommunityPage() {
         <section className={styles.section} aria-labelledby="create-community-fields">
           <h2 id="create-community-fields">Community details</h2>
           <Notice kind="info" title="Only a safe report summary is shared">
-            The community shows the report’s goal category and finalized date. It never exposes its
-            title, address, applicant details, source documents or attachments.
+            The community automatically publishes the selected report’s location and exact map pin,
+            plus its goal category and finalized date. Applicant details, source documents and
+            attachments stay private.
           </Notice>
           <div className={styles.formGrid}>
             <h3 className={styles.wide}>Community details</h3>

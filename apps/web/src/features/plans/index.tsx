@@ -177,11 +177,6 @@ function PlansWorkspace({ session }: { session: SessionState }) {
           </LoadingRegion>
         )}
       </section>
-      {(!comparison || comparison.options.length === 0) && (
-        <ButtonLink to="/goals" variant="ghost">
-          Back
-        </ButtonLink>
-      )}
       {comparison && comparison.options.length > 0 && (
         <div className={styles.selectionFooter}>
           <div className={styles.selectionInfo} aria-live="polite">

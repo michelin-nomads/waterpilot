@@ -59,8 +59,8 @@ export default function AppShell() {
           </div>
           {signedIn && (
             <nav aria-label="Primary" className={styles.primaryNav}>
-              {/* Review lives under /reports; inside the planner Reports is not current. */}
-              <NavLink to="/reports" end={inPlanning} className={navClass}>
+              {/* Only the reports list marks this destination current. */}
+              <NavLink to="/reports" end className={navClass}>
                 Reports
               </NavLink>
               <NavLink to="/communities" className={navClass}>

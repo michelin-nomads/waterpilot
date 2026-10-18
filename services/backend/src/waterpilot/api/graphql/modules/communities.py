@@ -3,8 +3,6 @@ Phase 05); members see roles and whether an entry is themselves."""
 
 from __future__ import annotations
 
-from decimal import ROUND_HALF_EVEN, Decimal
-
 import strawberry
 
 from waterpilot.api.graphql.context import Info, attempt, call
@@ -65,7 +63,7 @@ class SharedReportSummary:
 
 @strawberry.type
 class CommunityArea:
-    """Coarse public area and rounded map reference; never private addresses or boundaries."""
+    """Published community location; original owned planning areas remain private."""
 
     id: strawberry.ID
     name: str
@@ -126,18 +124,8 @@ class Community:
             id=strawberry.ID(found.id),
             name=found.name,
             country_code=found.country_code,
-            map_latitude=DecimalString(
-                format(
-                    Decimal(found.centroid_lat).quantize(Decimal("0.01"), rounding=ROUND_HALF_EVEN),
-                    "f",
-                )
-            ),
-            map_longitude=DecimalString(
-                format(
-                    Decimal(found.centroid_lon).quantize(Decimal("0.01"), rounding=ROUND_HALF_EVEN),
-                    "f",
-                )
-            ),
+            map_latitude=DecimalString(found.centroid_lat),
+            map_longitude=DecimalString(found.centroid_lon),
         )
 
     @strawberry.field(description="The caller's active membership, or null.")

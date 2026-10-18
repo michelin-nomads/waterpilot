@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 
 import { Button, ButtonLink } from '../../components/Button/Button';
@@ -35,6 +35,15 @@ export default function ReportDetailPage() {
   const archive = useGraphQLMutation('archiveReport', ArchiveReportDocument);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<'overview' | 'evidence' | 'implementation'>('overview');
+  const snapshotHeading = useRef<HTMLHeadingElement>(null);
+
+  const openReport = () => {
+    setTab('overview');
+    requestAnimationFrame(() => {
+      snapshotHeading.current?.scrollIntoView({ block: 'start', behavior: 'auto' });
+      snapshotHeading.current?.focus({ preventScroll: true });
+    });
+  };
 
   if (query.isPending)
     return (
@@ -97,9 +106,9 @@ export default function ReportDetailPage() {
             <h2 id="report-created-title">Report created</h2>
             <p>Your finalized plan is saved as an immutable snapshot.</p>
           </div>
-          <ButtonLink to="#snapshot-heading" variant="secondary">
+          <Button onClick={openReport} variant="secondary">
             Open report
-          </ButtonLink>
+          </Button>
         </section>
       )}
       <div className={styles.actions}>
@@ -173,7 +182,9 @@ export default function ReportDetailPage() {
         {tab === 'overview' && (
           <div className={styles.tabContent}>
             <section className={styles.review} aria-labelledby="snapshot-heading">
-              <h2 id="snapshot-heading">Finalized snapshot</h2>
+              <h2 id="snapshot-heading" ref={snapshotHeading} tabIndex={-1}>
+                Finalized snapshot
+              </h2>
               <dl>
                 <div>
                   <dt>Location</dt>

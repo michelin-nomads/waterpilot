@@ -35,7 +35,7 @@ export default function AgentGoalCheck() {
       ) : (
         <Skeleton shape="block" />
       )}
-      <ButtonLink to="/goals" variant="secondary" size="sm">
+      <ButtonLink startIcon="edit" iconOnly to="/goals" variant="secondary" size="sm">
         Edit goal
       </ButtonLink>
     </section>

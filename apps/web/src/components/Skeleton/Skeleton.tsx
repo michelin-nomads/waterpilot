@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { VisuallyHidden } from '../VisuallyHidden/VisuallyHidden';
+import { WaterDropletLoader } from '../WaterDropletLoader/WaterDropletLoader';
 import styles from './Skeleton.module.scss';
 
 interface SkeletonProps {
@@ -18,18 +18,17 @@ export function Skeleton({ shape = 'text', width = 'full' }: SkeletonProps) {
 interface LoadingRegionProps {
   /** Announced to screen readers, e.g. "Loading area profile". */
   label: string;
-  children: ReactNode;
+  children?: ReactNode;
 }
 
 /**
- * Wraps skeletons with a polite status message. Skeletons fade in after a short delay so
- * fast responses do not flash; content is never held back to show them.
+ * Shared page/data loader. Existing skeleton children remain accepted for compatibility;
+ * the droplet replaces them without delaying ready content or inventing progress.
  */
-export function LoadingRegion({ label, children }: LoadingRegionProps) {
+export function LoadingRegion({ label }: LoadingRegionProps) {
   return (
     <div className={styles.region} role="status" aria-busy="true">
-      <VisuallyHidden>{label}</VisuallyHidden>
-      {children}
+      <WaterDropletLoader size="sm" indeterminate statusText={label} />
     </div>
   );
 }

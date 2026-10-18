@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { AxiosAdapter, InternalAxiosRequestConfig } from 'axios';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
@@ -62,10 +62,7 @@ it('opens the authoritative finalized report after creation without suggesting a
   );
 
   expect(await screen.findByRole('heading', { name: 'Report created' })).toBeVisible();
-  expect(screen.getByRole('link', { name: 'Open report' })).toHaveAttribute(
-    'href',
-    '/reports/rpt_1#snapshot-heading',
-  );
+  expect(screen.getByRole('button', { name: 'Open report' })).toBeEnabled();
   expect(await screen.findByRole('heading', { name: 'Finalized snapshot' })).toBeVisible();
   expect(screen.getByText(/standalone report pdf export is not available/i)).toBeVisible();
   expect(screen.getByRole('link', { name: 'Prepare proposal' })).toHaveAttribute(
@@ -73,12 +70,22 @@ it('opens the authoritative finalized report after creation without suggesting a
     '/proposals/new?reportId=rpt_1',
   );
   expect(screen.getByRole('button', { name: 'Download PDF' })).toBeDisabled();
-  screen.getByRole('tab', { name: 'Evidence' }).click();
+  fireEvent.click(screen.getByRole('tab', { name: 'Evidence' }));
   expect(
     await screen.findByText('No impact assessment was recorded in this report version.'),
   ).toBeVisible();
-  screen.getByRole('tab', { name: 'Implementation' }).click();
+  fireEvent.click(screen.getByRole('tab', { name: 'Implementation' }));
   expect(
     await screen.findByRole('link', { name: 'Start a project from this report' }),
   ).toHaveAttribute('href', '/tracking/new?reportId=rpt_1');
+  const originalScroll = Object.getOwnPropertyDescriptor(Element.prototype, 'scrollIntoView');
+  const scroll = vi.fn();
+  Object.defineProperty(Element.prototype, 'scrollIntoView', { configurable: true, value: scroll });
+  fireEvent.click(screen.getByRole('button', { name: 'Open report' }));
+  await waitFor(() =>
+    expect(screen.getByRole('heading', { name: 'Finalized snapshot' })).toHaveFocus(),
+  );
+  expect(scroll).toHaveBeenCalled();
+  if (originalScroll) Object.defineProperty(Element.prototype, 'scrollIntoView', originalScroll);
+  else Reflect.deleteProperty(Element.prototype, 'scrollIntoView');
 });

@@ -831,9 +831,14 @@ def test_pilot_mode_fails_closed_for_data_but_health_stays_up(
     assert not (tmp_path / "cwd" / ".local-object-store").exists()
 
 
-def test_community_inherits_report_location_without_area_input(h: Harness) -> None:
+@pytest.mark.parametrize("private", [False, True])
+def test_community_inherits_report_location_without_area_input(h: Harness, private: bool) -> None:
     session = ready_session(h, "t-alice", key="inherit-area-session")
     report = finalize(h, "t-alice", session["id"], key="inherit-area-report")["report"]
+    if private:
+        source = h.store.areas.get(AREA_ID)
+        h.store.areas.add(source.model_copy(update={"owner_uid": "alice"}))
+
     result = h.gql(
         CREATE_COMMUNITY,
         {
@@ -848,7 +853,9 @@ def test_community_inherits_report_location_without_area_input(h: Harness) -> No
     )["data"]["createCommunity"]
     assert result["error"] is None, result
     community = h.store.communities.get(result["community"]["id"])
-    assert community.area_id == AREA_ID
+    assert (community.area_id != AREA_ID) if private else (community.area_id == AREA_ID)
+    assert h.store.areas.get(community.area_id).owner_uid is None
     area = h.store.areas.get(AREA_ID)
+    assert area.owner_uid == ("alice" if private else None)
     assert (community.latitude, community.longitude) == (area.centroid_lat, area.centroid_lon)
     assert community.geohash is not None

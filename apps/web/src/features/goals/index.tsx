@@ -181,9 +181,6 @@ function GoalEditor({ session, catalogue }: { session: SessionState; catalogue: 
         onCompare={() => void saveAndCompare()}
         actions={
           <div className={styles.goalFooter}>
-            <ButtonLink to="/scenarios" variant="secondary">
-              Back to scenario
-            </ButtonLink>
             <div className={styles.actions}>
               <Button
                 type="submit"

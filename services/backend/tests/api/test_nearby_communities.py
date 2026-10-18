@@ -132,7 +132,7 @@ def test_invalid_searches_are_validation_errors(
 
 
 @pytest.mark.parametrize("private", [False, True])
-def test_map_reference_is_rounded_and_private_areas_are_never_exposed(
+def test_public_map_reference_is_exact_and_owned_areas_are_never_exposed(
     h: Harness, private: bool
 ) -> None:
     from waterpilot.domain.location import AreaOrigin
@@ -160,5 +160,7 @@ def test_map_reference_is_rounded_and_private_areas_are_never_exposed(
     assert "errors" not in body, body
     projected = body["data"]["community"]["area"]
     assert projected == (
-        None if private else {"name": area.name, "mapLatitude": "12.94", "mapLongitude": "77.62"}
+        None
+        if private
+        else {"name": area.name, "mapLatitude": "12.9352123", "mapLongitude": "77.6245123"}
     )

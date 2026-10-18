@@ -1,3 +1,4 @@
+import { LoadingRegion } from '../../components/Skeleton/Skeleton';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -152,7 +153,7 @@ export default function AdminCatalogue() {
         </ErrorState>
       )}
       {notice && <p role="status">{notice}</p>}
-      {!loaded && !error && <p role="status">Loading catalogue…</p>}
+      {!loaded && !error && <LoadingRegion label="Loading catalogue…" />}
       {loaded && schemes.length === 0 && (
         <EmptyState title="No curated funding schemes yet">
           Import a permitted publisher document with reviewed metadata. Unknown amounts and
@@ -207,7 +208,7 @@ export default function AdminCatalogue() {
                   <dd>{scheme.unknown_fields?.join(', ') || 'None explicitly recorded'}</dd>
                 </dl>
                 <p>{scheme.source_url}</p>
-                <Button variant="secondary" onClick={() => edit(scheme)}>
+                <Button startIcon="edit" iconOnly variant="secondary" onClick={() => edit(scheme)}>
                   Edit / withdraw
                 </Button>
               </article>
