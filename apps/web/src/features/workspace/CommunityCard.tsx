@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 
-import { Badge } from '../../components/Badge/Badge';
-import { Button, ButtonLink } from '../../components/Button/Button';
+import { Button } from '../../components/Button/Button';
 import { Icon } from '../../components/Icon/Icon';
 import type { CommunityItem } from './useCommunityDirectory';
 import styles from './CommunityDirectory.module.scss';
@@ -13,6 +12,7 @@ interface CommunityCardProps {
   joining: boolean;
   error: string | null;
   onJoin: () => void;
+  onLeave: () => void;
 }
 
 /** One community in the directory, in the same card shell as a report. */
@@ -23,6 +23,7 @@ export function CommunityCard({
   joining,
   error,
   onJoin,
+  onLeave,
 }: CommunityCardProps) {
   const archived = community.status === 'ARCHIVED';
   const href = `/communities/${community.id}`;
@@ -35,10 +36,12 @@ export function CommunityCard({
         <h3>
           <Link to={href}>{community.name}</Link>
         </h3>
-        <p>{community.description || 'No description provided.'}</p>
+        <p className={styles.cardDescription}>
+          {community.description || 'No description provided.'}
+        </p>
         <div className={styles.facts}>
           {community.sharedReport && (
-            <span>
+            <span className={styles.goal}>
               <Icon name="target" size="sm" />
               {community.sharedReport.goal.replaceAll('_', ' ').toLowerCase()}
             </span>
@@ -61,21 +64,17 @@ export function CommunityCard({
         )}
       </div>
       <div className={styles.actions}>
-        {archived && (
-          <Badge tone="neutral" icon="archive">
+        {archived ? (
+          <span className={styles.cardMembership}>
+            <Icon name="archive" size="sm" />
             Archived
-          </Badge>
-        )}
-        {joined && (
-          <Badge tone="success" icon="check">
-            Joined
-          </Badge>
-        )}
-        <ButtonLink to={href} variant="secondary" size="sm">
-          Details
-        </ButtonLink>
-        {!joined && !archived && (
-          <Button size="sm" loading={joining} onClick={onJoin}>
+          </span>
+        ) : joined ? (
+          <Button className={styles.cardJoin} variant="danger" loading={joining} onClick={onLeave}>
+            Leave
+          </Button>
+        ) : (
+          <Button className={styles.cardJoin} loading={joining} onClick={onJoin}>
             Join
           </Button>
         )}

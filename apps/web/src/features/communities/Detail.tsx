@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 
 import { useAuth } from '../../auth/authContext';
 import { Button, ButtonLink } from '../../components/Button/Button';
@@ -16,7 +16,8 @@ import {
 import { newIdempotencyKey, unwrapPayload } from '../../graphql/client';
 import { useGraphQLMutation, useGraphQLQuery } from '../../graphql/hooks';
 import { queryKeys } from '../../graphql/queryKeys';
-import { PageHeader } from '../../shell/PageHeader';
+import { Icon } from '../../components/Icon/Icon';
+import detail from './CommunityDetail.module.scss';
 import styles from './Communities.module.scss';
 
 const PAGE = { first: 50 };
@@ -35,27 +36,27 @@ export default function CommunityDetailPage() {
   const archive = useGraphQLMutation('archiveCommunity', ArchiveCommunityDocument);
   const [optimisticJoined, setOptimisticJoined] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<'overview' | 'reports' | 'members' | 'settings'>('overview');
+  const [tab, setTab] = useState<'overview' | 'reports' | 'settings'>('overview');
   const community = query.data?.community ?? null;
   const members = useGraphQLQuery(
     queryKeys.communities.members(community?.id ?? '', PAGE),
     CommunityMembersDocument,
     { id: community?.id ?? '', ...PAGE },
-    { enabled: Boolean(community?.viewerMembership) && (tab === 'members' || tab === 'settings') },
+    { enabled: Boolean(community?.viewerMembership) && tab === 'settings' },
   );
 
   if (query.isPending)
     return (
-      <main className={styles.page}>
+      <div className={detail.page}>
         <LoadingRegion label="Loading community">
           <Skeleton />
           <Skeleton width="three-quarters" />
         </LoadingRegion>
-      </main>
+      </div>
     );
   if (query.isError)
     return (
-      <main className={styles.page}>
+      <div className={detail.page}>
         <ErrorState
           title="Community could not load"
           onRetry={() => void query.refetch()}
@@ -63,18 +64,18 @@ export default function CommunityDetailPage() {
         >
           This community may have been removed or is unavailable.
         </ErrorState>
-      </main>
+      </div>
     );
   if (!community)
     return (
-      <main className={styles.page}>
+      <div className={detail.page}>
         <EmptyState
           title="Community not found"
           actions={<ButtonLink to="/communities">All communities</ButtonLink>}
         >
           The community may no longer be available.
         </EmptyState>
-      </main>
+      </div>
     );
 
   const isJoined = optimisticJoined ?? Boolean(community.viewerMembership);
@@ -150,35 +151,88 @@ export default function CommunityDetailPage() {
   };
 
   return (
-    <main className={styles.page}>
-      <PageHeader
-        title={community.name}
-        subtitle={
-          community.status === 'ARCHIVED'
-            ? 'Archived community · read-only history'
-            : `${community.memberCount} ${community.memberCount === 1 ? 'member' : 'members'} · ${community.area ? `${community.area.name}, ${community.area.countryCode}` : 'area not shared'}`
-        }
-      />
-      <div className={styles.actions}>
-        <ButtonLink to="/communities" variant="secondary">
-          Back to communities
-        </ButtonLink>
-        {community.status === 'ACTIVE' && !isJoined && (
-          <Button loading={join.isPending} onClick={() => void runJoin()}>
-            Join community
-          </Button>
-        )}
-        {community.status === 'ACTIVE' && isJoined && (
-          <Button variant="secondary" loading={leave.isPending} onClick={() => void runLeave()}>
-            Leave community
-          </Button>
-        )}
-        {community.status === 'ACTIVE' && isCoordinator && (
-          <Button variant="danger" loading={archive.isPending} onClick={() => void runArchive()}>
-            Archive community
-          </Button>
-        )}
-      </div>
+    <div className={detail.page}>
+      <Link to="/communities" className={detail.back}>
+        <Icon name="chevron-right" size="sm" />
+        All communities
+      </Link>
+      <header className={detail.hero}>
+        <div className={detail.art} aria-hidden="true">
+          <Icon name="users" size="lg" />
+        </div>
+        <div className={detail.summary}>
+          <h1>{community.name}</h1>
+          <p>{community.description || 'No public description.'}</p>
+          <div className={detail.facts}>
+            {community.sharedReport && (
+              <span>
+                <Icon name="target" />
+                {community.sharedReport.goal.replaceAll('_', ' ').toLowerCase()}
+              </span>
+            )}
+            <span>
+              <Icon name="users" />
+              {community.memberCount} {community.memberCount === 1 ? 'member' : 'members'}
+            </span>
+            <span>
+              <Icon name="map" />
+              {community.area?.name ?? 'Area not shared'}
+            </span>
+          </div>
+        </div>
+        <div className={detail.membership}>
+          {community.status === 'ARCHIVED' ? (
+            <span>Archived</span>
+          ) : isJoined ? (
+            <details
+              className={detail.joinedMenu}
+              onBlur={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget))
+                  event.currentTarget.removeAttribute('open');
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') {
+                  event.currentTarget.removeAttribute('open');
+                  event.currentTarget.querySelector('summary')?.focus();
+                }
+              }}
+            >
+              <summary>
+                Joined <Icon name="check" size="sm" />
+                <Icon name="chevron-down" size="sm" />
+              </summary>
+              <div className={detail.menuPanel}>
+                <button type="button" onClick={() => setTab('overview')}>
+                  <Icon name="check" size="sm" />
+                  View community
+                </button>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  loading={leave.isPending}
+                  onClick={() => void runLeave()}
+                >
+                  Leave community
+                </Button>
+                {isCoordinator && (
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    loading={archive.isPending}
+                    onClick={() => void runArchive()}
+                  >
+                    Archive community
+                  </Button>
+                )}
+              </div>
+            </details>
+          ) : (
+            <Button loading={join.isPending} onClick={() => void runJoin()}>
+              Join community
+            </Button>
+          )}
+        </div>
+      </header>
       {error && (
         <p className={styles.error} role="alert">
           {error}
@@ -191,30 +245,51 @@ export default function CommunityDetailPage() {
           sanitized report summary remains available here.
         </Notice>
       )}
-      <div className={styles.filters} role="tablist" aria-label="Community details">
+      <div
+        className={detail.tabs}
+        onKeyDown={(event) => {
+          if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+          const tabs = Array.from(
+            event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]'),
+          );
+          const current = tabs.indexOf(event.target as HTMLButtonElement);
+          if (current < 0) return;
+          event.preventDefault();
+          const next =
+            event.key === 'Home'
+              ? 0
+              : event.key === 'End'
+                ? tabs.length - 1
+                : (current + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+          tabs[next]?.focus();
+          tabs[next]?.click();
+        }}
+        role="tablist"
+        aria-label="Community details"
+      >
         {(
           [
             ['overview', 'Overview'],
             ['reports', 'Shared reports'],
-            ['members', 'Members'],
             ...(isCoordinator ? ([['settings', 'Settings']] as const) : []),
           ] as const
         ).map(([value, label]) => (
-          <Button
+          <button
+            type="button"
             key={value}
             role="tab"
             id={`community-tab-${value}`}
             aria-selected={tab === value}
             aria-controls="community-tab-panel"
-            variant={tab === value ? 'primary' : 'secondary'}
+            tabIndex={tab === value ? 0 : -1}
             onClick={() => setTab(value)}
           >
             {label}
-          </Button>
+          </button>
         ))}
       </div>
       <section
-        className={styles.section}
+        className={tab === 'overview' ? detail.overview : styles.section}
         id="community-tab-panel"
         role="tabpanel"
         aria-labelledby={`community-tab-${tab}`}
@@ -222,50 +297,90 @@ export default function CommunityDetailPage() {
       >
         {tab === 'overview' && (
           <>
-            <h2>Overview</h2>
-            <p>{community.description || 'No description provided.'}</p>
-            <dl className={styles.detailGrid}>
-              <div>
-                <dt>Approximate area</dt>
-                <dd>
+            <article className={detail.panel}>
+              <h2>About this community</h2>
+              <p>{community.description || 'No description provided.'}</p>
+              <ul className={detail.aboutFacts}>
+                <li>
+                  <Icon name="map" />
                   {community.area
                     ? `${community.area.name}, ${community.area.countryCode}`
-                    : 'Not shared'}
-                </dd>
-              </div>
-              <div>
-                <dt>Members</dt>
-                <dd>{community.memberCount}</dd>
-              </div>
-              <div>
-                <dt>Your role</dt>
-                <dd>{community.viewerMembership?.role ?? 'Visitor'}</dd>
-              </div>
-              {community.contactName && (
-                <div>
-                  <dt>Consented contact name</dt>
-                  <dd>{community.contactName}</dd>
-                </div>
-              )}
-              {community.contactEmail && (
-                <div>
-                  <dt>Consented contact email</dt>
-                  <dd>
+                    : 'Area not shared'}
+                </li>
+                <li>
+                  <Icon name="users" />
+                  {community.status === 'ACTIVE'
+                    ? 'Open to new members · joining is immediate'
+                    : 'Archived · no new memberships'}
+                </li>
+                <li>
+                  <Icon name="user" />
+                  Your role: {community.viewerMembership?.role.toLowerCase() ?? 'visitor'}
+                </li>
+                {community.contactName && (
+                  <li>
+                    <Icon name="user" />
+                    {community.contactName}
+                  </li>
+                )}
+                {community.contactEmail && (
+                  <li>
+                    <Icon name="mail" />
                     <a href={`mailto:${community.contactEmail}`}>{community.contactEmail}</a>
-                  </dd>
-                </div>
-              )}
-            </dl>
-            {community.area && (
+                  </li>
+                )}
+              </ul>
               <p className={styles.meta}>
-                Area is approximate and used for discovery only. Distance does not establish
-                hydrological connectivity.
+                Only consented contact details are public. Area references are approximate;
+                proximity does not establish hydrological connectivity.
               </p>
-            )}
-            <p className={styles.meta}>
-              Join to access member-only history. The public summary never links to private report
-              files.
-            </p>
+            </article>
+            <div className={detail.rightColumn}>
+              <article className={detail.panel}>
+                <div className={detail.panelHeading}>
+                  <h2>Recent shared reports</h2>
+                  <button type="button" onClick={() => setTab('reports')}>
+                    View all
+                  </button>
+                </div>
+                {community.sharedReport ? (
+                  <div className={detail.reportRow}>
+                    <Icon name="file" size="lg" />
+                    <div>
+                      <h3>{community.sharedReport.goal.replaceAll('_', ' ').toLowerCase()}</h3>
+                      <p>
+                        Finalized{' '}
+                        {new Date(community.sharedReport.finalizedAt).toLocaleDateString()}
+                      </p>
+                      <span className={detail.summaryLabel}>Public summary</span>
+                    </div>
+                    <button
+                      type="button"
+                      aria-label="View shared report summary"
+                      onClick={() => setTab('reports')}
+                    >
+                      <Icon name="chevron-right" />
+                    </button>
+                  </div>
+                ) : (
+                  <p>No report summary has been shared yet.</p>
+                )}
+                <p className={styles.meta}>
+                  Only the goal and finalized date are shared. Report titles, source documents,
+                  applicants and private downloads stay private.
+                </p>
+              </article>
+              <article className={detail.goalPanel}>
+                <Icon name="target" size="lg" />
+                <div>
+                  <h2>Community goal</h2>
+                  <p>
+                    {community.sharedReport?.goal.replaceAll('_', ' ').toLowerCase() ??
+                      'A community goal has not been shared.'}
+                  </p>
+                </div>
+              </article>
+            </div>
           </>
         )}
         {tab === 'reports' && (
@@ -290,43 +405,6 @@ export default function CommunityDetailPage() {
             {isJoined && (
               <p>Other linked report and project history stays visible only to active members.</p>
             )}
-          </>
-        )}
-        {tab === 'members' && (
-          <>
-            <h2>Members</h2>
-            {!isJoined ? (
-              <p>Join this community to view member-only details.</p>
-            ) : members.isPending ? (
-              <LoadingRegion label="Loading community members">
-                <Skeleton />
-              </LoadingRegion>
-            ) : members.isError ? (
-              <ErrorState
-                title="Members could not load"
-                onRetry={() => void members.refetch()}
-                retrying={members.isFetching}
-              >
-                Retry to view the community member list.
-              </ErrorState>
-            ) : members.data.community?.members.nodes.length ? (
-              <ul className={styles.list}>
-                {members.data.community.members.nodes.map((member) => (
-                  <li className={styles.card} key={member.id}>
-                    <span>
-                      {member.isViewer ? 'You' : 'Community member · identity not shared'}
-                    </span>
-                    <span>{member.role === 'COORDINATOR' ? 'Coordinator' : 'Member'}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p>No active members were returned.</p>
-            )}
-            <p className={styles.meta}>
-              The member directory contains role and membership status only; private contact details
-              are shown only when separately consented.
-            </p>
           </>
         )}
         {tab === 'settings' && isCoordinator && (
@@ -373,6 +451,6 @@ export default function CommunityDetailPage() {
           Archive the community instead; its member history remains read-only.
         </p>
       )}
-    </main>
+    </div>
   );
 }

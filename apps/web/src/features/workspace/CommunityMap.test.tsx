@@ -72,6 +72,7 @@ it('opens a map preview and routes Join through the existing callback, then refl
     joining: false,
     actionError: null,
     onJoin,
+    onLeave: vi.fn(),
   };
   const { rerender } = render(
     <MemoryRouter>
@@ -90,5 +91,8 @@ it('opens a map preview and routes Join through the existing callback, then refl
       <CommunityMap {...props} isJoined={() => true} />
     </MemoryRouter>,
   );
-  expect(within(preview).getByRole('button', { name: 'Joined' })).toBeDisabled();
+  expect(within(preview).getByRole('button', { name: 'Leave community' })).toBeEnabled();
+  fireEvent.click(within(preview).getByRole('button', { name: 'Leave community' }));
+  expect(props.onLeave).toHaveBeenCalledWith(row);
+  expect(within(preview).queryByRole('button', { name: 'Join community' })).not.toBeInTheDocument();
 });

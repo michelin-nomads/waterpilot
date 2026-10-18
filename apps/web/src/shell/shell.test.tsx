@@ -226,9 +226,10 @@ describe('communities page', () => {
   it('is its own page, with Create a community at the top right and no workspace tabs', async () => {
     await renderAt('/communities', new FakeAuthBackend(permanent()));
     const title = screen.getByRole('heading', { level: 1, name: 'Communities' });
+    expect(title).toBeVisible();
     expect(screen.queryByRole('navigation', { name: 'Workspace' })).not.toBeInTheDocument();
     expect(
-      within(title.closest('header')!).getByRole('link', { name: 'Create a community' }),
+      screen.getByRole('link', { name: 'Create a community' }),
     ).toHaveAttribute('href', '/communities/new');
     expect(
       within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('link', {

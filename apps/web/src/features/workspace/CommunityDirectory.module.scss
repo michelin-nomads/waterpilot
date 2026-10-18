@@ -111,8 +111,7 @@
 .art {
   display: grid;
   place-items: center;
-  align-self: stretch;
-  min-height: 8rem;
+  height: 8rem;
   border-radius: var(--wp-radius-md);
   color: var(--wp-color-accent-strong);
   background: linear-gradient(145deg, var(--wp-color-accent-soft), var(--wp-color-surface-sunken));
@@ -155,7 +154,9 @@
 }
 .actions {
   display: grid;
-  justify-items: end;
+  justify-items: stretch;
+  width: 6.5rem;
+  align-self: end;
   gap: var(--wp-space-2);
 }
 .mapAside {
@@ -167,7 +168,6 @@
 }
 .map {
   height: 35rem;
-  border: 1px solid var(--wp-color-border);
   border-radius: var(--wp-radius-lg);
   overflow: hidden;
   background: var(--wp-color-surface-sunken);
@@ -267,66 +267,146 @@
 }
 .mapPopup {
   position: relative;
-  width: 17rem;
+  width: 13rem;
   max-width: 100%;
   display: grid;
-  gap: var(--wp-space-3);
-  padding: var(--wp-card-padding);
-  border: 1px solid var(--wp-color-border);
-  border-radius: var(--wp-radius-lg);
+  gap: var(--wp-space-2);
   background: var(--wp-color-surface);
   color: var(--wp-color-text);
-  box-shadow: var(--wp-shadow-sm);
   p {
     margin: 0;
     color: var(--wp-color-text-muted);
-    font-size: var(--wp-text-sm);
+    font-size: var(--wp-text-xs);
+    line-height: 1.4;
   }
 }
+
 .popupHeading {
   display: flex;
-  align-items: flex-start;
-  gap: var(--wp-space-3);
+  align-items: center;
+  gap: var(--wp-space-2);
   padding-right: var(--wp-space-4);
-  svg {
-    flex: none;
-    color: var(--wp-color-accent-strong);
-  }
+
   h3 {
     margin: 0;
-    font-size: var(--wp-text-md);
+    font-size: var(--wp-text-sm);
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--wp-color-text);
   }
 }
-.popupClose {
-  position: absolute;
-  top: var(--wp-space-2);
-  right: var(--wp-space-2);
+
+.popupIcon {
   display: grid;
   place-items: center;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 1.625rem;
+  height: 1.625rem;
+  border-radius: var(--wp-radius-pill);
+  background: var(--wp-color-accent-soft);
+  color: var(--wp-color-accent-strong);
+  flex: none;
+
+  svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+}
+
+.popupClose {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: grid;
+  place-items: center;
+  width: 1.375rem;
+  height: 1.375rem;
   border: 0;
   border-radius: var(--wp-radius-sm);
   background: transparent;
   color: var(--wp-color-text-muted);
   cursor: pointer;
+  transition:
+    background-color var(--wp-motion-fast) var(--wp-ease),
+    color var(--wp-motion-fast) var(--wp-ease);
+
+  &:hover {
+    background: var(--wp-color-surface-sunken);
+    color: var(--wp-color-text);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+
+  &:focus:not(:focus-visible) {
+    outline: none;
+  }
+}
+
+.popupActions {
+  display: grid;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.viewLink {
+  justify-self: center;
+  padding: var(--wp-space-1);
+  color: var(--wp-color-text-muted);
+  font-size: var(--wp-text-xs);
+  text-decoration: none;
+  &:hover {
+    color: var(--wp-color-accent-strong);
+    text-decoration: underline;
+  }
   &:focus-visible {
     @include focus-ring;
   }
 }
-.error {
-  color: var(--wp-color-danger);
+.joinedState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--wp-space-2);
+  min-height: 2rem;
+  color: var(--wp-color-accent-strong);
+  font-size: var(--wp-text-sm);
+  font-weight: 600;
 }
 
 .mapFrame {
-  :global(.gm-style-iw-c) {
-    background: var(--wp-color-surface);
-    padding: 0;
-  }
-  :global(.gm-style-iw-d) {
-    overflow: auto;
-  }
+  :global(.gm-style-iw-c),
   :global(.gm-style-iw-tc)::after {
     background: var(--wp-color-surface);
   }
+}
+
+.error {
+  color: var(--wp-color-danger);
+  font-size: var(--wp-text-xs);
+  margin: 0;
+}
+
+.cardJoin,
+.cardMembership {
+  width: 100%;
+  min-height: 2.75rem;
+}
+.cardMembership {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--wp-space-2);
+  color: var(--wp-color-accent-strong);
+  font-size: var(--wp-text-sm);
+  font-weight: 600;
+}
+.facts .goal {
+  flex-basis: 100%;
+}
+.content .cardDescription {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
